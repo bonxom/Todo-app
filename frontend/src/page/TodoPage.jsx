@@ -7,6 +7,7 @@ import SearchBar from '../feature/Todo/SearchBar';
 import FilterBar from '../feature/Todo/FilterBar';
 import TaskList from '../feature/Todo/TaskList';
 import ProgressBar from '../feature/Todo/ProgressBar';
+import ChatBubble from '../component/ChatBuble';
 
 const TodoPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,6 +69,7 @@ const TodoPage = () => {
   const totalCount = tasks.length;
 
   return (
+    <>
     <MainLayout>
       <AddTaskButton
         isOpen={isModalOpen}
@@ -128,6 +130,9 @@ const TodoPage = () => {
         </div>
       </div>
     </MainLayout>
+    
+    <ChatBubble />
+  </>
   );
 };
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import AddCategoryForm from './AddCategoryForm';
 
 const TaskDetailForm = ({ task, onClose }) => {
   const [title, setTitle] = useState('');
@@ -7,6 +8,7 @@ const TaskDetailForm = ({ task, onClose }) => {
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [description, setDescription] = useState('');
+  const [showAddCategory, setShowAddCategory] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -61,13 +63,20 @@ const TaskDetailForm = ({ task, onClose }) => {
           <select
             id="edit-category"
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => {
+              if (e.target.value === '__add_more__') {
+                setShowAddCategory(true);
+              } else {
+                setCategory(e.target.value);
+              }
+            }}
             className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
           >
             <option value="Personal">Personal</option>
             <option value="Work">Work</option>
             <option value="Shopping">Shopping</option>
             <option value="Health">Health</option>
+            <option value="__add_more__" className="text-purple-600 font-medium">+ Add more</option>
           </select>
         </div>
 
@@ -145,6 +154,19 @@ const TaskDetailForm = ({ task, onClose }) => {
           Save Changes
         </button>
       </div>
+
+      {showAddCategory && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 rounded-t-2xl">
+              <h2 className="text-xl font-semibold text-gray-900">Add Category</h2>
+            </div>
+            <div className="px-6 py-5">
+              <AddCategoryForm onClose={() => setShowAddCategory(false)} />
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 };
