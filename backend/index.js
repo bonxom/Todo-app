@@ -8,7 +8,7 @@ import userRouter from "./route/userRoute.js";
 import categoryRouter from "./route/categoryRoute.js";
 import taskRouter from "./route/taskRoute.js";
 import authRouter from "./route/authRoute.js";
-import { initializeAdmin } from "./config/initialize.js";
+import { init } from "./config/initialize.js";
 
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || 'localhost';
@@ -22,18 +22,18 @@ app.use(express.json());
 await connectDB();
 console.log("Database connected");
 
-// Initialize admin account
-await initializeAdmin();
+// init values
+await init();
 
 app.get("/", (req, res) => {
     res.send("This is backend of Todo App");
 });
 
 // routes...
-app.use('/auth', authRouter);
-app.use('/users', userRouter);
-app.use('/categories', categoryRouter);
-app.use('/tasks', taskRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
+app.use('/api/categories', categoryRouter);
+app.use('/api/tasks', taskRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://${HOST}:${PORT}`);

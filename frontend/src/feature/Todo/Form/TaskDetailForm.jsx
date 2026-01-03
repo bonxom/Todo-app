@@ -1,40 +1,84 @@
 import { useState, useEffect } from 'react';
 import AddCategoryForm from './AddCategoryForm';
+import { taskService, categoryService } from '../../../api/apiService';
 
-const TaskDetailForm = ({ task, onClose }) => {
+const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Personal');
+  const [categoryId, setCategoryId] = useState('');
   const [priority, setPriority] = useState('Medium');
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [description, setDescription] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   useEffect(() => {
-    if (task) {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoryService.getAllCategories();
+      const categoriesData = Array.isArray(response) ? response : response.categories;
+      if (categoriesData) {
+        setCategories(categoriesData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (task && categories.length > 0) {
       setTitle(task.title || '');
-      setCategory(task.category || 'Personal');
+      setCategoryId(task.categoryId?._id || categories[0]?._id || '');
       setPriority(task.priority || 'Medium');
-      setStartDate(task.startDate || '');
-      setDueDate(task.dueDate || '');
+      setStartDate(formatDateForInput(task.startDate));
+      setDueDate(formatDateForInput(task.dueDate));
       setDescription(task.description || '');
     }
-  }, [task]);
+  }, [task, categories]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Handle form submission
-    console.log({ 
-      id: task.id,
-      title, 
-      category, 
-      priority, 
-      startDate,
-      dueDate, 
-      description,
-      completed: task.completed
-    });
-    onClose();
+    
+    try {
+      setIsSubmitting(true);
+      
+      const updatedTask = {
+        title,
+        categoryId: categoryId || undefined,
+        priority,
+        startDate: startDate || undefined,
+        dueDate: dueDate || undefined,
+        description,
+      };
+      
+      console.log('Submitting updated task:', updatedTask);
+      
+      await taskService.updateTask(task._id, updatedTask);
+      
+      if (onTaskUpdated) {
+        onTaskUpdated();
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      alert('Failed to update task. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -62,20 +106,19 @@ const TaskDetailForm = ({ task, onClose }) => {
           </label>
           <select
             id="edit-category"
-            value={category}
+            value={categoryId}
             onChange={(e) => {
               if (e.target.value === '__add_more__') {
                 setShowAddCategory(true);
               } else {
-                setCategory(e.target.value);
+                setCategoryId(e.target.value);
               }
             }}
             className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
           >
-            <option value="Personal">Personal</option>
-            <option value="Work">Work</option>
-            <option value="Shopping">Shopping</option>
-            <option value="Health">Health</option>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>{cat.name}</option>
+            ))}
             <option value="__add_more__" className="text-purple-600 font-medium">+ Add more</option>
           </select>
         </div>
@@ -149,9 +192,10 @@ const TaskDetailForm = ({ task, onClose }) => {
         </button>
         <button
           type="submit"
-          className="flex-1 h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-xl shadow-md transition-all"
+          disabled={isSubmitting}
+          className="flex-1 h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save Changes
+          {isSubmitting ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
 
@@ -162,7 +206,10 @@ const TaskDetailForm = ({ task, onClose }) => {
               <h2 className="text-xl font-semibold text-gray-900">Add Category</h2>
             </div>
             <div className="px-6 py-5">
-              <AddCategoryForm onClose={() => setShowAddCategory(false)} />
+              <AddCategoryForm 
+                onClose={() => setShowAddCategory(false)}
+                onCategoryCreated={fetchCategories}
+              />
             </div>
           </div>
         </div>

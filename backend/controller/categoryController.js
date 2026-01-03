@@ -42,8 +42,9 @@ export const createCategory = async (req, res) => {
 
 export const getAllCategories = async (req, res) => {
     try {
+        const { role, _id } = req.user;
         // Users can only see their own categories, unless they are ADMIN
-        const query = req.user.role === 'ADMIN' ? {} : { userId: req.user._id };
+        const query = role === 'ADMIN' ? {} : { userId: _id };
         const categories = await Category.find(query).populate('userId', 'name email');
         
         res.status(200).json(categories);

@@ -1,18 +1,25 @@
 const FilterBar = ({
-  selectedCategory,
-  onCategoryChange,
-  categories,
+  selectedStatus,
+  onStatusChange,
 }) => {
+  const statusOptions = [
+    { value: 'all', label: 'All Tasks' },
+    { value: 'pending', label: 'Pending Tasks' },
+    { value: 'in-progress', label: 'In Progress Tasks' },
+    { value: 'completed', label: 'Completed Tasks' },
+    { value: 'given-up', label: 'Given Up Tasks' },
+  ];
+
   return (
     <div className="relative">
       <select
-        value={selectedCategory}
-        onChange={(e) => onCategoryChange(e.target.value)}
-        aria-label="Filter by category"
+        value={selectedStatus}
+        onChange={(e) => onStatusChange(e.target.value)}
+        aria-label="Filter by status"
         className="
           peer
           h-12
-          min-w-[180px]
+          min-w-[200px]
           appearance-none
           rounded-2xl
           border border-gray-200 bg-white/80
@@ -25,10 +32,9 @@ const FilterBar = ({
           focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60
         "
       >
-        <option value="all">All Categories</option>
-        {categories.map((cat) => (
-          <option key={cat} value={cat}>
-            {cat}
+        {statusOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>

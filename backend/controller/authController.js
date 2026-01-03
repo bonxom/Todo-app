@@ -1,6 +1,42 @@
 import User from '../model/User.js';
 import generateToken from '../utils/generateToken.js';
 
+export const registerUser = async (req, res) => {
+    try {
+        const { email, password, name, dob, nationality } = req.body;
+
+        if (!email || !password || !name || !dob) {
+            return res.status(400).json({ message: "Email, password, name, and date of birth are required" });
+        }
+
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: "Email already exists" });
+        }
+
+        // Create new user
+        const user = await User.create({
+            email,
+            password,
+            name,
+            dob,
+            nationality: nationality || 'Vietnam',
+            role: 'USER'
+        });
+
+        const token = generateToken(user._id);
+
+        // Exclude password from response
+        user.password = undefined;
+
+        res.status(201).json({ message: "Registration successful", user, token });
+    } catch (error) {
+        console.error("Error registering user:", error.message);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -28,6 +64,16 @@ export const loginUser = async (req, res) => {
         res.status(200).json({ message: "Login successful", user, token });
     } catch (error) {
         console.error("Error logging in user:", error.message);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export const logoutUser = async (req, res) => {
+    try {
+        // Handle in client side by deleting token
+        res.status(200).json({ message: "Logout successful" });
+    } catch (error) {
+        console.error("Error logging out user:", error.message);
         res.status(500).json({ message: "Internal server error" });
     }
 }

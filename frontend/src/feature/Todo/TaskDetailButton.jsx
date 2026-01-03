@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import TaskDetailForm from './Form/TaskDetailForm';
 
-const TaskDetailButton = ({ isOpen, task, onClose }) => {
+const TaskDetailButton = ({ isOpen, task, onClose, onTaskUpdated }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -40,7 +40,7 @@ const TaskDetailButton = ({ isOpen, task, onClose }) => {
         </div>
 
         <div className="px-6 py-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 100px)' }}>
-          <TaskDetailForm task={task} onClose={onClose} />
+          <TaskDetailForm task={task} onClose={onClose} onTaskUpdated={onTaskUpdated} />
         </div>
       </div>
     </div>

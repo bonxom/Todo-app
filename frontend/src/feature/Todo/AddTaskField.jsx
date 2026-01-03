@@ -1,9 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { categoryService } from '../../api/apiService';
 
 const AddTaskForm = ({ onAddTask }) => {
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Personal');
+  const [category, setCategory] = useState('');
   const [priority, setPriority] = useState('Medium');
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoryService.getAllCategories();
+        const categoriesData = Array.isArray(response) ? response : response.categories;
+        if (categoriesData && categoriesData.length > 0) {
+          setCategories(categoriesData);
+          setCategory(categoriesData[0]?.name || '');
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -14,7 +32,7 @@ const AddTaskForm = ({ onAddTask }) => {
         priority,
       });
       setTitle('');
-      setCategory('Personal');
+      setCategory(categories[0]?.name || '');
       setPriority('Medium');
     }
   };
@@ -47,10 +65,9 @@ const AddTaskForm = ({ onAddTask }) => {
             onChange={(e) => setCategory(e.target.value)}
             className="h-12 px-4 rounded-2xl border border-gray-200 bg-white/80 text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
           >
-            <option value="Personal">Personal</option>
-            <option value="Work">Work</option>
-            <option value="Shopping">Shopping</option>
-            <option value="Health">Health</option>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat.name}>{cat.name}</option>
+            ))}
           </select>
           
           <select

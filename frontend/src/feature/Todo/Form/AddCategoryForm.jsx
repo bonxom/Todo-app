@@ -1,20 +1,41 @@
 import { useState } from 'react';
+import { categoryService } from '../../../api/apiService';
 
-const AddCategoryForm = ({ onClose }) => {
+const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleReset = () => {
     setName('');
     setDescription('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Handle form submission
-    console.log({ name, description });
-    handleReset();
-    onClose();
+    
+    try {
+      setIsSubmitting(true);
+      
+      const newCategory = {
+        name,
+        description,
+      };
+      
+      await categoryService.createCategory(newCategory);
+      
+      if (onCategoryCreated) {
+        onCategoryCreated();
+      }
+      
+      handleReset();
+      onClose();
+    } catch (error) {
+      console.error('Failed to create category:', error);
+      alert(error.response?.data?.message || 'Failed to create category. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -62,9 +83,10 @@ const AddCategoryForm = ({ onClose }) => {
         </button>
         <button
           type="submit"
-          className="flex-1 h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-xl shadow-md transition-all"
+          disabled={isSubmitting}
+          className="flex-1 h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Add Category
+          {isSubmitting ? 'Adding...' : 'Add Category'}
         </button>
       </div>
     </form>

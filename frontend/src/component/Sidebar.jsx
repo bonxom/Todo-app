@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { authService } from '../api/apiService';
 
 export const drawerWidthExpanded = 304;
 export const drawerWidthCollapsed = 80;
 
 const Sidebar = ({ onWidthChange }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const currentDrawerWidth = isExpanded ? drawerWidthExpanded : drawerWidthCollapsed;
@@ -19,7 +22,7 @@ const Sidebar = ({ onWidthChange }) => {
 
   const menuItems = [
     {
-      path: '/',
+      path: '/dashboard',
       label: 'Todos',
       icon: (
         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,6 +41,14 @@ const Sidebar = ({ onWidthChange }) => {
     },
   ];
 
+  const handleLogout = () => {
+    console.log('Logout');
+    // TODO: Clear auth token and redirect to login
+    authService.logout();
+    navigate('/');
+
+  };
+
   return (
     <aside
       className="bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto overflow-x-hidden transition-all duration-300 z-20"
@@ -46,7 +57,7 @@ const Sidebar = ({ onWidthChange }) => {
         padding: isExpanded ? '24px 20px' : '24px 12px',
       }}
     >
-      <div className="flex flex-col gap-4 h-full">
+      <div className="flex flex-col gap-4 h-full justify-between">
         {/* Toggle Button */}
         <div className={`flex ${isExpanded ? 'justify-end' : 'justify-center'} mb-2`}>
           <button
@@ -75,32 +86,46 @@ const Sidebar = ({ onWidthChange }) => {
         )}
 
         {/* MENU */}
-        {isExpanded && (
-          <div className="text-xs font-semibold text-gray-500 mt-1 mb-[-4px]">Menu</div>
-        )}
+        <div className="flex-1">
+          {isExpanded && (
+            <div className="text-xs font-semibold text-gray-500 mt-1 mb-4">Menu</div>
+          )}
 
-        <nav className="flex flex-col gap-1">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-2.5 p-2.5 cursor-pointer transition-all duration-200 rounded-lg ${
-                  isExpanded ? 'justify-start' : 'justify-center'
-                } ${
-                  isActive
-                    ? 'bg-purple-100 text-purple-600 font-medium'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                title={!isExpanded ? item.label : ''}
-              >
-                <span className="flex-shrink-0">{item.icon}</span>
-                {isExpanded && <span className="text-sm whitespace-nowrap">{item.label}</span>}
-              </Link>
-            );
-          })}
-        </nav>
+          <nav className="flex flex-col gap-1">
+            {menuItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center gap-2.5 p-2.5 cursor-pointer transition-all duration-200 rounded-lg ${
+                    isExpanded ? 'justify-start' : 'justify-center'
+                  } ${
+                    isActive
+                      ? 'bg-purple-100 text-purple-600 font-medium'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                  title={!isExpanded ? item.label : ''}
+                >
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  {isExpanded && <span className="text-sm whitespace-nowrap">{item.label}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className={`flex items-center gap-2.5 p-2.5 cursor-pointer transition-all duration-200 rounded-lg text-red-600 hover:bg-red-50 ${
+            isExpanded ? 'justify-start' : 'justify-center'
+          }`}
+          title={!isExpanded ? 'Logout' : ''}
+        >
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {isExpanded && <span className="text-sm whitespace-nowrap font-medium">Logout</span>}
+        </button>
       </div>
     </aside>
   );
