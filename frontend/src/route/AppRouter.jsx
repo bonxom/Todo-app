@@ -2,6 +2,7 @@ import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
 import TodoPage from '../page/TodoPage';
 import ProfilePage from '../page/ProfilePage';
 import CategoryPage from '../page/CategoryPage';
+import CalendarPage from '../page/CalendarPage';
 import AuthPage from '../page/AuthPage';
 import LandingPage from '../page/LandingPage';
 
@@ -29,6 +30,7 @@ const AppRouter = () => {
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><TodoPage /></ProtectedRoute>} />
         <Route path="/categories" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
+        <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>

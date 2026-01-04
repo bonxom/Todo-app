@@ -13,6 +13,36 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState([]);
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'in-progress':
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'completed':
+        return 'bg-green-50 text-green-700 border-green-200';
+      case 'given-up':
+        return 'bg-gray-100 text-gray-700 border-gray-300';
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Pending';
+      case 'in-progress':
+        return 'In Progress';
+      case 'completed':
+        return 'Completed';
+      case 'given-up':
+        return 'Given Up';
+      default:
+        return status;
+    }
+  };
+
   const formatDateForInput = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -99,6 +129,17 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
         />
       </div>
 
+      <div>
+        <label htmlFor="edit-status" className="block text-sm font-medium text-gray-700 mb-2">
+          Status
+        </label>
+        <div
+          className={`w-full h-11 px-4 rounded-xl border-2 flex items-center text-[15px] font-medium ${getStatusColor(task?.status)}`}
+        >
+          {getStatusLabel(task?.status)}
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="edit-category" className="block text-sm font-medium text-gray-700 mb-2">
@@ -156,7 +197,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
 
         <div>
           <label htmlFor="edit-dueDate" className="block text-sm font-medium text-gray-700 mb-2">
-            Due Date
+            Due Date <span className="text-red-500">*</span>
           </label>
           <input
             id="edit-dueDate"
@@ -164,6 +205,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
             className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            required
           />
         </div>
       </div>

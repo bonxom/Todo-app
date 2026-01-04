@@ -1,9 +1,28 @@
-const ProfileHeader = ({ user }) => {
+import AvatarUpload from './AvtUpload';
+
+const ProfileHeader = ({ user, onAvatarUpdate }) => {
   return (
     <div className="mb-8 text-center">
       <div className="flex justify-center mb-4">
-        <div className="w-24 h-24 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-          {user?.name?.charAt(0).toUpperCase() || 'U'}
+        <div className="relative">
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={user.name}
+              className="w-24 h-24 rounded-full object-cover shadow-lg"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div
+            className="w-24 h-24 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg"
+            style={{ display: user?.avatarUrl ? 'none' : 'flex' }}
+          >
+            {user?.name?.charAt(0).toUpperCase() || 'U'}
+          </div>
+          <AvatarUpload onUploadSuccess={onAvatarUpdate} />
         </div>
       </div>
       <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r bg-linear-to-br from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">

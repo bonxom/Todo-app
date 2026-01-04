@@ -72,6 +72,14 @@ export const taskService = {
     return response.data;
   },
 
+  // Get tasks by date range
+  getTasksByDateRange: async (startDate, endDate) => {
+    const response = await axiosInstance.get('/api/tasks', {
+      params: { startDate, endDate }
+    });
+    return response.data;
+  },
+
   // Get tasks by status
   getTaskByStatus: async (status) => {
     const response = await axiosInstance.get(`/api/tasks/status/${status}`);

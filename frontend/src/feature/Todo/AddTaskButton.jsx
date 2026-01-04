@@ -18,7 +18,7 @@ const AddTaskButton = ({ isOpen, onClose, onTaskCreated }) => {
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm" 
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
       onClick={onClose}
     >
       <div 

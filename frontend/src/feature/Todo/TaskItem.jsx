@@ -34,7 +34,7 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onGiveUp, onDelete }) => {
   };
 
   return (
-    <div className="bg-white/80 rounded-2xl shadow-sm p-5 flex items-start gap-4 hover:shadow-md transition-all">
+    <div className="bg-white/80 rounded-2xl shadow-sm p-5 flex items-start gap-4 hover:shadow-md transition-all select-none" style={{ userSelect: 'none' }}>
       <input
         type="checkbox"
         checked={task.status === 'completed'}

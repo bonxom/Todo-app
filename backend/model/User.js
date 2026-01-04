@@ -36,7 +36,11 @@ const userSchema = new mongoose.Schema(
         categories: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Category'
-        }]
+        }],
+        avatarUrl: {
+            type: String,
+            default: ''
+        }
     },
     {
         timestamps: true        

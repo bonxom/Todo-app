@@ -1,100 +1,86 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MainLayout from '../layout/MainLayout';
 import CategoryGrid from '../feature/Category/CategoryGrid';
 import CategoryStats from '../feature/Category/CategoryStats';
 import ChatBubble from '../component/ChatBuble';
+import { categoryService, taskService } from '../api/apiService';
 
 const CategoryPage = () => {
-  // Mock tasks data - replace with actual API call
-  const [tasks] = useState([
-    {
-      id: '1',
-      title: 'Complete project presentation',
-      category: 'Work',
-      priority: 'High',
-      completed: false,
-    },
-    {
-      id: '2',
-      title: 'Prepare meeting agenda',
-      category: 'Work',
-      priority: 'Medium',
-      completed: false,
-    },
-    {
-      id: '3',
-      title: 'Review code changes',
-      category: 'Work',
-      priority: 'Low',
-      completed: true,
-    },
-    {
-      id: '4',
-      title: 'Buy groceries for the week',
-      category: 'Shopping',
-      priority: 'Medium',
-      completed: false,
-    },
-    {
-      id: '5',
-      title: 'Buy birthday gift',
-      category: 'Shopping',
-      priority: 'High',
-      completed: false,
-    },
-    {
-      id: '6',
-      title: 'Go for a morning run',
-      category: 'Health',
-      priority: 'Low',
-      completed: true,
-    },
-    {
-      id: '7',
-      title: 'Drink 8 glasses of water',
-      category: 'Health',
-      priority: 'Medium',
-      completed: false,
-    },
-    {
-      id: '8',
-      title: 'Read a book chapter',
-      category: 'Personal',
-      priority: 'Low',
-      completed: false,
-    },
-    {
-      id: '9',
-      title: 'Call family',
-      category: 'Personal',
-      priority: 'High',
-      completed: true,
-    },
-    {
-      id: '10',
-      title: 'Learn new programming concept',
-      category: 'Personal',
-      priority: 'Medium',
-      completed: false,
-    },
-  ]);
+  const [categorizedTasks, setCategorizedTasks] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [allTasks, setAllTasks] = useState([]);
+  const [selectedStatus, setSelectedStatus] = useState('all');
 
-  // Group tasks by category
-  const categorizedTasks = tasks.reduce((acc, task) => {
-    if (!acc[task.category]) {
-      acc[task.category] = [];
+  useEffect(() => {
+    fetchCategoriesAndTasks();
+  }, []);
+
+  const fetchCategoriesAndTasks = async () => {
+    try {
+      setIsLoading(true);
+
+      // Fetch all categories
+      const categoriesData = await categoryService.getAllCategories();
+      setCategories(categoriesData);
+
+      // Fetch tasks for each category
+      const tasksByCategory = {};
+      let allTasksArray = [];
+
+      for (const category of categoriesData) {
+        const tasks = await taskService.getTaskByCategory(category._id);
+        tasksByCategory[category.name] = tasks;
+        allTasksArray = [...allTasksArray, ...tasks];
+      }
+
+      setCategorizedTasks(tasksByCategory);
+      setAllTasks(allTasksArray);
+    } catch (error) {
+      console.error('Error fetching categories and tasks:', error);
+    } finally {
+      setIsLoading(false);
     }
-    acc[task.category].push(task);
-    return acc;
-  }, {});
-
-  // Calculate stats
-  const stats = {
-    totalCategories: Object.keys(categorizedTasks).length,
-    totalTasks: tasks.length,
-    completedTasks: tasks.filter(task => task.completed).length,
-    pendingTasks: tasks.filter(task => !task.completed).length,
   };
+
+  // Filter tasks by status
+  const getFilteredTasksByCategory = () => {
+    if (selectedStatus === 'all') {
+      return categorizedTasks;
+    }
+
+    const filtered = {};
+    Object.entries(categorizedTasks).forEach(([categoryName, tasks]) => {
+      const filteredTasks = tasks.filter(task => task.status === selectedStatus);
+      if (filteredTasks.length > 0) {
+        filtered[categoryName] = filteredTasks;
+      }
+    });
+    return filtered;
+  };
+
+  // Calculate stats (based on filtered tasks)
+  const filteredCategorizedTasks = getFilteredTasksByCategory();
+  const filteredAllTasks = selectedStatus === 'all' 
+    ? allTasks 
+    : allTasks.filter(task => task.status === selectedStatus);
+
+  const stats = {
+    totalCategories: Object.keys(filteredCategorizedTasks).length,
+    totalTasks: filteredAllTasks.length,
+    completedTasks: filteredAllTasks.filter(task => task.status === 'completed').length,
+    pendingTasks: filteredAllTasks.filter(task => task.status === 'pending').length,
+  };
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="flex justify-center items-center min-h-full">
+          <div className="text-gray-500">Loading categories...</div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <>
@@ -112,8 +98,65 @@ const CategoryPage = () => {
             {/* Stats */}
             <CategoryStats stats={stats} />
 
+            {/* Filter Buttons */}
+            <div className="mb-6 flex flex-wrap gap-2 justify-center">
+              <button
+                onClick={() => setSelectedStatus('all')}
+                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                  selectedStatus === 'all'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                }`}
+              >
+                All Tasks
+              </button>
+              <button
+                onClick={() => setSelectedStatus('pending')}
+                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                  selectedStatus === 'pending'
+                    ? 'bg-purple-100 text-purple-700 border-2 border-purple-500 shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                }`}
+              >
+                Pending
+              </button>
+              <button
+                onClick={() => setSelectedStatus('in-progress')}
+                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                  selectedStatus === 'in-progress'
+                    ? 'bg-blue-100 text-blue-700 border-2 border-blue-500 shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-300'
+                }`}
+              >
+                In Progress
+              </button>
+              <button
+                onClick={() => setSelectedStatus('completed')}
+                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                  selectedStatus === 'completed'
+                    ? 'bg-green-100 text-green-700 border-2 border-green-500 shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-green-300'
+                }`}
+              >
+                Completed
+              </button>
+              <button
+                onClick={() => setSelectedStatus('given-up')}
+                className={`px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+                  selectedStatus === 'given-up'
+                    ? 'bg-gray-200 text-gray-700 border-2 border-gray-400 shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                Given Up
+              </button>
+            </div>
+
             {/* Category Grid */}
-            <CategoryGrid categorizedTasks={categorizedTasks} />
+            <CategoryGrid 
+              categorizedTasks={filteredCategorizedTasks}
+              onTaskUpdated={fetchCategoriesAndTasks}
+            />
           </div>
         </div>
       </MainLayout>

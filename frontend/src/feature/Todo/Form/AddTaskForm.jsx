@@ -130,7 +130,7 @@ const AddTaskForm = ({ onClose, onTaskCreated }) => {
 
         <div>
           <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-2">
-            Due Date
+            Due Date <span className="text-red-500">*</span>
           </label>
           <input
             id="dueDate"
@@ -138,6 +138,7 @@ const AddTaskForm = ({ onClose, onTaskCreated }) => {
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
             className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            required
           />
         </div>
 

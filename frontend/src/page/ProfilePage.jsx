@@ -6,6 +6,7 @@ import ProfileStats from '../feature/Profile/ProfileStats';
 import ProfileActions from '../feature/Profile/ProfileActions';
 import EditProfileModal from '../feature/Profile/EditProfileModal';
 import ChangePasswordModal from '../feature/Profile/ChangePasswordModal';
+import AvatarUpload from '../feature/Profile/AvtUpload';
 import ChatBubble from '../component/ChatBuble';
 import { authService, taskService, categoryService } from '../api/apiService';
 
@@ -40,8 +41,8 @@ const ProfilePage = () => {
       ]);
       
       // Calculate stats
-      const completedTasks = tasks.filter(task => task.status === 'COMPLETED').length;
-      const inProgressTasks = tasks.filter(task => task.status === 'IN_PROGRESS').length;
+      const completedTasks = tasks.filter(task => task.status === 'completed').length;
+      const inProgressTasks = tasks.filter(task => task.status === 'in-progress').length;
       
       setStats({
         totalTasks: tasks.length,
@@ -112,24 +113,23 @@ const ProfilePage = () => {
 
   return (
     <>
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        user={user}
+        onSave={handleSaveProfile}
+      />
+
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onSave={handleSavePassword}
+      />
+
       <MainLayout>
-        <EditProfileModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          user={user}
-          onSave={handleSaveProfile}
-        />
-
-        <ChangePasswordModal
-          isOpen={isPasswordModalOpen}
-          onClose={() => setIsPasswordModalOpen(false)}
-          onSave={handleSavePassword}
-        />
-
         <div className="flex justify-center items-start min-h-full p-6">
           <div className="w-full max-w-4xl mx-auto bg-gray-100/50 backdrop-blur-sm rounded-xl shadow-lg p-8">
-            <ProfileHeader user={user} />
-            
+            <ProfileHeader user={user} onAvatarUpdate={fetchUserData} />
             <ProfileStats stats={stats} />
             
             <ProfileActions

@@ -26,6 +26,18 @@ const TodoPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [categories, setCategories] = useState([]);
 
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    if (isGiveUpModalOpen || isNotInProgressModalOpen || isDeleteModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isGiveUpModalOpen, isNotInProgressModalOpen, isDeleteModalOpen]);
+
   // Fetch tasks on component mount
   useEffect(() => {
     const fetchTasks = async () => {
@@ -35,6 +47,12 @@ const TodoPage = () => {
         console.log('API Response:', response);
         // API trả về array trực tiếp hoặc object với tasks property
         const tasksData = Array.isArray(response) ? response : response.tasks;
+        // sort taskData theo dueDate
+        tasksData.sort((a, b) => {
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate) - new Date(b.dueDate);
+        });
         if (tasksData) {
           setTasks(tasksData);
           console.log('Tasks loaded:', tasksData);
@@ -135,7 +153,7 @@ const TodoPage = () => {
   });
 
   const completedCount = tasks.filter((task) => task.status === 'completed').length;
-  const totalCount = tasks.length;
+  const totalCount = tasks.filter((task) => task.status === 'in-progress' || task.status === 'completed').length;
 
   const refreshTasks = async () => {
     try {
@@ -152,26 +170,28 @@ const TodoPage = () => {
 
   return (
     <>
-    <MainLayout>
-      <AddTaskButton
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onTaskCreated={refreshTasks}
-      />
+    <AddTaskButton
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      onTaskCreated={refreshTasks}
+    />
 
-      <TaskDetailButton
-        isOpen={isEditModalOpen}
-        task={selectedTask}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedTask(null);
-        }}
-        onTaskUpdated={refreshTasks}
-      />
+    <TaskDetailButton
+      isOpen={isEditModalOpen}
+      task={selectedTask}
+      onClose={() => {
+        setIsEditModalOpen(false);
+        setSelectedTask(null);
+      }}
+      onTaskUpdated={refreshTasks}
+    />
 
-      {/* Give Up Confirmation Modal */}
-      {isGiveUpModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    {/* Give Up Confirmation Modal */}
+    {isGiveUpModalOpen && (
+      <div 
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+      >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
               <h2 className="text-xl font-semibold text-white">Give Up Task</h2>
@@ -214,7 +234,10 @@ const TodoPage = () => {
 
       {/* Not In Progress Warning Modal */}
       {isNotInProgressModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
               <h2 className="text-xl font-semibold text-white">Task Not In Progress</h2>
@@ -247,7 +270,10 @@ const TodoPage = () => {
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
               <h2 className="text-xl font-semibold text-white">Delete Task</h2>
@@ -288,6 +314,7 @@ const TodoPage = () => {
         </div>
       )}
       
+      <MainLayout>
       <div className="flex justify-center items-start min-h-full p-6">
         <div className="w-full max-w-4xl mx-auto bg-gray-100/50 backdrop-blur-sm rounded-xl shadow-lg p-8">
           <div className="mb-8">

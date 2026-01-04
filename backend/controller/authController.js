@@ -145,7 +145,7 @@ export const changePassword = async (req, res) => {
 export const updateInfo = async (req, res) => {
     try {
         const { id } = req.user;
-        const { email, name, dob, nationality } = req.body;
+        const { email, name, dob, nationality, avatarUrl } = req.body;
 
         const user = await User.findById(id);
         if (!user) {
@@ -157,6 +157,7 @@ export const updateInfo = async (req, res) => {
         if (name !== undefined) update.name = name;
         if (dob !== undefined) update.dob = dob;
         if (nationality !== undefined) update.nationality = nationality;
+        if (avatarUrl !== undefined) update.avatarUrl = avatarUrl;
 
         if (Object.keys(update).length === 0) {
             return res.status(400).json({ message: "No fields to update" });

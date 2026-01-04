@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
@@ -9,6 +9,17 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
     nationality: user?.nationality || '',
   });
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave(formData);
@@ -17,7 +28,10 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+    >
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-fadeIn">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Edit Profile</h2>

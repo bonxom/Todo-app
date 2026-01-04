@@ -105,3 +105,29 @@ export const deleteUser = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }   
 }
+
+export const uploadAvatar = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+        const user = await User.findByIdAndUpdate(
+            id,
+            { avatarUrl },
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({ message: "Avatar uploaded successfully", avatarUrl });
+    } catch (error) {
+        console.error("Error uploading avatar:", error.message);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
