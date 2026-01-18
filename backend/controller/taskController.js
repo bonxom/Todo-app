@@ -12,21 +12,35 @@ export const createTask = async (req, res) => {
         // Use authenticated user's ID
         const userId = req.user._id;
 
+        let finalCategoryId = categoryId;
+
         //check category belongs to user if categoryId is provided
         if (categoryId) {
             const category = await Category.findById(categoryId);
             if (!category || category.userId.toString() !== userId.toString()) {
                 return res.status(400).json({ message: "Invalid categoryId" });
             }
+        } else {
+            // If no categoryId provided, use Uncategorized
+            const uncategorizedCategory = await Category.findOne({
+                userId: userId,
+                name: 'Uncategorized'
+            });
+            
+            if (!uncategorizedCategory) {
+                return res.status(400).json({ message: "Uncategorized category not found. Please contact support." });
+            }
+            
+            finalCategoryId = uncategorizedCategory._id;
         }
 
         const task = await Task.create({
-            userId,
+            // userId,
             title,
             description,
             status,
             priority,
-            categoryId,
+            categoryId: finalCategoryId,
             startDate,
             dueDate
         });
@@ -40,9 +54,25 @@ export const createTask = async (req, res) => {
 
 export const getAllTasks = async (req, res) => {
     try {
+        let query = {};
+        
         // Users can only see their own tasks, unless they are ADMIN
-        const query = req.user.role === 'ADMIN' ? {} : { userId: req.user._id };
-        const tasks = await Task.find(query).populate('categoryId', 'name').populate('userId', 'name email');
+        if (req.user.role !== 'ADMIN') {
+            // Find all categories belonging to the user
+            const userCategories = await Category.find({ userId: req.user._id });
+            const categoryIds = userCategories.map(cat => cat._id);
+            query = { categoryId: { $in: categoryIds } };
+        }
+        
+        const tasks = await Task.find(query).populate({ 
+            path: 'categoryId',
+            select: 'name userId',
+            populate: {
+                path: 'userId',
+                select: 'name email'
+            }
+        });
+        
         res.status(200).json(tasks);
     } catch (error) {
         console.error('Error getting all tasks:', error.message);   
@@ -53,14 +83,20 @@ export const getAllTasks = async (req, res) => {
 export const getTaskById = async (req, res) => {
     try {
         const { id } = req.params;
-        const task = await Task.findById(id).populate('categoryId', 'name').populate('userId', 'name email');
-
+        const task = await Task.findById(id).populate({
+            path: 'categoryId',
+            select: 'name userId',
+            populate: {
+                path: 'userId',
+                select: 'name email'
+            }
+        });
         if (!task) {
             return res.status(404).json({ message: "Task not found" });
         }
 
         // Check ownership (unless ADMIN)
-        if (req.user.role !== 'ADMIN' && task.userId._id.toString() !== req.user._id.toString()) {
+        if (req.user.role !== 'ADMIN' && task.categoryId?.userId?._id.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "You don't have permission to access this task" });
         }
         
@@ -76,13 +112,13 @@ export const updateTask = async (req, res) => {
         const { id } = req.params;
         const { title, description, status, priority, categoryId, startDate, dueDate } = req.body;
 
-        const task = await Task.findById(id);
+        const task = await Task.findById(id).populate('categoryId', 'userId');
         if (!task) {
             return res.status(404).json({ message: "Task not found" });
         }
 
         // Check ownership (unless ADMIN)
-        if (req.user.role !== 'ADMIN' && task.userId.toString() !== req.user._id.toString()) {
+        if (req.user.role !== 'ADMIN' && task.categoryId?.userId?.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "You don't have permission to update this task" });
         }
 
@@ -92,7 +128,26 @@ export const updateTask = async (req, res) => {
         if (status !== undefined) update.status = status;
         if (priority !== undefined) update.priority = priority;
         if (categoryId !== undefined) {
-            update.categoryId = categoryId === 'uncategorized' || categoryId === '' ? null : categoryId;
+            // If trying to set to null/empty, use Uncategorized instead
+            if (categoryId === 'uncategorized' || categoryId === '' || categoryId === null) {
+                const uncategorizedCategory = await Category.findOne({
+                    userId: req.user._id,
+                    name: 'Uncategorized'
+                });
+                
+                if (!uncategorizedCategory) {
+                    return res.status(400).json({ message: "Uncategorized category not found. Please contact support." });
+                }
+                
+                update.categoryId = uncategorizedCategory._id;
+            } else {
+                // Verify the new category belongs to user
+                const newCategory = await Category.findById(categoryId);
+                if (!newCategory || newCategory.userId.toString() !== req.user._id.toString()) {
+                    return res.status(400).json({ message: "Invalid categoryId" });
+                }
+                update.categoryId = categoryId;
+            }
         }
         if (startDate !== undefined) update.startDate = startDate;
         if (dueDate !== undefined) update.dueDate = dueDate;
@@ -101,11 +156,23 @@ export const updateTask = async (req, res) => {
             return res.status(400).json({ message: "No fields to update" });
         }
 
+        // const updatedTask = await Task.findByIdAndUpdate(
+        //     id, 
+        //     {$set: update},
+        //     { new: true }
+        // ).populate('categoryId', 'name').populate('userId', 'name email');
         const updatedTask = await Task.findByIdAndUpdate(
             id, 
             {$set: update},
             { new: true }
-        ).populate('categoryId', 'name').populate('userId', 'name email');
+        ).populate({
+            path: 'categoryId',
+            select: 'name userId',
+            populate: {
+                path: 'userId',
+                select: 'name email'
+            }
+        });
 
         res.status(200).json({ message: "Task updated successfully", task: updatedTask });
     } catch (error) {
@@ -119,13 +186,13 @@ export const finishTask = async (req, res) => {
         const { id } = req.params;
         const currentDate = new Date();
 
-        const task = await Task.findById(id);
+        const task = await Task.findById(id).populate('categoryId', 'userId');
         if (!task) {
             return res.status(404).json({ message: "Task not found" });
         }
 
         // Check ownership (unless ADMIN)
-        if (req.user.role !== 'ADMIN' && task.userId.toString() !== req.user._id.toString()) {
+        if (req.user.role !== 'ADMIN' && task.categoryId?.userId?.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "You don't have permission to update this task" });
         }
 
@@ -150,13 +217,13 @@ export const startTask = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const task = await Task.findById(id);
+        const task = await Task.findById(id).populate('categoryId', 'userId');
         if (!task) {
             return res.status(404).json({ message: "Task not found" });
         }
 
         // Check ownership (unless ADMIN)
-        if (req.user.role !== 'ADMIN' && task.userId.toString() !== req.user._id.toString()) {
+        if (req.user.role !== 'ADMIN' && task.categoryId?.userId?.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "You don't have permission to update this task" });
         }
 
@@ -178,13 +245,13 @@ export const giveUpTask = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const task = await Task.findById(id);
+        const task = await Task.findById(id).populate('categoryId', 'userId');
         if (!task) {
             return res.status(404).json({ message: "Task not found" });
         }
 
         // Check ownership (unless ADMIN)
-        if (req.user.role !== 'ADMIN' && task.userId.toString() !== req.user._id.toString()) {
+        if (req.user.role !== 'ADMIN' && task.categoryId?.userId?.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "You don't have permission to update this task" });
         }
 
@@ -205,14 +272,14 @@ export const giveUpTask = async (req, res) => {
 export const deleteTask = async (req, res) => {
     try {
         const { id } = req.params;
-        const task = await Task.findById(id);
+        const task = await Task.findById(id).populate('categoryId', 'userId');
 
         if (!task) {
             return res.status(404).json({ message: "Task not found" });
         }
 
         // Check ownership (unless ADMIN)
-        if (req.user.role !== 'ADMIN' && task.userId.toString() !== req.user._id.toString()) {
+        if (req.user.role !== 'ADMIN' && task.categoryId?.userId?.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "You don't have permission to delete this task" });
         }
 
@@ -233,14 +300,26 @@ export const getTodayDeadlines = async (req, res) => {
         endOfDay.setDate(endOfDay.getDate() + 1);
         endOfDay.setHours(23, 59, 59, 999);
 
+        let baseQuery = {};
         // Users can only see their own tasks, unless they are ADMIN
-        const baseQuery = req.user.role === 'ADMIN' ? {} : { userId: req.user._id };
+        if (req.user.role !== 'ADMIN') {
+            const userCategories = await Category.find({ userId: req.user._id });
+            const categoryIds = userCategories.map(cat => cat._id);
+            baseQuery = { categoryId: { $in: categoryIds } };
+        }
         
         const tasks = await Task.find({
             ...baseQuery,
             dueDate: { $gte: startOfDay, $lt: endOfDay },
             status: { $nin: ['completed', 'given-up'] }
-        }).populate('categoryId', 'name').populate('userId', 'name email');
+        }).populate({
+            path: 'categoryId',
+            select: 'name userId',
+            populate: {
+                path: 'userId',
+                select: 'name email'
+            }
+        });
 
         res.status(200).json(tasks);
     } catch (error) {
@@ -258,9 +337,21 @@ export const getTaskByStatus = async (req, res) => {
             return res.status(400).json({ message: "Invalid status" });
         }
 
+        let baseQuery = {};
         // Users can only see their own tasks, unless they are ADMIN
-        const baseQuery = req.user.role === 'ADMIN' ? {} : { userId: req.user._id };
-        const tasks = await Task.find({ ...baseQuery, status }).populate('categoryId', 'name').populate('userId', 'name email');
+        if (req.user.role !== 'ADMIN') {
+            const userCategories = await Category.find({ userId: req.user._id });
+            const categoryIds = userCategories.map(cat => cat._id);
+            baseQuery = { categoryId: { $in: categoryIds } };
+        }
+        const tasks = await Task.find({ ...baseQuery, status }).populate({
+            path: 'categoryId',
+            select: 'name userId',
+            populate: {
+                path: 'userId',
+                select: 'name email'
+            }
+        });
         
         res.status(200).json(tasks);
     } catch (error) {
@@ -273,9 +364,21 @@ export const getTaskByCategory = async (req, res) => {
     try {
         const { categoryId } = req.params;
         
+        let baseQuery = {};
         // Users can only see their own tasks, unless they are ADMIN
-        const baseQuery = req.user.role === 'ADMIN' ? {} : { userId: req.user._id };
-        const tasks = await Task.find({ ...baseQuery, categoryId }).populate('categoryId', 'name').populate('userId', 'name email');
+        if (req.user.role !== 'ADMIN') {
+            const userCategories = await Category.find({ userId: req.user._id });
+            const categoryIds = userCategories.map(cat => cat._id);
+            baseQuery = { categoryId: { $in: categoryIds } };
+        }
+        const tasks = await Task.find({ ...baseQuery, categoryId }).populate({
+            path: 'categoryId',
+            select: 'name userId',
+            populate: {
+                path: 'userId',
+                select: 'name email'
+            }
+        });
         
         res.status(200).json(tasks);
     } catch (error) {

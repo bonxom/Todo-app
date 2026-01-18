@@ -1,4 +1,4 @@
-import { registerUser, loginUser, getMe, changePassword, updateInfo, logoutUser } from '../controller/authController.js';
+import { registerUser, loginUser, getMe, changePassword, updateInfo, logoutUser, selfDelete } from '../controller/authController.js';
 import { protect, authorize } from '../middleware/auth.js';
 import express from 'express';
 
@@ -10,5 +10,6 @@ router.post('/login', loginUser);
 router.get('/me', protect, getMe);
 router.put('/change-password', protect, changePassword);
 router.put('/update-info', protect, updateInfo);
+router.delete('/self-delete', protect, selfDelete);
 
 export default router;

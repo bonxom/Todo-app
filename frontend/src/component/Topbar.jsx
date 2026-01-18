@@ -14,7 +14,6 @@ const Topbar = () => {
           onClick={() => navigate(-1)}
           className="cursor-pointer"
         />
-        <h2 className="text-lg font-semibold text-gray-800">Dashboard</h2>
       </div>  
       
       <button

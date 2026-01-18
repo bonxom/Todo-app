@@ -109,7 +109,7 @@ const AuthPage = () => {
       {/* LEFT SIDE: LOGIN FORM */}
       <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center transition-all duration-700 absolute md:relative top-0 left-0 h-full bg-white
         ${mode === 'login' 
-          ? 'z-10 opacity-100 translate-x-0 pointer-events-auto' 
+          ? 'z-30 opacity-100 translate-x-0 pointer-events-auto' 
           : 'z-0 opacity-0 pointer-events-none'
         }
         ${mode === 'register' && 'hidden md:flex'}
@@ -121,7 +121,7 @@ const AuthPage = () => {
 
         <LoginForm onSubmit={handleLoginSubmit} isLoading={isLoading} />
         <video 
-          className="fixed -bottom-20 left-1/2 w-96 h-96 z-30 shadow-bottom"
+          className="fixed -bottom-20 left-1/2 w-96 h-96 z-0 shadow-bottom"
           style={{
             transform: 'translate(calc(-50%), calc(50%))'
           }}
@@ -136,7 +136,7 @@ const AuthPage = () => {
       {/* RIGHT SIDE: REGISTER FORM */}
       <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center transition-all duration-700 absolute md:relative top-0 right-0 h-full bg-white
         ${mode === 'register'
-          ? 'z-10 opacity-100 translate-x-0 pointer-events-auto' 
+          ? 'z-30 opacity-100 translate-x-0 pointer-events-auto' 
           : 'z-0 opacity-0 pointer-events-none'
         }
         ${mode === 'login' && 'hidden md:flex'}

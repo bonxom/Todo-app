@@ -85,6 +85,10 @@ export const updateCategory = async (req, res) => {
             return res.status(404).json({ message: "Category not found" });
         }
 
+        if (category.name === 'Uncategorized') {
+            return res.status(400).json({ message: "Cannot update the 'Uncategorized' category" });
+        }
+
         // Check ownership (unless ADMIN)
         if (req.user.role !== 'ADMIN' && category.userId.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "You don't have permission to update this category" });
@@ -117,6 +121,10 @@ export const deleteCategory = async (req, res) => {
         const category = await Category.findById(id);
         if (!category) {
             return res.status(404).json({ message: "Category not found" });
+        }
+
+        if (category.name === 'Uncategorized') {
+            return res.status(400).json({ message: "Cannot delete the 'Uncategorized' category" });
         }
 
         // Check ownership (unless ADMIN)

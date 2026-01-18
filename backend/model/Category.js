@@ -26,16 +26,25 @@ categorySchema.statics.findByUserAndName = function(userId, name) {
     return this.findOne({ userId, name });
 };
 
-categorySchema.pre('remove', async function(next) {
-    try {
-        const Task = mongoose.model('Task');
+categorySchema.pre('findOneAndDelete', async function() {
+    const Task = mongoose.model('Task');
+    const Category = mongoose.model('Category');
+    
+    // Get the category being deleted
+    const categoryToDelete = await this.model.findOne(this.getQuery());
+    
+    if (categoryToDelete) {
+        // Find Uncategorized category of the same user
+        const uncategorizedCategory = await Category.findOne({
+            userId: categoryToDelete.userId,
+            name: 'Uncategorized'
+        });
+        
+        // Update tasks to Uncategorized or null
         await Task.updateMany(
-            { categoryId: this._id },
-            { $set: { categoryId: null } }
+            { categoryId: categoryToDelete._id },
+            { $set: { categoryId: uncategorizedCategory?._id || null } }
         );
-        next();
-    } catch (error) {
-        next(error);
     }
 });
 

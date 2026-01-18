@@ -1,7 +1,7 @@
 import User from '../model/User.js';
 import Category from '../model/Category.js';
 
-const initCategory = ['Work', 'Personal', 'Health'];
+const initCategory = ['Work', 'Personal', 'Health', 'Uncategorized'];
 
 export const initializeAdmin = async () => {
     try {
@@ -29,29 +29,56 @@ export const initializeAdmin = async () => {
     }
 };
 
-export const initializeCategories = async () => {
+// Helper function to create default categories for a specific user
+export const createDefaultCategories = async (userId, userEmail) => {
     try {
-        const users = await User.find();
+        const user = await User.findById(userId);
+        if (!user) {
+            console.error(`   User with ID ${userId} not found.`);
+            return;
+        }
+        if (user.name === 'Admin') {
+            console.log(`   Skipping default categories for admin user ${userEmail}`);
+            return;
+        }
+        for (const categoryName of initCategory) {
+            const existingCategory = await Category.findByUserAndName(userId, categoryName);
+            if (!existingCategory) {
+                const newCategory = await Category.create({
+                    userId: userId,
+                    name: categoryName,
+                    description: `Default ${categoryName} category`
+                });
 
-        for (const user of users) {
-            for (const categoryName of initCategory) {
-                const existingCategory = await Category.findByUserAndName(user._id, categoryName);
-                if (!existingCategory) {
-                    await Category.create({
-                        userId: user._id,
-                        name: categoryName,
-                        description: `Default ${categoryName} category`
-                    });
-                    console.log(`   Created default category '${categoryName}' for user ${user.email}`);
+                user.categories.push(newCategory._id);
+                console.log(`   Created default category '${categoryName}' for user ${userEmail}`);
+            } else {
+                // Category exists but may not be in user.categories array
+                if (!user.categories.includes(existingCategory._id)) {
+                    user.categories.push(existingCategory._id);
                 }
             }
         }
+        // Save once after all categories are added
+        await user.save();
     } catch (error) {
-        console.error('   Error initializing categories:', error.message);
+        console.error(`   Error creating default categories for user ${userEmail}:`, error.message);
     }
 };
 
+// export const initializeCategories = async () => {
+//     try {
+//         const users = await User.find();
+
+//         for (const user of users) {
+//             await createDefaultCategories(user._id, user.email);
+//         }
+//     } catch (error) {
+//         console.error('   Error initializing categories:', error.message);
+//     }
+// };
+
 export const init = async () => {
     await initializeAdmin();
-    await initializeCategories();
+    // await initializeCategories();
 }
