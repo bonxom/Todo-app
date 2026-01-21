@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
+import MarkdownText from './MarkdownText';
 
 const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
   const [inputValue, setInputValue] = useState('');
@@ -49,7 +50,13 @@ const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
                     : 'bg-gray-100 text-gray-800 rounded-bl-sm'
                 }`}
               >
-                <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
+                <p className="text-sm whitespace-pre-wrap break-words">
+                  {message.sender === 'bot' ? (
+                    <MarkdownText text={message.text} />
+                  ) : (
+                    message.text
+                  )}
+                </p>
                 <span className="text-xs opacity-70 mt-1 block">
                   {new Date(message.timestamp).toLocaleTimeString('en-US', {
                     hour: '2-digit',

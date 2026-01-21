@@ -1,6 +1,6 @@
 import TaskItem from './TaskItem';
 
-const TaskList = ({ tasks, onToggleComplete, onEdit, onGiveUp, onDelete }) => {
+const TaskList = ({ tasks, onToggleComplete, onEdit, onStart, onGiveUp, onDelete }) => {
   if (tasks.length === 0) {
     return (
       <div className="bg-white/80 rounded-2xl shadow-sm p-8 text-center text-gray-500">
@@ -17,6 +17,7 @@ const TaskList = ({ tasks, onToggleComplete, onEdit, onGiveUp, onDelete }) => {
           task={task}
           onToggleComplete={onToggleComplete}
           onEdit={onEdit}
+          onStart={onStart}
           onGiveUp={onGiveUp}
           onDelete={onDelete}
         />

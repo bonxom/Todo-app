@@ -193,3 +193,18 @@ export const userService = {
     return response.data;
   },
 };
+
+// ==================== AI Service ====================
+export const aiService = {
+  // Generate tasks based on user requirement
+  generateTasks: async (requirementData) => {
+    const response = await axiosInstance.post('/api/ai/require', requirementData);
+    return response.data;
+  },
+
+  // Get AI chat response
+  getChatResponse: async (userInput) => {
+    const response = await axiosInstance.post('/api/ai/chat', userInput);
+    return response.data;
+  },
+}

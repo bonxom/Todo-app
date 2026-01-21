@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import DayCell from './DayCell';
 
-const CalendarGrid = ({ currentDate, selectedDate, onDateSelect, onMonthChange, tasksByDate }) => {
+const CalendarGrid = ({ currentDate, selectedDate, onDateSelect, onMonthChange, tasksByDate, onTaskUpdated }) => {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
@@ -110,6 +110,7 @@ const CalendarGrid = ({ currentDate, selectedDate, onDateSelect, onMonthChange, 
               isCurrentMonth={isCurrentMonth}
               tasks={tasks}
               onClick={onDateSelect}
+              onTaskUpdated={onTaskUpdated}
             />
           );
         })}

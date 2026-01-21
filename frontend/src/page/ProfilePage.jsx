@@ -127,7 +127,7 @@ const ProfilePage = () => {
       />
 
       <MainLayout>
-        <div className="flex justify-center items-start min-h-full p-6">
+        <div className="flex justify-center items-start min-h-full p-6 cursor-default select-none">
           <div className="w-full max-w-4xl mx-auto bg-gray-100/50 backdrop-blur-sm rounded-xl shadow-lg p-8">
             <ProfileHeader user={user} onAvatarUpdate={fetchUserData} />
             <ProfileStats stats={stats} />

@@ -1,16 +1,62 @@
-const DayCell = ({ day, isToday, isSelected, isCurrentMonth, tasks, onClick }) => {
+import { useState } from 'react';
+import { taskService } from '../../api/apiService';
+
+const DayCell = ({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onTaskUpdated }) => {
+  const [isDragOver, setIsDragOver] = useState(false);
   const taskCount = tasks?.length || 0;
   const hasHighPriority = tasks?.some(task => task.priority === 'High');
   const hasMediumPriority = tasks?.some(task => task.priority === 'Medium');
   const hasOverdue = tasks?.some(task => task.isOverDue);
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const taskId = e.dataTransfer.getData('taskId');
+    if (!taskId) return;
+
+    try {
+      // Set dueDate to the day being dropped on
+      const newDueDate = new Date(day);
+      newDueDate.setHours(23, 59, 59, 999);
+
+      await taskService.updateTask(taskId, {
+        dueDate: newDueDate.toISOString()
+      });
+
+      if (onTaskUpdated) {
+        onTaskUpdated();
+      }
+    } catch (error) {
+      console.error('Failed to update task deadline:', error);
+      alert('Failed to update task deadline.');
+    }
+  };
+
   return (
     <button
       onClick={() => onClick(day)}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       className={`
         min-h-[80px] p-2 border border-gray-200 rounded-lg transition-all cursor-pointer
         ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : isToday ? 'ring-2 ring-purple-500 bg-purple-50' : isSelected ? 'bg-pink-50 text-gray-900' : 'bg-white text-gray-900'}
         ${isSelected ? 'ring-pink-500 border-pink-500' : 'hover:bg-purple-50'}
+        ${isDragOver ? 'ring-2 ring-blue-400 bg-blue-50 scale-105' : ''}
       `}
     >
       <div className="flex flex-col h-full">

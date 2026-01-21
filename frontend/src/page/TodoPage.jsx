@@ -9,8 +9,10 @@ import TaskList from '../feature/Todo/TaskList';
 import ProgressBar from '../feature/Todo/ProgressBar';
 import ChatBubble from '../component/ChatBuble';
 import { taskService, categoryService } from '../api/apiService';
+import { useTaskRefresh } from '../context/TaskRefreshContext';
 
 const TodoPage = () => {
+  const { refreshTrigger } = useTaskRefresh();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -65,7 +67,7 @@ const TodoPage = () => {
     };
 
     fetchTasks();
-  }, []);
+  }, [refreshTrigger]); // Listen to refreshTrigger
 
   // Fetch categories on component mount
   useEffect(() => {
@@ -104,6 +106,16 @@ const TodoPage = () => {
     } catch (error) {
       console.error('Failed to toggle task:', error);
       alert(error.response?.data?.message || 'Failed to update task. Please try again.');
+    }
+  };
+
+  const handleStart = async (taskId) => {
+    try {
+      await taskService.startTask(taskId);
+      await refreshTasks();
+    } catch (error) {
+      console.error('Failed to start task:', error);
+      alert(error.response?.data?.message || 'Failed to start task. Please try again.');
     }
   };
 
@@ -350,6 +362,7 @@ const TodoPage = () => {
             tasks={filteredTasks}
             onToggleComplete={handleToggleComplete}
             onEdit={handleEdit}
+            onStart={handleStart}
             onGiveUp={handleGiveUp}
             onDelete={handleDelete}
           />

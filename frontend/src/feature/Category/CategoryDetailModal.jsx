@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Folder, X } from 'lucide-react';
 import TaskCard from './TaskCard';
 import TaskDetailForm from '../Todo/Form/TaskDetailForm';
@@ -11,6 +12,7 @@ const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [isGiveUpModalOpen, setIsGiveUpModalOpen] = useState(false);
   const [taskToGiveUp, setTaskToGiveUp] = useState(null);
+  const [deletingTaskId, setDeletingTaskId] = useState(null);
 
   const handleEdit = (task) => {
     setSelectedTask(task);
@@ -41,13 +43,22 @@ const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }
 
   const confirmDelete = async () => {
     try {
-      await taskService.deleteTask(taskToDelete);
-      if (onTaskUpdated) onTaskUpdated();
+      setDeletingTaskId(taskToDelete);
       setIsDeleteModalOpen(false);
-      setTaskToDelete(null);
+      
+      await taskService.deleteTask(taskToDelete);
+      
+      // Wait for animation to complete, then refresh
+      setTimeout(() => {
+        setDeletingTaskId(null);
+        setTaskToDelete(null);
+        if (onTaskUpdated) onTaskUpdated();
+      }, 300);
     } catch (error) {
       console.error('Failed to delete task:', error);
       alert('Failed to delete task.');
+      setDeletingTaskId(null);
+      setTaskToDelete(null);
     }
   };
   useEffect(() => {
@@ -66,12 +77,12 @@ const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }
   const completedTasks = tasks.filter(task => task.status === 'completed').length;
   const totalTasks = tasks.length;
 
-  return (
+  const modalContent = (
     <>
     {isEditModalOpen && (
       <div 
-        className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm" 
-        style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm bg-black/30"
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
         onClick={() => {
           setIsEditModalOpen(false);
           setSelectedTask(null);
@@ -110,7 +121,7 @@ const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }
 
     {isGiveUpModalOpen && (
       <div 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60]"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
         style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
       >
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
@@ -155,7 +166,7 @@ const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }
 
     {isDeleteModalOpen && (
       <div 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60]"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
         style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
       >
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
@@ -199,13 +210,12 @@ const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }
     )}
 
     <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-fadeIn flex flex-col"
-        style={{ maxHeight: '85vh' }}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden animate-fadeIn flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Category Header */}
@@ -230,19 +240,27 @@ const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }
         </div>
 
         {/* Tasks List */}
-        <div className="p-6 overflow-y-auto" style={{ maxHeight: '500px' }}>
+        <div className="p-6 overflow-y-auto flex-1">
           {tasks.length > 0 ? (
             <div className="space-y-3">
               {tasks.map((task) => (
-                <TaskCard 
-                  key={task._id || task.id} 
-                  task={task}
-                  showActions={true}
-                  onEdit={handleEdit}
-                  onGiveUp={handleGiveUp}
-                  onDelete={handleDelete}
-                  onTaskUpdated={onTaskUpdated}
-                />
+                <div
+                  key={task._id || task.id}
+                  className={`transition-all duration-300 ${
+                    deletingTaskId === (task._id || task.id)
+                      ? 'opacity-0 scale-95 pointer-events-none'
+                      : 'opacity-100 scale-100'
+                  }`}
+                >
+                  <TaskCard 
+                    task={task}
+                    showActions={true}
+                    onEdit={handleEdit}
+                    onGiveUp={handleGiveUp}
+                    onDelete={handleDelete}
+                    onTaskUpdated={onTaskUpdated}
+                  />
+                </div>
               ))}
             </div>
           ) : (
@@ -257,6 +275,8 @@ const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }
     </div>
     </>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default CategoryDetailModal;

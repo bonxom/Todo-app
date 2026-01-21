@@ -56,12 +56,15 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
     fetchCategories();
   }, []);
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (selectCategoryId) => {
     try {
       const response = await categoryService.getAllCategories();
       const categoriesData = Array.isArray(response) ? response : response.categories;
       if (categoriesData) {
         setCategories(categoriesData);
+        if (selectCategoryId) {
+          setCategoryId(selectCategoryId);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
@@ -69,7 +72,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
   };
 
   useEffect(() => {
-    if (task && categories.length > 0) {
+    if (task && categories.length > 0 && !categoryId) {
       setTitle(task.title || '');
       setCategoryId(task.categoryId?._id || categories[0]?._id || '');
       setPriority(task.priority || 'Medium');
@@ -112,11 +115,12 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-2">
-          Task Title <span className="text-red-500">*</span>
-        </label>
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-2">
+            Task Title <span className="text-red-500">*</span>
+          </label>
         <input
           id="edit-title"
           type="text"
@@ -240,6 +244,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
           {isSubmitting ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
+      </form>
 
       {showAddCategory && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
@@ -250,13 +255,15 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
             <div className="px-6 py-5">
               <AddCategoryForm 
                 onClose={() => setShowAddCategory(false)}
-                onCategoryCreated={fetchCategories}
+                onCategoryCreated={(newCategory) => {
+                  fetchCategories(newCategory?._id || newCategory?.category?._id);
+                }}
               />
             </div>
           </div>
         </div>
       )}
-    </form>
+    </>
   );
 };
 

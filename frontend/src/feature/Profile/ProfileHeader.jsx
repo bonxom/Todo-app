@@ -2,7 +2,7 @@ import AvatarUpload from './AvtUpload';
 
 const ProfileHeader = ({ user, onAvatarUpdate }) => {
   return (
-    <div className="mb-8 text-center">
+    <div className="mb-8 text-center cursor-default select-none">
       <div className="flex justify-center mb-4">
         <div className="relative">
           {user?.avatarUrl ? (

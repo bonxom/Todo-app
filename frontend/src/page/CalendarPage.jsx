@@ -3,14 +3,24 @@ import MainLayout from '../layout/MainLayout';
 import CalendarView from '../feature/Calendar/CalendarView';
 import ChatBubble from '../component/ChatBuble';
 import { taskService } from '../api/apiService';
+import { useTaskRefresh } from '../context/TaskRefreshContext';
 
 const CalendarPage = () => {
+  const { refreshTrigger } = useTaskRefresh();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Initial load
   useEffect(() => {
     fetchTasks();
   }, []);
+
+  // Listen to refresh trigger from AI chat
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      fetchTasks();
+    }
+  }, [refreshTrigger]);
 
   const fetchTasks = async () => {
     try {
@@ -28,11 +38,14 @@ const CalendarPage = () => {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="flex justify-center items-center min-h-full">
-          <div className="text-gray-500">Loading calendar...</div>
-        </div>
-      </MainLayout>
+      <>
+        <MainLayout>
+          <div className="flex justify-center items-center min-h-full">
+            <div className="text-gray-500">Loading calendar...</div>
+          </div>
+        </MainLayout>
+        <ChatBubble key="chat-bubble-stable" />
+      </>
     );
   }
 
@@ -58,7 +71,7 @@ const CalendarPage = () => {
         </div>
       </MainLayout>
 
-      <ChatBubble />
+      <ChatBubble key="chat-bubble-stable" />
     </>
   );
 };

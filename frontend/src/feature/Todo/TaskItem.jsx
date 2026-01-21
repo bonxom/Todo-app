@@ -1,6 +1,8 @@
-import { CircleCheckBig, Frown } from 'lucide-react';
+import { useState } from 'react';
+import { CircleCheckBig, Frown, Play } from 'lucide-react';
 
-const TaskItem = ({ task, onToggleComplete, onEdit, onGiveUp, onDelete }) => {
+const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete }) => {
+  const [isHovered, setIsHovered] = useState(false);
   const priorityColors = {
     high: 'bg-red-100 text-red-800',
     medium: 'bg-yellow-100 text-yellow-800',
@@ -33,19 +35,31 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onGiveUp, onDelete }) => {
     return `${daysLeft} days left`;
   };
 
+  const isPending = task.status === 'pending';
+  const isInProgress = task.status === 'in-progress';
+
   return (
-    <div className="bg-white/80 rounded-2xl shadow-sm p-5 flex items-start gap-4 hover:shadow-md transition-all select-none" style={{ userSelect: 'none' }}>
+    <div 
+      className={`rounded-2xl shadow-sm p-5 flex items-start gap-4 hover:shadow-md transition-all select-none ${
+        isPending ? 'bg-gray-50/80 border-2 border-dashed border-transparent hover:border-gray-300' : 'bg-white/80'
+      }`}
+      style={{ userSelect: 'none' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <input
         type="checkbox"
         checked={task.status === 'completed'}
         onChange={() => onToggleComplete(task._id)}
         className="mt-1.5 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+        disabled={!isInProgress}
       />
       
       <div className="flex-1 min-w-0">
         <h3
           className={`text-[15px] font-medium mb-2.5 ${
-            task.status === 'completed' ? 'line-through text-gray-400' : 'text-gray-900'
+            task.status === 'completed' ? 'line-through text-gray-400' : 
+            isPending ? 'text-gray-500' : 'text-gray-900'
           }`}
         >
           {task.title}
@@ -70,6 +84,16 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onGiveUp, onDelete }) => {
       
       <div className="flex flex-col items-end gap-2">
         <div className="flex items-center gap-1">
+          {isPending && isHovered && (
+            <button
+              onClick={() => onStart(task._id)}
+              className="px-3 py-1.5 text-sm font-medium text-purple-600 border-2 border-dashed border-purple-400 hover:bg-purple-50 rounded-lg transition-all flex items-center gap-1.5"
+              aria-label="Start task"
+            >
+              <Play className="w-4 h-4" />
+              Try
+            </button>
+          )}
           <button
             onClick={() => onEdit(task)}
             className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
@@ -100,11 +124,18 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onGiveUp, onDelete }) => {
             </svg>
           </button>
         </div>
-        {task.dueDate && task.status !== 'completed' && task.status !== 'given-up' && (
-          <span className={`px-2 py-0.5 rounded text-xs font-medium ${getDeadlineColor(getDaysLeft(task.dueDate))}`}>
-            {formatDaysLeft(getDaysLeft(task.dueDate))}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {isPending && (
+            <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-700">
+              Pending
+            </span>
+          )}
+          {task.dueDate && task.status !== 'completed' && task.status !== 'given-up' && (
+            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getDeadlineColor(getDaysLeft(task.dueDate))}`}>
+              {formatDaysLeft(getDaysLeft(task.dueDate))}
+            </span>
+          )}
+        </div>
         {task.status === 'completed' && task.completedAt && (
           <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 flex items-center gap-1.5">
             <CircleCheckBig className="w-3.5 h-3.5" />

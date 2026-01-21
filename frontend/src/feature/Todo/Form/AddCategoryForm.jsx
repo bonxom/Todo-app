@@ -22,10 +22,10 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
         description,
       };
       
-      await categoryService.createCategory(newCategory);
+      const response = await categoryService.createCategory(newCategory);
       
       if (onCategoryCreated) {
-        onCategoryCreated();
+        onCategoryCreated(response);
       }
       
       handleReset();

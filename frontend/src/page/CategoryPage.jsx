@@ -3,18 +3,31 @@ import MainLayout from '../layout/MainLayout';
 import CategoryGrid from '../feature/Category/CategoryGrid';
 import CategoryStats from '../feature/Category/CategoryStats';
 import ChatBubble from '../component/ChatBuble';
+import AddCategoryForm from '../feature/Todo/Form/AddCategoryForm';
 import { categoryService, taskService } from '../api/apiService';
+import { Plus } from 'lucide-react';
+import { useTaskRefresh } from '../context/TaskRefreshContext';
 
 const CategoryPage = () => {
+  const { refreshTrigger } = useTaskRefresh();
   const [categorizedTasks, setCategorizedTasks] = useState({});
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [allTasks, setAllTasks] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
 
+  // Initial load
   useEffect(() => {
     fetchCategoriesAndTasks();
   }, []);
+
+  // Listen to refresh trigger from AI chat
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      fetchCategoriesAndTasks();
+    }
+  }, [refreshTrigger]);
 
   const fetchCategoriesAndTasks = async () => {
     try {
@@ -24,13 +37,17 @@ const CategoryPage = () => {
       const categoriesData = await categoryService.getAllCategories();
       setCategories(categoriesData);
 
-      // Fetch tasks for each category
+      // Fetch tasks for each category and store category metadata
       const tasksByCategory = {};
       let allTasksArray = [];
 
       for (const category of categoriesData) {
         const tasks = await taskService.getTaskByCategory(category._id);
-        tasksByCategory[category.name] = tasks;
+        // Store both tasks and categoryId
+        tasksByCategory[category.name] = {
+          tasks: tasks,
+          categoryId: category._id
+        };
         allTasksArray = [...allTasksArray, ...tasks];
       }
 
@@ -50,10 +67,13 @@ const CategoryPage = () => {
     }
 
     const filtered = {};
-    Object.entries(categorizedTasks).forEach(([categoryName, tasks]) => {
-      const filteredTasks = tasks.filter(task => task.status === selectedStatus);
+    Object.entries(categorizedTasks).forEach(([categoryName, data]) => {
+      const filteredTasks = data.tasks.filter(task => task.status === selectedStatus);
       if (filteredTasks.length > 0) {
-        filtered[categoryName] = filteredTasks;
+        filtered[categoryName] = {
+          tasks: filteredTasks,
+          categoryId: data.categoryId
+        };
       }
     });
     return filtered;
@@ -74,11 +94,14 @@ const CategoryPage = () => {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="flex justify-center items-center min-h-full">
-          <div className="text-gray-500">Loading categories...</div>
-        </div>
-      </MainLayout>
+      <>
+        <MainLayout>
+          <div className="flex justify-center items-center min-h-full">
+            <div className="text-gray-500">Loading categories...</div>
+          </div>
+        </MainLayout>
+        <ChatBubble key="chat-bubble-stable" />
+      </>
     );
   }
 
@@ -150,6 +173,12 @@ const CategoryPage = () => {
               >
                 Given Up
               </button>
+              <button
+                onClick={() => setIsAddCategoryModalOpen(true)}
+                className="px-4 py-2 rounded-xl font-medium text-sm transition-all bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-md flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Category Grid */}
@@ -161,7 +190,24 @@ const CategoryPage = () => {
         </div>
       </MainLayout>
 
-      <ChatBubble />
+      {/* Add Category Modal */}
+      {isAddCategoryModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4">
+              <h2 className="text-xl font-semibold text-white">Add New Category</h2>
+            </div>
+            <div className="p-6">
+              <AddCategoryForm
+                onClose={() => setIsAddCategoryModalOpen(false)}
+                onCategoryCreated={fetchCategoriesAndTasks}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ChatBubble key="chat-bubble-stable" />
     </>
   );
 };

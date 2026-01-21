@@ -17,14 +17,14 @@ const ProfileActions = ({ onEditProfile, onChangePassword, onLogout }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 mx-15">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 mx-15 cursor-default select-none">
       {actions.map((action, index) => {
         const Icon = action.icon;
         return (
             <button
             key={index}
             onClick={action.onClick}
-            className="relative overflow-hidden text-white font-semibold py-4 px-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex items-center justify-center gap-2"
+            className="relative overflow-hidden text-white font-semibold py-4 px-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex items-center justify-center gap-2 cursor-pointer">
             >
             {/* Gradient mặc định */}
             <span className={`absolute inset-0 bg-gradient-to-r ${action.color} transition-opacity duration-500 opacity-100 hover:opacity-0`} />

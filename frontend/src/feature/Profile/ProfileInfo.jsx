@@ -1,6 +1,6 @@
 const ProfileInfo = ({ user }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6 cursor-default select-none">
       <h2 className="text-xl font-semibold mb-4 text-gray-800">Personal Information</h2>
       <div className="space-y-4">
         <div className="flex items-center justify-between py-3 border-b border-gray-100">

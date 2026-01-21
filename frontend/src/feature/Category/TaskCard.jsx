@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { AlarmClock, CircleCheckBig } from 'lucide-react';
+import { AlarmClock, CircleCheckBig, Play } from 'lucide-react';
 import { taskService } from '../../api/apiService';
 
-const TaskCard = ({ task, onClick, showActions, onEdit, onGiveUp, onDelete, onTaskUpdated }) => {
+const TaskCard = ({ task, onClick, showActions, quickActions, onEdit, onGiveUp, onDelete, onTaskUpdated }) => {
   const [isHovering, setIsHovering] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [isCardHovering, setIsCardHovering] = useState(false);
   const priorityColors = {
     High: 'bg-red-100 text-red-700 border-red-200',
     Medium: 'bg-yellow-100 text-yellow-700 border-yellow-200',
@@ -51,6 +52,27 @@ const TaskCard = ({ task, onClick, showActions, onEdit, onGiveUp, onDelete, onTa
     }
   };
 
+  const handleStartTask = async (e) => {
+    e.stopPropagation();
+    
+    try {
+      await taskService.startTask(task._id);
+      if (onTaskUpdated) {
+        onTaskUpdated();
+      }
+    } catch (error) {
+      console.error('Failed to start task:', error);
+      alert('Failed to start task.');
+    }
+  };
+
+  const handleDragStart = (e) => {
+    e.stopPropagation();
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('taskId', task._id);
+    e.dataTransfer.setData('currentCategoryId', task.categoryId?._id || task.categoryId);
+  };
+
   // Determine card background and border based on status and isOverDue
   const getCardStyles = () => {
     if (task.isOverDue) {
@@ -73,12 +95,17 @@ const TaskCard = ({ task, onClick, showActions, onEdit, onGiveUp, onDelete, onTa
 
   const isCompleted = task.status === 'completed';
   const isGivenUp = task.status === 'given-up';
+  const isPending = task.status === 'pending';
 
   return (
     <div 
+      draggable={!isCompleted && !isGivenUp}
+      onDragStart={handleDragStart}
+      onMouseEnter={() => setIsCardHovering(true)}
+      onMouseLeave={() => setIsCardHovering(false)}
       className={`p-3 rounded-lg border-2 transition-all select-none ${getCardStyles()} ${
         isCompleted || isGivenUp ? 'opacity-60' : 'hover:border-purple-400'
-      } ${onClick && !showActions ? 'cursor-pointer' : ''}`}
+      } ${onClick && !showActions ? 'cursor-pointer' : ''} ${!isCompleted && !isGivenUp ? 'cursor-move' : ''}`}
       onClick={!showActions && onClick ? () => onClick(task) : undefined}
       style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
     >
@@ -96,8 +123,57 @@ const TaskCard = ({ task, onClick, showActions, onEdit, onGiveUp, onDelete, onTa
           }`}>
             {task.priority}
           </span>
+          {quickActions && (
+            <div className="flex items-center gap-1">
+              {isPending && isCardHovering && (
+                <button
+                  onClick={handleStartTask}
+                  className="px-2 py-1 text-xs font-medium text-purple-600 border-2 border-dashed border-purple-400 hover:bg-purple-50 rounded-lg transition-all flex items-center gap-1"
+                  aria-label="Start task"
+                >
+                  <Play className="w-3 h-3" />
+                  Try
+                </button>
+              )}
+              {task.status === 'in-progress' && task.dueDate && (
+                <button
+                  onClick={handleFinishTask}
+                  onMouseEnter={() => setIsHovering(true)}
+                  onMouseLeave={() => setIsHovering(false)}
+                  disabled={isFinishing}
+                  className={`p-1.5 rounded-lg transition-all duration-300 relative ${
+                    isFinishing ? 'bg-green-100' : getDeadlineColor(getDaysLeft(task.dueDate))
+                  } ${isFinishing ? 'cursor-default' : 'cursor-pointer hover:scale-110'}`}
+                  aria-label="Finish task"
+                >
+                  {isFinishing || isHovering ? (
+                    <CircleCheckBig 
+                      className={`w-4 h-4 text-green-600 ${
+                        isFinishing || isHovering ? 'animate-pulse' : ''
+                      }`} 
+                      style={{
+                        filter: isFinishing || isHovering ? 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))' : 'none'
+                      }}
+                    />
+                  ) : (
+                    <AlarmClock className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+            </div>
+          )}
           {showActions && (
             <div className="flex items-center gap-1">
+              {isPending && isCardHovering && (
+                <button
+                  onClick={handleStartTask}
+                  className="px-2 py-1 text-xs font-medium text-purple-600 border-2 border-dashed border-purple-400 hover:bg-purple-50 rounded-lg transition-all flex items-center gap-1"
+                  aria-label="Start task"
+                >
+                  <Play className="w-3 h-3" />
+                  Try
+                </button>
+              )}
               {task.status === 'in-progress' && task.dueDate && (
                 <button
                   onClick={handleFinishTask}

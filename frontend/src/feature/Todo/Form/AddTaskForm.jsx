@@ -16,13 +16,17 @@ const AddTaskForm = ({ onClose, onTaskCreated }) => {
     fetchCategories();
   }, []);
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (selectCategoryId) => {
     try {
       const response = await categoryService.getAllCategories();
       const categoriesData = Array.isArray(response) ? response : response.categories;
       if (categoriesData && categoriesData.length > 0) {
         setCategories(categoriesData);
-        setCategoryId(categoriesData[0]?._id || '');
+        if (selectCategoryId) {
+          setCategoryId(selectCategoryId);
+        } else if (!categoryId) {
+          setCategoryId(categoriesData[0]?._id || '');
+        }
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
@@ -186,7 +190,9 @@ const AddTaskForm = ({ onClose, onTaskCreated }) => {
             <div className="px-6 py-5">
               <AddCategoryForm 
                 onClose={() => setShowAddCategory(false)} 
-                onCategoryCreated={fetchCategories}
+                onCategoryCreated={(newCategory) => {
+                  fetchCategories(newCategory?._id || newCategory?.category?._id);
+                }}
               />
             </div>
           </div>

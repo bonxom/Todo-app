@@ -62,6 +62,7 @@ const CalendarView = ({ tasks, onTaskUpdated }) => {
           onDateSelect={handleDateSelect}
           onMonthChange={handleMonthChange}
           tasksByDate={tasksByDate}
+          onTaskUpdated={onTaskUpdated}
         />
       </div>
 
