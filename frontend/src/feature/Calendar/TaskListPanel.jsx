@@ -1,14 +1,27 @@
-import { useState } from 'react';
-import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Calendar as CalendarIcon, ChevronDown, Plus, Sparkles } from 'lucide-react';
 import TaskCard from '../Category/TaskCard';
 import TaskDetailButton from '../Todo/TaskDetailButton';
 import TaskListDetailModal from './TaskListDetailModal';
+import DetailRequestModal from './DetailRequestModal';
+import AddTaskModal from '../Dialog/AddTaskModal';
 
 const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+
+  // Cache today's date to prevent unnecessary re-renders
+  const today = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }, []);
+
+  const isToday = selectedDate && selectedDate.toDateString() === today.toDateString();
 
   const handleTaskClick = (task) => {
     setSelectedTask(task);
@@ -56,13 +69,29 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
 
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <CalendarIcon className="w-6 h-6 text-purple-600" />
-          <h2 className="text-xl font-bold text-gray-900">
-            {selectedDate && selectedDate.toDateString() === new Date().toDateString() 
-              ? 'Today\'s Tasks' 
-              : 'Tasks'}
-          </h2>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <CalendarIcon className="w-6 h-6 text-purple-600" />
+            <h2 className="text-xl font-bold text-gray-900">
+              {isToday ? 'Today\'s Tasks' : 'Tasks'}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsAddTaskModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg shadow-md transition-all text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </button>
+            <button
+              onClick={() => setIsGenerateModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg shadow-md transition-all text-sm font-medium"
+            >
+              <Sparkles className="w-4 h-4" />
+              Generate
+            </button>
+          </div>
         </div>
         {selectedDate && (
           <p className="text-sm text-gray-600">
@@ -124,13 +153,27 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
             <CalendarIcon className="w-16 h-16 mb-3 opacity-50" />
             <p className="text-lg font-medium">No tasks for this day</p>
             <p className="text-sm mt-1">
-              {selectedDate && selectedDate.toDateString() === new Date().toDateString()
-                ? 'You\'re all caught up!' 
-                : 'Select another date to view tasks'}
+              {isToday ? 'You\'re all caught up!' : 'Select another date to view tasks'}
             </p>
           </div>
         )}
       </div>
+
+      {/* Add Task Modal */}
+      <AddTaskModal
+        isOpen={isAddTaskModalOpen}
+        onClose={() => setIsAddTaskModalOpen(false)}
+        onTaskCreated={onTaskUpdated}
+        initialDueDate={selectedDate ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}` : ''}
+      />
+
+      {/* Generate Tasks Modal */}
+      <DetailRequestModal
+        isOpen={isGenerateModalOpen}
+        onClose={() => setIsGenerateModalOpen(false)}
+        selectedDate={selectedDate}
+        onTasksGenerated={onTaskUpdated}
+      />
     </div>
   );
 };

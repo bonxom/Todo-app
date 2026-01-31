@@ -1,14 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import CalendarGrid from './CalendarGrid';
 import TaskListPanel from './TaskListPanel';
 
 const CalendarView = ({ tasks, onTaskUpdated }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [tasksByDate, setTasksByDate] = useState({});
+  const [currentDate, setCurrentDate] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
 
-  // Group tasks by date
-  useEffect(() => {
+  // Group tasks by date using useMemo
+  const tasksByDate = useMemo(() => {
     const grouped = {};
     
     tasks.forEach(task => {
@@ -23,20 +30,22 @@ const CalendarView = ({ tasks, onTaskUpdated }) => {
       grouped[dateKey].push(task);
     });
     
-    setTasksByDate(grouped);
+    return grouped;
   }, [tasks]);
 
   const handleMonthChange = (direction) => {
     if (direction === 0) {
       // Go to today
       const today = new Date();
+      today.setHours(0, 0, 0, 0);
       setCurrentDate(today);
       setSelectedDate(today);
     } else {
-      // Move month
-      const newDate = new Date(currentDate);
-      newDate.setMonth(newDate.getMonth() + direction);
-      setCurrentDate(newDate);
+      // Move month - fix to prevent double jump
+      setCurrentDate(prevDate => {
+        const newDate = new Date(prevDate.getFullYear(), prevDate.getMonth() + direction, 1);
+        return newDate;
+      });
     }
   };
 
@@ -44,13 +53,12 @@ const CalendarView = ({ tasks, onTaskUpdated }) => {
     setSelectedDate(date);
   };
 
-  // Get tasks for selected date
-  const getSelectedDateKey = () => {
-    if (!selectedDate) return '';
-    return `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-  };
-
-  const selectedTasks = tasksByDate[getSelectedDateKey()] || [];
+  // Get tasks for selected date using useMemo
+  const selectedTasks = useMemo(() => {
+    if (!selectedDate) return [];
+    const dateKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+    return tasksByDate[dateKey] || [];
+  }, [selectedDate, tasksByDate]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-6 h-full">

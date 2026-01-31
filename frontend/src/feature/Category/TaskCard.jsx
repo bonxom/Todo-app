@@ -99,13 +99,13 @@ const TaskCard = ({ task, onClick, showActions, quickActions, onEdit, onGiveUp, 
 
   return (
     <div 
-      draggable={!isCompleted && !isGivenUp}
+      draggable={true}
       onDragStart={handleDragStart}
       onMouseEnter={() => setIsCardHovering(true)}
       onMouseLeave={() => setIsCardHovering(false)}
-      className={`p-3 rounded-lg border-2 transition-all select-none ${getCardStyles()} ${
+      className={`p-3 rounded-lg border-2 transition-all select-none cursor-move ${getCardStyles()} ${
         isCompleted || isGivenUp ? 'opacity-60' : 'hover:border-purple-400'
-      } ${onClick && !showActions ? 'cursor-pointer' : ''} ${!isCompleted && !isGivenUp ? 'cursor-move' : ''}`}
+      } ${onClick && !showActions ? 'cursor-pointer' : ''}`}
       onClick={!showActions && onClick ? () => onClick(task) : undefined}
       style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
     >

@@ -9,6 +9,7 @@ const CalendarPage = () => {
   const { refreshTrigger } = useTaskRefresh();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Initial load
   useEffect(() => {
@@ -33,10 +34,11 @@ const CalendarPage = () => {
       console.error('Error fetching tasks:', error);
     } finally {
       setIsLoading(false);
+      setIsInitialLoad(false);
     }
   };
 
-  if (isLoading) {
+  if (isInitialLoad && isLoading) {
     return (
       <>
         <MainLayout>

@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import AddCategoryForm from './AddCategoryForm';
 import { taskService, categoryService } from '../../../api/apiService';
 
-const AddTaskForm = ({ onClose, onTaskCreated }) => {
+const AddTaskForm = ({ onClose, onTaskCreated, initialDueDate = '' }) => {
   const [title, setTitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [priority, setPriority] = useState('Medium');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(initialDueDate);
   const [description, setDescription] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

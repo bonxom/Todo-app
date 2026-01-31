@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { taskService } from '../../api/apiService';
 
-const DayCell = ({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onTaskUpdated }) => {
+const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onTaskUpdated }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const taskCount = tasks?.length || 0;
   const hasHighPriority = tasks?.some(task => task.priority === 'High');
@@ -98,6 +98,18 @@ const DayCell = ({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onT
       </div>
     </button>
   );
-};
+}, (prevProps, nextProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.day.getTime() === nextProps.day.getTime() &&
+    prevProps.isToday === nextProps.isToday &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isCurrentMonth === nextProps.isCurrentMonth &&
+    prevProps.tasks?.length === nextProps.tasks?.length &&
+    JSON.stringify(prevProps.tasks) === JSON.stringify(nextProps.tasks)
+  );
+});
+
+DayCell.displayName = 'DayCell';
 
 export default DayCell;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import MainLayout from '../layout/MainLayout';
 import CategoryGrid from '../feature/Category/CategoryGrid';
 import CategoryStats from '../feature/Category/CategoryStats';
@@ -13,6 +13,7 @@ const CategoryPage = () => {
   const [categorizedTasks, setCategorizedTasks] = useState({});
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [allTasks, setAllTasks] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
@@ -57,11 +58,12 @@ const CategoryPage = () => {
       console.error('Error fetching categories and tasks:', error);
     } finally {
       setIsLoading(false);
+      setIsInitialLoad(false);
     }
   };
 
-  // Filter tasks by status
-  const getFilteredTasksByCategory = () => {
+  // Filter tasks by status using useMemo
+  const filteredCategorizedTasks = useMemo(() => {
     if (selectedStatus === 'all') {
       return categorizedTasks;
     }
@@ -77,22 +79,23 @@ const CategoryPage = () => {
       }
     });
     return filtered;
-  };
+  }, [categorizedTasks, selectedStatus]);
 
-  // Calculate stats (based on filtered tasks)
-  const filteredCategorizedTasks = getFilteredTasksByCategory();
-  const filteredAllTasks = selectedStatus === 'all' 
-    ? allTasks 
-    : allTasks.filter(task => task.status === selectedStatus);
+  const filteredAllTasks = useMemo(() => {
+    return selectedStatus === 'all' 
+      ? allTasks 
+      : allTasks.filter(task => task.status === selectedStatus);
+  }, [allTasks, selectedStatus]);
 
-  const stats = {
+  // Calculate stats using useMemo
+  const stats = useMemo(() => ({
     totalCategories: Object.keys(filteredCategorizedTasks).length,
     totalTasks: filteredAllTasks.length,
     completedTasks: filteredAllTasks.filter(task => task.status === 'completed').length,
     pendingTasks: filteredAllTasks.filter(task => task.status === 'pending').length,
-  };
+  }), [filteredCategorizedTasks, filteredAllTasks]);
 
-  if (isLoading) {
+  if (isInitialLoad && isLoading) {
     return (
       <>
         <MainLayout>
@@ -175,7 +178,7 @@ const CategoryPage = () => {
               </button>
               <button
                 onClick={() => setIsAddCategoryModalOpen(true)}
-                className="px-4 py-2 rounded-xl font-medium text-sm transition-all bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-md flex items-center gap-2"
+                className="px-4 py-2 rounded-xl font-medium text-sm transition-all bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md flex items-center gap-2"
               >
                 <Plus className="w-5 h-5" />
               </button>
@@ -194,7 +197,7 @@ const CategoryPage = () => {
       {isAddCategoryModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4">
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4">
               <h2 className="text-xl font-semibold text-white">Add New Category</h2>
             </div>
             <div className="p-6">

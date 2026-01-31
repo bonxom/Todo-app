@@ -1,13 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import MainLayout from '../layout/MainLayout';
 import ActionButtons from '../feature/Todo/GenTaskButton';
 import AddTaskButton from '../feature/Todo/AddTaskButton';
 import TaskDetailButton from '../feature/Todo/TaskDetailButton';
 import SearchBar from '../feature/Todo/SearchBar';
-import FilterBar from '../feature/Todo/FilterBar';
+import TaskSelector from '../feature/Todo/TaskSelector';
 import TaskList from '../feature/Todo/TaskList';
 import ProgressBar from '../feature/Todo/ProgressBar';
 import ChatBubble from '../component/ChatBuble';
+import AddCategoryForm from '../feature/Todo/Form/AddCategoryForm';
+import GiveUpDialog from '../feature/Dialog/GiveUpDialog';
+import NotInProgressDialog from '../feature/Dialog/NotInProgressDialog';
+import DeleteDialog from '../feature/Dialog/DeleteDialog';
 import { taskService, categoryService } from '../api/apiService';
 import { useTaskRefresh } from '../context/TaskRefreshContext';
 
@@ -24,9 +28,11 @@ const TodoPage = () => {
   const [isNotInProgressModalOpen, setIsNotInProgressModalOpen] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState(['pending', 'in-progress', 'completed', 'given-up']);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [categories, setCategories] = useState([]);
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
 
   // Lock body scroll when any modal is open
   useEffect(() => {
@@ -63,6 +69,7 @@ const TodoPage = () => {
         console.error('Failed to fetch tasks:', error);
       } finally {
         setIsLoading(false);
+        setIsInitialLoad(false);
       }
     };
 
@@ -158,14 +165,21 @@ const TodoPage = () => {
     }
   };
 
-  const filteredTasks = tasks.filter((task) => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = selectedStatus === 'all' || task.status === selectedStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = selectedStatus.includes(task.status);
+      return matchesSearch && matchesStatus;
+    });
+  }, [tasks, searchTerm, selectedStatus]);
 
-  const completedCount = tasks.filter((task) => task.status === 'completed').length;
-  const totalCount = tasks.filter((task) => task.status === 'in-progress' || task.status === 'completed').length;
+  const completedCount = useMemo(() => {
+    return tasks.filter((task) => task.status === 'completed').length;
+  }, [tasks]);
+
+  const totalCount = useMemo(() => {
+    return tasks.filter((task) => task.status === 'in-progress' || task.status === 'completed').length;
+  }, [tasks]);
 
   const refreshTasks = async () => {
     try {
@@ -179,6 +193,19 @@ const TodoPage = () => {
       console.error('Failed to refresh tasks:', error);
     }
   };
+
+  if (isInitialLoad && isLoading) {
+    return (
+      <>
+        <MainLayout>
+          <div className="flex justify-center items-center min-h-full">
+            <div className="text-gray-500">Loading tasks...</div>
+          </div>
+        </MainLayout>
+        <ChatBubble key="chat-bubble-stable" />
+      </>
+    );
+  }
 
   return (
     <>
@@ -198,133 +225,28 @@ const TodoPage = () => {
       onTaskUpdated={refreshTasks}
     />
 
-    {/* Give Up Confirmation Modal */}
-    {isGiveUpModalOpen && (
-      <div 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
-        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-      >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
-              <h2 className="text-xl font-semibold text-white">Give Up Task</h2>
-            </div>
-            <div className="px-6 py-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-gray-900 font-medium mb-1">Are you sure you want to give up this task?</p>
-                  <p className="text-sm text-gray-500">You are choosing not to continue working on this task.</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsGiveUpModalOpen(false);
-                    setTaskToGiveUp(null);
-                  }}
-                  className="flex-1 h-11 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmGiveUp}
-                  className="flex-1 h-11 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium rounded-xl shadow-md transition-all"
-                >
-                  Give Up
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    <GiveUpDialog
+      isOpen={isGiveUpModalOpen}
+      onClose={() => {
+        setIsGiveUpModalOpen(false);
+        setTaskToGiveUp(null);
+      }}
+      onConfirm={confirmGiveUp}
+    />
 
-      {/* Not In Progress Warning Modal */}
-      {isNotInProgressModalOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-        >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-              <h2 className="text-xl font-semibold text-white">Task Not In Progress</h2>
-            </div>
-            <div className="px-6 py-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-gray-900 font-medium mb-1">You are not working on this task</p>
-                  <p className="text-sm text-gray-500">This task must be in progress before you can mark it as completed.</p>
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsNotInProgressModalOpen(false)}
-                  className="px-6 h-11 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-xl shadow-md transition-all"
-                >
-                  Got it
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    <NotInProgressDialog
+      isOpen={isNotInProgressModalOpen}
+      onClose={() => setIsNotInProgressModalOpen(false)}
+    />
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-        >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
-              <h2 className="text-xl font-semibold text-white">Delete Task</h2>
-            </div>
-            <div className="px-6 py-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-gray-900 font-medium mb-1">Are you sure you want to delete this task?</p>
-                  <p className="text-sm text-gray-500">This action cannot be undone.</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsDeleteModalOpen(false);
-                    setTaskToDelete(null);
-                  }}
-                  className="flex-1 h-11 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmDelete}
-                  className="flex-1 h-11 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl shadow-md transition-all"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    <DeleteDialog
+      isOpen={isDeleteModalOpen}
+      onClose={() => {
+        setIsDeleteModalOpen(false);
+        setTaskToDelete(null);
+      }}
+      onConfirm={confirmDelete}
+    />
       
       <MainLayout>
       <div className="flex justify-center items-start min-h-full p-6">
@@ -343,19 +265,17 @@ const TodoPage = () => {
 
           <ActionButtons 
             onAddTask={() => setIsModalOpen(true)} 
-            onAutoGenerate={() => console.log('Generate tasks')}
+            onAddCategory={() => setIsAddCategoryModalOpen(true)}
           />
 
-          <div className="flex flex-col sm:flex-row gap-4 my-6">
-            <div className="flex-1">
+          <div className="flex flex-col gap-6 my-6">
+            <div>
               <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
             </div>
-            <div className="sm:w-auto">
-              <FilterBar
-                selectedStatus={selectedStatus}
-                onStatusChange={setSelectedStatus}
-              />
-            </div>
+            <TaskSelector 
+              selectedStatus={selectedStatus}
+              onStatusChange={setSelectedStatus}
+            />
           </div>
 
           <TaskList
@@ -374,6 +294,32 @@ const TodoPage = () => {
       </div>
     </MainLayout>
     
+    {/* Add Category Modal */}
+    {isAddCategoryModalOpen && (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4">
+            <h2 className="text-xl font-semibold text-white">Add New Category</h2>
+          </div>
+          <div className="p-6">
+            <AddCategoryForm
+              onClose={() => setIsAddCategoryModalOpen(false)}
+              onCategoryCreated={() => {
+                setIsAddCategoryModalOpen(false);
+                // Refresh categories list
+                categoryService.getAllCategories().then(response => {
+                  const categoriesData = Array.isArray(response) ? response : response.categories;
+                  if (categoriesData) {
+                    setCategories(categoriesData.map(cat => cat.name));
+                  }
+                });
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    )}
+
     <ChatBubble />
   </>
   );

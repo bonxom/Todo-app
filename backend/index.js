@@ -9,6 +9,7 @@ import categoryRouter from "./route/categoryRoute.js";
 import taskRouter from "./route/taskRoute.js";
 import authRouter from "./route/authRoute.js";
 import aiRouter from "./route/aiRoutes.js";
+import statRouter from "./route/statRoute.js";
 import { init } from "./config/initialize.js";
 
 const PORT = process.env.PORT || 3001;
@@ -36,6 +37,7 @@ app.use('/api/users', userRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/tasks', taskRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/stats', statRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://${HOST}:${PORT}`);

@@ -1,5 +1,7 @@
 import User from '../model/User.js';
 import Category from '../model/Category.js';
+import Stat from '../model/Stat.js';
+import Task from '../model/Task.js';
 
 const initCategory = ['Work', 'Personal', 'Health', 'Uncategorized'];
 
@@ -78,7 +80,136 @@ export const createDefaultCategories = async (userId, userEmail) => {
 //     }
 // };
 
+export const initializeStats = async () => {
+    try {
+        console.log('*** Initializing stats for all users ***');
+        const users = await User.find({ role: { $ne: 'ADMIN' } }); // Skip admin
+
+        for (const user of users) {
+            await updateStat(user._id);
+        }
+        console.log('*** Stats initialization completed ***');
+    } catch (error) {
+        console.error('   Error initializing stats:', error.message);
+    }
+};
+
+export const updateStat = async (userId) => {
+    try {
+        let stats = await Stat.findOne({ userId });
+
+        if (!stats) {
+            stats = new Stat({ userId });
+        }
+        
+        // Get all categories of this user
+        const userCategories = await Category.find({ userId });
+        const categoryIds = userCategories.map(cat => cat._id);
+        
+        // Get all tasks belonging to user's categories
+        const allTasks = await Task.find({ categoryId: { $in: categoryIds } });
+        
+        // Reset overall stats
+        stats.totalTasks = allTasks.length;
+        stats.pendingTasks = allTasks.filter(t => t.status === 'pending').length;
+        stats.inProgressTasks = allTasks.filter(t => t.status === 'in-progress').length;
+        stats.completedTasks = allTasks.filter(t => t.status === 'completed').length;
+        stats.givenUpTasks = allTasks.filter(t => t.status === 'given-up').length;
+        
+        // Reset and rebuild dailyStats
+        stats.dailyStats = [];// Cập nhật stats cho tất cả users khi khởi động
+        
+        // Group completed tasks by date
+        const completedTasks = allTasks.filter(t => t.status === 'completed' && t.completedAt);
+        const givenUpTasks = allTasks.filter(t => t.status === 'given-up' && t.updatedAt);
+        
+        // Create a map to store daily stats
+        const dailyStatsMap = new Map();
+        
+        // Process completed tasks
+        for (const task of completedTasks) {
+            const dateStr = task.completedAt.toISOString().split('T')[0];
+            
+            if (!dailyStatsMap.has(dateStr)) {
+                dailyStatsMap.set(dateStr, {
+                    date: new Date(dateStr),
+                    completedTasks: 0,
+                    completedOfEachCategory: [],
+                    givenUpTasks: 0,
+                    givenUpOfEachCategory: []
+                });
+            }
+            
+            const dailyStat = dailyStatsMap.get(dateStr);
+            dailyStat.completedTasks += 1;
+            
+            // Update category-specific stats
+            const category = userCategories.find(c => c._id.toString() === task.categoryId.toString());
+            if (category) {
+                let categoryStat = dailyStat.completedOfEachCategory.find(
+                    cs => cs.categoryId.toString() === category._id.toString()
+                );
+                
+                if (categoryStat) {
+                    categoryStat.count += 1;
+                } else {
+                    dailyStat.completedOfEachCategory.push({
+                        categoryId: category._id,
+                        categoryName: category.name,
+                        count: 1
+                    });
+                }
+            }
+        }
+        
+        // Process given-up tasks
+        for (const task of givenUpTasks) {
+            const dateStr = task.updatedAt.toISOString().split('T')[0];
+            
+            if (!dailyStatsMap.has(dateStr)) {
+                dailyStatsMap.set(dateStr, {
+                    date: new Date(dateStr),
+                    completedTasks: 0,
+                    completedOfEachCategory: [],
+                    givenUpTasks: 0,
+                    givenUpOfEachCategory: []
+                });
+            }
+            
+            const dailyStat = dailyStatsMap.get(dateStr);
+            dailyStat.givenUpTasks += 1;
+            
+            // Update category-specific stats
+            const category = userCategories.find(c => c._id.toString() === task.categoryId.toString());
+            if (category) {
+                let categoryStat = dailyStat.givenUpOfEachCategory.find(
+                    cs => cs.categoryId.toString() === category._id.toString()
+                );
+                
+                if (categoryStat) {
+                    categoryStat.count += 1;
+                } else {
+                    dailyStat.givenUpOfEachCategory.push({
+                        categoryId: category._id,
+                        categoryName: category.name,
+                        count: 1
+                    });
+                }
+            }
+        }
+        
+        // Convert map to array and sort by date
+        stats.dailyStats = Array.from(dailyStatsMap.values()).sort((a, b) => a.date - b.date);
+        
+        await stats.save();
+        console.log(`   Stats updated for user ${userId}: ${stats.totalTasks} total tasks`);
+    } catch (error) {
+        console.error("Error updating stats:", error);
+    }
+}
+
 export const init = async () => {
     await initializeAdmin();
     // await initializeCategories();
+    // await initializeStats(); 
 }

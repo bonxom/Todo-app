@@ -50,13 +50,17 @@ const SmallChat = ({ onClose, onMinimize }) => {
         // Chat mode - normal conversation
         const response = await aiService.getChatResponse({ userInput: text });
         
-        const botResponse = {
-          id: (Date.now() + 1).toString(),
-          sender: 'bot',
-          text: response.data || 'Sorry bro, I can not reply now :Đ.',
-          timestamp: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, botResponse]);
+        if (response.data) {
+          const botResponse = {
+            id: (Date.now() + 1).toString(),
+            sender: 'bot',
+            text: response.data,
+            timestamp: new Date().toISOString(),
+          };
+          setMessages((prev) => [...prev, botResponse]);
+        } else {
+          throw new Error('No response from AI');
+        }
       } else {
         // Task Assistant mode - generate tasks
         const response = await aiService.generateTasks({ userRequirement: text });

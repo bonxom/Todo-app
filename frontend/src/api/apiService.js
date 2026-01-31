@@ -207,4 +207,12 @@ export const aiService = {
     const response = await axiosInstance.post('/api/ai/chat', userInput);
     return response.data;
   },
-}
+};
+// ===================== Stat ===========================
+export const statService = {
+  // Get user stats
+  getUserStats: async () => {
+    const response = await axiosInstance.get('/api/stats/');
+    return response.data;
+  } 
+};

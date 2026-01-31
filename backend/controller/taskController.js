@@ -1,5 +1,6 @@
 import Task from '../model/Task.js';
 import Category from '../model/Category.js';
+import { addCompletedTasks, addGivenUpTasks, addStartTask, addInProgressTask } from './statController.js';
 
 export const createTask = async (req, res) => {
     try {
@@ -38,12 +39,15 @@ export const createTask = async (req, res) => {
             // userId,
             title,
             description,
-            status,
+            status: 'in-progress', 
             priority,
             categoryId: finalCategoryId,
             startDate,
             dueDate
         });
+
+        // Update stats: totalTasks +1, inProgressTasks +1
+        await addInProgressTask(userId);
 
         res.status(201).json({ message: "Task created successfully", task });
     } catch (error) {
@@ -206,6 +210,11 @@ export const finishTask = async (req, res) => {
 
         await task.save();
 
+        const categoryName = (await Category.findById(task.categoryId._id)).name;
+        
+        // Update stats: completedTasks +1, dailyStats, inProgressTasks -1
+        await addCompletedTasks(req.user._id, task.categoryId._id, categoryName);
+
         res.status(200).json({ message: "Task marked as completed", task });
     } catch (error) {
         console.error('Error finishing task:', error.message);   
@@ -234,6 +243,9 @@ export const startTask = async (req, res) => {
         task.status = 'in-progress';
         await task.save();
 
+        // Update stats: pendingTasks -1, inProgressTasks +1
+        await addStartTask(req.user._id);
+
         res.status(200).json({ message: "Task started successfully", task });
     } catch (error) {
         console.error('Error starting task:', error.message);   
@@ -261,6 +273,11 @@ export const giveUpTask = async (req, res) => {
 
         task.status = 'given-up';
         await task.save();
+
+        const categoryName = (await Category.findById(task.categoryId._id)).name;
+        
+        // Update stats: givenUpTasks +1, dailyStats, inProgressTasks -1
+        await addGivenUpTasks(req.user._id, task.categoryId._id, categoryName);
 
         res.status(200).json({ message: "Task marked as given-up", task });
     } catch (error) {

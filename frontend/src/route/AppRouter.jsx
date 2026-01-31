@@ -5,6 +5,7 @@ import CategoryPage from '../page/CategoryPage';
 import CalendarPage from '../page/CalendarPage';
 import AuthPage from '../page/AuthPage';
 import LandingPage from '../page/LandingPage';
+import StatisticsPage from '../page/StatisticsPage';
 
 const AppRouter = () => {
   // Check if user is authenticated
@@ -31,6 +32,7 @@ const AppRouter = () => {
         <Route path="/dashboard" element={<ProtectedRoute><TodoPage /></ProtectedRoute>} />
         <Route path="/categories" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
+        <Route path="/statistics" element={<ProtectedRoute><StatisticsPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>

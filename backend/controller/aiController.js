@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import Category from "../model/Category.js";
 import Task from "../model/Task.js";
+import { addPendingTask } from "./statController.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import dotenv from "dotenv";
@@ -115,6 +116,9 @@ Create 3 practical, actionable tasks with:
 
             const savedTask = await newTask.save();
             savedTasks.push(savedTask);
+            
+            // Update stats: totalTasks +1, pendingTasks +1 (AI gen task có status pending)
+            await addPendingTask(userId);
         }
 
         res.status(201).json({

@@ -4,6 +4,7 @@ import { Folder, ChevronDown, X } from 'lucide-react';
 import TaskCard from './TaskCard';
 import CategoryDetailModal from './CategoryDetailModal';
 import TaskDetailButton from '../Todo/TaskDetailButton';
+import DeleteCategoryDialog from '../Dialog/DeleteCategoryDialog';
 import { categoryService, taskService } from '../../api/apiService';
 
 const CategoryCard = ({ category, tasks, onTaskUpdated, categoryId }) => {
@@ -168,38 +169,12 @@ const CategoryCard = ({ category, tasks, onTaskUpdated, categoryId }) => {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      {isDeleteDialogOpen && createPortal(
-        <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-        >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
-              <h2 className="text-xl font-semibold text-white">Delete Category</h2>
-            </div>
-            <div className="px-6 py-6">
-              <p className="text-gray-700 mb-6">
-                Are you sure you want to delete the category <span className="font-semibold">"{category}"</span>? This action cannot be undone.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setIsDeleteDialogOpen(false)}
-                  className="flex-1 h-11 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  className="flex-1 h-11 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl shadow-md transition-all"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      <DeleteCategoryDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        categoryName={category}
+      />
 
     </>
   );
