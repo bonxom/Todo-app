@@ -50,7 +50,8 @@ const SmallChat = ({ onClose, onMinimize }) => {
         // Chat mode - normal conversation
         const response = await aiService.getChatResponse({ userInput: text });
         
-        if (response.data) {
+        // Check if response exists and has data
+        if (response && response.data && typeof response.data === 'string' && response.data.trim()) {
           const botResponse = {
             id: (Date.now() + 1).toString(),
             sender: 'bot',
@@ -59,14 +60,25 @@ const SmallChat = ({ onClose, onMinimize }) => {
           };
           setMessages((prev) => [...prev, botResponse]);
         } else {
-          throw new Error('No response from AI');
+          // If no valid data, show a specific error message
+          const errorResponse = {
+            id: (Date.now() + 1).toString(),
+            sender: 'bot',
+            text: 'I received your message but couldn\'t generate a proper response. Please try rephrasing your question.',
+            timestamp: new Date().toISOString(),
+          };
+          setMessages((prev) => [...prev, errorResponse]);
         }
       } else {
         // Task Assistant mode - generate tasks
         const response = await aiService.generateTasks({ userRequirement: text });
         
-        if (response.success && response.data) {
-          const tasksText = `Great! I've created **3 tasks** for you:\n\n${response.data.map((task, index) => 
+        console.log('AI generateTasks response:', response);
+        
+        // Validate response structure before processing
+        // Response from apiService already contains the full backend response
+        if (response && response.success === true && Array.isArray(response.data) && response.data.length > 0) {
+          const tasksText = `Great! I've created **${response.data.length} task${response.data.length > 1 ? 's' : ''}** for you:\n\n${response.data.map((task, index) => 
             `**${index + 1}. ${task.title}**\n${task.description || ''}\nPriority: ${task.priority || 'Medium'}${task.dueDate ? `\nDue: ${new Date(task.dueDate).toLocaleDateString()}` : ''}`
           ).join('\n\n')}\n\nCheck your todo list to see them!`;
           
@@ -81,10 +93,16 @@ const SmallChat = ({ onClose, onMinimize }) => {
           // Trigger refresh on all pages
           triggerRefresh();
         } else {
+          // More specific error message for task generation
+          console.log('Task generation failed. Response:', response);
+          const errorMessage = response && response.message 
+            ? response.message 
+            : 'Sorry, I couldn\'t generate tasks from your description. Please try to be more specific about what you want to accomplish.';
+          
           const errorResponse = {
             id: (Date.now() + 1).toString(),
             sender: 'bot',
-            text: 'Sorry, I couldn\'t generate tasks. Please try again with a different description.',
+            text: errorMessage,
             timestamp: new Date().toISOString(),
           };
           setMessages((prev) => [...prev, errorResponse]);
@@ -92,10 +110,30 @@ const SmallChat = ({ onClose, onMinimize }) => {
       }
     } catch (error) {
       console.error('Error getting AI response:', error);
+      
+      // Provide more helpful error messages based on error type
+      let errorMessage = 'Sorry, something went wrong. Please try again.';
+      
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        errorMessage = 'The request took too long. Please try again with a shorter message.';
+      } else if (error.response) {
+        // Server responded with error
+        if (error.response.status === 500) {
+          errorMessage = 'The AI service is having issues. Please try again in a moment.';
+        } else if (error.response.status === 401) {
+          errorMessage = 'Authentication error. Please log in again.';
+        } else if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.request) {
+        // Request made but no response
+        errorMessage = 'Cannot connect to the AI service. Please check your internet connection.';
+      }
+      
       const errorResponse = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
-        text: 'Sorry bro, I don\'t get it. Please try again.',
+        text: errorMessage,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorResponse]);

@@ -2,18 +2,23 @@ import axios from 'axios';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_SERVER_URL,
-  timeout: 10000,
+  timeout: 30000, // Increased to 30 seconds for general requests
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor - add token to requests
+// Request interceptor - add token to requests and adjust timeout for AI endpoints
 axiosInstance.interceptors.request.use(
   (config) => {
     console.log('Request:', config.method?.toUpperCase(), config.url);
     console.log('Request data:', config.data);
     console.log('Base URL:', config.baseURL);
+    
+    // Increase timeout for AI endpoints (they need more time)
+    if (config.url?.includes('/api/ai/')) {
+      config.timeout = 60000; // 60 seconds for AI requests
+    }
     
     const token = localStorage.getItem('token');
     if (token) {
