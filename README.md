@@ -90,6 +90,15 @@ TodoApp is a feature-rich personal task management system designed to help users
 - **Axios**: HTTP client
 - **Chart.js**: Data visualization
 
+### DevOps
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![Vercel](https://img.shields.io/badge/vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Postman](https://img.shields.io/badge/postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
+
+- **Docker**: Containerization and local development
+- **Vercel**: Frontend deployment and hosting
+- **Postman**: API testing and documentation
+
 ---
 
 ## 📁 Project Structure
@@ -135,6 +144,38 @@ TodoApp/
 - Node.js (v14 or higher)
 - MongoDB (local or Atlas)
 - Google Gemini API key
+
+### Run with Docker (Fast)
+
+1. **Create backend env file**
+```bash
+cd backend
+cp .env.example .env
+# Or create .env manually if you do not have .env.example
+```
+
+Example `.env`:
+```env
+PORT=4000
+HOST=0.0.0.0
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+API_KEY=your_google_gemini_api_key
+```
+
+2. **Run with Docker Compose (build + up)**
+```bash
+cd ..
+docker compose up --build
+```
+
+3. **Access the app**
+- `http://localhost:3636`
+
+Stop containers:
+```bash
+docker compose down
+```
 
 ### Installation
 
@@ -244,4 +285,4 @@ This project is licensed under the ISC License.
 
 ---
 
-**Built with ❤️ using the MERN Stack**
+**Built with HMD deep try**
