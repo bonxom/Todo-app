@@ -1,4 +1,13 @@
 services:
+  mongodb:
+    image: mongodb/mongodb-community-server:8.0-ubuntu2204
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "1818:27017"   # để vẫn truy cập từ máy host qua localhost:1818 (tuỳ chọn)
+    volumes:
+      - mongo_data:/data/db
+
   frontend:
     build:
       context: ./frontend
@@ -12,3 +21,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
+
+volumes:
+  mongo_data:
