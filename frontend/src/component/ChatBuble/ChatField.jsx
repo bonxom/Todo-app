@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import MarkdownText from './MarkdownText';
+import { formatDateTime } from '../../utils/dateTime';
 
 const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
   const [inputValue, setInputValue] = useState('');
@@ -58,10 +59,7 @@ const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
                   )}
                 </p>
                 <span className="text-xs opacity-70 mt-1 block">
-                  {new Date(message.timestamp).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatDateTime(message.timestamp)}
                 </span>
               </div>
             </div>

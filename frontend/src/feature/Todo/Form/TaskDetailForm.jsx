@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import AddCategoryForm from './AddCategoryForm';
 import AddProjectForm from './AddProjectForm';
 import { taskService, categoryService, projectService } from '../../../api/apiService';
+import { toDateTimeLocalValue } from '../../../utils/dateTime';
 
 const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
   const [title, setTitle] = useState('');
@@ -55,15 +56,6 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
     }
   };
 
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const fetchCategories = useCallback(async (selectCategoryId) => {
     try {
       const response = await categoryService.getAllCategories();
@@ -105,8 +97,8 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
     setCategoryId(taskCategoryId || fallbackCategoryId);
     setProjectId(taskProjectId);
     setPriority(taskPriority);
-    setStartDate(formatDateForInput(taskStartDate));
-    setDueDate(formatDateForInput(taskDueDate));
+    setStartDate(toDateTimeLocalValue(taskStartDate));
+    setDueDate(toDateTimeLocalValue(taskDueDate));
     setDescription(taskDescription);
   }, [
     fallbackCategoryId,
@@ -259,9 +251,13 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
           </label>
           <input
             id="edit-startDate"
-            type="date"
+            type="text"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
+            inputMode="numeric"
+            placeholder="yyyy/mm/dd hh:mm"
+            pattern="\d{4}/\d{2}/\d{2} \d{2}:\d{2}"
+            title="Use yyyy/mm/dd hh:mm, for example 2026/06/13 00:00"
             className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
           />
         </div>
@@ -272,9 +268,13 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
           </label>
           <input
             id="edit-dueDate"
-            type="date"
+            type="text"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
+            inputMode="numeric"
+            placeholder="yyyy/mm/dd hh:mm"
+            pattern="\d{4}/\d{2}/\d{2} \d{2}:\d{2}"
+            title="Use yyyy/mm/dd hh:mm, for example 2026/06/13 00:00"
             className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
             required
           />

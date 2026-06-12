@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { getStartOfToday } from "../utils/dateTime.js";
 
 const taskSchema = new mongoose.Schema({
     // userId: {
@@ -37,7 +38,7 @@ const taskSchema = new mongoose.Schema({
     },
     startDate: {
         type: Date,
-        default: Date.now
+        default: getStartOfToday
     },
     dueDate: {
         type: Date,

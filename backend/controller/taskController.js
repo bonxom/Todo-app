@@ -2,6 +2,7 @@ import Task from '../model/Task.js';
 import Category from '../model/Category.js';
 import Project from '../model/Project.js';
 import { addCompletedTasks, addGivenUpTasks, addStartTask, addInProgressTask } from './statController.js';
+import { normalizeTaskDateInput } from '../utils/dateTime.js';
 
 const TASK_POPULATE = [
     {
@@ -140,6 +141,13 @@ export const createTask = async (req, res) => {
             return res.status(400).json({ message: projectUpdate.error });
         }
 
+        const startDateUpdate = normalizeTaskDateInput(startDate);
+        const dueDateUpdate = normalizeTaskDateInput(dueDate);
+
+        if (startDateUpdate.error || dueDateUpdate.error) {
+            return res.status(400).json({ message: startDateUpdate.error || dueDateUpdate.error });
+        }
+
         const task = await Task.create({
             // userId,
             title,
@@ -148,8 +156,8 @@ export const createTask = async (req, res) => {
             priority,
             categoryId: finalCategoryId,
             projectId: projectUpdate.shouldUpdate ? projectUpdate.value : null,
-            startDate,
-            dueDate
+            startDate: startDateUpdate.shouldUpdate ? startDateUpdate.value : undefined,
+            dueDate: dueDateUpdate.shouldUpdate ? dueDateUpdate.value : undefined
         });
 
         await task.populate(TASK_POPULATE);
@@ -245,8 +253,15 @@ export const updateTask = async (req, res) => {
         if (projectUpdate.shouldUpdate) {
             update.projectId = projectUpdate.value;
         }
-        if (startDate !== undefined) update.startDate = startDate;
-        if (dueDate !== undefined) update.dueDate = dueDate;
+        const startDateUpdate = normalizeTaskDateInput(startDate);
+        const dueDateUpdate = normalizeTaskDateInput(dueDate);
+
+        if (startDateUpdate.error || dueDateUpdate.error) {
+            return res.status(400).json({ message: startDateUpdate.error || dueDateUpdate.error });
+        }
+
+        if (startDateUpdate.shouldUpdate) update.startDate = startDateUpdate.value;
+        if (dueDateUpdate.shouldUpdate) update.dueDate = dueDateUpdate.value;
 
         if (Object.keys(update).length === 0) {
             return res.status(400).json({ message: "No fields to update" });

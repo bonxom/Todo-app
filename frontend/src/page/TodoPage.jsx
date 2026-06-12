@@ -50,6 +50,7 @@ const TodoPage = () => {
   const [projects, setProjects] = useState([]);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
+  const [initialTaskProjectId, setInitialTaskProjectId] = useState('');
 
   // Lock body scroll when any modal is open
   useEffect(() => {
@@ -137,6 +138,11 @@ const TodoPage = () => {
   const handleEdit = (task) => {
     setSelectedTask(task);
     setIsEditModalOpen(true);
+  };
+
+  const openAddTask = (projectId = '') => {
+    setInitialTaskProjectId(projectId);
+    setIsModalOpen(true);
   };
 
   const handleGiveUp = async (taskId) => {
@@ -279,6 +285,7 @@ const TodoPage = () => {
 
       return {
         id: project._id,
+        isProject: true,
         eyebrow: 'Project',
         name: project.name,
         description: project.description || 'No description yet. Use this space to capture the goal of the work.',
@@ -323,9 +330,13 @@ const TodoPage = () => {
     <>
     <AddTaskButton
       isOpen={isModalOpen}
-      onClose={() => setIsModalOpen(false)}
+      onClose={() => {
+        setIsModalOpen(false);
+        setInitialTaskProjectId('');
+      }}
       onTaskCreated={fetchTasksAndProjects}
       onProjectCreated={fetchTasksAndProjects}
+      initialProjectId={initialTaskProjectId}
     />
 
     <TaskDetailButton
@@ -402,7 +413,7 @@ const TodoPage = () => {
           ) : null}
 
           <ActionButtons 
-            onAddTask={() => setIsModalOpen(true)} 
+            onAddTask={() => openAddTask()} 
             onAddCategory={() => setIsAddCategoryModalOpen(true)}
             onAddProject={() => setIsAddProjectModalOpen(true)}
           />
@@ -413,6 +424,7 @@ const TodoPage = () => {
               selectedProjectId={selectedProjectId}
               onSelectProject={setSelectedProjectId}
               onCreateProject={() => setIsAddProjectModalOpen(true)}
+              onAddTaskToProject={openAddTask}
             />
           </div>
 

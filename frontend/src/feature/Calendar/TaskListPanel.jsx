@@ -5,8 +5,9 @@ import TaskListDetailModal from './TaskListDetailModal';
 import DetailRequestModal from './DetailRequestModal';
 import AddTaskModal from '../Dialog/AddTaskModal';
 import CalendarTaskDetailCard from './CalendarTaskDetailCard';
+import { formatDateTime, toMidnightDateTimeLocalValue } from '../../utils/dateTime';
 
-const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
+const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated, summaryOnly = false }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -54,6 +55,7 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
         selectedDate={selectedDate}
         tasks={sortedTasks}
         onTaskUpdated={onTaskUpdated}
+        summaryOnly={summaryOnly}
       />
 
       <div className="mb-6">
@@ -86,12 +88,7 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
 
         {selectedDate && (
           <p className="text-sm text-gray-600">
-            {selectedDate.toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
+            {formatDateTime(selectedDate)}
           </p>
         )}
 
@@ -120,6 +117,7 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
                 key={task._id || task.id}
                 task={task}
                 mode="panel"
+                summaryOnly={summaryOnly}
                 onClick={(clickedTask) => {
                   setSelectedTask(clickedTask);
                   setIsEditModalOpen(true);
@@ -154,7 +152,7 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
         isOpen={isAddTaskModalOpen}
         onClose={() => setIsAddTaskModalOpen(false)}
         onTaskCreated={onTaskUpdated}
-        initialDueDate={selectedDate ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}` : ''}
+        initialDueDate={selectedDate ? toMidnightDateTimeLocalValue(selectedDate) : ''}
       />
 
       <DetailRequestModal

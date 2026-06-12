@@ -1,6 +1,33 @@
 import { useState, memo } from 'react';
 import { taskService } from '../../api/apiService';
 import { isSameDay } from './calendarUtils';
+import { formatDateTime } from '../../utils/dateTime';
+
+const priorityClassNames = {
+  High: 'bg-red-100 text-red-700',
+  Medium: 'bg-amber-100 text-amber-700',
+  Low: 'bg-emerald-100 text-emerald-700',
+};
+
+const statusAccentClassNames = {
+  completed: 'border-emerald-300',
+  'in-progress': 'border-blue-300',
+  pending: 'border-purple-300',
+  'given-up': 'border-slate-300',
+};
+
+const formatCellTime = (value) => {
+  if (!value) return 'No due';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'No due';
+
+  return new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+};
 
 const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onTaskUpdated, viewMode = 'month' }) => {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -32,7 +59,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
     try {
       // Set dueDate to the day being dropped on
       const newDueDate = new Date(day);
-      newDueDate.setHours(23, 59, 59, 999);
+      newDueDate.setHours(0, 0, 0, 0);
 
       await taskService.updateTask(taskId, {
         dueDate: newDueDate.toISOString()
@@ -79,19 +106,28 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
         </div>
         
         {taskCount > 0 && (
-          <div className="flex flex-col gap-0.5 flex-1">
+          <div className="flex flex-col gap-1.5 flex-1">
             {tasks.slice(0, 2).map((task, idx) => (
               <div
-                key={idx}
+                key={task._id || task.id || idx}
                 className={`
-                  text-xs px-1.5 py-0.5 rounded truncate text-left
-                  ${task.status === 'completed' ? 'bg-green-100 text-green-700 line-through' : 
-                    task.status === 'in-progress' ? 'bg-blue-100 text-blue-700' : 
-                    task.status === 'pending' ? 'bg-purple-100 text-purple-700' : 
-                    'bg-gray-100 text-gray-600'}
+                  rounded-lg border bg-white/85 px-1.5 py-1 text-left shadow-sm
+                  ${statusAccentClassNames[task.status] || 'border-gray-200'}
+                  ${task.status === 'completed' ? 'opacity-75' : ''}
                 `}
+                title={`${task.title} • ${task.priority || 'Medium'} • ${formatDateTime(task.dueDate, 'No due date')}`}
               >
-                {task.title}
+                <div className={`truncate text-[11px] font-semibold ${task.status === 'completed' ? 'text-slate-500 line-through' : 'text-slate-800'}`}>
+                  {task.title}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${priorityClassNames[task.priority] || 'bg-slate-100 text-slate-600'}`}>
+                    {task.priority || 'Medium'}
+                  </span>
+                  <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700">
+                    {formatCellTime(task.dueDate)}
+                  </span>
+                </div>
               </div>
             ))}
             {taskCount > 2 && (

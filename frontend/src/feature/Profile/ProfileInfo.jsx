@@ -1,3 +1,5 @@
+import { formatDateOnly, formatDateTime } from '../../utils/dateTime';
+
 const ProfileInfo = ({ user }) => {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6 cursor-default select-none">
@@ -18,7 +20,7 @@ const ProfileInfo = ({ user }) => {
         <div className="flex items-center justify-between py-3 border-b border-gray-100">
           <span className="text-gray-600 font-medium">Birthday</span>
           <span className="text-gray-900">
-            {user?.dob ? new Date(user.dob).toLocaleDateString() : 'N/A'}
+            {user?.dob ? formatDateOnly(user.dob) : 'N/A'}
           </span>
         </div>
         {/* <div className="flex items-center justify-between py-3 border-b border-gray-100">
@@ -28,7 +30,7 @@ const ProfileInfo = ({ user }) => {
         <div className="flex items-center justify-between py-3">
           <span className="text-gray-600 font-medium">Member Since</span>
           <span className="text-gray-900">
-            {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+            {user?.createdAt ? formatDateTime(user.createdAt) : 'N/A'}
           </span>
         </div>
       </div>

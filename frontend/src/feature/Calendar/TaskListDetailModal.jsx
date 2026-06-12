@@ -6,8 +6,9 @@ import GiveUpDialog from '../Dialog/GiveUpDialog';
 import DeleteDialog from '../Dialog/DeleteDialog';
 import { taskService } from '../../api/apiService';
 import CalendarTaskDetailCard from './CalendarTaskDetailCard';
+import { formatDateTime } from '../../utils/dateTime';
 
-const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdated }) => {
+const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdated, summaryOnly = false }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -77,12 +78,6 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
 
   if (!isOpen) return null;
 
-  const formatDate = (date) => {
-    if (!date) return '';
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
-  };
-
   const isToday = selectedDate && selectedDate.toDateString() === new Date().toDateString();
   const completedTasks = tasks.filter(task => task.status === 'completed').length;
   const totalTasks = tasks.length;
@@ -145,7 +140,7 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
             </div>
             {selectedDate && (
               <p className="text-sm text-gray-600 mb-2">
-                {formatDate(selectedDate)}
+                {formatDateTime(selectedDate)}
               </p>
             )}
             <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
@@ -171,6 +166,7 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
                     <CalendarTaskDetailCard
                       task={task}
                       mode="modal"
+                      summaryOnly={summaryOnly}
                       onEdit={handleEdit}
                       onGiveUp={handleGiveUp}
                       onDelete={handleDelete}

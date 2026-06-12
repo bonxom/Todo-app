@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react';
 import ProgressBar from './ProgressBar';
 
 const ProjectOverviewGrid = ({
@@ -5,6 +6,7 @@ const ProjectOverviewGrid = ({
   selectedProjectId,
   onSelectProject,
   onCreateProject,
+  onAddTaskToProject,
 }) => {
   return (
     <section className="space-y-4" aria-labelledby="project-overview-heading">
@@ -26,9 +28,7 @@ const ProjectOverviewGrid = ({
           onClick={onCreateProject}
           className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-600 px-5 text-sm font-medium text-white shadow-md transition-all hover:from-sky-700 hover:to-cyan-700 hover:shadow-lg"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="h-4 w-4" />
           <span>Add Project</span>
         </button>
       </div>
@@ -38,18 +38,23 @@ const ProjectOverviewGrid = ({
           const isSelected = selectedProjectId === item.id;
 
           return (
-            <button
+            <article
               key={item.id}
-              type="button"
-              onClick={() => onSelectProject(item.id)}
-              className={`rounded-3xl border p-5 text-left transition-all focus:outline-none focus:ring-4 ${
+              className={`relative rounded-3xl border p-5 text-left transition-all ${
                 isSelected
                   ? 'border-sky-300 bg-gradient-to-br from-sky-50 via-white to-cyan-50 shadow-lg ring-4 ring-sky-200/60'
-                  : 'border-gray-200 bg-white/85 shadow-sm hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md focus:ring-sky-200/60'
+                  : 'border-gray-200 bg-white/85 shadow-sm hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md'
               }`}
-              aria-pressed={isSelected}
             >
-              <div className="flex items-start justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => onSelectProject(item.id)}
+                className="absolute inset-0 rounded-3xl focus:outline-none focus:ring-4 focus:ring-sky-200/70"
+                aria-label={`View tasks for ${item.name}`}
+                aria-pressed={isSelected}
+              />
+
+              <div className="pointer-events-none relative z-10 flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gray-400">
                     {item.eyebrow}
@@ -67,7 +72,7 @@ const ProjectOverviewGrid = ({
                 </span>
               </div>
 
-              <div className="mt-5">
+              <div className="pointer-events-none relative z-10 mt-5">
                 <ProgressBar
                   title={item.progressLabel}
                   completed={item.completed}
@@ -77,7 +82,23 @@ const ProjectOverviewGrid = ({
                   emptyLabel={item.emptyLabel}
                 />
               </div>
-            </button>
+
+              <div className="relative z-20 mt-5 flex flex-col gap-2 sm:flex-row">
+
+
+                {item.isProject ? (
+                  <button
+                    type="button"
+                    onClick={() => onAddTaskToProject?.(item.id)}
+                    className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-2xl bg-sky-600 px-4 text-sm font-medium text-white shadow-sm transition-all hover:bg-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-200/70"
+                    aria-label={`Add task to ${item.name}`}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add Task</span>
+                  </button>
+                ) : null}
+              </div>
+            </article>
           );
         })}
       </div>

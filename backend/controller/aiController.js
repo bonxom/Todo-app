@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import Category from "../model/Category.js";
 import Task from "../model/Task.js";
 import { addPendingTask } from "./statController.js";
+import { normalizeTaskDateInput } from "../utils/dateTime.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import dotenv from "dotenv";
@@ -105,13 +106,18 @@ Create 3 practical, actionable tasks with:
             }
             
             // Create and save the task to database
+            const dueDateUpdate = normalizeTaskDateInput(generatedTask.dueDate);
+            if (dueDateUpdate.error) {
+                continue;
+            }
+
             const newTask = new Task({
                 title: generatedTask.title,
                 description: generatedTask.description || "",
                 priority: generatedTask.priority || "Medium",
                 status: "pending",
                 categoryId: categoryId,
-                dueDate: generatedTask.dueDate ? new Date(generatedTask.dueDate) : undefined,
+                dueDate: dueDateUpdate.shouldUpdate ? dueDateUpdate.value : undefined,
             });
 
             const savedTask = await newTask.save();

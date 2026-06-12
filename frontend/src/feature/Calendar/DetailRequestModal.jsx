@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Sparkles } from 'lucide-react';
 import { aiService } from '../../api/apiService';
+import { formatDateTime } from '../../utils/dateTime';
 
 const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated }) => {
   const [userInput, setUserInput] = useState('');
@@ -37,14 +38,7 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
     setIsLoading(true);
 
     // Format date
-    const dateStr = selectedDate 
-      ? selectedDate.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        })
-      : 'today';
+    const dateStr = selectedDate ? formatDateTime(selectedDate) : 'today';
 
     // Build request string
     let requestString = `In date ${dateStr}, I want: ${userInput.trim()}`;
@@ -115,12 +109,7 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
             <p className="text-sm text-gray-600">Generating tasks for:</p>
             <p className="text-lg font-semibold text-purple-700">
               {selectedDate 
-                ? selectedDate.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })
+                ? formatDateTime(selectedDate)
                 : 'Today'}
             </p>
           </div>

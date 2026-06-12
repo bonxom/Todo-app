@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { createHeatmapModel, formatUtcDateLabel } from './statsUtils';
+import { createHeatmapModel, formatDateKeyLabel } from './statsUtils';
 
 const CELL_LEVEL_STYLES = [
   'bg-slate-200 border-slate-300/80',
@@ -20,15 +20,8 @@ const WEEKDAY_LABELS = [
 ];
 
 const formatCompletionLabel = (dateKey, count) => {
-  const formattedDate = formatUtcDateLabel(dateKey, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-
-  const taskLabel = count === 1 ? 'completed task' : 'completed tasks';
-  return `${count} ${taskLabel} on ${formattedDate}`;
+  const taskLabel = count === 1 ? 'task completed' : 'tasks completed';
+  return `${formatDateKeyLabel(dateKey)}: ${count} ${taskLabel}`;
 };
 
 const SummaryPill = ({ label, value }) => (
@@ -107,44 +100,20 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
     );
   }
 
-  if (heatmap.totalCompleted === 0) {
-    return (
-      <section className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-6 py-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-700">Completion Rhythm</p>
-          <h2 className="mt-3 text-2xl font-semibold text-slate-900">Daily activity heatmap</h2>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">
-            The heatmap fills in when tasks move to completed. Your last 365 days are being tracked, but there are no completed tasks in this range yet.
-          </p>
-        </div>
-        <div className="px-6 py-6">
-          <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-            <p className="text-sm font-medium text-slate-700">No completed task activity yet</p>
-            <p className="mt-2 text-sm text-slate-500">
-              Finish a task to start building a daily activity history for the last year.
-            </p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   const bestDayLabel = heatmap.bestDay?.count
-    ? `${heatmap.bestDay.count} on ${formatUtcDateLabel(heatmap.bestDay.dateKey, {
-      month: 'short',
-      day: 'numeric',
-    })}`
+    ? `${heatmap.bestDay.count} on ${formatDateKeyLabel(heatmap.bestDay.dateKey)}`
     : 'No activity yet';
+  const hasNoCompletedTasks = heatmap.totalCompleted === 0;
 
   return (
-    <section className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.12),_transparent_32%),linear-gradient(180deg,_#ffffff_0%,_#f8fbff_100%)] shadow-sm">
-      <div className="border-b border-slate-200 bg-white/65 px-6 py-6 backdrop-blur-sm">
+    <section className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-200 bg-white px-6 py-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-700">Completion Rhythm</p>
             <h2 className="mt-3 text-2xl font-semibold text-slate-900">Daily activity heatmap</h2>
             <p className="mt-2 text-sm text-slate-600">
-              A year-long ledger of completed tasks. Darker cells mark heavier completion days, with the grid pinned to the backend&apos;s stored UTC day buckets.
+              A year-long ledger of completed tasks. Darker cells mark heavier completion days, and missing dates are shown as zero activity.
             </p>
           </div>
 
@@ -157,6 +126,12 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
       </div>
 
       <div className="space-y-5 px-6 py-6">
+        {hasNoCompletedTasks ? (
+          <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            No completed tasks in this range yet. Finish a task to start building your activity history.
+          </p>
+        ) : null}
+
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Hover Detail</p>
@@ -241,8 +216,7 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
         </div>
 
         <p className="text-xs text-slate-500">
-          Range: {formatUtcDateLabel(heatmap.rangeStartKey, { month: 'short', day: 'numeric', year: 'numeric' })} to{' '}
-          {formatUtcDateLabel(heatmap.rangeEndKey, { month: 'short', day: 'numeric', year: 'numeric' })}
+          Range: {formatDateKeyLabel(heatmap.rangeStartKey)} to {formatDateKeyLabel(heatmap.rangeEndKey)}
         </p>
       </div>
     </section>

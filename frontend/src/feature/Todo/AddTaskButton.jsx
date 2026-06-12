@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import AddTaskForm from './Form/AddTaskForm';
 
-const AddTaskButton = ({ isOpen, onClose, onTaskCreated, onProjectCreated }) => {
+const AddTaskButton = ({ isOpen, onClose, onTaskCreated, onProjectCreated, initialProjectId = '' }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -44,6 +44,7 @@ const AddTaskButton = ({ isOpen, onClose, onTaskCreated, onProjectCreated }) => 
             onClose={onClose}
             onTaskCreated={onTaskCreated}
             onProjectCreated={onProjectCreated}
+            initialProjectId={initialProjectId}
           />
         </div>
       </div>

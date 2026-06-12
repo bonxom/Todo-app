@@ -2,13 +2,20 @@ import { useCallback, useEffect, useState } from 'react';
 import AddCategoryForm from './AddCategoryForm';
 import AddProjectForm from './AddProjectForm';
 import { taskService, categoryService, projectService } from '../../../api/apiService';
+import { toMidnightDateTimeLocalValue } from '../../../utils/dateTime';
 
-const AddTaskForm = ({ onClose, onTaskCreated, onProjectCreated, initialDueDate = '' }) => {
+const AddTaskForm = ({
+  onClose,
+  onTaskCreated,
+  onProjectCreated,
+  initialDueDate = '',
+  initialProjectId = '',
+}) => {
   const [title, setTitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [projectId, setProjectId] = useState('');
+  const [projectId, setProjectId] = useState(initialProjectId);
   const [priority, setPriority] = useState('Medium');
-  const [dueDate, setDueDate] = useState(initialDueDate);
+  const [dueDate, setDueDate] = useState(initialDueDate || toMidnightDateTimeLocalValue());
   const [description, setDescription] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
@@ -49,12 +56,16 @@ const AddTaskForm = ({ onClose, onTaskCreated, onProjectCreated, initialDueDate 
     fetchProjects();
   }, [fetchCategories, fetchProjects]);
 
+  useEffect(() => {
+    setProjectId(initialProjectId);
+  }, [initialProjectId]);
+
   const handleReset = () => {
     setTitle('');
     setCategoryId(categories[0]?._id || '');
-    setProjectId('');
+    setProjectId(initialProjectId);
     setPriority('Medium');
-    setDueDate('');
+    setDueDate(toMidnightDateTimeLocalValue());
     setDescription('');
   };
 
@@ -180,9 +191,13 @@ const AddTaskForm = ({ onClose, onTaskCreated, onProjectCreated, initialDueDate 
           </label>
           <input
             id="dueDate"
-            type="date"
+            type="text"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
+            inputMode="numeric"
+            placeholder="yyyy/mm/dd hh:mm"
+            pattern="\d{4}/\d{2}/\d{2} \d{2}:\d{2}"
+            title="Use yyyy/mm/dd hh:mm, for example 2026/06/13 00:00"
             className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
             required
           />

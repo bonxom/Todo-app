@@ -1,6 +1,6 @@
 import AddTaskForm from '../Todo/Form/AddTaskForm';
 
-const AddTaskModal = ({ isOpen, onClose, onTaskCreated, initialDueDate }) => {
+const AddTaskModal = ({ isOpen, onClose, onTaskCreated, initialDueDate, initialProjectId = '' }) => {
   if (!isOpen) return null;
 
   return (
@@ -14,6 +14,7 @@ const AddTaskModal = ({ isOpen, onClose, onTaskCreated, initialDueDate }) => {
             onClose={onClose}
             onTaskCreated={onTaskCreated}
             initialDueDate={initialDueDate}
+            initialProjectId={initialProjectId}
           />
         </div>
       </div>

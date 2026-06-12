@@ -13,6 +13,7 @@ import {
 } from 'chart.js';
 import {
   formatUtcDateLabel,
+  formatUtcDateTimeLabel,
   getDateKeysInRange,
   getUtcTodayKey,
   shiftUtcDateKey,
@@ -56,12 +57,14 @@ const LineChart = ({ dailyStats }) => {
 
     const allDates = getDateKeysInRange(startDate, endDate);
     const labels = [];
+    const dateKeys = [];
     const completed = [];
     const givenUp = [];
 
     allDates.forEach((dateKey) => {
       const stat = dataMap.get(dateKey);
 
+      dateKeys.push(dateKey);
       labels.push(formatUtcDateLabel(dateKey, { month: 'short', day: 'numeric' }));
       completed.push(stat?.completedTasks || 0);
       givenUp.push(stat?.givenUpTasks || 0);
@@ -69,6 +72,7 @@ const LineChart = ({ dailyStats }) => {
 
     return {
       labels,
+      dateKeys,
       datasets: [
         {
           label: 'Completed Tasks',
@@ -131,6 +135,13 @@ const LineChart = ({ dailyStats }) => {
         intersect: false,
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
         padding: 12,
+        callbacks: {
+          title: (tooltipItems) => {
+            const item = tooltipItems[0];
+            const dateKey = chartData.dateKeys?.[item.dataIndex];
+            return dateKey ? formatUtcDateTimeLabel(dateKey) : item.label;
+          }
+        },
         titleFont: {
           size: 14,
           weight: 'bold'
@@ -184,6 +195,9 @@ const LineChart = ({ dailyStats }) => {
         <h2 className="text-lg font-semibold mb-4">
           Daily Tasks Trend
         </h2>
+        <p className="mb-4 text-sm text-gray-500">
+          Range: {formatUtcDateTimeLabel(startDate)} to {formatUtcDateTimeLabel(endDate)}
+        </p>
 
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">

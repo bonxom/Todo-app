@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CircleCheckBig, Frown, Play } from 'lucide-react';
+import { formatDateTime } from '../../utils/dateTime';
 
 const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -144,10 +145,15 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete 
             </span>
           )}
         </div>
+        {task.dueDate && (
+          <span className="text-xs text-gray-500">
+            Due {formatDateTime(task.dueDate)}
+          </span>
+        )}
         {task.status === 'completed' && task.completedAt && (
           <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 flex items-center gap-1.5">
             <CircleCheckBig className="w-3.5 h-3.5" />
-            <span>Done at {new Date(task.completedAt).toLocaleDateString()}</span>
+            <span>Done at {formatDateTime(task.completedAt)}</span>
           </span>
         )}
         {task.status === 'given-up' && (

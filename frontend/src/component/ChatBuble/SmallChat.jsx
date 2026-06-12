@@ -3,6 +3,7 @@ import { X, Minimize2, MessageSquare, Sparkles } from 'lucide-react';
 import ChatField from './ChatField';
 import { aiService } from '../../api/apiService';
 import { useTaskRefresh } from '../../context/useTaskRefresh';
+import { formatDateTime } from '../../utils/dateTime';
 
 const SmallChat = ({ onClose, onMinimize }) => {
   const { triggerRefresh } = useTaskRefresh();
@@ -79,7 +80,7 @@ const SmallChat = ({ onClose, onMinimize }) => {
         // Response from apiService already contains the full backend response
         if (response && response.success === true && Array.isArray(response.data) && response.data.length > 0) {
           const tasksText = `Great! I've created **${response.data.length} task${response.data.length > 1 ? 's' : ''}** for you:\n\n${response.data.map((task, index) => 
-            `**${index + 1}. ${task.title}**\n${task.description || ''}\nPriority: ${task.priority || 'Medium'}${task.dueDate ? `\nDue: ${new Date(task.dueDate).toLocaleDateString()}` : ''}`
+            `**${index + 1}. ${task.title}**\n${task.description || ''}\nPriority: ${task.priority || 'Medium'}${task.dueDate ? `\nDue: ${formatDateTime(task.dueDate)}` : ''}`
           ).join('\n\n')}\n\nCheck your todo list to see them!`;
           
           const botResponse = {
