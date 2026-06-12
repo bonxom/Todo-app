@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import MainLayout from '../layout/MainLayout';
 import { statService } from '../api/apiService';
 import LineChart from '../feature/Statics/LineChart';
 import StatusPieChart from '../feature/Statics/StatusPieChart';
 import CategoryPieChart from '../feature/Statics/CategoryPieChart';
 import StatsSummary from '../feature/Statics/StatsSummary';
+import ActivityHeatmap from '../feature/Statics/ActivityHeatmap';
+import { normalizeDailyStats } from '../feature/Statics/statsUtils';
 import ChatBubble from '../component/ChatBuble';
 
 const StatisticsPage = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const normalizedDailyStats = useMemo(() => normalizeDailyStats(stats?.dailyStats || []), [stats]);
 
   useEffect(() => {
     fetchStats();
@@ -94,15 +97,21 @@ const StatisticsPage = () => {
               <h1 className="flex justify-center text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 Statistics Dashboard
               </h1>
-              <p className="flex justify-center text-gray-500 mb-2">Track your productivity and task completion trends</p>
+              <p className="flex justify-center text-gray-500 mb-2">
+                Track task totals, completion trends, and the daily rhythm of finished work.
+              </p>
             </div>
 
             {/* Summary Cards */}
             <StatsSummary stats={stats} />
 
+            <div className="mb-6">
+              <ActivityHeatmap dailyStats={normalizedDailyStats} />
+            </div>
+
             {/* Line Chart - Full Width */}
             <div className="mb-6">
-              <LineChart dailyStats={stats.dailyStats || []} />
+              <LineChart dailyStats={normalizedDailyStats} />
             </div>
 
             {/* Pie Charts Row */}
@@ -111,7 +120,7 @@ const StatisticsPage = () => {
               <StatusPieChart stats={stats} />
               
               {/* Category Pie Chart */}
-              <CategoryPieChart dailyStats={stats.dailyStats || []} />
+              <CategoryPieChart dailyStats={normalizedDailyStats} />
             </div>
           </div>
         </div>

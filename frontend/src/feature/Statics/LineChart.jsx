@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Line } from 'react-chartjs-2';
-import { format, eachDayOfInterval, subDays, parseISO } from 'date-fns';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +11,12 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+import {
+  formatUtcDateLabel,
+  getDateKeysInRange,
+  getUtcTodayKey,
+  shiftUtcDateKey,
+} from './statsUtils';
 
 // Register Chart.js components
 ChartJS.register(
@@ -26,12 +31,9 @@ ChartJS.register(
 );
 
 const LineChart = ({ dailyStats }) => {
-  // Initialize with last 30 days
-  const today = new Date();
-  const thirtyDaysAgo = subDays(today, 29);
-  
-  const [startDate, setStartDate] = useState(format(thirtyDaysAgo, 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(today, 'yyyy-MM-dd'));
+  const todayKey = getUtcTodayKey();
+  const [startDate, setStartDate] = useState(() => shiftUtcDateKey(todayKey, -29));
+  const [endDate, setEndDate] = useState(todayKey);
 
   const chartData = useMemo(() => {
     if (!dailyStats || dailyStats.length === 0) {
@@ -41,30 +43,26 @@ const LineChart = ({ dailyStats }) => {
       };
     }
 
-    // Parse selected dates
-    const start = parseISO(startDate);
-    const end = parseISO(endDate);
-    
-    // Generate all dates in the range
-    const allDates = eachDayOfInterval({ start, end });
-    
-    // Create a map of existing data
     const dataMap = new Map();
-    dailyStats.forEach(stat => {
-      const dateKey = format(new Date(stat.date), 'yyyy-MM-dd');
+    dailyStats.forEach((stat) => {
+      const dateKey = stat.dateKey;
+
+      if (!dateKey) {
+        return;
+      }
+
       dataMap.set(dateKey, stat);
     });
-    
-    // Generate labels and data arrays with continuous dates
+
+    const allDates = getDateKeysInRange(startDate, endDate);
     const labels = [];
     const completed = [];
     const givenUp = [];
-    
-    allDates.forEach(date => {
-      const dateKey = format(date, 'yyyy-MM-dd');
+
+    allDates.forEach((dateKey) => {
       const stat = dataMap.get(dateKey);
-      
-      labels.push(format(date, 'MMM dd'));
+
+      labels.push(formatUtcDateLabel(dateKey, { month: 'short', day: 'numeric' }));
       completed.push(stat?.completedTasks || 0);
       givenUp.push(stat?.givenUpTasks || 0);
     });
@@ -106,12 +104,10 @@ const LineChart = ({ dailyStats }) => {
     };
   }, [dailyStats, startDate, endDate]);
 
-  // Quick range buttons handler
   const setQuickRange = (days) => {
-    const end = new Date();
-    const start = subDays(end, days - 1);
-    setStartDate(format(start, 'yyyy-MM-dd'));
-    setEndDate(format(end, 'yyyy-MM-dd'));
+    const nextEndDate = getUtcTodayKey();
+    setStartDate(shiftUtcDateKey(nextEndDate, -(days - 1)));
+    setEndDate(nextEndDate);
   };
 
   const options = {
@@ -188,8 +184,7 @@ const LineChart = ({ dailyStats }) => {
         <h2 className="text-lg font-semibold mb-4">
           Daily Tasks Trend
         </h2>
-        
-        {/* Date Range Selectors */}
+
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">From:</label>
@@ -201,7 +196,7 @@ const LineChart = ({ dailyStats }) => {
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          
+
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">To:</label>
             <input
@@ -212,8 +207,7 @@ const LineChart = ({ dailyStats }) => {
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          
-          {/* Quick Range Buttons */}
+
           <div className="flex gap-2 ml-auto">
             <button
               onClick={() => setQuickRange(7)}
