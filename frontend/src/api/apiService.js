@@ -1,4 +1,10 @@
 import axiosInstance from './axiosInstance';
+import {
+  buildTaskMutationPayload,
+  normalizeProject,
+  normalizeProjects,
+  normalizeProjectTasks,
+} from './projectHelpers';
 
 // ==================== Auth Service ====================
 export const authService = {
@@ -56,7 +62,7 @@ export const authService = {
 export const taskService = {
   // Create new task
   createTask: async (taskData) => {
-    const response = await axiosInstance.post('/api/tasks', taskData);
+    const response = await axiosInstance.post('/api/tasks', buildTaskMutationPayload(taskData));
     return response.data;
   },
 
@@ -100,7 +106,7 @@ export const taskService = {
 
   // Update task
   updateTask: async (taskId, taskData) => {
-    const response = await axiosInstance.put(`/api/tasks/${taskId}`, taskData);
+    const response = await axiosInstance.put(`/api/tasks/${taskId}`, buildTaskMutationPayload(taskData));
     return response.data;
   },
 
@@ -159,6 +165,45 @@ export const categoryService = {
   deleteCategory: async (categoryId) => {
     const response = await axiosInstance.delete(`/api/categories/${categoryId}`);
     return response.data;
+  },
+};
+
+// ==================== Project Service ====================
+export const projectService = {
+  // Create new project
+  createProject: async (projectData) => {
+    const response = await axiosInstance.post('/api/projects', projectData);
+    return normalizeProject(response.data);
+  },
+
+  // Get all projects
+  getAllProjects: async () => {
+    const response = await axiosInstance.get('/api/projects');
+    return normalizeProjects(response.data);
+  },
+
+  // Get project by ID
+  getProjectById: async (projectId) => {
+    const response = await axiosInstance.get(`/api/projects/${projectId}`);
+    return normalizeProject(response.data);
+  },
+
+  // Update project
+  updateProject: async (projectId, projectData) => {
+    const response = await axiosInstance.put(`/api/projects/${projectId}`, projectData);
+    return normalizeProject(response.data);
+  },
+
+  // Delete project
+  deleteProject: async (projectId) => {
+    const response = await axiosInstance.delete(`/api/projects/${projectId}`);
+    return response.data;
+  },
+
+  // Get tasks for a single project
+  getProjectTasks: async (projectId) => {
+    const response = await axiosInstance.get(`/api/projects/${projectId}/tasks`);
+    return normalizeProjectTasks(response.data);
   },
 };
 
