@@ -30,6 +30,11 @@ const taskSchema = new mongoose.Schema({
         ref: 'Category',
         default: null
     },
+    projectId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Project',
+        default: null
+    },
     startDate: {
         type: Date,
         default: Date.now
@@ -47,6 +52,9 @@ const taskSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+taskSchema.index({ categoryId: 1 });
+taskSchema.index({ projectId: 1 });
 
 const Task = mongoose.model("Task", taskSchema);
 export default Task;

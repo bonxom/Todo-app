@@ -75,6 +75,7 @@ userSchema.methods.comparePassword = async function (plainPassword) {
 // when delete user, delete all tasks and categories belong to this user
 userSchema.pre('findOneAndDelete', async function () {
     const Category = mongoose.model('Category');
+    const Project = mongoose.model('Project');
     const Task = mongoose.model('Task');
     
     // Get the user being deleted
@@ -84,9 +85,27 @@ userSchema.pre('findOneAndDelete', async function () {
         // Find all categories of this user
         const categories = await Category.find({ userId: userToDelete._id });
         const categoryIds = categories.map(cat => cat._id);
+        const projects = await Project.find({ userId: userToDelete._id });
+        const projectIds = projects.map(project => project._id);
         
-        // Delete all tasks belonging to these categories
-        await Task.deleteMany({ categoryId: { $in: categoryIds } });
+        const taskDeleteConditions = [];
+        if (categoryIds.length > 0) {
+            taskDeleteConditions.push({ categoryId: { $in: categoryIds } });
+        }
+        if (projectIds.length > 0) {
+            taskDeleteConditions.push({ projectId: { $in: projectIds } });
+        }
+
+        if (taskDeleteConditions.length > 0) {
+            await Task.deleteMany(
+                taskDeleteConditions.length === 1
+                    ? taskDeleteConditions[0]
+                    : { $or: taskDeleteConditions }
+            );
+        }
+
+        // Delete all projects of this user
+        await Project.deleteMany({ userId: userToDelete._id });
         
         // Delete all categories of this user
         await Category.deleteMany({ userId: userToDelete._id });

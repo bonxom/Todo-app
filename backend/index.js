@@ -6,6 +6,7 @@ import morgan from "morgan";
 
 import userRouter from "./route/userRoute.js";
 import categoryRouter from "./route/categoryRoute.js";
+import projectRouter from "./route/projectRoute.js";
 import taskRouter from "./route/taskRoute.js";
 import authRouter from "./route/authRoute.js";
 import aiRouter from "./route/aiRoutes.js";
@@ -35,6 +36,7 @@ app.get("/", (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/categories', categoryRouter);
+app.use('/api/projects', projectRouter);
 app.use('/api/tasks', taskRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/stats', statRouter);
