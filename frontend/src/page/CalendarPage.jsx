@@ -1,42 +1,49 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import MainLayout from '../layout/MainLayout';
 import CalendarView from '../feature/Calendar/CalendarView';
 import ChatBubble from '../component/ChatBuble';
-import { taskService } from '../api/apiService';
+import { projectService, taskService } from '../api/apiService';
 import { useTaskRefresh } from '../context/TaskRefreshContext';
 
 const CalendarPage = () => {
   const { refreshTrigger } = useTaskRefresh();
   const [tasks, setTasks] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // Initial load
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  // Listen to refresh trigger from AI chat
-  useEffect(() => {
-    if (refreshTrigger > 0) {
-      fetchTasks();
-    }
-  }, [refreshTrigger]);
-
-  const fetchTasks = async () => {
+  const fetchCalendarData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const allTasks = await taskService.getAllTasks();
-      // Filter tasks that have dueDate
+      setErrorMessage('');
+
+      const [allTasks, allProjects] = await Promise.all([
+        taskService.getAllTasks(),
+        projectService.getAllProjects(),
+      ]);
+
       const tasksWithDueDate = allTasks.filter(task => task.dueDate);
       setTasks(tasksWithDueDate);
+      setProjects(allProjects || []);
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error('Error fetching calendar data:', error);
+      setErrorMessage(error.response?.data?.message || 'Failed to load calendar data.');
     } finally {
       setIsLoading(false);
       setIsInitialLoad(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchCalendarData();
+  }, [fetchCalendarData]);
+
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      fetchCalendarData();
+    }
+  }, [fetchCalendarData, refreshTrigger]);
 
   if (isInitialLoad && isLoading) {
     return (
@@ -61,14 +68,28 @@ const CalendarPage = () => {
               <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r bg-linear-to-br from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 Calendar
               </h1>
-              <p className="text-gray-500 mb-2">View your tasks by deadline</p>
+              <p className="text-gray-500 mb-2">View scheduled work by deadline, or narrow the board to specific projects.</p>
             </div>
 
-            {/* Calendar View */}
-            <CalendarView 
-              tasks={tasks}
-              onTaskUpdated={fetchTasks}
-            />
+            {errorMessage ? (
+              <div className="rounded-[2rem] border border-red-200 bg-red-50/80 px-6 py-10 text-center">
+                <p className="text-lg font-semibold text-red-700">Unable to load the calendar</p>
+                <p className="mt-2 text-sm text-red-600">{errorMessage}</p>
+                <button
+                  type="button"
+                  onClick={fetchCalendarData}
+                  className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl border border-red-300 bg-white px-5 text-sm font-medium text-red-700 transition-all hover:bg-red-50"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : (
+              <CalendarView
+                tasks={tasks}
+                projects={projects}
+                onTaskUpdated={fetchCalendarData}
+              />
+            )}
           </div>
         </div>
       </MainLayout>

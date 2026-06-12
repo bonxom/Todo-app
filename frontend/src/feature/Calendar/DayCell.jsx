@@ -1,7 +1,8 @@
 import { useState, memo } from 'react';
 import { taskService } from '../../api/apiService';
+import { isSameDay } from './calendarUtils';
 
-const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onTaskUpdated }) => {
+const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onTaskUpdated, viewMode = 'month' }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const taskCount = tasks?.length || 0;
   const hasHighPriority = tasks?.some(task => task.priority === 'High');
@@ -48,15 +49,18 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
 
   return (
     <button
+      type="button"
       onClick={() => onClick(day)}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`
-        min-h-[80px] p-2 border border-gray-200 rounded-lg transition-all cursor-pointer
+        border border-gray-200 rounded-[1.25rem] transition-all cursor-pointer text-left
+        ${viewMode === 'week' ? 'min-h-[120px] p-3' : 'min-h-[88px] p-2.5'}
         ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : isToday ? 'ring-2 ring-purple-500 bg-purple-50' : isSelected ? 'bg-pink-50 text-gray-900' : 'bg-white text-gray-900'}
-        ${isSelected ? 'ring-pink-500 border-pink-500' : 'hover:bg-purple-50'}
+        ${isSelected ? 'ring-pink-500 border-pink-500 shadow-sm' : 'hover:bg-purple-50'}
         ${isDragOver ? 'ring-2 ring-blue-400 bg-blue-50 scale-105' : ''}
+        ${hasOverdue && !isSelected ? 'border-orange-200' : ''}
       `}
     >
       <div className="flex flex-col h-full">
@@ -67,7 +71,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
           {taskCount > 0 && (
             <span className={`
               text-xs px-1.5 py-0.5 rounded-full font-semibold
-              ${hasHighPriority ? 'bg-red-100 text-red-700' : hasMediumPriority ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}
+              ${hasHighPriority ? 'bg-red-100 text-red-700' : hasOverdue ? 'bg-orange-100 text-orange-700' : hasMediumPriority ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}
             `}>
               {taskCount}
             </span>
@@ -101,10 +105,11 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
 }, (prevProps, nextProps) => {
   // Only re-render if these specific props change
   return (
-    prevProps.day.getTime() === nextProps.day.getTime() &&
+    isSameDay(prevProps.day, nextProps.day) &&
     prevProps.isToday === nextProps.isToday &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.isCurrentMonth === nextProps.isCurrentMonth &&
+    prevProps.viewMode === nextProps.viewMode &&
     prevProps.tasks?.length === nextProps.tasks?.length &&
     JSON.stringify(prevProps.tasks) === JSON.stringify(nextProps.tasks)
   );

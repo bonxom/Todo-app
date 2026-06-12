@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
-import TaskCard from '../Category/TaskCard';
-import TaskDetailForm from '../Todo/Form/TaskDetailForm';
+import TaskDetailButton from '../Todo/TaskDetailButton';
 import GiveUpDialog from '../Dialog/GiveUpDialog';
 import DeleteDialog from '../Dialog/DeleteDialog';
 import { taskService } from '../../api/apiService';
+import CalendarTaskDetailCard from './CalendarTaskDetailCard';
 
 const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdated }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -89,45 +89,16 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
 
   const modalContent = (
     <>
-      {isEditModalOpen && (
-        <div 
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm bg-black/30"
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-          onClick={() => {
-            setIsEditModalOpen(false);
-            setSelectedTask(null);
-          }}
-        >
-          <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-xl relative animate-fadeIn" 
-            style={{ maxHeight: '90vh' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-white rounded-t-2xl p-6 pb-4 border-b border-gray-100 z-10">
-              <button
-                onClick={() => {
-                  setIsEditModalOpen(false);
-                  setSelectedTask(null);
-                }}
-                className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Close modal"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <h2 className="text-2xl font-bold text-gray-900 pr-10">Edit Task</h2>
-            </div>
-
-            <div className="px-6 py-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 100px)' }}>
-              <TaskDetailForm task={selectedTask} onClose={() => {
-                setIsEditModalOpen(false);
-                setSelectedTask(null);
-              }} onTaskUpdated={onTaskUpdated} />
-            </div>
-          </div>
-        </div>
-      )}
+      <TaskDetailButton
+        isOpen={isEditModalOpen}
+        task={selectedTask}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedTask(null);
+        }}
+        onTaskUpdated={onTaskUpdated}
+        onProjectCreated={onTaskUpdated}
+      />
 
       <GiveUpDialog
         isOpen={isGiveUpModalOpen}
@@ -197,9 +168,9 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
                         : 'opacity-100 scale-100'
                     }`}
                   >
-                    <TaskCard 
+                    <CalendarTaskDetailCard
                       task={task}
-                      showActions={true}
+                      mode="modal"
                       onEdit={handleEdit}
                       onGiveUp={handleGiveUp}
                       onDelete={handleDelete}
