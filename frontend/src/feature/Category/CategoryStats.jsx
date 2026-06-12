@@ -1,11 +1,15 @@
-const CategoryStats = ({ stats }) => {
+const CategoryStats = ({ stats, entityLabel = 'Categories', accent = 'violet' }) => {
+  const primaryNumberClass = accent === 'sky'
+    ? 'from-sky-600 to-cyan-600'
+    : 'from-violet-600 to-fuchsia-600';
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <div className="bg-white rounded-lg shadow-md p-4 text-center">
-        <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          {stats.totalCategories}
+        <div className={`text-2xl font-bold bg-gradient-to-r ${primaryNumberClass} bg-clip-text text-transparent`}>
+          {stats.totalGroups}
         </div>
-        <div className="text-sm text-gray-600 mt-1">Categories</div>
+        <div className="text-sm text-gray-600 mt-1">{entityLabel}</div>
       </div>
       <div className="bg-white rounded-lg shadow-md p-4 text-center">
         <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">

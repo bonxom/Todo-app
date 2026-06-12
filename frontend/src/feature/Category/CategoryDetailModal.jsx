@@ -7,7 +7,7 @@ import GiveUpDialog from '../Dialog/GiveUpDialog';
 import DeleteDialog from '../Dialog/DeleteDialog';
 import { taskService } from '../../api/apiService';
 
-const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }) => {
+const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, onTaskUpdated }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -115,7 +115,7 @@ const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }
             <TaskDetailForm task={selectedTask} onClose={() => {
               setIsEditModalOpen(false);
               setSelectedTask(null);
-            }} onTaskUpdated={onTaskUpdated} />
+            }} onTaskUpdated={onTaskUpdated} onProjectCreated={onTaskUpdated} />
           </div>
         </div>
       </div>
@@ -153,7 +153,12 @@ const CategoryDetailModal = ({ isOpen, onClose, category, tasks, onTaskUpdated }
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <Folder className="w-7 h-7 text-gray-700" />
-              <h2 className="text-2xl font-bold text-gray-800">{category}</h2>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">{category}</h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  {description || 'Tasks grouped under this category appear here.'}
+                </p>
+              </div>
             </div>
             <button
               onClick={onClose}

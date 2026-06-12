@@ -1,14 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { projectService } from '../../../api/apiService';
 
-const AddProjectForm = ({ onClose, onProjectCreated }) => {
+const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = null }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    setName(project?.name || '');
+    setDescription(project?.description || '');
+  }, [project?._id, project?.name, project?.description]);
+
   const handleReset = () => {
-    setName('');
-    setDescription('');
+    setName(project?.name || '');
+    setDescription(project?.description || '');
   };
 
   const handleSubmit = async (e) => {
@@ -17,20 +22,23 @@ const AddProjectForm = ({ onClose, onProjectCreated }) => {
     try {
       setIsSubmitting(true);
 
-      const createdProject = await projectService.createProject({
+      const payload = {
         name,
         description,
-      });
+      };
 
-      if (onProjectCreated) {
-        onProjectCreated(createdProject);
-      }
+      const savedProject = project?._id
+        ? await projectService.updateProject(project._id, payload)
+        : await projectService.createProject(payload);
+
+      onProjectCreated?.(savedProject);
+      onProjectSaved?.(savedProject);
 
       handleReset();
       onClose();
     } catch (error) {
       console.error('Failed to create project:', error);
-      alert(error.message || 'Failed to create project. Please try again.');
+      alert(error.response?.data?.message || error.message || 'Failed to save project. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -84,7 +92,7 @@ const AddProjectForm = ({ onClose, onProjectCreated }) => {
           disabled={isSubmitting}
           className="flex-1 h-11 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-700 hover:to-cyan-700 text-white font-medium rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Adding...' : 'Add Project'}
+          {isSubmitting ? (project?._id ? 'Saving...' : 'Adding...') : (project?._id ? 'Save Project' : 'Add Project')}
         </button>
       </div>
     </form>

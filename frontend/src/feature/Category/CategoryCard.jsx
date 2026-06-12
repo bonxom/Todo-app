@@ -7,7 +7,7 @@ import TaskDetailButton from '../Todo/TaskDetailButton';
 import DeleteCategoryDialog from '../Dialog/DeleteCategoryDialog';
 import { categoryService, taskService } from '../../api/apiService';
 
-const CategoryCard = ({ category, tasks, onTaskUpdated, categoryId }) => {
+const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -90,6 +90,7 @@ const CategoryCard = ({ category, tasks, onTaskUpdated, categoryId }) => {
             setSelectedTask(null);
           }}
           onTaskUpdated={onTaskUpdated}
+          onProjectCreated={onTaskUpdated}
         />,
         document.body
       )}
@@ -98,6 +99,7 @@ const CategoryCard = ({ category, tasks, onTaskUpdated, categoryId }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         category={category}
+        description={description}
         tasks={tasks}
         onTaskUpdated={onTaskUpdated}
       />
@@ -131,6 +133,9 @@ const CategoryCard = ({ category, tasks, onTaskUpdated, categoryId }) => {
             <Folder className="w-6 h-6 text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-800">{category}</h3>
           </div>
+          <p className="mb-3 min-h-[2.5rem] text-sm text-gray-600">
+            {description || 'No category description yet. Use categories to group work that shares a theme.'}
+          </p>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span>{completedTasks}/{totalTasks} completed</span>
           </div>
