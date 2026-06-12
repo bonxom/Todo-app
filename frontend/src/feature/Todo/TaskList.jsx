@@ -13,7 +13,7 @@ const TaskList = ({ tasks, onToggleComplete, onEdit, onStart, onGiveUp, onDelete
     <div className="space-y-4">
       {tasks.map((task) => (
         <TaskItem
-          key={task.id}
+          key={task._id || task.id}
           task={task}
           onToggleComplete={onToggleComplete}
           onEdit={onEdit}
@@ -27,4 +27,3 @@ const TaskList = ({ tasks, onToggleComplete, onEdit, onStart, onGiveUp, onDelete
 };
 
 export default TaskList;
-

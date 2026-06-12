@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import AddCategoryForm from './AddCategoryForm';
-import { taskService, categoryService } from '../../../api/apiService';
+import AddProjectForm from './AddProjectForm';
+import { taskService, categoryService, projectService } from '../../../api/apiService';
 
-const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
+const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
   const [title, setTitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [projectId, setProjectId] = useState('');
   const [priority, setPriority] = useState('Medium');
   const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [description, setDescription] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
+  const [showAddProject, setShowAddProject] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -54,6 +58,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
 
   useEffect(() => {
     fetchCategories();
+    fetchProjects();
   }, []);
 
   const fetchCategories = async (selectCategoryId) => {
@@ -71,16 +76,29 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
     }
   };
 
+  const fetchProjects = async (selectProjectId) => {
+    try {
+      const projectsData = await projectService.getAllProjects();
+      setProjects(projectsData);
+      if (selectProjectId !== undefined) {
+        setProjectId(selectProjectId);
+      }
+    } catch (error) {
+      console.error('Failed to fetch projects:', error);
+    }
+  };
+
   useEffect(() => {
     if (task && categories.length > 0 && !categoryId) {
       setTitle(task.title || '');
       setCategoryId(task.categoryId?._id || categories[0]?._id || '');
+      setProjectId(task.projectId?._id || task.projectId || '');
       setPriority(task.priority || 'Medium');
       setStartDate(formatDateForInput(task.startDate));
       setDueDate(formatDateForInput(task.dueDate));
       setDescription(task.description || '');
     }
-  }, [task, categories]);
+  }, [task, categories, categoryId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -91,13 +109,12 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
       const updatedTask = {
         title,
         categoryId: categoryId || undefined,
+        projectId: projectId || undefined,
         priority,
         startDate: startDate || undefined,
         dueDate: dueDate || undefined,
         description,
       };
-      
-      console.log('Submitting updated task:', updatedTask);
       
       await taskService.updateTask(task._id, updatedTask);
       
@@ -144,7 +161,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="edit-category" className="block text-sm font-medium text-gray-700 mb-2">
             Category
@@ -165,6 +182,30 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
               <option key={cat._id} value={cat._id}>{cat.name}</option>
             ))}
             <option value="__add_more__" className="text-purple-600 font-medium">+ Add more</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="edit-project" className="block text-sm font-medium text-gray-700 mb-2">
+            Project
+          </label>
+          <select
+            id="edit-project"
+            value={projectId}
+            onChange={(e) => {
+              if (e.target.value === '__add_project__') {
+                setShowAddProject(true);
+              } else {
+                setProjectId(e.target.value);
+              }
+            }}
+            className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-sky-300 focus:ring-4 focus:ring-sky-200/60"
+          >
+            <option value="">No project</option>
+            {projects.map((project) => (
+              <option key={project._id} value={project._id}>{project.name}</option>
+            ))}
+            <option value="__add_project__" className="text-sky-600 font-medium">+ Add project</option>
           </select>
         </div>
 
@@ -257,6 +298,25 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated }) => {
                 onClose={() => setShowAddCategory(false)}
                 onCategoryCreated={(newCategory) => {
                   fetchCategories(newCategory?._id || newCategory?.category?._id);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAddProject && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
+            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 rounded-t-2xl">
+              <h2 className="text-xl font-semibold text-gray-900">Add Project</h2>
+            </div>
+            <div className="px-6 py-5">
+              <AddProjectForm
+                onClose={() => setShowAddProject(false)}
+                onProjectCreated={(newProject) => {
+                  fetchProjects(newProject?._id);
+                  onProjectCreated?.(newProject);
                 }}
               />
             </div>

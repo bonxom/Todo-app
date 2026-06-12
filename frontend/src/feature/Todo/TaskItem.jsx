@@ -10,6 +10,7 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete 
   };
 
   const categoryColors = 'bg-purple-100 text-purple-800';
+  const projectColors = 'bg-sky-100 text-sky-800';
 
   const getDaysLeft = (deadline) => {
     const today = new Date();
@@ -65,6 +66,13 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete 
           {task.title}
         </h3>
         <div className="flex gap-2 mt-3">
+          {task.projectId?.name && (
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-medium ${projectColors}`}
+            >
+              {task.projectId.name}
+            </span>
+          )}
           {task.categoryId?.name && (
             <span
               className={`px-3 py-1 rounded-full text-xs font-medium ${categoryColors || 'bg-gray-100 text-gray-800'}`}
@@ -154,4 +162,3 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete 
 };
 
 export default TaskItem;
-

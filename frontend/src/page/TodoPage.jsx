@@ -7,13 +7,18 @@ import SearchBar from '../feature/Todo/SearchBar';
 import TaskSelector from '../feature/Todo/TaskSelector';
 import TaskList from '../feature/Todo/TaskList';
 import ProgressBar from '../feature/Todo/ProgressBar';
+import ProjectOverviewGrid from '../feature/Todo/ProjectOverviewGrid';
 import ChatBubble from '../component/ChatBuble';
 import AddCategoryForm from '../feature/Todo/Form/AddCategoryForm';
+import AddProjectForm from '../feature/Todo/Form/AddProjectForm';
 import GiveUpDialog from '../feature/Dialog/GiveUpDialog';
 import NotInProgressDialog from '../feature/Dialog/NotInProgressDialog';
 import DeleteDialog from '../feature/Dialog/DeleteDialog';
-import { taskService, categoryService } from '../api/apiService';
+import { taskService, projectService } from '../api/apiService';
 import { useTaskRefresh } from '../context/TaskRefreshContext';
+
+const ALL_PROJECT_FILTER = 'all-projects';
+const STANDALONE_PROJECT_FILTER = 'standalone-projects';
 
 const TodoPage = () => {
   const { refreshTrigger } = useTaskRefresh();
@@ -29,14 +34,22 @@ const TodoPage = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState(['pending', 'in-progress', 'completed', 'given-up']);
+  const [selectedProjectId, setSelectedProjectId] = useState(ALL_PROJECT_FILTER);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [categories, setCategories] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
+  const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
 
   // Lock body scroll when any modal is open
   useEffect(() => {
-    if (isGiveUpModalOpen || isNotInProgressModalOpen || isDeleteModalOpen) {
+    if (
+      isGiveUpModalOpen ||
+      isNotInProgressModalOpen ||
+      isDeleteModalOpen ||
+      isAddCategoryModalOpen ||
+      isAddProjectModalOpen
+    ) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -44,53 +57,44 @@ const TodoPage = () => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isGiveUpModalOpen, isNotInProgressModalOpen, isDeleteModalOpen]);
+  }, [
+    isGiveUpModalOpen,
+    isNotInProgressModalOpen,
+    isDeleteModalOpen,
+    isAddCategoryModalOpen,
+    isAddProjectModalOpen,
+  ]);
 
-  // Fetch tasks on component mount
+  const sortTasksByDueDate = (taskList) => {
+    return [...taskList].sort((a, b) => {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return new Date(a.dueDate) - new Date(b.dueDate);
+    });
+  };
+
+  const fetchTasksAndProjects = async () => {
+    try {
+      setIsLoading(true);
+      const [taskResponse, projectResponse] = await Promise.all([
+        taskService.getAllTasks(),
+        projectService.getAllProjects(),
+      ]);
+
+      const tasksData = Array.isArray(taskResponse) ? taskResponse : taskResponse.tasks || [];
+      setTasks(sortTasksByDueDate(tasksData));
+      setProjects(projectResponse || []);
+    } catch (error) {
+      console.error('Failed to fetch Todo data:', error);
+    } finally {
+      setIsLoading(false);
+      setIsInitialLoad(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setIsLoading(true);
-        const response = await taskService.getAllTasks();
-        console.log('API Response:', response);
-        // API trả về array trực tiếp hoặc object với tasks property
-        const tasksData = Array.isArray(response) ? response : response.tasks;
-        // sort taskData theo dueDate
-        tasksData.sort((a, b) => {
-          if (!a.dueDate) return 1;
-          if (!b.dueDate) return -1;
-          return new Date(a.dueDate) - new Date(b.dueDate);
-        });
-        if (tasksData) {
-          setTasks(tasksData);
-          console.log('Tasks loaded:', tasksData);
-        }
-      } catch (error) {
-        console.error('Failed to fetch tasks:', error);
-      } finally {
-        setIsLoading(false);
-        setIsInitialLoad(false);
-      }
-    };
-
-    fetchTasks();
-  }, [refreshTrigger]); // Listen to refreshTrigger
-
-  // Fetch categories on component mount
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await categoryService.getAllCategories();
-        const categoriesData = Array.isArray(response) ? response : response.categories;
-        if (categoriesData) {
-          setCategories(categoriesData.map(cat => cat.name));
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      }
-    };
-    fetchCategories();
-  }, []);
+    fetchTasksAndProjects();
+  }, [refreshTrigger]);
 
   const handleToggleComplete = async (taskId) => {
     try {
@@ -109,7 +113,7 @@ const TodoPage = () => {
       
       // If task is in-progress, mark it as finished
       await taskService.finishTask(taskId);
-      await refreshTasks();
+      await fetchTasksAndProjects();
     } catch (error) {
       console.error('Failed to toggle task:', error);
       alert(error.response?.data?.message || 'Failed to update task. Please try again.');
@@ -119,7 +123,7 @@ const TodoPage = () => {
   const handleStart = async (taskId) => {
     try {
       await taskService.startTask(taskId);
-      await refreshTasks();
+      await fetchTasksAndProjects();
     } catch (error) {
       console.error('Failed to start task:', error);
       alert(error.response?.data?.message || 'Failed to start task. Please try again.');
@@ -139,7 +143,7 @@ const TodoPage = () => {
   const confirmGiveUp = async () => {
     try {
       await taskService.giveUpTask(taskToGiveUp);
-      await refreshTasks();
+      await fetchTasksAndProjects();
       setIsGiveUpModalOpen(false);
       setTaskToGiveUp(null);
     } catch (error) {
@@ -156,7 +160,7 @@ const TodoPage = () => {
   const confirmDelete = async () => {
     try {
       await taskService.deleteTask(taskToDelete);
-      setTasks(tasks.filter((task) => task._id !== taskToDelete && task.id !== taskToDelete));
+      await fetchTasksAndProjects();
       setIsDeleteModalOpen(false);
       setTaskToDelete(null);
     } catch (error) {
@@ -169,30 +173,99 @@ const TodoPage = () => {
     return tasks.filter((task) => {
       const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = selectedStatus.includes(task.status);
-      return matchesSearch && matchesStatus;
+      const taskProjectId = task.projectId?._id || task.projectId || null;
+      const matchesProject = selectedProjectId === ALL_PROJECT_FILTER
+        ? true
+        : selectedProjectId === STANDALONE_PROJECT_FILTER
+          ? !taskProjectId
+          : taskProjectId === selectedProjectId;
+
+      return matchesSearch && matchesStatus && matchesProject;
     });
-  }, [tasks, searchTerm, selectedStatus]);
+  }, [tasks, searchTerm, selectedStatus, selectedProjectId]);
 
-  const completedCount = useMemo(() => {
-    return tasks.filter((task) => task.status === 'completed').length;
+  const overallSummary = useMemo(() => {
+    const completed = tasks.filter((task) => task.status === 'completed').length;
+
+    return {
+      completed,
+      total: tasks.length,
+    };
   }, [tasks]);
 
-  const totalCount = useMemo(() => {
-    return tasks.filter((task) => task.status === 'in-progress' || task.status === 'completed').length;
-  }, [tasks]);
+  const visibleSummary = useMemo(() => {
+    const completed = filteredTasks.filter((task) => task.status === 'completed').length;
 
-  const refreshTasks = async () => {
-    try {
-      const response = await taskService.getAllTasks();
-      console.log('Refresh Response:', response);
-      const tasksData = Array.isArray(response) ? response : response.tasks;
-      if (tasksData) {
-        setTasks(tasksData);
-      }
-    } catch (error) {
-      console.error('Failed to refresh tasks:', error);
+    return {
+      completed,
+      total: filteredTasks.length,
+    };
+  }, [filteredTasks]);
+
+  const selectedProject = useMemo(() => {
+    if (selectedProjectId === ALL_PROJECT_FILTER || selectedProjectId === STANDALONE_PROJECT_FILTER) {
+      return null;
     }
-  };
+
+    return projects.find((project) => project._id === selectedProjectId) || null;
+  }, [projects, selectedProjectId]);
+
+  const projectCards = useMemo(() => {
+    const buildSummary = (projectId) => {
+      const projectTasks = tasks.filter((task) => {
+        const taskProjectId = task.projectId?._id || task.projectId || null;
+        return projectId === STANDALONE_PROJECT_FILTER ? !taskProjectId : taskProjectId === projectId;
+      });
+
+      return {
+        total: projectTasks.length,
+        completed: projectTasks.filter((task) => task.status === 'completed').length,
+      };
+    };
+
+    const allCard = {
+      id: ALL_PROJECT_FILTER,
+      eyebrow: 'Overview',
+      name: 'All Tasks',
+      description: 'See every task across standalone work and project-based work.',
+      ...overallSummary,
+      badgeClassName: 'bg-indigo-100 text-indigo-700',
+      accentClassName: 'from-indigo-500 to-purple-600',
+      progressLabel: 'Overall completion',
+      emptyLabel: 'No tasks yet',
+    };
+
+    const projectItems = projects.map((project) => {
+      const summary = buildSummary(project._id);
+
+      return {
+        id: project._id,
+        eyebrow: 'Project',
+        name: project.name,
+        description: project.description || 'No description yet. Use this space to capture the goal of the work.',
+        ...summary,
+        badgeClassName: 'bg-sky-100 text-sky-700',
+        accentClassName: 'from-sky-500 to-cyan-600',
+        progressLabel: `${project.name} progress`,
+        emptyLabel: 'No tasks in this project yet',
+      };
+    });
+
+    const standaloneSummary = buildSummary(STANDALONE_PROJECT_FILTER);
+    const standaloneCard = {
+      id: STANDALONE_PROJECT_FILTER,
+      eyebrow: 'Flexible',
+      name: 'Standalone',
+      description: 'Tasks that stay outside a project but still belong in your daily list.',
+      ...standaloneSummary,
+      badgeClassName: 'bg-slate-100 text-slate-700',
+      accentClassName: 'from-slate-500 to-slate-700',
+      progressLabel: 'Standalone progress',
+      emptyLabel: 'No standalone tasks right now',
+    };
+
+    return [allCard, ...projectItems, standaloneCard];
+  }, [projects, tasks, overallSummary]);
 
   if (isInitialLoad && isLoading) {
     return (
@@ -212,7 +285,8 @@ const TodoPage = () => {
     <AddTaskButton
       isOpen={isModalOpen}
       onClose={() => setIsModalOpen(false)}
-      onTaskCreated={refreshTasks}
+      onTaskCreated={fetchTasksAndProjects}
+      onProjectCreated={fetchTasksAndProjects}
     />
 
     <TaskDetailButton
@@ -222,7 +296,8 @@ const TodoPage = () => {
         setIsEditModalOpen(false);
         setSelectedTask(null);
       }}
-      onTaskUpdated={refreshTasks}
+      onTaskUpdated={fetchTasksAndProjects}
+      onProjectCreated={fetchTasksAndProjects}
     />
 
     <GiveUpDialog
@@ -250,23 +325,39 @@ const TodoPage = () => {
       
       <MainLayout>
       <div className="flex justify-center items-start min-h-full p-6">
-        <div className="w-full max-w-4xl mx-auto bg-gray-100/50 backdrop-blur-sm rounded-xl shadow-lg p-8">
+        <div className="w-full max-w-6xl mx-auto bg-gray-100/50 backdrop-blur-sm rounded-[28px] shadow-lg p-6 sm:p-8">
           <div className="mb-8">
             <h1 className="flex justify-center text-3xl font-bold mb-3 bg-gradient-to-r bg-linear-to-br from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
               My Todo App
             </h1> 
             <p className="flex justify-center text-gray-500 mb-2">Stay organized and productive</p>
             <div className="flex justify-center gap-2 text-sm text-gray-500">
-              <span>{completedCount} completed</span>
+              <span>{visibleSummary.completed} completed</span>
               <span>·</span>
-              <span>{totalCount} total tasks</span>
+              <span>{visibleSummary.total} visible tasks</span>
+              {selectedProject && (
+                <>
+                  <span>·</span>
+                  <span>{selectedProject.name}</span>
+                </>
+              )}
             </div>
           </div>
 
           <ActionButtons 
             onAddTask={() => setIsModalOpen(true)} 
             onAddCategory={() => setIsAddCategoryModalOpen(true)}
+            onAddProject={() => setIsAddProjectModalOpen(true)}
           />
+
+          <div className="mb-6">
+            <ProjectOverviewGrid
+              items={projectCards}
+              selectedProjectId={selectedProjectId}
+              onSelectProject={setSelectedProjectId}
+              onCreateProject={() => setIsAddProjectModalOpen(true)}
+            />
+          </div>
 
           <div className="flex flex-col gap-6 my-6">
             <div>
@@ -288,7 +379,13 @@ const TodoPage = () => {
           />
 
           <div className="mt-6">
-            <ProgressBar completed={completedCount} total={totalCount} />
+            <ProgressBar
+              title={selectedProject ? `${selectedProject.name} progress` : 'Overall progress'}
+              completed={visibleSummary.completed}
+              total={visibleSummary.total}
+              accentClassName={selectedProject ? 'from-sky-500 to-cyan-600' : 'from-blue-500 to-purple-600'}
+              emptyLabel={selectedProject ? 'No tasks in this project yet' : 'No tasks yet'}
+            />
           </div>
         </div>
       </div>
@@ -306,13 +403,26 @@ const TodoPage = () => {
               onClose={() => setIsAddCategoryModalOpen(false)}
               onCategoryCreated={() => {
                 setIsAddCategoryModalOpen(false);
-                // Refresh categories list
-                categoryService.getAllCategories().then(response => {
-                  const categoriesData = Array.isArray(response) ? response : response.categories;
-                  if (categoriesData) {
-                    setCategories(categoriesData.map(cat => cat.name));
-                  }
-                });
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    )}
+
+    {isAddProjectModalOpen && (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div className="bg-gradient-to-r from-sky-600 to-cyan-600 px-6 py-4">
+            <h2 className="text-xl font-semibold text-white">Add New Project</h2>
+          </div>
+          <div className="p-6">
+            <AddProjectForm
+              onClose={() => setIsAddProjectModalOpen(false)}
+              onProjectCreated={(project) => {
+                setIsAddProjectModalOpen(false);
+                setSelectedProjectId(project?._id || ALL_PROJECT_FILTER);
+                fetchTasksAndProjects();
               }}
             />
           </div>
@@ -326,4 +436,3 @@ const TodoPage = () => {
 };
 
 export default TodoPage;
-
