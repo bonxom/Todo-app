@@ -14,7 +14,14 @@ const ProgressBar = ({
         <h3 className={`${compact ? 'text-sm' : 'text-lg'} font-semibold text-gray-800`}>{title}</h3>
         <span className={`${compact ? 'text-sm' : 'text-lg'} font-bold text-purple-600`}>{percentage}%</span>
       </div>
-      <div className={`w-full bg-gray-200 rounded-full overflow-hidden ${compact ? 'h-2.5' : 'h-3'}`}>
+      <div
+        className={`w-full bg-gray-200 rounded-full overflow-hidden ${compact ? 'h-2.5' : 'h-3'}`}
+        role="progressbar"
+        aria-label={title}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percentage}
+      >
         <div
           className={`h-full bg-gradient-to-r transition-all duration-300 ${accentClassName}`}
           style={{ width: `${percentage}%` }}

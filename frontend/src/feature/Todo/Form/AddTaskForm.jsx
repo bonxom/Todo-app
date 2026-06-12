@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import AddCategoryForm from './AddCategoryForm';
 import AddProjectForm from './AddProjectForm';
 import { taskService, categoryService, projectService } from '../../../api/apiService';
@@ -16,29 +16,22 @@ const AddTaskForm = ({ onClose, onTaskCreated, onProjectCreated, initialDueDate 
   const [categories, setCategories] = useState([]);
   const [projects, setProjects] = useState([]);
 
-  useEffect(() => {
-    fetchCategories();
-    fetchProjects();
-  }, []);
-
-  const fetchCategories = async (selectCategoryId) => {
+  const fetchCategories = useCallback(async (selectCategoryId) => {
     try {
       const response = await categoryService.getAllCategories();
       const categoriesData = Array.isArray(response) ? response : response.categories;
       if (categoriesData && categoriesData.length > 0) {
         setCategories(categoriesData);
-        if (selectCategoryId) {
-          setCategoryId(selectCategoryId);
-        } else if (!categoryId) {
-          setCategoryId(categoriesData[0]?._id || '');
-        }
+        setCategoryId((currentCategoryId) => (
+          selectCategoryId || currentCategoryId || categoriesData[0]?._id || ''
+        ));
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
     }
-  };
+  }, []);
 
-  const fetchProjects = async (selectProjectId) => {
+  const fetchProjects = useCallback(async (selectProjectId) => {
     try {
       const projectsData = await projectService.getAllProjects();
       setProjects(projectsData);
@@ -49,7 +42,12 @@ const AddTaskForm = ({ onClose, onTaskCreated, onProjectCreated, initialDueDate 
     } catch (error) {
       console.error('Failed to fetch projects:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchProjects();
+  }, [fetchCategories, fetchProjects]);
 
   const handleReset = () => {
     setTitle('');

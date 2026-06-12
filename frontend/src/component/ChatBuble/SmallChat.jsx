@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Minimize2, MessageSquare, Sparkles } from 'lucide-react';
 import ChatField from './ChatField';
 import { aiService } from '../../api/apiService';
-import { useTaskRefresh } from '../../context/TaskRefreshContext';
+import { useTaskRefresh } from '../../context/useTaskRefresh';
 
 const SmallChat = ({ onClose, onMinimize }) => {
   const { triggerRefresh } = useTaskRefresh();

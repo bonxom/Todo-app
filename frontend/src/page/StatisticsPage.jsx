@@ -37,10 +37,11 @@ const StatisticsPage = () => {
     return (
       <>
         <MainLayout>
-          <div className="flex justify-center items-center min-h-full">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading statistics...</p>
+          <div className="flex min-h-full items-center justify-center p-6">
+            <div className="w-full max-w-4xl rounded-[2rem] border border-slate-200 bg-white px-6 py-10 text-center shadow-sm">
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-slate-200 border-t-sky-500" />
+              <p className="text-lg font-semibold text-slate-900">Loading statistics</p>
+              <p className="mt-2 text-sm text-slate-500">Preparing summaries, charts, and the last year of activity.</p>
             </div>
           </div>
         </MainLayout>
@@ -53,13 +54,14 @@ const StatisticsPage = () => {
     return (
       <>
         <MainLayout>
-          <div className="flex justify-center items-center min-h-full">
-            <div className="text-center">
-              <div className="text-red-500 text-5xl mb-4">⚠️</div>
-              <p className="text-gray-600 mb-4">{error}</p>
+          <div className="flex min-h-full items-center justify-center p-6">
+            <div className="w-full max-w-4xl rounded-[2rem] border border-red-200 bg-white px-6 py-10 text-center shadow-sm">
+              <p className="text-lg font-semibold text-red-700">Unable to load statistics</p>
+              <p className="mt-2 text-sm text-red-600">{error}</p>
               <button
+                type="button"
                 onClick={fetchStats}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md"
+                className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl border border-red-300 bg-white px-5 text-sm font-medium text-red-700 transition-all hover:bg-red-50"
               >
                 Try Again
               </button>
@@ -75,10 +77,10 @@ const StatisticsPage = () => {
     return (
       <>
         <MainLayout>
-          <div className="flex justify-center items-center min-h-full">
-            <div className="text-center text-gray-500">
-              <div className="text-6xl mb-4">📊</div>
-              <p>No statistics available</p>
+          <div className="flex min-h-full items-center justify-center p-6">
+            <div className="w-full max-w-4xl rounded-[2rem] border border-slate-200 bg-white px-6 py-10 text-center shadow-sm">
+              <p className="text-lg font-semibold text-slate-900">No statistics available yet</p>
+              <p className="mt-2 text-sm text-slate-500">Create and complete tasks to populate the dashboard.</p>
             </div>
           </div>
         </MainLayout>

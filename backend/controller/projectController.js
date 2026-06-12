@@ -215,7 +215,7 @@ export const deleteProject = async (req, res) => {
             return res.status(403).json({ message: "You don't have permission to delete this project" });
         }
 
-        await Project.findByIdAndDelete(id);
+        await Project.findOneAndDelete({ _id: id });
 
         res.status(200).json({
             message: "Project deleted successfully. Related tasks were kept and unassigned from the project."

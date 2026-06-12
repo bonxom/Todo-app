@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import MainLayout from '../layout/MainLayout';
 import ActionButtons from '../feature/Todo/GenTaskButton';
 import AddTaskButton from '../feature/Todo/AddTaskButton';
@@ -15,10 +15,19 @@ import GiveUpDialog from '../feature/Dialog/GiveUpDialog';
 import NotInProgressDialog from '../feature/Dialog/NotInProgressDialog';
 import DeleteDialog from '../feature/Dialog/DeleteDialog';
 import { taskService, projectService } from '../api/apiService';
-import { useTaskRefresh } from '../context/TaskRefreshContext';
+import { useTaskRefresh } from '../context/useTaskRefresh';
 
 const ALL_PROJECT_FILTER = 'all-projects';
 const STANDALONE_PROJECT_FILTER = 'standalone-projects';
+const DEFAULT_STATUS_FILTERS = ['pending', 'in-progress', 'completed', 'given-up'];
+
+const sortTasksByDueDate = (taskList) => {
+  return [...taskList].sort((a, b) => {
+    if (!a.dueDate) return 1;
+    if (!b.dueDate) return -1;
+    return new Date(a.dueDate) - new Date(b.dueDate);
+  });
+};
 
 const TodoPage = () => {
   const { refreshTrigger } = useTaskRefresh();
@@ -33,10 +42,11 @@ const TodoPage = () => {
   const [isNotInProgressModalOpen, setIsNotInProgressModalOpen] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState(['pending', 'in-progress', 'completed', 'given-up']);
+  const [selectedStatus, setSelectedStatus] = useState(DEFAULT_STATUS_FILTERS);
   const [selectedProjectId, setSelectedProjectId] = useState(ALL_PROJECT_FILTER);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [projects, setProjects] = useState([]);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
@@ -65,17 +75,10 @@ const TodoPage = () => {
     isAddProjectModalOpen,
   ]);
 
-  const sortTasksByDueDate = (taskList) => {
-    return [...taskList].sort((a, b) => {
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
-      return new Date(a.dueDate) - new Date(b.dueDate);
-    });
-  };
-
-  const fetchTasksAndProjects = async () => {
+  const fetchTasksAndProjects = useCallback(async () => {
     try {
       setIsLoading(true);
+      setErrorMessage('');
       const [taskResponse, projectResponse] = await Promise.all([
         taskService.getAllTasks(),
         projectService.getAllProjects(),
@@ -86,15 +89,16 @@ const TodoPage = () => {
       setProjects(projectResponse || []);
     } catch (error) {
       console.error('Failed to fetch Todo data:', error);
+      setErrorMessage(error.response?.data?.message || 'Failed to load tasks or projects.');
     } finally {
       setIsLoading(false);
       setIsInitialLoad(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTasksAndProjects();
-  }, [refreshTrigger]);
+  }, [fetchTasksAndProjects, refreshTrigger]);
 
   const handleToggleComplete = async (taskId) => {
     try {
@@ -209,6 +213,41 @@ const TodoPage = () => {
 
     return projects.find((project) => project._id === selectedProjectId) || null;
   }, [projects, selectedProjectId]);
+
+  const taskListEmptyState = useMemo(() => {
+    if (searchTerm.trim()) {
+      return {
+        title: 'No tasks match this search',
+        description: 'Try a shorter title search or clear the project and status filters.',
+      };
+    }
+
+    if (selectedProjectId === STANDALONE_PROJECT_FILTER) {
+      return {
+        title: 'No standalone tasks found',
+        description: 'Create a task without selecting a project, or switch back to all tasks.',
+      };
+    }
+
+    if (selectedProject) {
+      return {
+        title: `No tasks in ${selectedProject.name}`,
+        description: 'Assign tasks to this project from the add or edit task forms to track them here.',
+      };
+    }
+
+    if (selectedStatus.length !== DEFAULT_STATUS_FILTERS.length) {
+      return {
+        title: 'No tasks match these statuses',
+        description: 'Adjust the status filter to bring other tasks back into view.',
+      };
+    }
+
+    return {
+      title: 'No tasks yet',
+      description: 'Add your first task to start building a daily list and project progress.',
+    };
+  }, [searchTerm, selectedProject, selectedProjectId, selectedStatus.length]);
 
   const projectCards = useMemo(() => {
     const buildSummary = (projectId) => {
@@ -344,6 +383,24 @@ const TodoPage = () => {
             </div>
           </div>
 
+          {errorMessage ? (
+            <div className="mb-6 rounded-[1.6rem] border border-amber-200 bg-amber-50/80 px-5 py-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">Unable to refresh the latest todo data</p>
+                  <p className="mt-1 text-sm text-amber-700">{errorMessage}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={fetchTasksAndProjects}
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-300 bg-white px-4 text-sm font-medium text-amber-800 transition-all hover:bg-amber-100"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <ActionButtons 
             onAddTask={() => setIsModalOpen(true)} 
             onAddCategory={() => setIsAddCategoryModalOpen(true)}
@@ -371,6 +428,8 @@ const TodoPage = () => {
 
           <TaskList
             tasks={filteredTasks}
+            isLoading={isLoading && !isInitialLoad}
+            emptyState={taskListEmptyState}
             onToggleComplete={handleToggleComplete}
             onEdit={handleEdit}
             onStart={handleStart}

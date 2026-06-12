@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, useCallback } from 'react';
-
-const TaskRefreshContext = createContext();
+import { useCallback, useState } from 'react';
+import TaskRefreshContext from './taskRefreshContext';
 
 export const TaskRefreshProvider = ({ children }) => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -14,12 +13,4 @@ export const TaskRefreshProvider = ({ children }) => {
       {children}
     </TaskRefreshContext.Provider>
   );
-};
-
-export const useTaskRefresh = () => {
-  const context = useContext(TaskRefreshContext);
-  if (!context) {
-    throw new Error('useTaskRefresh must be used within TaskRefreshProvider');
-  }
-  return context;
 };

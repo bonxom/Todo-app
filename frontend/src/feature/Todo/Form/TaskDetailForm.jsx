@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import AddCategoryForm from './AddCategoryForm';
 import AddProjectForm from './AddProjectForm';
 import { taskService, categoryService, projectService } from '../../../api/apiService';
@@ -16,6 +16,14 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState([]);
   const [projects, setProjects] = useState([]);
+  const fallbackCategoryId = categories[0]?._id || '';
+  const taskCategoryId = task?.categoryId?._id || task?.categoryId || '';
+  const taskProjectId = task?.projectId?._id || task?.projectId || '';
+  const taskTitle = task?.title || '';
+  const taskPriority = task?.priority || 'Medium';
+  const taskStartDate = task?.startDate || '';
+  const taskDueDate = task?.dueDate || '';
+  const taskDescription = task?.description || '';
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -56,12 +64,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
     return `${year}-${month}-${day}`;
   };
 
-  useEffect(() => {
-    fetchCategories();
-    fetchProjects();
-  }, []);
-
-  const fetchCategories = async (selectCategoryId) => {
+  const fetchCategories = useCallback(async (selectCategoryId) => {
     try {
       const response = await categoryService.getAllCategories();
       const categoriesData = Array.isArray(response) ? response : response.categories;
@@ -74,9 +77,9 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
     } catch (error) {
       console.error('Failed to fetch categories:', error);
     }
-  };
+  }, []);
 
-  const fetchProjects = async (selectProjectId) => {
+  const fetchProjects = useCallback(async (selectProjectId) => {
     try {
       const projectsData = await projectService.getAllProjects();
       setProjects(projectsData);
@@ -86,19 +89,42 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
     } catch (error) {
       console.error('Failed to fetch projects:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (task && categories.length > 0 && !categoryId) {
-      setTitle(task.title || '');
-      setCategoryId(task.categoryId?._id || categories[0]?._id || '');
-      setProjectId(task.projectId?._id || task.projectId || '');
-      setPriority(task.priority || 'Medium');
-      setStartDate(formatDateForInput(task.startDate));
-      setDueDate(formatDateForInput(task.dueDate));
-      setDescription(task.description || '');
+    fetchCategories();
+    fetchProjects();
+  }, [fetchCategories, fetchProjects]);
+
+  useEffect(() => {
+    if (!task) {
+      return;
     }
-  }, [task, categories, categoryId]);
+
+    setTitle(taskTitle);
+    setCategoryId(taskCategoryId || fallbackCategoryId);
+    setProjectId(taskProjectId);
+    setPriority(taskPriority);
+    setStartDate(formatDateForInput(taskStartDate));
+    setDueDate(formatDateForInput(taskDueDate));
+    setDescription(taskDescription);
+  }, [
+    fallbackCategoryId,
+    task,
+    taskCategoryId,
+    taskDescription,
+    taskDueDate,
+    taskPriority,
+    taskProjectId,
+    taskStartDate,
+    taskTitle,
+  ]);
+
+  useEffect(() => {
+    if (!categoryId && categories.length > 0) {
+      setCategoryId(taskCategoryId || fallbackCategoryId);
+    }
+  }, [categories.length, categoryId, fallbackCategoryId, taskCategoryId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

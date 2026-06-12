@@ -10,7 +10,6 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
 
@@ -37,11 +36,7 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
   const hasMore = sortedTasks.length > MAX_DISPLAY_TASKS;
 
   return (
-    <div
-      className="flex h-full flex-col rounded-[2rem] border border-gray-200 bg-white p-6 shadow-lg"
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-    >
+    <div className="flex h-full flex-col rounded-[2rem] border border-gray-200 bg-white p-6 shadow-lg">
       <TaskDetailButton
         isOpen={isEditModalOpen}
         task={selectedTask}
@@ -133,17 +128,15 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated }) => {
               />
             ))}
 
-            {isHovering ? (
+            {hasMore ? (
               <button
                 type="button"
                 onClick={() => setIsDetailModalOpen(true)}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-purple-300 p-3 text-sm font-medium text-purple-600 transition-all hover:border-purple-400 hover:bg-purple-50 hover:text-purple-700"
               >
                 <ChevronDown className="h-4 w-4" />
-                <span>View all</span>
+                <span>View all tasks</span>
               </button>
-            ) : hasMore ? (
-              <div className="py-2 text-center text-sm text-gray-400">•••</div>
             ) : null}
           </>
         ) : (

@@ -1,6 +1,6 @@
-import { Edit, Lock, LogOut } from 'lucide-react';
+import { Edit, Lock } from 'lucide-react';
 
-const ProfileActions = ({ onEditProfile, onChangePassword, onLogout }) => {
+const ProfileActions = ({ onEditProfile, onChangePassword }) => {
   const actions = [
     {
       label: 'Edit Profile',
@@ -21,24 +21,19 @@ const ProfileActions = ({ onEditProfile, onChangePassword, onLogout }) => {
       {actions.map((action, index) => {
         const Icon = action.icon;
         return (
-            <button
+          <button
             key={index}
+            type="button"
             onClick={action.onClick}
-            className="relative overflow-hidden text-white font-semibold py-4 px-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex items-center justify-center gap-2 cursor-pointer">
-            >
-            {/* Gradient mặc định */}
+            className="relative flex items-center justify-center gap-2 overflow-hidden rounded-lg px-6 py-4 font-semibold text-white shadow-md transition-shadow duration-300 hover:shadow-lg"
+          >
             <span className={`absolute inset-0 bg-gradient-to-r ${action.color} transition-opacity duration-500 opacity-100 hover:opacity-0`} />
-
-            {/* Gradient đảo chiều khi hover */}
             <span className={`absolute inset-0 bg-gradient-to-l ${action.color} transition-opacity duration-500 opacity-0 hover:opacity-100`} />
-
-            {/* Nội dung nằm trên */}
             <span className="relative z-10 flex items-center gap-2">
-                <Icon className="w-5 h-5" />
-                {action.label}
+              <Icon className="w-5 h-5" />
+              {action.label}
             </span>
-            </button>
-
+          </button>
         );
       })}
     </div>

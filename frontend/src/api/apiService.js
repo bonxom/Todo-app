@@ -19,15 +19,10 @@ export const authService = {
 
   // Login user
   login: async (credentials) => {
-    console.log('authService.login called with:', credentials);
-    console.log('API URL:', '/api/auth/login');
-    
     const response = await axiosInstance.post('/api/auth/login', credentials);
-    console.log('Login API response:', response.data);
-    
+
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
-      console.log('Token saved to localStorage');
     }
     return response.data;
   },
@@ -51,10 +46,13 @@ export const authService = {
   },
 
   // Logout
-  logout: () => {
-    const response = axiosInstance.post('/api/auth/logout');
-    localStorage.removeItem('token');
-    return response.data;
+  logout: async () => {
+    try {
+      const response = await axiosInstance.post('/api/auth/logout');
+      return response.data;
+    } finally {
+      localStorage.removeItem('token');
+    }
   },
 };
 

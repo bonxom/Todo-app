@@ -59,12 +59,12 @@ const Sidebar = ({ onWidthChange }) => {
     },
   ];
 
-  const handleLogout = () => {
-    console.log('Logout');
-    // TODO: Clear auth token and redirect to login
-    authService.logout();
-    navigate('/');
-
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      navigate('/');
+    }
   };
 
   return (
@@ -150,4 +150,3 @@ const Sidebar = ({ onWidthChange }) => {
 };
 
 export default Sidebar;
-

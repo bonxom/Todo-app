@@ -7,17 +7,13 @@ import AuthPage from '../page/AuthPage';
 import LandingPage from '../page/LandingPage';
 import StatisticsPage from '../page/StatisticsPage';
 
+const hasStoredToken = () => localStorage.getItem('token') !== null;
+
+const ProtectedRoute = ({ children }) => {
+  return hasStoredToken() ? children : <Navigate to="/login" replace />;
+};
+
 const AppRouter = () => {
-  // Check if user is authenticated
-  const isAuthenticated = () => {
-    return localStorage.getItem('token') !== null;
-  };
-
-  // Protected Route Component
-  const ProtectedRoute = ({ children }) => {
-    return isAuthenticated() ? children : <Navigate to="/login" replace />;
-  };
-
   return (
     <BrowserRouter>
       <Routes>
@@ -40,4 +36,3 @@ const AppRouter = () => {
 };
 
 export default AppRouter;
-
