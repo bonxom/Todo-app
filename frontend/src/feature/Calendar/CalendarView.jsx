@@ -15,7 +15,7 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
   const today = useMemo(() => startOfDay(new Date()), []);
   const [currentDate, setCurrentDate] = useState(today);
   const [selectedDate, setSelectedDate] = useState(today);
-  const [viewMode, setViewMode] = useState('month');
+  const [viewMode, setViewMode] = useState('week');
   const [selectedProjectIds, setSelectedProjectIds] = useState([]);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);

@@ -1,5 +1,7 @@
-import { CalendarClock, CircleDot, FolderKanban, Pencil, Tag, Trash2, XCircle } from 'lucide-react';
+import { useState } from 'react';
+import { CalendarClock, Check, CircleDot, FolderKanban, Pencil, Tag, Trash2, XCircle } from 'lucide-react';
 import { formatDateTime } from '../../utils/dateTime';
+import { toggleTaskCompletion } from '../../utils/taskCompletion';
 
 const formatLabel = (value) => {
   if (!value) return 'None';
@@ -37,10 +39,13 @@ const CalendarTaskDetailCard = ({
   onEdit,
   onGiveUp,
   onDelete,
+  onTaskUpdated,
 }) => {
+  const [isCompletionUpdating, setIsCompletionUpdating] = useState(false);
   const projectName = task.projectId?.name || 'Standalone';
   const categoryName = task.categoryId?.name || 'Uncategorized';
   const taskId = task._id || task.id;
+  const isCompleted = task.status === 'completed';
 
   const handleDragStart = (event) => {
     event.stopPropagation();
@@ -55,6 +60,45 @@ const CalendarTaskDetailCard = ({
     }
   };
 
+  const handleToggleCompletion = async (event) => {
+    event.stopPropagation();
+
+    if (isCompletionUpdating) {
+      return;
+    }
+
+    try {
+      setIsCompletionUpdating(true);
+      await toggleTaskCompletion(task);
+      onTaskUpdated?.();
+    } catch (error) {
+      console.error('Failed to update task completion:', error);
+      alert(error.response?.data?.message || 'Failed to update task completion.');
+    } finally {
+      setIsCompletionUpdating(false);
+    }
+  };
+
+  const badges = (
+    <div className="flex min-w-0 flex-wrap gap-2 md:justify-end">
+      <Badge className={priorityClassNames[task.priority] || 'border-slate-200 bg-slate-50 text-slate-700'}>
+        {task.priority || 'Medium'}
+      </Badge>
+      <Badge icon={CalendarClock} className="border-indigo-200 bg-indigo-50 text-indigo-700">
+        {formatDateTime(task.dueDate, 'No due date')}
+      </Badge>
+      <Badge icon={CircleDot} className={statusClassNames[task.status] || 'border-slate-200 bg-slate-50 text-slate-700'}>
+        {formatLabel(task.status)}
+      </Badge>
+      <Badge icon={FolderKanban} className="border-sky-200 bg-sky-50 text-sky-700">
+        {projectName}
+      </Badge>
+      <Badge icon={Tag} className="border-slate-200 bg-slate-50 text-slate-600">
+        {categoryName}
+      </Badge>
+    </div>
+  );
+
   return (
     <article
       draggable={Boolean(taskId)}
@@ -64,15 +108,34 @@ const CalendarTaskDetailCard = ({
         mode === 'panel'
           ? 'cursor-pointer hover:border-sky-200 hover:bg-sky-50/40 hover:shadow-md focus-within:ring-4 focus-within:ring-sky-100'
           : ''
-      } ${task.status === 'completed' ? 'opacity-75' : ''}`}
+      } ${isCompleted ? 'opacity-75' : ''}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className={`truncate text-sm font-semibold ${
-            task.status === 'completed' ? 'text-slate-500 line-through' : 'text-slate-900'
-          }`}>
-            {task.title}
-          </h3>
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={handleToggleCompletion}
+          disabled={isCompletionUpdating}
+          aria-pressed={isCompleted}
+          aria-label={isCompleted ? `Mark ${task.title} as in progress` : `Mark ${task.title} as completed`}
+          className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 disabled:cursor-wait disabled:opacity-70 ${
+            isCompleted
+              ? 'border-emerald-500 bg-emerald-500 text-white'
+              : 'border-slate-300 bg-white text-transparent hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-500'
+          }`}
+        >
+          <Check className="h-4 w-4" />
+        </button>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <h3 className={`min-w-0 truncate text-sm font-semibold md:max-w-[45%] ${
+              isCompleted ? 'text-slate-500 line-through' : 'text-slate-900'
+            }`}>
+              {task.title}
+            </h3>
+            {badges}
+          </div>
+
           {task.description ? (
             <p className="mt-1 max-h-10 overflow-hidden text-xs text-slate-500">{task.description}</p>
           ) : null}
@@ -117,24 +180,6 @@ const CalendarTaskDetailCard = ({
             </button>
           </div>
         ) : null}
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Badge className={priorityClassNames[task.priority] || 'border-slate-200 bg-slate-50 text-slate-700'}>
-          {task.priority || 'Medium'}
-        </Badge>
-        <Badge icon={CalendarClock} className="border-indigo-200 bg-indigo-50 text-indigo-700">
-          {formatDateTime(task.dueDate, 'No due date')}
-        </Badge>
-        <Badge icon={CircleDot} className={statusClassNames[task.status] || 'border-slate-200 bg-slate-50 text-slate-700'}>
-          {formatLabel(task.status)}
-        </Badge>
-        <Badge icon={FolderKanban} className="border-sky-200 bg-sky-50 text-sky-700">
-          {projectName}
-        </Badge>
-        <Badge icon={Tag} className="border-slate-200 bg-slate-50 text-slate-600">
-          {categoryName}
-        </Badge>
       </div>
 
       {mode === 'panel' ? (

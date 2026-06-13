@@ -12,10 +12,10 @@ import ChatBubble from '../component/ChatBuble';
 import AddCategoryForm from '../feature/Todo/Form/AddCategoryForm';
 import AddProjectForm from '../feature/Todo/Form/AddProjectForm';
 import GiveUpDialog from '../feature/Dialog/GiveUpDialog';
-import NotInProgressDialog from '../feature/Dialog/NotInProgressDialog';
 import DeleteDialog from '../feature/Dialog/DeleteDialog';
 import { taskService, projectService } from '../api/apiService';
 import { useTaskRefresh } from '../context/useTaskRefresh';
+import { toggleTaskCompletion } from '../utils/taskCompletion';
 
 const ALL_PROJECT_FILTER = 'all-projects';
 const STANDALONE_PROJECT_FILTER = 'standalone-projects';
@@ -39,7 +39,6 @@ const TodoPage = () => {
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [isGiveUpModalOpen, setIsGiveUpModalOpen] = useState(false);
   const [taskToGiveUp, setTaskToGiveUp] = useState(null);
-  const [isNotInProgressModalOpen, setIsNotInProgressModalOpen] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState(DEFAULT_STATUS_FILTERS);
@@ -56,7 +55,6 @@ const TodoPage = () => {
   useEffect(() => {
     if (
       isGiveUpModalOpen ||
-      isNotInProgressModalOpen ||
       isDeleteModalOpen ||
       isAddCategoryModalOpen ||
       isAddProjectModalOpen
@@ -70,7 +68,6 @@ const TodoPage = () => {
     };
   }, [
     isGiveUpModalOpen,
-    isNotInProgressModalOpen,
     isDeleteModalOpen,
     isAddCategoryModalOpen,
     isAddProjectModalOpen,
@@ -106,18 +103,8 @@ const TodoPage = () => {
       const task = tasks.find(t => t._id === taskId);
       
       if (!task) return;
-      
-      // If task is already completed, do nothing
-      if (task.status === 'completed') return;
-      
-      // If task is not in-progress, show warning
-      if (task.status !== 'in-progress') {
-        setIsNotInProgressModalOpen(true);
-        return;
-      }
-      
-      // If task is in-progress, mark it as finished
-      await taskService.finishTask(taskId);
+
+      await toggleTaskCompletion(task);
       await fetchTasksAndProjects();
     } catch (error) {
       console.error('Failed to toggle task:', error);
@@ -357,11 +344,6 @@ const TodoPage = () => {
         setTaskToGiveUp(null);
       }}
       onConfirm={confirmGiveUp}
-    />
-
-    <NotInProgressDialog
-      isOpen={isNotInProgressModalOpen}
-      onClose={() => setIsNotInProgressModalOpen(false)}
     />
 
     <DeleteDialog

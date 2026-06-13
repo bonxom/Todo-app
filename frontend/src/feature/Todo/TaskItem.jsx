@@ -38,7 +38,6 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete 
   };
 
   const isPending = task.status === 'pending';
-  const isInProgress = task.status === 'in-progress';
 
   return (
     <div 
@@ -54,7 +53,7 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete 
         checked={task.status === 'completed'}
         onChange={() => onToggleComplete(task._id)}
         className="mt-1.5 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
-        disabled={!isInProgress}
+        aria-label={task.status === 'completed' ? `Mark ${task.title} as in progress` : `Mark ${task.title} as completed`}
       />
       
       <div className="flex-1 min-w-0">

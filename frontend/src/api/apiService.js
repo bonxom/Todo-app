@@ -257,5 +257,13 @@ export const statService = {
   getUserStats: async () => {
     const response = await axiosInstance.get('/api/stats/');
     return response.data;
-  } 
+  },
+
+  // Get completed tasks for a heatmap day
+  getCompletedTasksByDate: async (date) => {
+    const response = await axiosInstance.get('/api/stats/completed-tasks', {
+      params: { date },
+    });
+    return response.data;
+  },
 };

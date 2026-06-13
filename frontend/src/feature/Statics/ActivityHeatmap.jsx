@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { statService } from '../../api/apiService';
 import { createHeatmapModel, formatDateKeyLabel } from './statsUtils';
 
 const CELL_LEVEL_STYLES = [
   'bg-slate-200 border-slate-300/80',
   'bg-emerald-100 border-emerald-200',
-  'bg-emerald-300 border-emerald-400/80',
-  'bg-teal-500 border-teal-600/80',
-  'bg-slate-900 border-slate-900',
+  'bg-emerald-200 border-emerald-300',
+  'bg-emerald-400 border-emerald-500/80',
+  'bg-emerald-600 border-emerald-700',
 ];
 
 const WEEKDAY_LABELS = [
@@ -24,6 +25,108 @@ const formatCompletionLabel = (dateKey, count) => {
   return `${formatDateKeyLabel(dateKey)}: ${count} ${taskLabel}`;
 };
 
+const formatDateTimeLabel = (value, fallback = 'Not set') => {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return fallback;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(parsedDate);
+};
+
+const formatTimeLabel = (value) => {
+  if (!value) {
+    return 'Time unavailable';
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return 'Time unavailable';
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(parsedDate);
+};
+
+const formatStatusLabel = (status) => {
+  if (!status) {
+    return 'Unknown';
+  }
+
+  return status
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+};
+
+const getTaskProjectName = (task) => task?.project?.name || task?.projectId?.name || 'Standalone';
+
+const getTaskCategoryName = (task) => task?.category?.name || task?.categoryId?.name || 'Uncategorized';
+
+const MetadataBadge = ({ children, tone = 'slate' }) => {
+  const toneClassName = {
+    emerald: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    amber: 'border-amber-200 bg-amber-50 text-amber-700',
+    sky: 'border-sky-200 bg-sky-50 text-sky-700',
+    rose: 'border-rose-200 bg-rose-50 text-rose-700',
+    slate: 'border-slate-200 bg-slate-50 text-slate-600',
+  }[tone] || 'border-slate-200 bg-slate-50 text-slate-600';
+
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${toneClassName}`}>
+      {children}
+    </span>
+  );
+};
+
+const getPriorityTone = (priority) => {
+  if (priority === 'High') {
+    return 'rose';
+  }
+
+  if (priority === 'Medium') {
+    return 'amber';
+  }
+
+  return 'sky';
+};
+
+const CompletedTaskCard = ({ task }) => (
+  <article className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+      <div className="min-w-0">
+        <h3 className="truncate text-sm font-semibold text-slate-900">{task.title || 'Untitled task'}</h3>
+        {task.description ? (
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{task.description}</p>
+        ) : null}
+      </div>
+
+      <div className="flex flex-wrap gap-2 lg:justify-end">
+        <MetadataBadge tone={getPriorityTone(task.priority)}>{task.priority || 'No priority'}</MetadataBadge>
+        <MetadataBadge tone="emerald">Completed {formatTimeLabel(task.completedAt || task.completionDate)}</MetadataBadge>
+        <MetadataBadge>{formatStatusLabel(task.status)}</MetadataBadge>
+        <MetadataBadge tone="sky">Due {formatDateTimeLabel(task.dueDate)}</MetadataBadge>
+        <MetadataBadge>{getTaskProjectName(task)}</MetadataBadge>
+        <MetadataBadge>{getTaskCategoryName(task)}</MetadataBadge>
+      </div>
+    </div>
+  </article>
+);
+
 const SummaryPill = ({ label, value }) => (
   <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm">
     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{label}</p>
@@ -33,6 +136,11 @@ const SummaryPill = ({ label, value }) => (
 
 const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = '' }) => {
   const [activeDateKey, setActiveDateKey] = useState(null);
+  const [selectedDateKey, setSelectedDateKey] = useState(null);
+  const [completedTasks, setCompletedTasks] = useState([]);
+  const [isTaskListLoading, setIsTaskListLoading] = useState(false);
+  const [taskListError, setTaskListError] = useState('');
+  const taskListRequestId = useRef(0);
   const heatmap = useMemo(() => createHeatmapModel(dailyStats, 365), [dailyStats]);
 
   const monthLabelByColumn = useMemo(() => {
@@ -67,6 +175,47 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
 
     return heatmap.weeks.flat().find((cell) => cell.dateKey === activeDateKey) || fallbackCell;
   }, [activeDateKey, fallbackCell, heatmap.weeks]);
+
+  const selectedCell = useMemo(() => {
+    if (!selectedDateKey) {
+      return null;
+    }
+
+    return heatmap.weeks.flat().find((cell) => cell.dateKey === selectedDateKey) || null;
+  }, [heatmap.weeks, selectedDateKey]);
+
+  const handleCellSelect = async (cell) => {
+    if (!cell?.isInRange) {
+      return;
+    }
+
+    setSelectedDateKey(cell.dateKey);
+    setCompletedTasks([]);
+    setTaskListError('');
+    setIsTaskListLoading(true);
+    const requestId = taskListRequestId.current + 1;
+    taskListRequestId.current = requestId;
+
+    try {
+      const response = await statService.getCompletedTasksByDate(cell.dateKey);
+      if (requestId !== taskListRequestId.current) {
+        return;
+      }
+
+      setCompletedTasks(Array.isArray(response?.tasks) ? response.tasks : []);
+    } catch (error) {
+      if (requestId !== taskListRequestId.current) {
+        return;
+      }
+
+      const message = error?.response?.data?.message || 'Unable to load completed tasks for this day.';
+      setTaskListError(message);
+    } finally {
+      if (requestId === taskListRequestId.current) {
+        setIsTaskListLoading(false);
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -187,6 +336,7 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
                     {week.map((cell) => {
                       const tooltipLabel = formatCompletionLabel(cell.dateKey, cell.count);
                       const isActive = activeCell?.dateKey === cell.dateKey;
+                      const isSelected = selectedDateKey === cell.dateKey;
 
                       return (
                         <button
@@ -194,6 +344,8 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
                           type="button"
                           title={tooltipLabel}
                           aria-label={tooltipLabel}
+                          aria-pressed={isSelected}
+                          onClick={() => handleCellSelect(cell)}
                           onMouseEnter={() => setActiveDateKey(cell.dateKey)}
                           onFocus={() => setActiveDateKey(cell.dateKey)}
                           onMouseLeave={() => setActiveDateKey(null)}
@@ -202,7 +354,8 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
                             'h-4 w-4 rounded-[4px] border transition-transform duration-150',
                             cell.isInRange ? CELL_LEVEL_STYLES[cell.level] : 'border-transparent bg-transparent',
                             cell.isInRange ? 'hover:-translate-y-px focus-visible:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2' : '',
-                            isActive && cell.isInRange ? 'ring-2 ring-slate-900/20 ring-offset-1' : '',
+                            isActive && cell.isInRange && !isSelected ? 'ring-2 ring-slate-900/20 ring-offset-1' : '',
+                            isSelected && cell.isInRange ? 'ring-2 ring-emerald-700 ring-offset-2' : '',
                           ].join(' ')}
                           disabled={!cell.isInRange}
                         />
@@ -212,6 +365,59 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                Completed Tasks
+              </p>
+              <h3 className="mt-1 text-lg font-semibold text-slate-900">
+                {selectedDateKey ? formatDateKeyLabel(selectedDateKey) : 'Select a heatmap day'}
+              </h3>
+            </div>
+
+            {selectedCell ? (
+              <p className="text-sm text-slate-500">{formatCompletionLabel(selectedCell.dateKey, selectedCell.count)}</p>
+            ) : null}
+          </div>
+
+          <div className="mt-4">
+            {!selectedDateKey ? (
+              <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-500">
+                Click any day cell to inspect the tasks completed on that date.
+              </p>
+            ) : null}
+
+            {selectedDateKey && isTaskListLoading ? (
+              <div className="space-y-3" aria-live="polite">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="h-20 animate-pulse rounded-2xl bg-white" />
+                ))}
+              </div>
+            ) : null}
+
+            {selectedDateKey && taskListError && !isTaskListLoading ? (
+              <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {taskListError}
+              </p>
+            ) : null}
+
+            {selectedDateKey && !isTaskListLoading && !taskListError && completedTasks.length === 0 ? (
+              <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+                No tasks were completed on this day.
+              </p>
+            ) : null}
+
+            {selectedDateKey && !isTaskListLoading && !taskListError && completedTasks.length > 0 ? (
+              <div className="space-y-3">
+                {completedTasks.map((task) => (
+                  <CompletedTaskCard key={task._id} task={task} />
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
 

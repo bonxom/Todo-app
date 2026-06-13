@@ -1,4 +1,4 @@
-import { useState, memo } from 'react';
+import { useMemo, useState, memo } from 'react';
 import { taskService } from '../../api/apiService';
 import { isSameDay } from './calendarUtils';
 import { formatDateTime } from '../../utils/dateTime';
@@ -29,12 +29,27 @@ const formatCellTime = (value) => {
   }).format(date);
 };
 
+const getDueTimestamp = (task) => {
+  if (!task?.dueDate) return Number.POSITIVE_INFINITY;
+
+  const date = new Date(task.dueDate);
+  return Number.isNaN(date.getTime()) ? Number.POSITIVE_INFINITY : date.getTime();
+};
+
 const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onTaskUpdated, viewMode = 'month' }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const taskCount = tasks?.length || 0;
   const hasHighPriority = tasks?.some(task => task.priority === 'High');
   const hasMediumPriority = tasks?.some(task => task.priority === 'Medium');
   const hasOverdue = tasks?.some(task => task.isOverDue);
+  const sortedTasks = useMemo(() => {
+    return [...(tasks || [])].sort((left, right) => {
+      const dueDiff = getDueTimestamp(left) - getDueTimestamp(right);
+      if (dueDiff !== 0) return dueDiff;
+
+      return (left.title || '').localeCompare(right.title || '');
+    });
+  }, [tasks]);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -107,7 +122,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
         
         {taskCount > 0 && (
           <div className="flex flex-col gap-1.5 flex-1">
-            {tasks.slice(0, 2).map((task, idx) => (
+            {sortedTasks.slice(0, 2).map((task, idx) => (
               <div
                 key={task._id || task.id || idx}
                 className={`

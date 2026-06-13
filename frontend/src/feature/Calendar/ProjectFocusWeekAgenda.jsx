@@ -67,6 +67,7 @@ const ProjectFocusWeekAgenda = ({ selectedDate, tasks, selectedProjectCount = 0,
                 setSelectedTask(clickedTask);
                 setIsEditModalOpen(true);
               }}
+              onTaskUpdated={onTaskUpdated}
             />
           ))
         ) : (
