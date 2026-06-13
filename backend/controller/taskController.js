@@ -22,6 +22,7 @@ const TASK_POPULATE = [
         }
     }
 ];
+const VALID_TASK_STATUSES = ['pending', 'in-progress', 'completed', 'given-up'];
 
 const populateTaskQuery = (query) => {
     let populatedQuery = query;
@@ -101,6 +102,23 @@ const resolveProjectUpdate = async (projectId, userId) => {
         shouldUpdate: true,
         value: project._id
     };
+};
+
+const applyCompletionTimestampTransition = (update, currentStatus) => {
+    if (update.status === undefined) {
+        return;
+    }
+
+    if (update.status === 'completed') {
+        if (currentStatus !== 'completed') {
+            update.completedAt = new Date();
+        }
+        return;
+    }
+
+    if (currentStatus === 'completed') {
+        update.completedAt = null;
+    }
 };
 
 export const createTask = async (req, res) => {
@@ -222,7 +240,13 @@ export const updateTask = async (req, res) => {
         const update = {};
         if (title !== undefined) update.title = title;
         if (description !== undefined) update.description = description;
-        if (status !== undefined) update.status = status;
+        if (status !== undefined) {
+            if (!VALID_TASK_STATUSES.includes(status)) {
+                return res.status(400).json({ message: "Invalid status" });
+            }
+
+            update.status = status;
+        }
         if (priority !== undefined) update.priority = priority;
         if (categoryId !== undefined) {
             // If trying to set to null/empty, use Uncategorized instead
@@ -263,6 +287,8 @@ export const updateTask = async (req, res) => {
         if (startDateUpdate.shouldUpdate) update.startDate = startDateUpdate.value;
         if (dueDateUpdate.shouldUpdate) update.dueDate = dueDateUpdate.value;
 
+        applyCompletionTimestampTransition(update, task.status);
+
         if (Object.keys(update).length === 0) {
             return res.status(400).json({ message: "No fields to update" });
         }
@@ -275,7 +301,7 @@ export const updateTask = async (req, res) => {
         const updatedTask = await populateTaskQuery(Task.findByIdAndUpdate(
             id, 
             {$set: update},
-            { new: true }
+            { new: true, runValidators: true }
         ));
 
         res.status(200).json({ message: "Task updated successfully", task: updatedTask });
@@ -299,8 +325,8 @@ export const finishTask = async (req, res) => {
             return res.status(403).json({ message: "You don't have permission to update this task" });
         }
 
-        if (task.status !== 'in-progress') {
-            return res.status(400).json({ message: "Only in-progress tasks can be finished" });
+        if (task.status === 'completed') {
+            return res.status(400).json({ message: "Task is already completed" });
         }
 
         task.status = 'completed';

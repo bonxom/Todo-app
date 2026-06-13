@@ -5,6 +5,16 @@ import Task from '../model/Task.js';
 
 const initCategory = ['Work', 'Personal', 'Health', 'Uncategorized'];
 
+const toLocalDateKey = (value) => {
+    const date = new Date(value);
+
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')
+    ].join('-');
+};
+
 export const initializeAdmin = async () => {
     try {
         // Check if admin exists
@@ -120,7 +130,7 @@ export const updateStat = async (userId) => {
         stats.dailyStats = [];// Cập nhật stats cho tất cả users khi khởi động
         
         // Group completed tasks by date
-        const completedTasks = allTasks.filter(t => t.status === 'completed' && t.completedAt);
+        const completedTasks = allTasks.filter(t => t.status === 'completed' && (t.completedAt || t.updatedAt));
         const givenUpTasks = allTasks.filter(t => t.status === 'given-up' && t.updatedAt);
         
         // Create a map to store daily stats
@@ -128,7 +138,8 @@ export const updateStat = async (userId) => {
         
         // Process completed tasks
         for (const task of completedTasks) {
-            const dateStr = task.completedAt.toISOString().split('T')[0];
+            const completedDate = task.completedAt || task.updatedAt;
+            const dateStr = toLocalDateKey(completedDate);
             
             if (!dailyStatsMap.has(dateStr)) {
                 dailyStatsMap.set(dateStr, {
@@ -164,7 +175,7 @@ export const updateStat = async (userId) => {
         
         // Process given-up tasks
         for (const task of givenUpTasks) {
-            const dateStr = task.updatedAt.toISOString().split('T')[0];
+            const dateStr = toLocalDateKey(task.updatedAt);
             
             if (!dailyStatsMap.has(dateStr)) {
                 dailyStatsMap.set(dateStr, {
