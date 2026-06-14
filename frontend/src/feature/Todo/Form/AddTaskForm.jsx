@@ -191,13 +191,10 @@ const AddTaskForm = ({
           </label>
           <input
             id="dueDate"
-            type="text"
+            type="datetime-local"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            inputMode="numeric"
-            placeholder="yyyy/mm/dd hh:mm"
-            pattern="\d{4}/\d{2}/\d{2} \d{2}:\d{2}"
-            title="Use yyyy/mm/dd hh:mm, for example 2026/06/13 00:00"
+            step="60"
             className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
             required
           />

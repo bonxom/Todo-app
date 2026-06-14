@@ -1,4 +1,5 @@
 import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 import TodoPage from '../page/TodoPage';
 import ProfilePage from '../page/ProfilePage';
 import CategoryPage from '../page/CategoryPage';
@@ -7,10 +8,44 @@ import AuthPage from '../page/AuthPage';
 import LandingPage from '../page/LandingPage';
 import StatisticsPage from '../page/StatisticsPage';
 
-const hasStoredToken = () => localStorage.getItem('token') !== null;
+const MAIN_APP_ROUTE = '/dashboard';
+
+const AuthLoadingScreen = () => {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white text-gray-500">
+      Checking your session...
+    </div>
+  );
+};
+
+const RootRoute = () => {
+  const { isAuthReady, isAuthenticated } = useAuth();
+
+  if (!isAuthReady) {
+    return <AuthLoadingScreen />;
+  }
+
+  return isAuthenticated ? <Navigate to={MAIN_APP_ROUTE} replace /> : <LandingPage />;
+};
 
 const ProtectedRoute = ({ children }) => {
-  return hasStoredToken() ? children : <Navigate to="/login" replace />;
+  const { isAuthReady, isAuthenticated } = useAuth();
+
+  if (!isAuthReady) {
+    return <AuthLoadingScreen />;
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+const PublicOnlyRoute = ({ children }) => {
+  const { isAuthReady, isAuthenticated } = useAuth();
+
+  if (!isAuthReady) {
+    return <AuthLoadingScreen />;
+  }
+
+  return isAuthenticated ? <Navigate to={MAIN_APP_ROUTE} replace /> : children;
 };
 
 const AppRouter = () => {
@@ -18,11 +53,11 @@ const AppRouter = () => {
     <BrowserRouter>
       <Routes>
         {/* Landing Page */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<RootRoute />} />
         
         {/* Auth Routes */}
-        <Route path="/login" element={<AuthPage />} />
-        <Route path="/register" element={<AuthPage />} />
+        <Route path="/login" element={<PublicOnlyRoute><AuthPage /></PublicOnlyRoute>} />
+        <Route path="/register" element={<PublicOnlyRoute><AuthPage /></PublicOnlyRoute>} />
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><TodoPage /></ProtectedRoute>} />

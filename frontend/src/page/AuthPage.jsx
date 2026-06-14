@@ -5,10 +5,12 @@ import LoginForm from '../feature/Auth/LoginForm';
 import RegisterForm from '../feature/Auth/RegisterForm';
 import AuthOverlay from '../feature/Auth/AuthOverlay';
 import { authService } from '../api/apiService';
+import { useAuth } from '../context/useAuth';
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { setSession } = useAuth();
   
   const initialMode = location.pathname === '/register' ? 'register' : 'login';
   const [mode, setMode] = useState(initialMode);
@@ -28,11 +30,7 @@ const AuthPage = () => {
       
       const response = await authService.login(credentials);
       console.log('Login response:', response);
-      
-      // Store user info if needed
-      if (response.user) {
-        localStorage.setItem('user', JSON.stringify(response.user));
-      }
+      setSession(response);
       
       console.log('Login successful, redirecting...');
       // Redirect to main page
@@ -53,16 +51,15 @@ const AuthPage = () => {
       setIsLoading(true);
       
       // Register new user (auto login with token)
-      await authService.register({
+      const response = await authService.register({
         email: credentials.email,
         password: credentials.password,
         name: credentials.name,
         dob: credentials.dob
       });
-      
-      // Redirect to main page
-      // navigate('/', { replace: true });
-      switchMode('login');
+
+      setSession(response);
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       const errorMessage = error?.message || 'Registration failed. Please try again.';
       setErrors({ email: errorMessage });

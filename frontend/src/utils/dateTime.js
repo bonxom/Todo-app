@@ -29,14 +29,18 @@ export const formatDateOnly = (value, fallback = 'N/A') => {
   return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`;
 };
 
-export const toDateTimeLocalValue = (value) => {
+export const toDateTimeInputValue = (value) => {
   const date = toDate(value);
 
   if (!date) {
     return '';
   }
 
-  return formatDateTime(date, '');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+export const toDateTimeLocalValue = (value) => {
+  return toDateTimeInputValue(value);
 };
 
 export const toMidnightDateTimeLocalValue = (value = new Date()) => {

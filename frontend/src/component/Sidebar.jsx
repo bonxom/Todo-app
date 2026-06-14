@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { authService } from '../api/apiService';
+import { useAuth } from '../context/useAuth';
 
 export const drawerWidthExpanded = 304;
 export const drawerWidthCollapsed = 80;
@@ -9,6 +10,7 @@ export const drawerWidthCollapsed = 80;
 const Sidebar = ({ onWidthChange }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { clearSession } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const currentDrawerWidth = isExpanded ? drawerWidthExpanded : drawerWidthCollapsed;
@@ -63,6 +65,7 @@ const Sidebar = ({ onWidthChange }) => {
     try {
       await authService.logout();
     } finally {
+      clearSession();
       navigate('/');
     }
   };

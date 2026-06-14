@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import MainLayout from '../layout/MainLayout';
 import ProfileHeader from '../feature/Profile/ProfileHeader';
 import ProfileInfo from '../feature/Profile/ProfileInfo';
@@ -9,8 +9,10 @@ import ChangePasswordModal from '../feature/Profile/ChangePasswordModal';
 import AvatarUpload from '../feature/Profile/AvtUpload';
 import ChatBubble from '../component/ChatBuble';
 import { authService, taskService, categoryService } from '../api/apiService';
+import { useAuth } from '../context/useAuth';
 
 const ProfilePage = () => {
+  const { syncUser } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -22,17 +24,14 @@ const ProfilePage = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       setIsLoading(true);
       
       // Fetch user info
       const userData = await authService.getMe();
       setUser(userData);
+      syncUser(userData);
       
       // Fetch tasks and categories for stats
       const [tasks, categories] = await Promise.all([
@@ -55,7 +54,11 @@ const ProfilePage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [syncUser]);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
 
   const handleEditProfile = () => {
     setIsEditModalOpen(true);

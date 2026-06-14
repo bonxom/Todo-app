@@ -5,14 +5,21 @@ import { addPendingTask } from "./statController.js";
 import { normalizeTaskDateInput } from "../utils/dateTime.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import dotenv from "dotenv";
-dotenv.config();
+import { getAiApiKey } from "../config/env.js";
 
-// The client gets the API key from the environment variable `GEMINI_API_KEY`.
-const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
+const getAiClient = () => {
+    const apiKey = getAiApiKey();
+
+    if (!apiKey) {
+        throw new Error("Missing required environment variable: API_KEY");
+    }
+
+    return new GoogleGenAI({ apiKey });
+};
 
 export const generateTasksWithRequirement = async (req, res) => {
     try {
+        const ai = getAiClient();
         const { userRequirement } = req.body;
         
         if (!userRequirement) {
@@ -144,6 +151,7 @@ Create 3 practical, actionable tasks with:
 
 export const responseToUser = async (req, res) => {
     try {
+        const ai = getAiClient();
         const { userInput } = req.body;
         if (!userInput) {
             return res.status(400).json({ 

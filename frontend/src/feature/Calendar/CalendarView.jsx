@@ -170,14 +170,14 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
             onViewModeChange={handleViewModeChange}
           />
 
-          {viewMode === 'week' ? (
-            <ProjectFocusWeekAgenda
-              selectedDate={selectedDate}
-              tasks={selectedTasks}
-              selectedProjectCount={validSelectedProjectIds.length}
-              onTaskUpdated={onTaskUpdated}
-            />
-          ) : null}
+          <ProjectFocusWeekAgenda
+            selectedDate={selectedDate}
+            tasks={selectedTasks}
+            selectedProjectCount={validSelectedProjectIds.length}
+            onTaskUpdated={onTaskUpdated}
+            onAddTask={openAddTask}
+            onGenerateTasks={openGenerateTasks}
+          />
         </div>
 
         <div className="h-full" style={{ maxHeight: 'calc(100vh - 150px)' }}>
@@ -187,10 +187,6 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
             onToggleProject={handleProjectToggle}
             onSelectAllProjects={() => setSelectedProjectIds(projects.map((project) => project._id))}
             onClearProjects={() => setSelectedProjectIds([])}
-            selectedDate={selectedDate}
-            tasks={selectedTasks}
-            onTaskUpdated={onTaskUpdated}
-            showSelectedDayTasks={viewMode === 'month'}
             onAddTask={openAddTask}
             onGenerateTasks={openGenerateTasks}
           />

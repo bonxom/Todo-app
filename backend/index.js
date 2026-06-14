@@ -11,22 +11,52 @@ import taskRouter from "./route/taskRoute.js";
 import authRouter from "./route/authRoute.js";
 import aiRouter from "./route/aiRoutes.js";
 import statRouter from "./route/statRoute.js";
-import { init } from "./config/initialize.js";
+import {
+    createCorsOptions,
+    getServerConfig,
+    validateServerEnv,
+} from "./config/env.js";
 
-const PORT = process.env.PORT || 3001;
-const HOST = process.env.HOST || 'localhost';
-
-console.log('Hello backend');
 const app = express();
-app.use(cors());
+const { host, port } = getServerConfig();
+
+app.use(cors(createCorsOptions()));
 app.use(morgan('dev'));
 app.use(express.json());
 
-await connectDB();
-console.log("Database connected");
+let startupPromise;
 
-// init values
-await init();
+const ensureAppReady = async () => {
+    if (!startupPromise) {
+        startupPromise = (async () => {
+            validateServerEnv();
+            await connectDB();
+        })().catch((error) => {
+            startupPromise = undefined;
+            throw error;
+        });
+    }
+
+    return startupPromise;
+};
+
+app.get("/healthz", async (req, res, next) => {
+    try {
+        await ensureAppReady();
+        res.status(200).json({ ok: true });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.use(async (req, res, next) => {
+    try {
+        await ensureAppReady();
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
 
 app.get("/", (req, res) => {
     res.send("This is backend of Todo App");
@@ -41,8 +71,33 @@ app.use('/api/tasks', taskRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/stats', statRouter);
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://${HOST}:${PORT}`);
+app.use((error, req, res, next) => {
+    console.error("Unhandled server error:", error.message);
+
+    if (res.headersSent) {
+        next(error);
+        return;
+    }
+
+    if (req.path.startsWith("/api/") || req.path === "/healthz") {
+        res.status(500).json({ message: error.message || "Internal server error" });
+        return;
+    }
+
+    res.status(500).send("Internal server error");
 });
+
+if (!process.env.VERCEL) {
+    ensureAppReady()
+        .then(() => {
+            app.listen(port, () => {
+                console.log(`Server is running on http://${host}:${port}`);
+            });
+        })
+        .catch((error) => {
+            console.error("Failed to start server:", error);
+            process.exit(1);
+        });
+}
 
 export default app;

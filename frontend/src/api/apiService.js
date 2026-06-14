@@ -1,4 +1,5 @@
 import axiosInstance from './axiosInstance';
+import { clearStoredAuth, persistAuthSession, updateStoredUser } from './authStorage';
 import {
   buildTaskMutationPayload,
   normalizeProject,
@@ -11,25 +12,21 @@ export const authService = {
   // Register new user
   register: async (userData) => {
     const response = await axiosInstance.post('/api/auth/register', userData);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-    }
+    persistAuthSession(response.data);
     return response.data;
   },
 
   // Login user
   login: async (credentials) => {
     const response = await axiosInstance.post('/api/auth/login', credentials);
-
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-    }
+    persistAuthSession(response.data);
     return response.data;
   },
 
   // Get current user info
   getMe: async () => {
     const response = await axiosInstance.get('/api/auth/me');
+    updateStoredUser(response.data);
     return response.data;
   },
 
@@ -42,6 +39,7 @@ export const authService = {
   // Update user info
   updateInfo: async (userData) => {
     const response = await axiosInstance.put('/api/auth/update-info', userData);
+    updateStoredUser(response.data.user);
     return response.data;
   },
 
@@ -51,7 +49,7 @@ export const authService = {
       const response = await axiosInstance.post('/api/auth/logout');
       return response.data;
     } finally {
-      localStorage.removeItem('token');
+      clearStoredAuth();
     }
   },
 };

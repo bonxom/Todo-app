@@ -15,32 +15,6 @@ const toLocalDateKey = (value) => {
     ].join('-');
 };
 
-export const initializeAdmin = async () => {
-    try {
-        // Check if admin exists
-        const adminExists = await User.findOne({ role: 'ADMIN' });
-        
-        if (!adminExists) {
-            // Create default admin account
-            const admin = await User.create({
-                name: 'Admin',
-                email: 'admin@todoapp.com',
-                password: 'admin123',
-                role: 'ADMIN'
-            });
-            
-            console.log('   Default admin account created:');
-            console.log('   Email: admin@todoapp.com');
-            console.log('   Password: admin123');
-            console.log('   Please change the password after first login!');
-        } else {
-            console.log('*** Admin account already exists ***');
-        }
-    } catch (error) {
-        console.error('   Error initializing admin:', error.message);
-    }
-};
-
 // Helper function to create default categories for a specific user
 export const createDefaultCategories = async (userId, userEmail) => {
     try {
@@ -217,10 +191,4 @@ export const updateStat = async (userId) => {
     } catch (error) {
         console.error("Error updating stats:", error);
     }
-}
-
-export const init = async () => {
-    await initializeAdmin();
-    // await initializeCategories();
-    // await initializeStats(); 
 }

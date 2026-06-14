@@ -1,10 +1,17 @@
 import { useMemo, useState } from 'react';
-import { CalendarDays, CheckCircle2 } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Plus, Sparkles } from 'lucide-react';
 import TaskDetailButton from '../Todo/TaskDetailButton';
 import CalendarTaskDetailCard from './CalendarTaskDetailCard';
 import { formatDateTime } from '../../utils/dateTime';
 
-const ProjectFocusWeekAgenda = ({ selectedDate, tasks, selectedProjectCount = 0, onTaskUpdated }) => {
+const ProjectFocusWeekAgenda = ({
+  selectedDate,
+  tasks,
+  selectedProjectCount = 0,
+  onTaskUpdated,
+  onAddTask,
+  onGenerateTasks,
+}) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -48,10 +55,30 @@ const ProjectFocusWeekAgenda = ({ selectedDate, tasks, selectedProjectCount = 0,
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-            <span>{summary.completed}/{summary.total}</span>
-            <span>&middot;</span>
-            <span>{summary.completionRate}% complete</span>
+          <div className="flex flex-col items-start gap-3 sm:items-end">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              <span>{summary.completed}/{summary.total}</span>
+              <span>&middot;</span>
+              <span>{summary.completionRate}% complete</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={onAddTask}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-medium text-amber-700 shadow-sm transition-[background-color,box-shadow,transform] duration-200 ease-out hover:bg-amber-100 hover:shadow-md hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 motion-reduce:transform-none"
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Add Task
+              </button>
+              <button
+                type="button"
+                onClick={onGenerateTasks}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-medium text-rose-700 shadow-sm transition-[background-color,box-shadow,transform] duration-200 ease-out hover:bg-rose-100 hover:shadow-md hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2 motion-reduce:transform-none"
+              >
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                Generate
+              </button>
+            </div>
           </div>
         </div>
       </div>

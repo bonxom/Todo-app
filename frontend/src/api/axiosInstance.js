@@ -1,7 +1,33 @@
 import axios from 'axios';
+import { clearStoredAuth, getStoredToken } from './authStorage';
+
+const baseURL = import.meta.env.VITE_SERVER_URL?.trim() || undefined;
+
+const isSessionAuthFailure = (error) => {
+  const status = error.response?.status;
+  const message = error.response?.data?.message?.toLowerCase() ?? '';
+  const requestUrl = error.config?.url ?? '';
+  const hasStoredToken = Boolean(getStoredToken());
+
+  if (status !== 401 || !hasStoredToken) {
+    return false;
+  }
+
+  if (requestUrl.includes('/api/auth/login') || requestUrl.includes('/api/auth/register')) {
+    return false;
+  }
+
+  return (
+    requestUrl.includes('/api/auth/me') ||
+    message.includes('not authorized') ||
+    message.includes('token') ||
+    message.includes('unauthorized') ||
+    message.includes('jwt')
+  );
+};
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_SERVER_URL,
+  baseURL,
   timeout: 30000, // Increased to 30 seconds for general requests
   headers: {
     'Content-Type': 'application/json',
@@ -20,7 +46,7 @@ axiosInstance.interceptors.request.use(
       config.timeout = 60000; // 60 seconds for AI requests
     }
     
-    const token = localStorage.getItem('token');
+    const token = getStoredToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -46,12 +72,13 @@ axiosInstance.interceptors.response.use(
       console.error('Error response data:', error.response.data);
       
       // Handle 401 - Unauthorized
-      if (error.response.status === 401) {
+      if (isSessionAuthFailure(error)) {
+        clearStoredAuth();
+
         // Only redirect if not on login/register page
         const currentPath = window.location.pathname;
         if (!['/login', '/register'].includes(currentPath)) {
-          localStorage.removeItem('token');
-          window.location.href = '/login';
+          window.location.replace('/login');
         }
       }
       
