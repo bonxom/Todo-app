@@ -17,16 +17,13 @@ const MainLayout = ({ children }) => {
 
         {/* Main content: chừa chỗ cho topbar */}
         <main
-          className="min-h-screen transition-all duration-300"
+          className="ui-main-shell"
           style={{
             marginLeft: `var(--sidebar-w)`,
             paddingTop: `${TOPBAR_HEIGHT}px`, 
-            backgroundColor: "rgba(255, 255, 255, 0.4)",
-            backdropFilter: "blur(3px)",
-            WebkitBackdropFilter: "blur(3px)",
           }}
         >
-          <div className="p-6">{children}</div>
+          <div className="ui-main-content">{children}</div>
         </main>
       </div>
     </>
