@@ -144,63 +144,67 @@ const SmallChat = ({ onClose, onMinimize }) => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 h-[32rem] bg-white rounded-2xl shadow-2xl flex flex-col z-50 animate-fadeIn">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-2xl">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
-            <h3 className="font-semibold text-sm">
-              {mode === 'chat' ? 'Chat Assistant' : 'Task Assistant'}
-            </h3>
+    <div className="ui-assistant-panel animate-fadeIn">
+      <div className="ui-assistant-header">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="ui-assistant-status">
+            <div className="ui-assistant-status-dot" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--color-text)]">
+                {mode === 'chat' ? 'Assistant' : 'Task assistant'}
+              </p>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                {mode === 'chat'
+                  ? 'Ask questions and get planning help'
+                  : 'Describe a goal and generate tasks'}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={onMinimize}
-              className="w-8 h-8 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+              className="ui-icon-button ui-focus-ring h-8 w-8"
               aria-label="Minimize chat"
             >
-              <Minimize2 className="w-4 h-4" />
+              <Minimize2 className="h-4 w-4" />
             </button>
             <button
+              type="button"
               onClick={onClose}
-              className="w-8 h-8 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+              className="ui-icon-button ui-focus-ring h-8 w-8"
               aria-label="Close chat"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        {/* Mode Toggle */}
-        <div className="flex gap-1 px-4 pb-3">
+        <div className="ui-assistant-toggle" role="group" aria-label="Assistant mode">
           <button
+            type="button"
             onClick={() => handleModeChange('chat')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              mode === 'chat'
-                ? 'bg-white text-purple-600 shadow-md'
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
+            className="ui-assistant-toggle-button ui-focus-ring"
+            data-active={mode === 'chat'}
+            aria-pressed={mode === 'chat'}
           >
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="h-4 w-4" />
             Chat
           </button>
           <button
+            type="button"
             onClick={() => handleModeChange('taskAssistant')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              mode === 'taskAssistant'
-                ? 'bg-white text-purple-600 shadow-md'
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
+            className="ui-assistant-toggle-button ui-focus-ring"
+            data-active={mode === 'taskAssistant'}
+            aria-pressed={mode === 'taskAssistant'}
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="h-4 w-4" />
             Tasks
           </button>
         </div>
       </div>
 
-      {/* Chat Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden bg-[var(--color-canvas)]">
         <ChatField
           messages={messages}
           onSendMessage={handleSendMessage}

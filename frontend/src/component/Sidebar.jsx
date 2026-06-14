@@ -1,65 +1,123 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { authService } from '../api/apiService';
 import { useAuth } from '../context/useAuth';
 
-export const drawerWidthExpanded = 304;
-export const drawerWidthCollapsed = 80;
+export const DESKTOP_BREAKPOINT = 1024;
+export const drawerWidthExpanded = 272;
+export const drawerWidthCollapsed = 88;
 
-const Sidebar = ({ onWidthChange }) => {
+const menuItems = [
+  {
+    path: '/dashboard',
+    label: 'Todos',
+    icon: (
+      <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+        />
+      </svg>
+    ),
+  },
+  {
+    path: '/categories',
+    label: 'Categories',
+    icon: (
+      <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+        />
+      </svg>
+    ),
+  },
+  {
+    path: '/calendar',
+    label: 'Calendar',
+    icon: (
+      <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+    ),
+  },
+  {
+    path: '/statistics',
+    label: 'Statistics',
+    icon: (
+      <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+        />
+      </svg>
+    ),
+  },
+];
+
+const Sidebar = ({
+  isDesktop,
+  isExpanded,
+  isOpen,
+  onClose,
+  onToggleExpand,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { clearSession } = useAuth();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const previousPathnameRef = useRef(location.pathname);
+  const showLabels = !isDesktop || isExpanded;
+  const currentDrawerWidth = isDesktop
+    ? isExpanded
+      ? drawerWidthExpanded
+      : drawerWidthCollapsed
+    : 'min(18rem, calc(100vw - 1rem))';
+  const todayLabel = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date());
 
-  const currentDrawerWidth = isExpanded ? drawerWidthExpanded : drawerWidthCollapsed;
-
-  // Notify parent of width changes
   useEffect(() => {
-    if (onWidthChange) {
-      onWidthChange(currentDrawerWidth);
+    if (!isDesktop && isOpen && previousPathnameRef.current !== location.pathname) {
+      onClose?.();
     }
-  }, [currentDrawerWidth, onWidthChange]);
 
-  const menuItems = [
-    {
-      path: '/dashboard',
-      label: 'Todos',
-      icon: (
-        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      ),
-    },
-    {
-      path: '/categories',
-      label: 'Categories',
-      icon: (
-        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-        </svg>
-      ),
-    },
-    {
-      path: '/calendar',
-      label: 'Calendar',
-      icon: (
-        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      ),
-    },
-    {
-      path: '/statistics',
-      label: 'Statistics',
-      icon: (
-        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ),
-    },
-  ];
+    previousPathnameRef.current = location.pathname;
+  }, [isDesktop, location.pathname, isOpen, onClose]);
+
+  useEffect(() => {
+    if (isDesktop || !isOpen) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onClose?.();
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDesktop, isOpen, onClose]);
 
   const handleLogout = async () => {
     try {
@@ -71,84 +129,108 @@ const Sidebar = ({ onWidthChange }) => {
   };
 
   return (
-    <aside
-      className="bg-white border-r border-gray-200 h-screen fixed left-0 top-0 overflow-y-auto overflow-x-hidden transition-all duration-300 z-20"
-      style={{
-        width: `${currentDrawerWidth}px`,
-        padding: isExpanded ? '24px 20px' : '24px 12px',
-      }}
-    >
-      <div className="flex flex-col gap-4 h-full justify-between">
-        {/* Toggle Button */}
-        <div className={`flex ${isExpanded ? 'justify-end' : 'justify-center'} mb-2`}>
+    <>
+      {!isDesktop && isOpen && (
+        <button
+          type="button"
+          className="ui-shell-overlay"
+          onClick={onClose}
+          aria-label="Close navigation"
+        />
+      )}
+
+      <aside
+        className="ui-shell-sidebar"
+        data-desktop={isDesktop}
+        data-open={isOpen}
+        aria-hidden={!isDesktop && !isOpen}
+        style={{
+          width: currentDrawerWidth,
+          padding: showLabels ? '1rem' : '1rem 0.75rem',
+        }}
+      >
+        <div className={`flex ${showLabels ? 'justify-end' : 'justify-center'}`}>
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            title={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            type="button"
+            onClick={isDesktop ? onToggleExpand : onClose}
+            className="ui-icon-button ui-focus-ring"
+            aria-label={
+              isDesktop
+                ? isExpanded
+                  ? 'Collapse navigation'
+                  : 'Expand navigation'
+                : 'Close navigation'
+            }
+            title={
+              isDesktop
+                ? isExpanded
+                  ? 'Collapse navigation'
+                  : 'Expand navigation'
+                : 'Close navigation'
+            }
           >
-            {isExpanded ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+            {isDesktop ? (
+              isExpanded ? (
+                <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
+              )
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <X className="h-4 w-4" aria-hidden="true" />
             )}
           </button>
         </div>
 
-        {/* Title */}
-        {isExpanded && (
-          <div className="text-center mb-4 mt-2">
-            <h1 className="text-2xl font-bold text-purple-600 mb-2">My Todo App</h1>
-            <p className="text-sm text-gray-500">Stay organized and productive</p>
-          </div>
-        )}
-
-        {/* MENU */}
-        <div className="flex-1">
-          {isExpanded && (
-            <div className="text-xs font-semibold text-gray-500 mt-1 mb-4">Menu</div>
+        <div className={`ui-shell-brand ${showLabels ? '' : 'justify-center'}`}>
+          <div className="ui-shell-brand-mark" aria-hidden="true">T</div>
+          {showLabels && (
+            <div className="ui-shell-brand-copy">
+              <p className="text-sm font-semibold text-[var(--color-text)]">TodoApp</p>
+              <p className="ui-tabular text-xs text-[var(--color-text-muted)]">{todayLabel}</p>
+            </div>
           )}
-
-          <nav className="flex flex-col gap-1">
-            {menuItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center gap-2.5 p-2.5 cursor-pointer transition-all duration-200 rounded-lg ${
-                    isExpanded ? 'justify-start' : 'justify-center'
-                  } ${
-                    isActive
-                      ? 'bg-purple-100 text-purple-600 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  title={!isExpanded ? item.label : ''}
-                >
-                  <span className="flex-shrink-0">{item.icon}</span>
-                  {isExpanded && <span className="text-sm whitespace-nowrap">{item.label}</span>}
-                </Link>
-              );
-            })}
-          </nav>
         </div>
 
-        {/* Logout Button */}
-        <button
-          onClick={handleLogout}
-          className={`flex items-center gap-2.5 p-2.5 cursor-pointer transition-all duration-200 rounded-lg text-red-600 hover:bg-red-50 ${
-            isExpanded ? 'justify-start' : 'justify-center'
-          }`}
-          title={!isExpanded ? 'Logout' : ''}
-        >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          {isExpanded && <span className="text-sm whitespace-nowrap font-medium">Logout</span>}
-        </button>
-      </div>
-    </aside>
+        {showLabels && (
+          <p className="ui-shell-section-label px-1">Workspace</p>
+        )}
+
+        <nav className="ui-shell-nav" aria-label="Primary navigation">
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path;
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`ui-shell-nav-link ui-focus-ring ${showLabels ? '' : 'justify-center'}`}
+                data-active={isActive}
+                aria-current={isActive ? 'page' : undefined}
+                onClick={!isDesktop ? onClose : undefined}
+                title={!showLabels ? item.label : undefined}
+              >
+                <span className="flex-shrink-0" aria-hidden="true">
+                  {item.icon}
+                </span>
+                {showLabels && <span className="ui-shell-nav-label">{item.label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-[var(--color-line)] pt-3">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className={`ui-shell-nav-link ui-focus-ring w-full ${showLabels ? '' : 'justify-center'}`}
+            title={!showLabels ? 'Logout' : undefined}
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+            {showLabels && <span className="ui-shell-nav-label">Logout</span>}
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };
 

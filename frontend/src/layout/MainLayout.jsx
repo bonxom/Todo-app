@@ -1,32 +1,76 @@
-import { useState } from "react";
-import Sidebar, { drawerWidthCollapsed } from "../component/Sidebar";
+import { useEffect, useState } from "react";
+import Sidebar, {
+  DESKTOP_BREAKPOINT,
+  drawerWidthCollapsed,
+  drawerWidthExpanded,
+} from "../component/Sidebar";
 import Topbar from "../component/Topbar";
 
 const TOPBAR_HEIGHT = 64;
 
 const MainLayout = ({ children }) => {
-  const [sidebarWidth, setSidebarWidth] = useState(drawerWidthCollapsed);
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === "undefined") {
+      return true;
+    }
+
+    return window.innerWidth >= DESKTOP_BREAKPOINT;
+  });
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`);
+    const syncViewport = (event) => {
+      setIsDesktop(event.matches);
+      if (event.matches) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    syncViewport(mediaQuery);
+    mediaQuery.addEventListener("change", syncViewport);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncViewport);
+    };
+  }, []);
+
+  const sidebarWidth = isDesktop
+    ? isSidebarExpanded
+      ? drawerWidthExpanded
+      : drawerWidthCollapsed
+    : 0;
 
   return (
-    <>
-      <Sidebar onWidthChange={setSidebarWidth} />
+    <div style={{ "--sidebar-w": `${sidebarWidth}px` }}>
+      <Sidebar
+        isDesktop={isDesktop}
+        isExpanded={isSidebarExpanded}
+        isOpen={isDesktop || isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onToggleExpand={() => setIsSidebarExpanded((current) => !current)}
+      />
 
-      {/* Wrapper để share sidebar width cho Topbar */}
-      <div style={{ "--sidebar-w": `${sidebarWidth}px` }}>
-        <Topbar />
+      <Topbar
+        isDesktop={isDesktop}
+        onOpenSidebar={() => setIsSidebarOpen(true)}
+      />
 
-        {/* Main content: chừa chỗ cho topbar */}
-        <main
-          className="ui-main-shell"
-          style={{
-            marginLeft: `var(--sidebar-w)`,
-            paddingTop: `${TOPBAR_HEIGHT}px`, 
-          }}
-        >
-          <div className="ui-main-content">{children}</div>
-        </main>
-      </div>
-    </>
+      <main
+        className="ui-main-shell"
+        style={{
+          marginLeft: isDesktop ? "var(--sidebar-w)" : 0,
+          paddingTop: `${TOPBAR_HEIGHT}px`,
+        }}
+      >
+        <div className="ui-main-content">{children}</div>
+      </main>
+    </div>
   );
 };
 

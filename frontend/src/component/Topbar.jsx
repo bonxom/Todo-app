@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, ArrowLeft } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Menu, User } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 
 const getAvatarUrl = (user) => {
@@ -15,42 +15,122 @@ const getAvatarUrl = (user) => {
   return avatarFields.find((value) => typeof value === 'string' && value.trim()) ?? '';
 };
 
-const Topbar = () => {
+const getTopbarContext = (pathname) => {
+  if (pathname.startsWith('/dashboard')) {
+    return {
+      title: 'Today',
+      subtitle: 'Tasks and focus for the day',
+    };
+  }
+
+  if (pathname.startsWith('/categories')) {
+    return {
+      title: 'Projects',
+      subtitle: 'Categories and work streams',
+    };
+  }
+
+  if (pathname.startsWith('/calendar')) {
+    return {
+      title: 'Calendar',
+      subtitle: 'Deadlines, plans, and schedule',
+    };
+  }
+
+  if (pathname.startsWith('/statistics')) {
+    return {
+      title: 'Statistics',
+      subtitle: 'Progress and completion trends',
+    };
+  }
+
+  if (pathname.startsWith('/profile')) {
+    return {
+      title: 'Account',
+      subtitle: 'Profile and settings',
+    };
+  }
+
+  return {
+    title: 'Workspace',
+    subtitle: 'Plan, review, and adjust',
+  };
+};
+
+const Topbar = ({ isDesktop, onOpenSidebar }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const avatarUrl = getAvatarUrl(user);
   const [brokenAvatarUrl, setBrokenAvatarUrl] = useState('');
   const showAvatar = Boolean(avatarUrl) && brokenAvatarUrl !== avatarUrl;
+  const pageContext = getTopbarContext(location.pathname);
+  const todayLabel = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date());
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate('/dashboard');
+  };
 
   return (
     <header
-      className="h-16 bg-white border-b border-gray-200 fixed top-0 right-0 z-40 flex items-center justify-between px-6"
-      style={{ left: "var(--sidebar-w)" }}
+      className="ui-topbar"
+      style={{ left: isDesktop ? 'var(--sidebar-w)' : 0 }}
     >
-      <div className="flex items-center gap-3">
-        <ArrowLeft 
-          onClick={() => navigate(-1)}
-          className="cursor-pointer"
-        />
-      </div>  
-      
+      <div className="flex min-w-0 items-center gap-3">
+        {!isDesktop && (
+          <button
+            type="button"
+            onClick={onOpenSidebar}
+            className="ui-icon-button ui-focus-ring"
+            aria-label="Open navigation"
+          >
+            <Menu className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={handleBack}
+          className="ui-icon-button ui-focus-ring"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        </button>
+
+        <div className="ui-topbar-meta">
+          <p className="ui-topbar-title">{pageContext.title}</p>
+          <p className="ui-topbar-subtitle">
+            {pageContext.subtitle} · <span className="ui-tabular">{todayLabel}</span>
+          </p>
+        </div>
+      </div>
+
       <button
-        onClick={() => navigate('/profile')}
-        className="w-10 h-10 rounded-full flex items-center justify-center text-gray-800 overflow-hidden touch-manipulation bg-white/80 shadow-sm ring-1 ring-transparent transition-[background-color,box-shadow,transform] duration-200 ease-out hover:bg-white hover:shadow-md hover:ring-violet-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:shadow-md motion-reduce:transform-none"
-        aria-label="Go to profile"
         type="button"
+        onClick={() => navigate('/profile')}
+        className="ui-avatar-button ui-focus-ring"
+        aria-label="Go to profile"
       >
         {showAvatar ? (
           <img
             src={avatarUrl}
             alt={user?.name ? `${user.name} avatar` : 'User avatar'}
-            className="w-full h-full rounded-full object-cover"
+            className="h-full w-full rounded-full object-cover"
             width={40}
             height={40}
             onError={() => setBrokenAvatarUrl(avatarUrl)}
           />
         ) : (
-          <User className="w-5 h-5" aria-hidden="true" />
+          <User className="h-5 w-5" aria-hidden="true" />
         )}
       </button>
     </header>
