@@ -49,8 +49,8 @@ const CalendarPage = () => {
     return (
       <>
         <MainLayout>
-          <div className="flex justify-center items-center min-h-full">
-            <div className="text-gray-500">Loading calendar...</div>
+          <div className="ui-page-shell flex min-h-full items-center justify-center">
+            <div className="text-sm text-[var(--color-text-muted)]">Loading calendar…</div>
           </div>
         </MainLayout>
         <ChatBubble key="chat-bubble-stable" />
@@ -61,36 +61,45 @@ const CalendarPage = () => {
   return (
     <>
       <MainLayout>
-        <div className="flex justify-center items-start min-h-full p-6">
-          <div className="w-full max-w-[1600px] mx-auto">
-            {/* Header */}
-            <div className="mb-8 text-center">
-              <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r bg-linear-to-br from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Calendar
-              </h1>
-              <p className="text-gray-500 mb-2">View scheduled work by deadline, or narrow the board to specific projects.</p>
-            </div>
+        <div className="ui-page-shell">
+          <header className="ui-page-header">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="ui-page-kicker">Planning View</p>
+                <h1 className="ui-page-title">Calendar</h1>
+                <p className="ui-page-description">
+                  See due work by week or month, then narrow the board to the projects that matter right now.
+                </p>
+              </div>
 
-            {errorMessage ? (
-              <div className="rounded-[2rem] border border-red-200 bg-red-50/80 px-6 py-10 text-center">
-                <p className="text-lg font-semibold text-red-700">Unable to load the calendar</p>
-                <p className="mt-2 text-sm text-red-600">{errorMessage}</p>
+              <div className="flex flex-wrap gap-2 text-sm">
+                <span className="ui-chip ui-tabular">Week default</span>
+                <span className="ui-chip">Standalone tasks stay visible</span>
+              </div>
+            </div>
+          </header>
+
+          {errorMessage ? (
+            <div className="ui-section-card ui-card-padding text-center">
+              <p className="text-lg font-semibold text-[var(--color-danger)]">Unable to load the calendar</p>
+              <p className="mt-2 text-sm text-[var(--color-text-muted)]">{errorMessage}</p>
+              <div className="mt-6 flex justify-center">
                 <button
                   type="button"
                   onClick={fetchCalendarData}
-                  className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl border border-red-300 bg-white px-5 text-sm font-medium text-red-700 transition-all hover:bg-red-50"
+                  className="ui-btn-secondary ui-focus-ring"
                 >
                   Try Again
                 </button>
               </div>
-            ) : (
-              <CalendarView
-                tasks={tasks}
-                projects={projects}
-                onTaskUpdated={fetchCalendarData}
-              />
-            )}
-          </div>
+            </div>
+          ) : (
+            <CalendarView
+              tasks={tasks}
+              projects={projects}
+              onTaskUpdated={fetchCalendarData}
+            />
+          )}
         </div>
       </MainLayout>
 

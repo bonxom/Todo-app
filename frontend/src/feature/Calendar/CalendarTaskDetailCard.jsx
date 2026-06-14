@@ -12,25 +12,77 @@ const formatLabel = (value) => {
     .join(' ');
 };
 
-const priorityClassNames = {
-  High: 'border-red-200 bg-red-50 text-red-700',
-  Medium: 'border-amber-200 bg-amber-50 text-amber-700',
-  Low: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+const chipStyles = {
+  neutral: {
+    borderColor: 'var(--color-line)',
+    background: 'var(--color-surface-muted)',
+    color: 'var(--color-text-muted)',
+  },
+  accent: {
+    borderColor: 'transparent',
+    background: 'var(--color-accent-soft)',
+    color: 'var(--color-accent)',
+  },
+  success: {
+    borderColor: 'transparent',
+    background: 'var(--color-success-soft)',
+    color: 'var(--color-success)',
+  },
+  warning: {
+    borderColor: 'transparent',
+    background: 'var(--color-warning-soft)',
+    color: 'var(--color-warning)',
+  },
+  danger: {
+    borderColor: 'transparent',
+    background: 'var(--color-danger-soft)',
+    color: 'var(--color-danger)',
+  },
 };
 
-const statusClassNames = {
-  pending: 'border-purple-200 bg-purple-50 text-purple-700',
-  'in-progress': 'border-blue-200 bg-blue-50 text-blue-700',
-  completed: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  'given-up': 'border-slate-200 bg-slate-100 text-slate-600',
+const getPriorityStyle = (priority) => {
+  if (priority === 'High') return chipStyles.danger;
+  if (priority === 'Medium') return chipStyles.warning;
+  if (priority === 'Low') return chipStyles.success;
+  return chipStyles.neutral;
 };
 
-const Badge = ({ icon: Icon, children, className = '' }) => (
-  <span className={`inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${className}`}>
-    {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+const getStatusStyle = (status) => {
+  if (status === 'completed') return chipStyles.success;
+  if (status === 'in-progress') return chipStyles.accent;
+  if (status === 'pending') return chipStyles.warning;
+  return chipStyles.neutral;
+};
+
+const Badge = ({ icon: Icon, children, style }) => (
+  <span
+    className="inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
+    style={style}
+  >
+    {Icon ? <Icon className="h-3.5 w-3.5" aria-hidden="true" /> : null}
     {children}
   </span>
 );
+
+const IconAction = ({ label, onClick, tone = 'neutral', children }) => {
+  const hoverStyles = {
+    neutral: 'hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] focus-visible:ring-[var(--ring-focus-outline)]',
+    accent: 'hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)] focus-visible:ring-[var(--ring-focus-outline)]',
+    warning: 'hover:bg-[var(--color-warning-soft)] hover:text-[var(--color-warning)] focus-visible:ring-[var(--ring-focus-outline)]',
+    danger: 'hover:bg-[var(--color-danger-soft)] hover:text-[var(--color-danger)] focus-visible:ring-[var(--ring-focus-outline)]',
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-text-muted)] transition-[background-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 ${hoverStyles[tone]}`}
+      aria-label={label}
+    >
+      {children}
+    </button>
+  );
+};
 
 const CalendarTaskDetailCard = ({
   task,
@@ -46,6 +98,13 @@ const CalendarTaskDetailCard = ({
   const categoryName = task.categoryId?.name || 'Uncategorized';
   const taskId = task._id || task.id;
   const isCompleted = task.status === 'completed';
+  const priorityStyle = getPriorityStyle(task.priority);
+  const statusStyle = getStatusStyle(task.status);
+  const cardStyle = {
+    borderColor: task.isOverDue ? 'var(--color-danger-soft)' : 'var(--color-line)',
+    background: isCompleted ? 'var(--color-surface-muted)' : 'var(--color-surface)',
+    boxShadow: 'var(--shadow-xs)',
+  };
 
   const handleDragStart = (event) => {
     event.stopPropagation();
@@ -54,7 +113,7 @@ const CalendarTaskDetailCard = ({
     event.dataTransfer.setData('currentCategoryId', task.categoryId?._id || task.categoryId || '');
   };
 
-  const handleCardClick = () => {
+  const handleOpen = () => {
     if (mode === 'panel') {
       onClick?.(task);
     }
@@ -79,36 +138,50 @@ const CalendarTaskDetailCard = ({
     }
   };
 
-  const badges = (
-    <div className="flex min-w-0 flex-wrap gap-2 md:justify-end">
-      <Badge className={priorityClassNames[task.priority] || 'border-slate-200 bg-slate-50 text-slate-700'}>
-        {task.priority || 'Medium'}
-      </Badge>
-      <Badge icon={CalendarClock} className="border-indigo-200 bg-indigo-50 text-indigo-700">
-        {formatDateTime(task.dueDate, 'No due date')}
-      </Badge>
-      <Badge icon={CircleDot} className={statusClassNames[task.status] || 'border-slate-200 bg-slate-50 text-slate-700'}>
-        {formatLabel(task.status)}
-      </Badge>
-      <Badge icon={FolderKanban} className="border-sky-200 bg-sky-50 text-sky-700">
-        {projectName}
-      </Badge>
-      <Badge icon={Tag} className="border-slate-200 bg-slate-50 text-slate-600">
-        {categoryName}
-      </Badge>
-    </div>
+  const details = (
+    <>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <h3
+            className={`min-w-0 break-words text-sm font-semibold ${
+              isCompleted ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text)]'
+            }`}
+          >
+            {task.title}
+          </h3>
+          {task.description ? (
+            <p className="mt-1 text-xs text-[var(--color-text-muted)] break-words">
+              {task.description}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-wrap gap-2 lg:justify-end">
+          <Badge style={priorityStyle}>{task.priority || 'Medium'}</Badge>
+          <Badge icon={CircleDot} style={statusStyle}>{formatLabel(task.status)}</Badge>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Badge icon={CalendarClock} style={chipStyles.neutral}>
+          {formatDateTime(task.dueDate, 'No due date')}
+        </Badge>
+        <Badge icon={FolderKanban} style={chipStyles.accent}>
+          {projectName}
+        </Badge>
+        <Badge icon={Tag} style={chipStyles.neutral}>
+          {categoryName}
+        </Badge>
+      </div>
+    </>
   );
 
   return (
     <article
       draggable={Boolean(taskId)}
       onDragStart={handleDragStart}
-      onClick={handleCardClick}
-      className={`rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-sm transition-all ${
-        mode === 'panel'
-          ? 'cursor-pointer hover:border-sky-200 hover:bg-sky-50/40 hover:shadow-md focus-within:ring-4 focus-within:ring-sky-100'
-          : ''
-      } ${isCompleted ? 'opacity-75' : ''}`}
+      className={`rounded-[16px] border p-4 ${isCompleted ? 'opacity-85' : ''}`}
+      style={cardStyle}
     >
       <div className="flex items-start gap-3">
         <button
@@ -117,83 +190,67 @@ const CalendarTaskDetailCard = ({
           disabled={isCompletionUpdating}
           aria-pressed={isCompleted}
           aria-label={isCompleted ? `Mark ${task.title} as in progress` : `Mark ${task.title} as completed`}
-          className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 disabled:cursor-wait disabled:opacity-70 ${
+          className={`ui-focus-ring mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition-[background-color,border-color,color] duration-150 disabled:cursor-wait disabled:opacity-70 ${
             isCompleted
-              ? 'border-emerald-500 bg-emerald-500 text-white'
-              : 'border-slate-300 bg-white text-transparent hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-500'
+              ? 'border-[var(--color-success)] bg-[var(--color-success)] text-white'
+              : 'border-[var(--color-line)] bg-[var(--color-surface)] text-transparent hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)]'
           }`}
         >
-          <Check className="h-4 w-4" />
+          <Check className="h-4 w-4" aria-hidden="true" />
         </button>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-            <h3 className={`min-w-0 truncate text-sm font-semibold md:max-w-[45%] ${
-              isCompleted ? 'text-slate-500 line-through' : 'text-slate-900'
-            }`}>
-              {task.title}
-            </h3>
-            {badges}
-          </div>
-
-          {task.description ? (
-            <p className="mt-1 max-h-10 overflow-hidden text-xs text-slate-500">{task.description}</p>
-          ) : null}
+          {mode === 'panel' ? (
+            <button
+              type="button"
+              onClick={handleOpen}
+              className="ui-focus-ring w-full rounded-[12px] px-1 py-0.5 text-left transition-[background-color] duration-150 hover:bg-[var(--color-surface-muted)]"
+              aria-label={`Open ${task.title}`}
+            >
+              {details}
+            </button>
+          ) : (
+            <div className="px-1 py-0.5">{details}</div>
+          )}
         </div>
 
         {mode === 'modal' ? (
           <div className="flex shrink-0 items-center gap-1">
-            <button
-              type="button"
+            <IconAction
+              label={`Edit ${task.title}`}
               onClick={(event) => {
                 event.stopPropagation();
                 onEdit?.(task);
               }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-sky-50 hover:text-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-200"
-              aria-label={`Edit ${task.title}`}
+              tone="accent"
             >
-              <Pencil className="h-4 w-4" />
-            </button>
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+            </IconAction>
             {task.status === 'in-progress' ? (
-              <button
-                type="button"
+              <IconAction
+                label={`Give up ${task.title}`}
                 onClick={(event) => {
                   event.stopPropagation();
                   onGiveUp?.(taskId);
                 }}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-orange-50 hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-200"
-                aria-label={`Give up ${task.title}`}
+                tone="warning"
               >
-                <XCircle className="h-4 w-4" />
-              </button>
+                <XCircle className="h-4 w-4" aria-hidden="true" />
+              </IconAction>
             ) : null}
-            <button
-              type="button"
+            <IconAction
+              label={`Delete ${task.title}`}
               onClick={(event) => {
                 event.stopPropagation();
                 onDelete?.(taskId);
               }}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-200"
-              aria-label={`Delete ${task.title}`}
+              tone="danger"
             >
-              <Trash2 className="h-4 w-4" />
-            </button>
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+            </IconAction>
           </div>
         ) : null}
       </div>
-
-      {mode === 'panel' ? (
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onClick?.(task);
-          }}
-          className="sr-only"
-        >
-          Edit {task.title}
-        </button>
-      ) : null}
     </article>
   );
 };

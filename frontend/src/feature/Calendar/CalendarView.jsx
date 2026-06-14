@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { FolderPlus, Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import CalendarGrid from './CalendarGrid';
 import ProjectFocusPanel from './ProjectFocusPanel';
 import ProjectFocusWeekAgenda from './ProjectFocusWeekAgenda';
 import DetailRequestModal from './DetailRequestModal';
 import AddTaskModal from '../Dialog/AddTaskModal';
 import AddProjectForm from '../Todo/Form/AddProjectForm';
-import { addDays, getDateKey, groupTasksByDate, startOfDay } from './calendarUtils';
+import { addDays, formatMonthLabel, formatWeekLabel, getDateKey, groupTasksByDate, sortTasksByDueTime, startOfDay } from './calendarUtils';
 import { toMidnightDateTimeLocalValue } from '../../utils/dateTime';
 
 const getProjectId = (task) => task.projectId?._id || task.projectId || null;
@@ -40,7 +40,7 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
 
   const selectedTasks = useMemo(() => {
     const dateKey = getDateKey(selectedDate);
-    return activeTasksByDate[dateKey] || [];
+    return sortTasksByDueTime(activeTasksByDate[dateKey] || []);
   }, [activeTasksByDate, selectedDate]);
 
   const projectSidebarItems = useMemo(() => {
@@ -111,51 +111,66 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
   const openAddTask = () => setIsAddTaskModalOpen(true);
   const openGenerateTasks = () => setIsGenerateModalOpen(true);
   const openAddProject = () => setIsAddProjectModalOpen(true);
+  const viewLabel = viewMode === 'week' ? formatWeekLabel(currentDate) : formatMonthLabel(currentDate);
 
   return (
     <section className="space-y-6">
-      <div className="overflow-hidden rounded-[2rem] border border-gray-200 bg-white shadow-sm">
-        <div className="border-b border-gray-100 bg-gradient-to-r from-slate-50 via-white to-sky-50 px-6 py-5">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-600">Planning Lens</p>
-              <h2 className="mt-2 text-3xl font-semibold text-gray-900">Plan every deadline in one view</h2>
-              <p className="mt-3 text-sm text-gray-600">
-                Switch between month and week, then use project filters to narrow the calendar. With no project selected, standalone and project tasks all stay visible.
-              </p>
-            </div>
+      <div className="ui-section-card ui-card-padding">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-sm font-medium text-[var(--color-accent)]">Deadline planner</p>
+            <h2 className="mt-1 text-2xl font-semibold text-[var(--color-text)]">
+              Keep the selected day visible while you scan the week or month
+            </h2>
+            <p className="mt-3 text-sm text-[var(--color-text-muted)]">
+              Project filters narrow the board without hiding standalone tasks. Click any day to review the exact-day workload below the calendar.
+            </p>
+          </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-2 sm:items-end">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={openAddTask}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-600 px-5 text-sm font-medium text-white shadow-md transition-all hover:from-sky-700 hover:to-cyan-700 focus:outline-none focus:ring-4 focus:ring-sky-200"
+                className="ui-btn-primary ui-focus-ring"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4" aria-hidden="true" />
                 Add Task
               </button>
               <button
                 type="button"
                 onClick={openGenerateTasks}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 px-5 text-sm font-medium text-white shadow-md transition-all hover:from-emerald-600 hover:to-teal-700 focus:outline-none focus:ring-4 focus:ring-emerald-200"
+                className="ui-btn-secondary ui-focus-ring"
               >
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
                 Generate
               </button>
-              <button
-                type="button"
-                onClick={openAddProject}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-slate-700 to-sky-700 px-5 text-sm font-medium text-white shadow-md transition-all hover:from-slate-800 hover:to-sky-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
-              >
-                <FolderPlus className="h-4 w-4" />
-                Add Project
-              </button>
             </div>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Add Project lives in the filter rail so the main calendar keeps one primary action.
+            </p>
           </div>
+        </div>
+
+        <div className="mt-5 flex flex-wrap gap-2 border-t border-[var(--color-line)] pt-4 text-sm">
+          <span className="ui-chip ui-tabular">
+            {viewMode === 'week' ? 'Week View' : 'Month View'} · {viewLabel}
+          </span>
+          <span className="ui-chip">
+            {validSelectedProjectIds.length > 0
+              ? `${validSelectedProjectIds.length} project filter${validSelectedProjectIds.length > 1 ? 's' : ''}`
+              : 'All projects'}
+          </span>
+          <span className="ui-chip ui-tabular">
+            {selectedTasks.length} task{selectedTasks.length === 1 ? '' : 's'} on selected day
+          </span>
+          <span className="ui-chip">
+            {validSelectedProjectIds.length === 0 ? 'Standalone tasks included' : 'Filtered to selected projects'}
+          </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2.05fr)_minmax(280px,0.75fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2.05fr)_minmax(300px,0.78fr)]">
         <div className="space-y-6">
           <CalendarGrid
             currentDate={currentDate}
@@ -185,10 +200,8 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
             projects={projectSidebarItems}
             selectedProjectIds={validSelectedProjectIds}
             onToggleProject={handleProjectToggle}
-            onSelectAllProjects={() => setSelectedProjectIds(projects.map((project) => project._id))}
             onClearProjects={() => setSelectedProjectIds([])}
-            onAddTask={openAddTask}
-            onGenerateTasks={openGenerateTasks}
+            onAddProject={openAddProject}
           />
         </div>
       </div>
@@ -210,17 +223,21 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
 
       {isAddProjectModalOpen ? (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
           onClick={() => setIsAddProjectModalOpen(false)}
         >
           <div
-            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="ui-modal-shell animate-fadeIn"
+            style={{ width: 'min(100%, 34rem)' }}
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="bg-gradient-to-r from-sky-600 to-cyan-600 px-6 py-4">
-              <h2 className="text-xl font-semibold text-white">Add Project</h2>
+            <div className="ui-modal-header">
+              <h2 className="text-xl font-semibold text-[var(--color-text)]">Add Project</h2>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                Create a project first, then use the filter rail to narrow the calendar.
+              </p>
             </div>
-            <div className="p-6">
+            <div className="ui-modal-body">
               <AddProjectForm
                 onClose={() => setIsAddProjectModalOpen(false)}
                 onProjectCreated={onTaskUpdated}

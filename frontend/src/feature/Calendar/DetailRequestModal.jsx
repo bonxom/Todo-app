@@ -75,48 +75,50 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-white" />
-            <h2 className="text-xl font-semibold text-white">Generate Tasks with AI</h2>
+    <div className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div className="ui-modal-shell relative mx-4 w-full max-w-lg overflow-hidden">
+        <div className="ui-modal-header flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
+              <Sparkles className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-[var(--color-text)]">Generate Tasks</h2>
+              <p className="text-sm text-[var(--color-text-muted)]">Create a short task list for the selected day.</p>
+            </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-white hover:bg-white/20 rounded-full p-1 transition-colors"
+            className="ui-icon-button ui-focus-ring h-8 w-8"
             disabled={isLoading}
+            aria-label="Close task generation modal"
           >
-            <X className="w-5 h-5" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
-        {/* Loading Overlay */}
         {isLoading && (
-          <div className="absolute inset-0 bg-white/90 flex items-center justify-center z-10">
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-              <p className="text-gray-600 font-medium">Generating tasks...</p>
+              <div className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--color-accent-soft)] border-t-[var(--color-accent)]" />
+              <p className="font-medium text-[var(--color-text-muted)]">Generating tasks…</p>
             </div>
           </div>
         )}
 
-        {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Date Display */}
-          <div className="bg-purple-50 rounded-lg p-3 text-center">
-            <p className="text-sm text-gray-600">Generating tasks for:</p>
-            <p className="text-lg font-semibold text-purple-700">
+        <form onSubmit={handleSubmit} className="ui-modal-body space-y-5">
+          <div className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-surface-muted)] p-3 text-center">
+            <p className="text-sm text-[var(--color-text-muted)]">Generating tasks for</p>
+            <p className="text-lg font-semibold text-[var(--color-text)]">
               {selectedDate 
                 ? formatDateTime(selectedDate)
                 : 'Today'}
             </p>
           </div>
 
-          {/* Quick Topics */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="mb-3 block text-sm font-medium text-[var(--color-text)]">
               Quick Topics (Optional)
             </label>
             <div className="flex flex-wrap gap-2">
@@ -125,10 +127,10 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
                   key={topic}
                   type="button"
                   onClick={() => toggleTopic(topic)}
-                  className={`px-4 py-2 rounded-full font-medium text-sm transition-all ${
+                  className={`rounded-full border px-4 py-2 text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ${
                     selectedTopics.includes(topic)
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'border-transparent bg-[var(--color-accent)] text-white shadow-[var(--shadow-xs)]'
+                      : 'border-[var(--color-line)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]'
                   }`}
                 >
                   {topic}
@@ -137,33 +139,33 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
             </div>
           </div>
 
-          {/* User Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="calendar-task-request" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
               What do you want to accomplish?
             </label>
             <textarea
+              id="calendar-task-request"
+              name="taskRequest"
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder="E.g., Prepare dinner, exercise for 30 minutes, study React..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all resize-none"
+              placeholder="E.g., Prepare dinner, exercise for 30 minutes, study React…"
+              className="ui-input resize-none"
               rows="4"
             />
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-11 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all"
+              className="ui-btn-secondary ui-focus-ring flex-1"
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ui-btn-primary ui-focus-ring flex-1 disabled:cursor-not-allowed disabled:border-[var(--color-line)] disabled:bg-[var(--color-surface-muted)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
               disabled={isLoading}
             >
               Generate Tasks

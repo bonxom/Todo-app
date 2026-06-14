@@ -1,20 +1,7 @@
 import { useMemo, useState, memo } from 'react';
 import { taskService } from '../../api/apiService';
-import { isSameDay } from './calendarUtils';
+import { isSameDay, sortTasksByDueTime } from './calendarUtils';
 import { formatDateTime } from '../../utils/dateTime';
-
-const priorityClassNames = {
-  High: 'bg-red-100 text-red-700',
-  Medium: 'bg-amber-100 text-amber-700',
-  Low: 'bg-emerald-100 text-emerald-700',
-};
-
-const statusAccentClassNames = {
-  completed: 'border-emerald-300',
-  'in-progress': 'border-blue-300',
-  pending: 'border-purple-300',
-  'given-up': 'border-slate-300',
-};
 
 const formatCellTime = (value) => {
   if (!value) return 'No due';
@@ -29,26 +16,44 @@ const formatCellTime = (value) => {
   }).format(date);
 };
 
-const getDueTimestamp = (task) => {
-  if (!task?.dueDate) return Number.POSITIVE_INFINITY;
+const priorityDotStyle = {
+  High: { background: 'var(--color-danger)' },
+  Medium: { background: 'var(--color-warning)' },
+  Low: { background: 'var(--color-success)' },
+};
 
-  const date = new Date(task.dueDate);
-  return Number.isNaN(date.getTime()) ? Number.POSITIVE_INFINITY : date.getTime();
+const taskPreviewTone = (task) => {
+  if (task.isOverDue) {
+    return {
+      borderColor: 'var(--color-danger-soft)',
+      background: 'var(--color-surface)',
+      metaColor: 'var(--color-danger)',
+    };
+  }
+
+  if (task.status === 'completed') {
+    return {
+      borderColor: 'var(--color-line)',
+      background: 'var(--color-surface-muted)',
+      metaColor: 'var(--color-text-muted)',
+    };
+  }
+
+  return {
+    borderColor: 'var(--color-line)',
+    background: 'var(--color-surface)',
+    metaColor: 'var(--color-text-muted)',
+  };
 };
 
 const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onTaskUpdated, viewMode = 'month' }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const taskCount = tasks?.length || 0;
-  const hasHighPriority = tasks?.some(task => task.priority === 'High');
-  const hasMediumPriority = tasks?.some(task => task.priority === 'Medium');
   const hasOverdue = tasks?.some(task => task.isOverDue);
+  const hasHighPriority = tasks?.some(task => task.priority === 'High');
+  const previewLimit = viewMode === 'week' ? 3 : 2;
   const sortedTasks = useMemo(() => {
-    return [...(tasks || [])].sort((left, right) => {
-      const dueDiff = getDueTimestamp(left) - getDueTimestamp(right);
-      if (dueDiff !== 0) return dueDiff;
-
-      return (left.title || '').localeCompare(right.title || '');
-    });
+    return sortTasksByDueTime(tasks || []);
   }, [tasks]);
 
   const handleDragOver = (e) => {
@@ -97,56 +102,101 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`
-        border border-gray-200 rounded-[1.25rem] transition-all cursor-pointer text-left
-        ${viewMode === 'week' ? 'min-h-[120px] p-3' : 'min-h-[88px] p-2.5'}
-        ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : isToday ? 'ring-2 ring-purple-500 bg-purple-50' : isSelected ? 'bg-pink-50 text-gray-900' : 'bg-white text-gray-900'}
-        ${isSelected ? 'ring-pink-500 border-pink-500 shadow-sm' : 'hover:bg-purple-50'}
-        ${isDragOver ? 'ring-2 ring-blue-400 bg-blue-50 scale-105' : ''}
-        ${hasOverdue && !isSelected ? 'border-orange-200' : ''}
+        cursor-pointer rounded-[14px] border text-left transition-[background-color,border-color,box-shadow,transform] duration-150
+        ${viewMode === 'week' ? 'min-h-[132px] p-3' : 'min-h-[96px] p-2.5'}
+        ${!isCurrentMonth ? 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]' : 'text-[var(--color-text)]'}
+        ${isSelected ? 'shadow-[var(--shadow-xs)]' : ''}
+        ${isDragOver ? 'shadow-[var(--shadow-sm)]' : ''}
       `}
+      style={{
+        borderColor: isSelected || isToday
+          ? 'var(--color-accent)'
+          : hasOverdue
+            ? 'var(--color-danger-soft)'
+            : 'var(--color-line)',
+        background: isDragOver
+          ? 'var(--color-accent-soft)'
+          : isSelected
+            ? 'var(--color-accent-soft)'
+            : isToday
+              ? 'color-mix(in srgb, var(--color-accent-soft) 58%, var(--color-surface))'
+              : isCurrentMonth
+                ? 'var(--color-surface)'
+                : 'var(--color-surface-muted)',
+        transform: isDragOver ? 'translateY(-1px)' : undefined,
+      }}
     >
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between mb-1">
-          <span className={`text-sm font-medium ${isToday ? 'text-purple-700' : ''}`}>
+        <div className="mb-1 flex items-center justify-between">
+          <span
+            className={`text-sm font-semibold ${isCurrentMonth ? '' : 'opacity-75'}`}
+            style={{ color: isToday || isSelected ? 'var(--color-accent)' : undefined }}
+          >
             {day.getDate()}
           </span>
           {taskCount > 0 && (
-            <span className={`
-              text-xs px-1.5 py-0.5 rounded-full font-semibold
-              ${hasHighPriority ? 'bg-red-100 text-red-700' : hasOverdue ? 'bg-orange-100 text-orange-700' : hasMediumPriority ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}
-            `}>
+            <span
+              className="ui-chip ui-tabular min-h-0 px-2 py-1 text-[11px]"
+              style={{
+                background: hasOverdue
+                  ? 'var(--color-danger-soft)'
+                  : hasHighPriority
+                    ? 'var(--color-accent-soft)'
+                    : 'var(--color-surface-muted)',
+                borderColor: hasOverdue ? 'transparent' : 'var(--color-line)',
+                color: hasOverdue ? 'var(--color-danger)' : 'var(--color-text-muted)',
+              }}
+            >
               {taskCount}
             </span>
           )}
         </div>
-        
+
         {taskCount > 0 && (
-          <div className="flex flex-col gap-1.5 flex-1">
-            {sortedTasks.slice(0, 2).map((task, idx) => (
+          <div className="flex flex-1 flex-col gap-1.5">
+            {sortedTasks.slice(0, previewLimit).map((task, idx) => {
+              const previewTone = taskPreviewTone(task);
+
+              return (
               <div
                 key={task._id || task.id || idx}
-                className={`
-                  rounded-lg border bg-white/85 px-1.5 py-1 text-left shadow-sm
-                  ${statusAccentClassNames[task.status] || 'border-gray-200'}
-                  ${task.status === 'completed' ? 'opacity-75' : ''}
-                `}
+                className={`rounded-lg border px-2 py-1.5 text-left ${task.status === 'completed' ? 'opacity-80' : ''}`}
+                style={{
+                  borderColor: previewTone.borderColor,
+                  background: previewTone.background,
+                }}
                 title={`${task.title} • ${task.priority || 'Medium'} • ${formatDateTime(task.dueDate, 'No due date')}`}
               >
-                <div className={`truncate text-[11px] font-semibold ${task.status === 'completed' ? 'text-slate-500 line-through' : 'text-slate-800'}`}>
-                  {task.title}
-                </div>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${priorityClassNames[task.priority] || 'bg-slate-100 text-slate-600'}`}>
-                    {task.priority || 'Medium'}
-                  </span>
-                  <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700">
-                    {formatCellTime(task.dueDate)}
-                  </span>
+                <div className="flex items-start gap-2">
+                  <span
+                    className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={priorityDotStyle[task.priority] || { background: 'var(--color-text-muted)' }}
+                    aria-hidden="true"
+                  />
+                  <div className="min-w-0">
+                    <div className={`truncate text-[11px] font-semibold ${
+                      task.status === 'completed'
+                        ? 'text-[var(--color-text-muted)] line-through'
+                        : 'text-[var(--color-text)]'
+                    }`}>
+                      {task.title}
+                    </div>
+                    <div
+                      className="mt-0.5 text-[10px]"
+                      style={{ color: previewTone.metaColor }}
+                    >
+                      <span className="ui-tabular">{formatCellTime(task.dueDate)}</span>
+                      {task.priority === 'High' ? ' · High' : ''}
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
-            {taskCount > 2 && (
-              <span className="text-xs text-gray-500 mt-0.5">+{taskCount - 2} more</span>
+            );
+          })}
+            {taskCount > previewLimit && (
+              <span className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                +{taskCount - previewLimit} more
+              </span>
             )}
           </div>
         )}

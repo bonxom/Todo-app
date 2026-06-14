@@ -34,25 +34,25 @@ const CalendarGrid = ({
     : formatMonthLabel(currentDate);
 
   return (
-    <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-lg">
+    <div className="ui-section-card ui-card-padding">
       <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-purple-600">
-            {viewMode === 'week' ? 'Weekly zoom' : 'Monthly view'}
+          <p className="text-sm font-medium text-[var(--color-accent)]">
+            {viewMode === 'week' ? 'Week view' : 'Month view'}
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-gray-900">{heading}</h2>
+          <h2 className="mt-1 text-2xl font-semibold text-[var(--color-text)]">{heading}</h2>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {showViewModeToggle && (
-            <div className="inline-flex rounded-2xl bg-gray-100 p-1 shadow-inner">
+            <div className="inline-flex rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] p-1">
               <button
                 type="button"
                 onClick={() => onViewModeChange?.('month')}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                className={`ui-focus-ring rounded-[calc(var(--radius-md)-2px)] px-4 py-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ${
                   viewMode === 'month'
-                    ? 'bg-white text-purple-700 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-[var(--color-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
                 }`}
               >
                 Month
@@ -60,10 +60,10 @@ const CalendarGrid = ({
               <button
                 type="button"
                 onClick={() => onViewModeChange?.('week')}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                className={`ui-focus-ring rounded-[calc(var(--radius-md)-2px)] px-4 py-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ${
                   viewMode === 'week'
-                    ? 'bg-white text-purple-700 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-[var(--color-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
                 }`}
               >
                 Week
@@ -75,33 +75,36 @@ const CalendarGrid = ({
             <button
               type="button"
               onClick={() => onNavigate(-1)}
-              className="rounded-xl p-2 transition-colors hover:bg-gray-100"
+              className="ui-icon-button ui-focus-ring"
               aria-label={viewMode === 'week' ? 'Previous week' : 'Previous month'}
             >
-              <ChevronLeft className="h-5 w-5 text-gray-600" />
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
             </button>
             <button
               type="button"
               onClick={onResetToToday}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-purple-600 transition-colors hover:bg-purple-50"
+              className="ui-btn-secondary ui-focus-ring"
             >
               Today
             </button>
             <button
               type="button"
               onClick={() => onNavigate(1)}
-              className="rounded-xl p-2 transition-colors hover:bg-gray-100"
+              className="ui-icon-button ui-focus-ring"
               aria-label={viewMode === 'week' ? 'Next week' : 'Next month'}
             >
-              <ChevronRight className="h-5 w-5 text-gray-600" />
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         </div>
       </div>
 
-      <div className="mb-2 grid grid-cols-7 gap-2">
+      <div className="mb-3 grid grid-cols-7 gap-2">
         {WEEK_DAYS.map((day) => (
-          <div key={day} className="py-2 text-center text-sm font-semibold text-gray-600">
+          <div
+            key={day}
+            className="py-2 text-center text-xs font-semibold text-[var(--color-text-muted)] sm:text-sm"
+          >
             {day}
           </div>
         ))}

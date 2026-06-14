@@ -7,6 +7,7 @@ import DeleteDialog from '../Dialog/DeleteDialog';
 import { taskService } from '../../api/apiService';
 import CalendarTaskDetailCard from './CalendarTaskDetailCard';
 import { formatDateTime } from '../../utils/dateTime';
+import { sortTasksByDueTime } from './calendarUtils';
 
 const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdated, summaryOnly = false }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -79,7 +80,8 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
   if (!isOpen) return null;
 
   const isToday = selectedDate && selectedDate.toDateString() === new Date().toDateString();
-  const completedTasks = tasks.filter(task => task.status === 'completed').length;
+  const sortedTasks = sortTasksByDueTime(tasks);
+  const completedTasks = sortedTasks.filter(task => task.status === 'completed').length;
   const totalTasks = tasks.length;
 
   const modalContent = (
@@ -113,54 +115,59 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
         onConfirm={confirmDelete}
       />
 
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+      <div
+        className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <div 
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden animate-fadeIn flex flex-col"
+        <div
+          className="animate-fadeIn flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[18px] border border-[var(--color-line)] bg-[var(--color-surface)]"
+          style={{ boxShadow: 'var(--shadow-lg)' }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-purple-100 to-blue-100 border-b border-gray-200 p-6 flex-shrink-0">
-            <div className="flex items-center justify-between mb-3">
+          <div className="border-b border-[var(--color-line)] bg-[var(--color-surface)] p-6">
+            <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <CalendarIcon className="w-7 h-7 text-purple-600" />
-                <h2 className="text-2xl font-bold text-gray-800">
-                  {isToday ? "Today's Tasks" : 'Tasks'}
-                </h2>
+                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
+                  <CalendarIcon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold text-[var(--color-text)]">
+                    {isToday ? "Today's Tasks" : 'Day Tasks'}
+                  </h2>
+                  {selectedDate && (
+                    <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                      {formatDateTime(selectedDate)}
+                    </p>
+                  )}
+                </div>
               </div>
               <button
+                type="button"
                 onClick={onClose}
-                className="text-gray-600 hover:text-gray-800 transition-colors p-1 hover:bg-white/50 rounded-full"
+                className="ui-icon-button ui-focus-ring"
+                aria-label="Close task list"
               >
-                <X className="w-6 h-6" />
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            {selectedDate && (
-              <p className="text-sm text-gray-600 mb-2">
-                {formatDateTime(selectedDate)}
-              </p>
-            )}
-            <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-              <span>{completedTasks}/{totalTasks} completed</span>
-              <span>•</span>
-              <span>{totalTasks} total tasks</span>
+
+            <div className="flex flex-wrap gap-2 text-sm">
+              <span className="ui-chip ui-tabular">{completedTasks}/{totalTasks} completed</span>
+              <span className="ui-chip ui-tabular">{totalTasks} total tasks</span>
+              <span className="ui-chip">Sorted by due time</span>
             </div>
           </div>
 
-          {/* Tasks List */}
-          <div className="p-6 overflow-y-auto flex-1">
-            {tasks.length > 0 ? (
+          <div className="flex-1 overflow-y-auto overscroll-contain p-6">
+            {sortedTasks.length > 0 ? (
               <div className="space-y-3">
-                {tasks.map((task) => (
+                {sortedTasks.map((task) => (
                   <div
                     key={task._id || task.id}
-                    className={`transition-all duration-300 ${
+                    className={`transition-[opacity,transform] duration-300 ${
                       deletingTaskId === (task._id || task.id)
-                        ? 'opacity-0 scale-95 pointer-events-none'
-                        : 'opacity-100 scale-100'
+                        ? 'pointer-events-none scale-95 opacity-0'
+                        : 'scale-100 opacity-100'
                     }`}
                   >
                     <CalendarTaskDetailCard
@@ -176,11 +183,11 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-400">
-                <CalendarIcon className="w-16 h-16 mx-auto mb-3 opacity-50" />
-                <p className="text-lg font-medium">No tasks for this day</p>
-                <p className="text-sm mt-1">
-                  {isToday ? "You're all caught up!" : 'Select another date to view tasks'}
+              <div className="py-12 text-center text-[var(--color-text-muted)]">
+                <CalendarIcon className="mx-auto mb-3 h-16 w-16 opacity-50" aria-hidden="true" />
+                <p className="text-lg font-medium text-[var(--color-text)]">No tasks for this day</p>
+                <p className="mt-1 text-sm">
+                  {isToday ? "You're all caught up." : 'Select another date to view tasks'}
                 </p>
               </div>
             )}

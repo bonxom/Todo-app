@@ -90,6 +90,22 @@ export const groupTasksByDate = (tasks) => {
   return grouped;
 };
 
+export const getTaskDueTimestamp = (task) => {
+  if (!task?.dueDate) return Number.POSITIVE_INFINITY;
+
+  const date = new Date(task.dueDate);
+  return Number.isNaN(date.getTime()) ? Number.POSITIVE_INFINITY : date.getTime();
+};
+
+export const sortTasksByDueTime = (tasks = []) => (
+  [...tasks].sort((left, right) => {
+    const dueDiff = getTaskDueTimestamp(left) - getTaskDueTimestamp(right);
+    if (dueDiff !== 0) return dueDiff;
+
+    return (left.title || '').localeCompare(right.title || '');
+  })
+);
+
 export const formatMonthLabel = (currentDate) => currentDate.toLocaleDateString('en-US', {
   month: 'long',
   year: 'numeric',
