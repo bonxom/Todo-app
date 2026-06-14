@@ -9,17 +9,15 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 } from 'chart.js';
 import {
   formatUtcDateLabel,
-  formatUtcDateTimeLabel,
   getDateKeysInRange,
   getUtcTodayKey,
   shiftUtcDateKey,
 } from './statsUtils';
 
-// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -31,6 +29,33 @@ ChartJS.register(
   Filler
 );
 
+const QUICK_RANGES = [7, 14, 30, 90];
+const AXIS_TEXT = '#667085';
+const GRID_COLOR = 'rgba(31, 35, 40, 0.08)';
+const COMPLETED_COLOR = '#2F7D5A';
+const COMPLETED_FILL = 'rgba(47, 125, 90, 0.12)';
+const GIVEN_UP_COLOR = '#B25547';
+const GIVEN_UP_FILL = 'rgba(178, 85, 71, 0.08)';
+
+const formatRangeLabel = (startDate, endDate) => {
+  const startLabel = formatUtcDateLabel(startDate, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const endLabel = formatUtcDateLabel(endDate, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  return `${startLabel} to ${endLabel}`;
+};
+
+const isQuickRangeActive = (days, startDate, endDate, todayKey) => {
+  return endDate === todayKey && startDate === shiftUtcDateKey(todayKey, -(days - 1));
+};
+
 const LineChart = ({ dailyStats }) => {
   const todayKey = getUtcTodayKey();
   const [startDate, setStartDate] = useState(() => shiftUtcDateKey(todayKey, -29));
@@ -40,19 +65,16 @@ const LineChart = ({ dailyStats }) => {
     if (!dailyStats || dailyStats.length === 0) {
       return {
         labels: [],
-        datasets: []
+        datasets: [],
+        dateKeys: [],
       };
     }
 
     const dataMap = new Map();
     dailyStats.forEach((stat) => {
-      const dateKey = stat.dateKey;
-
-      if (!dateKey) {
-        return;
+      if (stat.dateKey) {
+        dataMap.set(stat.dateKey, stat);
       }
-
-      dataMap.set(dateKey, stat);
     });
 
     const allDates = getDateKeysInRange(startDate, endDate);
@@ -77,44 +99,36 @@ const LineChart = ({ dailyStats }) => {
         {
           label: 'Completed Tasks',
           data: completed,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          tension: 0.4,
+          borderColor: COMPLETED_COLOR,
+          backgroundColor: COMPLETED_FILL,
+          borderWidth: 2,
+          tension: 0.3,
           fill: true,
-          pointRadius: 6,
-          pointHoverRadius: 10,
-          pointBackgroundColor: '#10b981',
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointBackgroundColor: COMPLETED_COLOR,
           pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointHoverBackgroundColor: '#10b981',
-          pointHoverBorderColor: '#fff',
+          pointBorderWidth: 1.5,
         },
         {
           label: 'Given Up Tasks',
           data: givenUp,
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          tension: 0.4,
+          borderColor: GIVEN_UP_COLOR,
+          backgroundColor: GIVEN_UP_FILL,
+          borderWidth: 2,
+          tension: 0.3,
           fill: true,
-          pointRadius: 6,
-          pointHoverRadius: 10,
-          pointBackgroundColor: '#ef4444',
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointBackgroundColor: GIVEN_UP_COLOR,
           pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointHoverBackgroundColor: '#ef4444',
-          pointHoverBorderColor: '#fff',
-        }
-      ]
+          pointBorderWidth: 1.5,
+        },
+      ],
     };
   }, [dailyStats, startDate, endDate]);
 
-  const setQuickRange = (days) => {
-    const nextEndDate = getUtcTodayKey();
-    setStartDate(shiftUtcDateKey(nextEndDate, -(days - 1)));
-    setEndDate(nextEndDate);
-  };
-
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -123,138 +137,164 @@ const LineChart = ({ dailyStats }) => {
         position: 'bottom',
         labels: {
           usePointStyle: true,
-          padding: 20,
+          boxWidth: 8,
+          boxHeight: 8,
+          padding: 18,
+          color: AXIS_TEXT,
           font: {
-            size: 13,
-            family: "'Inter', sans-serif"
-          }
-        }
+            size: 12,
+            weight: '600',
+          },
+        },
       },
       tooltip: {
         mode: 'index',
         intersect: false,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        padding: 12,
+        backgroundColor: 'rgba(31, 35, 40, 0.92)',
+        padding: 10,
+        titleColor: '#fff',
+        bodyColor: '#fff',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderWidth: 1,
         callbacks: {
           title: (tooltipItems) => {
             const item = tooltipItems[0];
-            const dateKey = chartData.dateKeys?.[item.dataIndex];
-            return dateKey ? formatUtcDateTimeLabel(dateKey) : item.label;
-          }
+            const dateKey = chartData.dateKeys[item.dataIndex];
+
+            return dateKey
+              ? formatUtcDateLabel(dateKey, {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })
+              : item.label;
+          },
         },
-        titleFont: {
-          size: 14,
-          weight: 'bold'
-        },
-        bodyFont: {
-          size: 13
-        },
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        borderWidth: 1
-      }
+      },
     },
     scales: {
       x: {
         grid: {
-          display: true,
-          color: 'rgba(0, 0, 0, 0.05)',
-          drawBorder: false
+          color: GRID_COLOR,
+          drawBorder: false,
         },
         ticks: {
+          color: AXIS_TEXT,
           font: {
-            size: 12
+            size: 11,
           },
-          maxRotation: 45,
-          minRotation: 0
-        }
+          maxRotation: 0,
+          autoSkipPadding: 14,
+        },
       },
       y: {
         beginAtZero: true,
         grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-          drawBorder: false
+          color: GRID_COLOR,
+          drawBorder: false,
         },
         ticks: {
+          color: AXIS_TEXT,
           font: {
-            size: 12
+            size: 11,
           },
-          precision: 0
-        }
-      }
+          precision: 0,
+        },
+      },
     },
     interaction: {
       mode: 'nearest',
       axis: 'x',
-      intersect: false
-    }
+      intersect: false,
+    },
+  }), [chartData.dateKeys]);
+
+  const setQuickRange = (days) => {
+    const nextEndDate = getUtcTodayKey();
+    setStartDate(shiftUtcDateKey(nextEndDate, -(days - 1)));
+    setEndDate(nextEndDate);
   };
 
+  const rangeLabel = formatRangeLabel(startDate, endDate);
+  const hasNoData = chartData.labels.length === 0;
+
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-4">
-          Daily Tasks Trend
-        </h2>
-        <p className="mb-4 text-sm text-gray-500">
-          Range: {formatUtcDateTimeLabel(startDate)} to {formatUtcDateTimeLabel(endDate)}
-        </p>
+    <section className="ui-section-card ui-card-padding">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-[color:var(--color-text)]">Daily Completion Trend</h2>
+          <p className="mt-2 max-w-2xl text-sm text-[color:var(--color-text-muted)]">
+            Compare completed and given-up tasks over time without the extra dashboard chrome.
+          </p>
+        </div>
+        <span className="ui-chip ui-tabular">{rangeLabel}</span>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">From:</label>
+      <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-2 text-sm font-medium text-[color:var(--color-text)]">
+            <span>From</span>
             <input
               type="date"
+              name="stats_range_start"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(event) => setStartDate(event.target.value)}
               max={endDate}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="ui-input min-w-[11rem]"
+              autoComplete="off"
             />
-          </div>
+          </label>
 
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">To:</label>
+          <label className="flex flex-col gap-2 text-sm font-medium text-[color:var(--color-text)]">
+            <span>To</span>
             <input
               type="date"
+              name="stats_range_end"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(event) => setEndDate(event.target.value)}
               min={startDate}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="ui-input min-w-[11rem]"
+              autoComplete="off"
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="flex gap-2 ml-auto">
-            <button
-              onClick={() => setQuickRange(7)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
-            >
-              7D
-            </button>
-            <button
-              onClick={() => setQuickRange(14)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
-            >
-              14D
-            </button>
-            <button
-              onClick={() => setQuickRange(30)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
-            >
-              30D
-            </button>
-            <button
-              onClick={() => setQuickRange(90)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
-            >
-              90D
-            </button>
-          </div>
+        <div className="flex flex-wrap gap-2">
+          {QUICK_RANGES.map((days) => {
+            const isActive = isQuickRangeActive(days, startDate, endDate, todayKey);
+
+            return (
+              <button
+                key={days}
+                type="button"
+                onClick={() => setQuickRange(days)}
+                aria-pressed={isActive}
+                className={`inline-flex min-h-[2.25rem] items-center justify-center rounded-full border px-3.5 text-xs font-semibold transition-[background-color,border-color,color] duration-150 ${
+                  isActive
+                    ? 'border-transparent bg-[var(--color-accent-soft)] text-[color:var(--color-accent)]'
+                    : 'border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]'
+                }`}
+              >
+                {days}D
+              </button>
+            );
+          })}
         </div>
       </div>
-      
-      <div className="relative h-80">
-        <Line data={chartData} options={options} />
+
+      <div className="mt-6">
+        {hasNoData ? (
+          <div className="flex h-80 items-center justify-center rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 text-sm text-[color:var(--color-text-muted)]">
+            No trend data available for this date range.
+          </div>
+        ) : (
+          <div className="relative h-80 rounded-[12px] border border-[color:var(--color-line)] bg-[var(--color-surface)] p-3">
+            <Line data={chartData} options={options} />
+          </div>
+        )}
       </div>
-    </div>
+    </section>
   );
 };
 

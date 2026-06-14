@@ -37,11 +37,15 @@ const StatisticsPage = () => {
     return (
       <>
         <MainLayout>
-          <div className="flex min-h-full items-center justify-center p-6">
-            <div className="w-full max-w-4xl rounded-[2rem] border border-slate-200 bg-white px-6 py-10 text-center shadow-sm">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-slate-200 border-t-sky-500" />
-              <p className="text-lg font-semibold text-slate-900">Loading statistics</p>
-              <p className="mt-2 text-sm text-slate-500">Preparing summaries, charts, and the last year of activity.</p>
+          <div className="ui-main-content">
+            <div className="ui-page-shell">
+              <section className="ui-section-card ui-card-padding text-center">
+                <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-[color:var(--color-line)] border-t-[color:var(--color-accent)]" />
+                <p className="text-lg font-semibold text-[color:var(--color-text)]">Loading statistics…</p>
+                <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
+                  Preparing summaries, charts, and the last year of activity.
+                </p>
+              </section>
             </div>
           </div>
         </MainLayout>
@@ -54,17 +58,19 @@ const StatisticsPage = () => {
     return (
       <>
         <MainLayout>
-          <div className="flex min-h-full items-center justify-center p-6">
-            <div className="w-full max-w-4xl rounded-[2rem] border border-red-200 bg-white px-6 py-10 text-center shadow-sm">
-              <p className="text-lg font-semibold text-red-700">Unable to load statistics</p>
-              <p className="mt-2 text-sm text-red-600">{error}</p>
-              <button
-                type="button"
-                onClick={fetchStats}
-                className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl border border-red-300 bg-white px-5 text-sm font-medium text-red-700 transition-all hover:bg-red-50"
-              >
-                Try Again
-              </button>
+          <div className="ui-main-content">
+            <div className="ui-page-shell">
+              <section className="ui-section-card ui-card-padding text-center">
+                <p className="text-lg font-semibold text-[color:var(--color-danger)]">Unable to load statistics</p>
+                <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">{error}</p>
+                <button
+                  type="button"
+                  onClick={fetchStats}
+                  className="ui-btn-secondary mt-6"
+                >
+                  Try Again
+                </button>
+              </section>
             </div>
           </div>
         </MainLayout>
@@ -77,10 +83,14 @@ const StatisticsPage = () => {
     return (
       <>
         <MainLayout>
-          <div className="flex min-h-full items-center justify-center p-6">
-            <div className="w-full max-w-4xl rounded-[2rem] border border-slate-200 bg-white px-6 py-10 text-center shadow-sm">
-              <p className="text-lg font-semibold text-slate-900">No statistics available yet</p>
-              <p className="mt-2 text-sm text-slate-500">Create and complete tasks to populate the dashboard.</p>
+          <div className="ui-main-content">
+            <div className="ui-page-shell">
+              <section className="ui-section-card ui-card-padding text-center">
+                <p className="text-lg font-semibold text-[color:var(--color-text)]">No statistics available yet</p>
+                <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
+                  Create and complete tasks to populate this page.
+                </p>
+              </section>
             </div>
           </div>
         </MainLayout>
@@ -92,36 +102,32 @@ const StatisticsPage = () => {
   return (
     <>
       <MainLayout>
-        <div className="flex justify-center items-start min-h-full p-6">
-          <div className="w-full max-w-7xl mx-auto bg-gray-100/50 backdrop-blur-sm rounded-xl shadow-lg p-8">
-            {/* Header */}
-            <div className="mb-8">
-              <h1 className="flex justify-center text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Statistics Dashboard
-              </h1>
-              <p className="flex justify-center text-gray-500 mb-2">
-                Track task totals, completion trends, and the daily rhythm of finished work.
+        <div className="ui-main-content">
+          <div className="ui-page-shell">
+            <header className="ui-page-header">
+              <p className="ui-page-kicker">Statistics</p>
+              <h1 className="ui-page-title">Statistics</h1>
+              <p className="ui-page-description">
+                Review completion pace, task mix, and the specific days when work actually moved forward.
               </p>
-            </div>
+            </header>
 
-            {/* Summary Cards */}
+            <section className="ui-section-card ui-card-padding">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-[color:var(--color-text-muted)]">
+                <span className="ui-chip">365-day activity ledger</span>
+                <span className="ui-chip ui-tabular">{normalizedDailyStats.length} recorded days</span>
+                <span className="ui-chip">Click a heatmap day to inspect completed tasks</span>
+              </div>
+            </section>
+
             <StatsSummary stats={stats} />
 
-            <div className="mb-6">
-              <ActivityHeatmap dailyStats={normalizedDailyStats} />
-            </div>
+            <ActivityHeatmap dailyStats={normalizedDailyStats} />
 
-            {/* Line Chart - Full Width */}
-            <div className="mb-6">
-              <LineChart dailyStats={normalizedDailyStats} />
-            </div>
+            <LineChart dailyStats={normalizedDailyStats} />
 
-            {/* Pie Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Status Pie Chart */}
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               <StatusPieChart stats={stats} />
-              
-              {/* Category Pie Chart */}
               <CategoryPieChart dailyStats={normalizedDailyStats} />
             </div>
           </div>

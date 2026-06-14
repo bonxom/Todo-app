@@ -3,11 +3,11 @@ import { statService } from '../../api/apiService';
 import { createHeatmapModel, formatDateKeyLabel } from './statsUtils';
 
 const CELL_LEVEL_STYLES = [
-  'bg-slate-200 border-slate-300/80',
-  'bg-emerald-100 border-emerald-200',
-  'bg-emerald-200 border-emerald-300',
-  'bg-emerald-400 border-emerald-500/80',
-  'bg-emerald-600 border-emerald-700',
+  'bg-[var(--color-surface-muted)] border-[color:var(--color-line)]',
+  'bg-[#edf3ef] border-[#d7e5dd]',
+  'bg-[#d6e7dc] border-[#b8d2c1]',
+  'bg-[#a7c4b3] border-[#87aa96]',
+  'bg-[#5e8f72] border-[#507a62]',
 ];
 
 const WEEKDAY_LABELS = [
@@ -20,20 +20,22 @@ const WEEKDAY_LABELS = [
   { label: '', ariaLabel: 'Saturday' },
 ];
 
+const NUMBER_FORMATTER = new Intl.NumberFormat();
+
 const formatCompletionLabel = (dateKey, count) => {
   const taskLabel = count === 1 ? 'task completed' : 'tasks completed';
-  return `${formatDateKeyLabel(dateKey)}: ${count} ${taskLabel}`;
+  return `${formatDateKeyLabel(dateKey)}: ${NUMBER_FORMATTER.format(count)} ${taskLabel}`;
 };
 
-const formatDateTimeLabel = (value, fallback = 'Not set') => {
+const formatDateTimeLabel = (value) => {
   if (!value) {
-    return fallback;
+    return null;
   }
 
   const parsedDate = new Date(value);
 
   if (Number.isNaN(parsedDate.getTime())) {
-    return fallback;
+    return null;
   }
 
   return new Intl.DateTimeFormat(undefined, {
@@ -47,13 +49,13 @@ const formatDateTimeLabel = (value, fallback = 'Not set') => {
 
 const formatTimeLabel = (value) => {
   if (!value) {
-    return 'Time unavailable';
+    return null;
   }
 
   const parsedDate = new Date(value);
 
   if (Number.isNaN(parsedDate.getTime())) {
-    return 'Time unavailable';
+    return null;
   }
 
   return new Intl.DateTimeFormat(undefined, {
@@ -62,75 +64,69 @@ const formatTimeLabel = (value) => {
   }).format(parsedDate);
 };
 
-const formatStatusLabel = (status) => {
-  if (!status) {
-    return 'Unknown';
-  }
-
-  return status
-    .split('-')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-};
-
 const getTaskProjectName = (task) => task?.project?.name || task?.projectId?.name || 'Standalone';
-
 const getTaskCategoryName = (task) => task?.category?.name || task?.categoryId?.name || 'Uncategorized';
 
-const MetadataBadge = ({ children, tone = 'slate' }) => {
+const MetadataBadge = ({ children, tone = 'neutral' }) => {
   const toneClassName = {
-    emerald: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    amber: 'border-amber-200 bg-amber-50 text-amber-700',
-    sky: 'border-sky-200 bg-sky-50 text-sky-700',
-    rose: 'border-rose-200 bg-rose-50 text-rose-700',
-    slate: 'border-slate-200 bg-slate-50 text-slate-600',
-  }[tone] || 'border-slate-200 bg-slate-50 text-slate-600';
+    success: 'ui-badge ui-badge--success',
+    warning: 'ui-badge ui-badge--warning',
+    danger: 'ui-badge ui-badge--danger',
+    accent: 'ui-badge ui-badge--accent',
+    neutral: 'ui-badge',
+  }[tone] || 'ui-badge';
 
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${toneClassName}`}>
-      {children}
-    </span>
-  );
+  return <span className={toneClassName}>{children}</span>;
 };
 
 const getPriorityTone = (priority) => {
   if (priority === 'High') {
-    return 'rose';
+    return 'danger';
   }
 
   if (priority === 'Medium') {
-    return 'amber';
+    return 'warning';
   }
 
-  return 'sky';
+  return 'accent';
 };
 
-const CompletedTaskCard = ({ task }) => (
-  <article className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-      <div className="min-w-0">
-        <h3 className="truncate text-sm font-semibold text-slate-900">{task.title || 'Untitled task'}</h3>
-        {task.description ? (
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{task.description}</p>
-        ) : null}
-      </div>
+const CompletedTaskCard = ({ task }) => {
+  const completedLabel = formatTimeLabel(task.completedAt || task.completionDate);
+  const dueLabel = formatDateTimeLabel(task.dueDate);
 
-      <div className="flex flex-wrap gap-2 lg:justify-end">
-        <MetadataBadge tone={getPriorityTone(task.priority)}>{task.priority || 'No priority'}</MetadataBadge>
-        <MetadataBadge tone="emerald">Completed {formatTimeLabel(task.completedAt || task.completionDate)}</MetadataBadge>
-        <MetadataBadge>{formatStatusLabel(task.status)}</MetadataBadge>
-        <MetadataBadge tone="sky">Due {formatDateTimeLabel(task.dueDate)}</MetadataBadge>
-        <MetadataBadge>{getTaskProjectName(task)}</MetadataBadge>
-        <MetadataBadge>{getTaskCategoryName(task)}</MetadataBadge>
-      </div>
-    </div>
-  </article>
-);
+  return (
+    <article className="rounded-[12px] border border-[color:var(--color-line)] bg-[var(--color-surface)] px-4 py-3 shadow-[var(--shadow-xs)]">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold text-[color:var(--color-text)]">
+            {task.title || 'Untitled task'}
+          </h3>
+          {task.description ? (
+            <p className="mt-1 break-words text-xs leading-5 text-[color:var(--color-text-muted)]">
+              {task.description}
+            </p>
+          ) : null}
+        </div>
 
-const SummaryPill = ({ label, value }) => (
-  <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm">
-    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{label}</p>
-    <p className="mt-2 text-lg font-semibold text-slate-900">{value}</p>
+        <div className="flex flex-wrap gap-2 lg:justify-end">
+          {task.priority ? (
+            <MetadataBadge tone={getPriorityTone(task.priority)}>{task.priority}</MetadataBadge>
+          ) : null}
+          {completedLabel ? <MetadataBadge tone="success">Completed {completedLabel}</MetadataBadge> : null}
+          {dueLabel ? <MetadataBadge>Due {dueLabel}</MetadataBadge> : null}
+          <MetadataBadge>{getTaskProjectName(task)}</MetadataBadge>
+          <MetadataBadge>{getTaskCategoryName(task)}</MetadataBadge>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const SummaryCard = ({ label, value }) => (
+  <div className="ui-section-card p-4">
+    <p className="text-xs font-medium text-[color:var(--color-text-muted)]">{label}</p>
+    <p className="ui-tabular mt-2 text-xl font-semibold text-[color:var(--color-text)]">{value}</p>
   </div>
 );
 
@@ -198,6 +194,7 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
 
     try {
       const response = await statService.getCompletedTasksByDate(cell.dateKey);
+
       if (requestId !== taskListRequestId.current) {
         return;
       }
@@ -219,19 +216,21 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
 
   if (isLoading) {
     return (
-      <section className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-6 py-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-700">Completion Rhythm</p>
-          <h2 className="mt-3 text-2xl font-semibold text-slate-900">Daily activity heatmap</h2>
-          <p className="mt-2 text-sm text-slate-600">Building the last 365 days of completed task activity…</p>
+      <section className="ui-section-card ui-card-padding">
+        <div className="max-w-3xl">
+          <p className="ui-page-kicker">Completion Rhythm</p>
+          <h2 className="mt-3 text-2xl font-semibold text-[color:var(--color-text)]">Daily Activity Heatmap</h2>
+          <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
+            Building the last 365 days of completed task activity…
+          </p>
         </div>
-        <div className="space-y-5 px-6 py-6">
+        <div className="mt-6 space-y-4" aria-live="polite">
           <div className="grid gap-3 sm:grid-cols-3">
             {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-20 animate-pulse rounded-2xl bg-slate-100" />
+              <div key={index} className="h-20 animate-pulse rounded-[12px] bg-[var(--color-surface-muted)]" />
             ))}
           </div>
-          <div className="h-56 animate-pulse rounded-2xl bg-slate-100" />
+          <div className="h-56 animate-pulse rounded-[12px] bg-[var(--color-surface-muted)]" />
         </div>
       </section>
     );
@@ -239,57 +238,55 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
 
   if (errorMessage) {
     return (
-      <section className="overflow-hidden rounded-[1.75rem] border border-rose-200 bg-white shadow-sm">
-        <div className="px-6 py-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-rose-600">Completion Rhythm</p>
-          <h2 className="mt-3 text-2xl font-semibold text-slate-900">Daily activity heatmap</h2>
-          <p className="mt-4 max-w-2xl text-sm text-slate-600">{errorMessage}</p>
-        </div>
+      <section className="ui-section-card ui-card-padding">
+        <p className="ui-page-kicker">Completion Rhythm</p>
+        <h2 className="mt-3 text-2xl font-semibold text-[color:var(--color-text)]">Daily Activity Heatmap</h2>
+        <p className="mt-4 max-w-2xl text-sm text-[color:var(--color-text-muted)]">{errorMessage}</p>
       </section>
     );
   }
 
   const bestDayLabel = heatmap.bestDay?.count
-    ? `${heatmap.bestDay.count} on ${formatDateKeyLabel(heatmap.bestDay.dateKey)}`
+    ? `${NUMBER_FORMATTER.format(heatmap.bestDay.count)} on ${formatDateKeyLabel(heatmap.bestDay.dateKey)}`
     : 'No activity yet';
   const hasNoCompletedTasks = heatmap.totalCompleted === 0;
 
   return (
-    <section className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-200 bg-white px-6 py-6">
+    <section className="ui-section-card overflow-hidden">
+      <div className="border-b border-[color:var(--color-line)] px-6 py-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-700">Completion Rhythm</p>
-            <h2 className="mt-3 text-2xl font-semibold text-slate-900">Daily activity heatmap</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              A year-long ledger of completed tasks. Darker cells mark heavier completion days, and missing dates are shown as zero activity.
+            <p className="ui-page-kicker">Completion Rhythm</p>
+            <h2 className="mt-3 text-2xl font-semibold text-[color:var(--color-text)]">Daily Activity Heatmap</h2>
+            <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
+              A year-long ledger of completed work. Darker cells mark heavier completion days, and every in-range day stays visible.
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <SummaryPill label="Completed" value={heatmap.totalCompleted} />
-            <SummaryPill label="Active Days" value={heatmap.activeDays} />
-            <SummaryPill label="Best Day" value={bestDayLabel} />
+            <SummaryCard label="Completed" value={NUMBER_FORMATTER.format(heatmap.totalCompleted)} />
+            <SummaryCard label="Active Days" value={NUMBER_FORMATTER.format(heatmap.activeDays)} />
+            <SummaryCard label="Best Day" value={bestDayLabel} />
           </div>
         </div>
       </div>
 
       <div className="space-y-5 px-6 py-6">
         {hasNoCompletedTasks ? (
-          <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          <p className="rounded-[12px] border border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-3 text-sm text-[color:var(--color-text-muted)]">
             No completed tasks in this range yet. Finish a task to start building your activity history.
           </p>
         ) : null}
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Hover Detail</p>
-            <p className="mt-2 text-sm font-medium text-slate-800">
+          <div className="ui-section-card max-w-xl p-4">
+            <p className="text-xs font-medium text-[color:var(--color-text-muted)]">Hover Detail</p>
+            <p className="mt-2 text-sm font-medium text-[color:var(--color-text)]">
               {activeCell ? formatCompletionLabel(activeCell.dateKey, activeCell.count) : 'No day selected'}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-[color:var(--color-text-muted)]">
             <span>Less</span>
             <div className="flex items-center gap-1">
               {CELL_LEVEL_STYLES.map((cellLevelStyle, index) => (
@@ -310,7 +307,7 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
               {WEEKDAY_LABELS.map((weekday) => (
                 <div
                   key={weekday.ariaLabel}
-                  className="flex h-4 items-center text-[10px] font-medium text-slate-400"
+                  className="flex h-4 items-center text-[10px] font-medium text-[color:var(--color-text-muted)]"
                   aria-label={weekday.ariaLabel}
                 >
                   {weekday.label}
@@ -323,7 +320,7 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
                 {heatmap.weeks.map((_, columnIndex) => (
                   <div
                     key={`month-${columnIndex}`}
-                    className="w-4 text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400"
+                    className="w-4 text-[10px] font-medium text-[color:var(--color-text-muted)]"
                   >
                     {monthLabelByColumn.get(columnIndex) || ''}
                   </div>
@@ -351,11 +348,13 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
                           onMouseLeave={() => setActiveDateKey(null)}
                           onBlur={() => setActiveDateKey(null)}
                           className={[
-                            'h-4 w-4 rounded-[4px] border transition-transform duration-150',
+                            'h-4 w-4 rounded-[4px] border transition-[transform,box-shadow,border-color] duration-150',
                             cell.isInRange ? CELL_LEVEL_STYLES[cell.level] : 'border-transparent bg-transparent',
-                            cell.isInRange ? 'hover:-translate-y-px focus-visible:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2' : '',
-                            isActive && cell.isInRange && !isSelected ? 'ring-2 ring-slate-900/20 ring-offset-1' : '',
-                            isSelected && cell.isInRange ? 'ring-2 ring-emerald-700 ring-offset-2' : '',
+                            cell.isInRange
+                              ? 'hover:-translate-y-px focus-visible:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring-focus-outline)] focus-visible:ring-offset-2'
+                              : '',
+                            isActive && cell.isInRange && !isSelected ? 'ring-2 ring-slate-900/15 ring-offset-1' : '',
+                            isSelected && cell.isInRange ? 'ring-2 ring-[var(--color-accent)] ring-offset-2' : '',
                           ].join(' ')}
                           disabled={!cell.isInRange}
                         />
@@ -368,25 +367,25 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+        <div className="rounded-[14px] border border-[color:var(--color-line)] bg-[var(--color-surface-muted)] p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                Completed Tasks
-              </p>
-              <h3 className="mt-1 text-lg font-semibold text-slate-900">
+              <p className="text-xs font-medium text-[color:var(--color-text-muted)]">Completed Tasks</p>
+              <h3 className="mt-1 text-lg font-semibold text-[color:var(--color-text)]">
                 {selectedDateKey ? formatDateKeyLabel(selectedDateKey) : 'Select a heatmap day'}
               </h3>
             </div>
 
             {selectedCell ? (
-              <p className="text-sm text-slate-500">{formatCompletionLabel(selectedCell.dateKey, selectedCell.count)}</p>
+              <span className="ui-chip ui-tabular">
+                {formatCompletionLabel(selectedCell.dateKey, selectedCell.count)}
+              </span>
             ) : null}
           </div>
 
           <div className="mt-4">
             {!selectedDateKey ? (
-              <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-500">
+              <p className="rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[color:var(--color-text-muted)]">
                 Click any day cell to inspect the tasks completed on that date.
               </p>
             ) : null}
@@ -394,19 +393,19 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
             {selectedDateKey && isTaskListLoading ? (
               <div className="space-y-3" aria-live="polite">
                 {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="h-20 animate-pulse rounded-2xl bg-white" />
+                  <div key={index} className="h-20 animate-pulse rounded-[12px] bg-[var(--color-surface)]" />
                 ))}
               </div>
             ) : null}
 
             {selectedDateKey && taskListError && !isTaskListLoading ? (
-              <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              <p className="rounded-[12px] border border-[color:var(--color-danger)] bg-[var(--color-danger-soft)] px-4 py-3 text-sm text-[color:var(--color-danger)]">
                 {taskListError}
               </p>
             ) : null}
 
             {selectedDateKey && !isTaskListLoading && !taskListError && completedTasks.length === 0 ? (
-              <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+              <p className="rounded-[12px] border border-[color:var(--color-line)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[color:var(--color-text-muted)]">
                 No tasks were completed on this day.
               </p>
             ) : null}
@@ -421,7 +420,7 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
           </div>
         </div>
 
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[color:var(--color-text-muted)]">
           Range: {formatDateKeyLabel(heatmap.rangeStartKey)} to {formatDateKeyLabel(heatmap.rangeEndKey)}
         </p>
       </div>
