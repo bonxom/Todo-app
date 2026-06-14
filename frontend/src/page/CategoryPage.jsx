@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { FolderOpen, LayoutGrid, Plus, X } from 'lucide-react';
 import MainLayout from '../layout/MainLayout';
 import CategoryGrid from '../feature/Category/CategoryGrid';
 import CategoryStats from '../feature/Category/CategoryStats';
@@ -12,29 +12,29 @@ import { useTaskRefresh } from '../context/useTaskRefresh';
 
 const VIEW_CONFIG = {
   categories: {
-    eyebrow: 'Category Library',
-    title: 'Map work by theme',
-    description: 'Use categories for broad buckets of work, then switch to projects when a stream needs its own progress and task list.',
-    accent: 'violet',
+    label: 'Categories',
+    title: 'Categories',
+    description: 'Group tasks by theme so related work stays easy to scan, review, and reorganize.',
     addLabel: 'Add Category',
-    loadingLabel: 'Loading categories and tasks...',
+    loadingLabel: 'Loading categories & tasks…',
+    Icon: LayoutGrid,
   },
   projects: {
-    eyebrow: 'Project Desk',
-    title: 'Track work by outcome',
-    description: 'Projects keep multi-step work focused, measurable, and easy to reopen without mixing it into every category.',
-    accent: 'sky',
+    label: 'Projects',
+    title: 'Projects',
+    description: 'Track outcome-based workstreams with their own progress, recent tasks, and next steps.',
     addLabel: 'Add Project',
-    loadingLabel: 'Loading projects and tasks...',
+    loadingLabel: 'Loading projects & tasks…',
+    Icon: FolderOpen,
   },
 };
 
 const STATUS_OPTIONS = [
-  { id: 'all', label: 'All Tasks', activeClassName: 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md', idleClassName: 'hover:border-violet-300' },
-  { id: 'pending', label: 'Pending', activeClassName: 'border-2 border-violet-500 bg-violet-100 text-violet-700 shadow-md', idleClassName: 'hover:border-violet-300' },
-  { id: 'in-progress', label: 'In Progress', activeClassName: 'border-2 border-sky-500 bg-sky-100 text-sky-700 shadow-md', idleClassName: 'hover:border-sky-300' },
-  { id: 'completed', label: 'Completed', activeClassName: 'border-2 border-emerald-500 bg-emerald-100 text-emerald-700 shadow-md', idleClassName: 'hover:border-emerald-300' },
-  { id: 'given-up', label: 'Given Up', activeClassName: 'border-2 border-gray-400 bg-gray-200 text-gray-700 shadow-md', idleClassName: 'hover:border-gray-300' },
+  { id: 'all', label: 'All Tasks' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'in-progress', label: 'In Progress' },
+  { id: 'completed', label: 'Completed' },
+  { id: 'given-up', label: 'Given Up' },
 ];
 
 const getRelationId = (value) => value?._id || value || null;
@@ -155,6 +155,7 @@ const CategoryPage = () => {
 
   const activeItems = selectedView === 'categories' ? categoryItems : projectItems;
   const activeConfig = VIEW_CONFIG[selectedView];
+  const ActiveIcon = activeConfig.Icon;
 
   const stats = useMemo(() => {
     const visibleTasks = activeItems.flatMap((item) => item.tasks);
@@ -167,12 +168,18 @@ const CategoryPage = () => {
     };
   }, [activeItems]);
 
+  const activeStatusLabel = STATUS_OPTIONS.find((option) => option.id === selectedStatus)?.label || 'All Tasks';
+
   if (isInitialLoad && isLoading) {
     return (
       <>
         <MainLayout>
-          <div className="flex min-h-full items-center justify-center">
-            <div className="text-gray-500">{activeConfig.loadingLabel}</div>
+          <div className="ui-main-content">
+            <div className="ui-page-shell">
+              <section className="ui-section-card ui-card-padding flex min-h-[18rem] items-center justify-center">
+                <p className="text-sm text-[color:var(--color-text-muted)]">{activeConfig.loadingLabel}</p>
+              </section>
+            </div>
           </div>
         </MainLayout>
         <ChatBubble key="chat-bubble-stable" />
@@ -183,72 +190,77 @@ const CategoryPage = () => {
   return (
     <>
       <MainLayout>
-        <div className="flex min-h-full justify-center p-6">
-          <div className="mx-auto w-full max-w-7xl">
-            <section className="overflow-hidden rounded-[2rem] border border-gray-200 bg-white shadow-sm">
-              <div className={`border-b px-6 py-6 ${selectedView === 'categories' ? 'border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50' : 'border-sky-100 bg-gradient-to-br from-sky-50 via-white to-cyan-50'}`}>
-                <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-                  <div className="max-w-3xl">
-                    <p className={`text-xs font-semibold uppercase tracking-[0.28em] ${selectedView === 'categories' ? 'text-violet-600' : 'text-sky-600'}`}>
-                      {activeConfig.eyebrow}
-                    </p>
-                    <h1 className="mt-3 text-3xl font-semibold text-gray-900">{activeConfig.title}</h1>
-                    <p className="mt-3 text-sm text-gray-600">{activeConfig.description}</p>
-                  </div>
-
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <div className="inline-flex rounded-2xl bg-white p-1 shadow-sm ring-1 ring-gray-200">
-                      {Object.keys(VIEW_CONFIG).map((viewId) => {
-                        const isSelected = selectedView === viewId;
-                        const count = viewId === 'categories' ? categories.length : projects.length;
-
-                        return (
-                          <button
-                            key={viewId}
-                            type="button"
-                            onClick={() => setSelectedView(viewId)}
-                            className={`inline-flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
-                              isSelected
-                                ? viewId === 'categories'
-                                  ? 'bg-violet-600 text-white shadow-md'
-                                  : 'bg-sky-600 text-white shadow-md'
-                                : 'text-gray-600 hover:text-gray-900'
-                            }`}
-                          >
-                            <span>{viewId === 'categories' ? 'Categories' : 'Projects'}</span>
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                              isSelected ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {count}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (selectedView === 'categories') {
-                          setIsAddCategoryModalOpen(true);
-                        } else {
-                          setIsAddProjectModalOpen(true);
-                        }
-                      }}
-                      className={`inline-flex h-11 items-center justify-center gap-2 rounded-2xl px-5 text-sm font-medium text-white shadow-md transition-all ${
-                        selectedView === 'categories'
-                          ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700'
-                          : 'bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-700 hover:to-cyan-700'
-                      }`}
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>{activeConfig.addLabel}</span>
-                    </button>
-                  </div>
+        <div className="ui-main-content">
+          <div className="ui-page-shell">
+            <header className="ui-page-header">
+              <p className="ui-page-kicker">Workspace</p>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div className="min-w-0">
+                  <h1 className="ui-page-title">{activeConfig.title}</h1>
+                  <p className="ui-page-description">{activeConfig.description}</p>
                 </div>
               </div>
+            </header>
 
-              <div className="border-b border-gray-100 px-6 py-5">
+            <section className="ui-section-card ui-card-padding">
+              <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="inline-flex flex-wrap gap-2 rounded-[14px] border border-[color:var(--color-line)] bg-[var(--color-surface)] p-1.5">
+                    {Object.keys(VIEW_CONFIG).map((viewId) => {
+                      const isSelected = selectedView === viewId;
+                      const count = viewId === 'categories' ? categories.length : projects.length;
+                      const { Icon, label } = VIEW_CONFIG[viewId];
+
+                      return (
+                        <button
+                          key={viewId}
+                          type="button"
+                          onClick={() => setSelectedView(viewId)}
+                          className={`inline-flex items-center gap-3 rounded-[10px] border px-4 py-3 text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ${
+                            isSelected
+                              ? 'border-transparent bg-[var(--color-accent-soft)] text-[color:var(--color-accent)] shadow-[var(--shadow-xs)]'
+                              : 'border-transparent bg-transparent text-[color:var(--color-text-muted)] hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" aria-hidden="true" />
+                          <span>{label}</span>
+                          <span className={`ui-chip ui-tabular ${isSelected ? 'ui-chip--accent' : ''}`}>
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[color:var(--color-text-muted)]">
+                    <span className="ui-chip">
+                      <ActiveIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                      {activeConfig.label} View
+                    </span>
+                    <span className="ui-chip ui-tabular">{activeItems.length} groups</span>
+                    <span className="ui-chip ui-tabular">{stats.totalTasks} visible tasks</span>
+                    <span className="ui-chip">{activeStatusLabel}</span>
+                    {isLoading ? <span className="ui-chip">Refreshing…</span> : null}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedView === 'categories') {
+                      setIsAddCategoryModalOpen(true);
+                    } else {
+                      setIsAddProjectModalOpen(true);
+                    }
+                  }}
+                  className="ui-btn-primary w-full sm:w-auto"
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  <span>{activeConfig.addLabel}</span>
+                </button>
+              </div>
+
+              <div className="mt-5 border-t border-[color:var(--color-line)] pt-5">
                 <div className="flex flex-wrap gap-2">
                   {STATUS_OPTIONS.map((option) => {
                     const isSelected = selectedStatus === option.id;
@@ -258,10 +270,10 @@ const CategoryPage = () => {
                         key={option.id}
                         type="button"
                         onClick={() => setSelectedStatus(option.id)}
-                        className={`rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
+                        className={`inline-flex items-center rounded-full border px-3.5 py-2 text-sm font-medium transition-[background-color,border-color,color] duration-150 ${
                           isSelected
-                            ? option.activeClassName
-                            : `border-gray-200 bg-white text-gray-700 ${option.idleClassName}`
+                            ? 'border-transparent bg-[var(--color-accent-soft)] text-[color:var(--color-accent)]'
+                            : 'border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]'
                         }`}
                       >
                         {option.label}
@@ -270,70 +282,78 @@ const CategoryPage = () => {
                   })}
                 </div>
               </div>
-
-              <div className="px-6 py-6">
-                <CategoryStats
-                  stats={stats}
-                  entityLabel={selectedView === 'categories' ? 'Categories' : 'Projects'}
-                  accent={activeConfig.accent}
-                />
-
-                {errorMessage ? (
-                  <div className="rounded-[2rem] border border-red-200 bg-red-50/80 px-6 py-10 text-center">
-                    <p className="text-lg font-semibold text-red-700">Unable to load this page</p>
-                    <p className="mt-2 text-sm text-red-600">{errorMessage}</p>
-                    <button
-                      type="button"
-                      onClick={fetchWorkspaceData}
-                      className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl border border-red-300 bg-white px-5 text-sm font-medium text-red-700 transition-all hover:bg-red-50"
-                    >
-                      Try Again
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    {!isLoading && activeItems.length === 0 && selectedStatus !== 'all' ? (
-                      <div className="mt-6 rounded-[2rem] border border-dashed border-gray-200 bg-gray-50/70 px-6 py-10 text-center">
-                        <p className="text-lg font-semibold text-gray-900">No matches for this status filter</p>
-                        <p className="mt-2 text-sm text-gray-500">
-                          Switch the status filter to see the rest of your {selectedView}.
-                        </p>
-                      </div>
-                    ) : selectedView === 'categories' ? (
-                      <CategoryGrid
-                        items={categoryItems}
-                        onTaskUpdated={fetchWorkspaceData}
-                        onCreateCategory={() => setIsAddCategoryModalOpen(true)}
-                      />
-                    ) : (
-                      <ProjectGrid
-                        items={projectItems}
-                        onTaskUpdated={fetchWorkspaceData}
-                        onProjectUpdated={fetchWorkspaceData}
-                        onCreateProject={() => setIsAddProjectModalOpen(true)}
-                      />
-                    )}
-                  </>
-                )}
-              </div>
             </section>
+
+            <CategoryStats
+              stats={stats}
+              entityLabel={selectedView === 'categories' ? 'Categories' : 'Projects'}
+            />
+
+            {errorMessage ? (
+              <section className="ui-section-card ui-card-padding text-center">
+                <p className="text-lg font-semibold text-[color:var(--color-danger)]">Unable to load this workspace</p>
+                <p className="mx-auto mt-2 max-w-2xl text-sm text-[color:var(--color-text-muted)]">{errorMessage}</p>
+                <button
+                  type="button"
+                  onClick={fetchWorkspaceData}
+                  className="ui-btn-secondary mt-6"
+                >
+                  Try Again
+                </button>
+              </section>
+            ) : !isLoading && activeItems.length === 0 && selectedStatus !== 'all' ? (
+              <section className="ui-section-card border-dashed px-6 py-12 text-center">
+                <p className="text-lg font-semibold text-[color:var(--color-text)]">No matches for this status filter</p>
+                <p className="mx-auto mt-2 max-w-xl text-sm text-[color:var(--color-text-muted)]">
+                  Switch the task filter to see the rest of your {selectedView}.
+                </p>
+              </section>
+            ) : selectedView === 'categories' ? (
+              <CategoryGrid
+                items={categoryItems}
+                onTaskUpdated={fetchWorkspaceData}
+                onCreateCategory={() => setIsAddCategoryModalOpen(true)}
+              />
+            ) : (
+              <ProjectGrid
+                items={projectItems}
+                onTaskUpdated={fetchWorkspaceData}
+                onProjectUpdated={fetchWorkspaceData}
+                onCreateProject={() => setIsAddProjectModalOpen(true)}
+              />
+            )}
           </div>
         </div>
       </MainLayout>
 
       {isAddCategoryModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setIsAddCategoryModalOpen(false)}
+          role="presentation"
         >
           <div
-            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="ui-modal-shell w-full max-w-lg animate-fadeIn"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-category-title"
           >
-            <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 py-4">
-              <h2 className="text-xl font-semibold text-white">Add Category</h2>
+            <div className="ui-modal-header flex items-start justify-between gap-4">
+              <div>
+                <p className="ui-page-kicker">Create</p>
+                <h2 id="add-category-title" className="text-xl font-semibold text-[color:var(--color-text)]">Add Category</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddCategoryModalOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-[color:var(--color-text-muted)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
+                aria-label="Close add category dialog"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="p-6">
+            <div className="ui-modal-body">
               <AddCategoryForm
                 onClose={() => setIsAddCategoryModalOpen(false)}
                 onCategoryCreated={() => {
@@ -348,17 +368,32 @@ const CategoryPage = () => {
 
       {isAddProjectModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setIsAddProjectModalOpen(false)}
+          role="presentation"
         >
           <div
-            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="ui-modal-shell w-full max-w-lg animate-fadeIn"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-project-title"
           >
-            <div className="bg-gradient-to-r from-sky-600 to-cyan-600 px-6 py-4">
-              <h2 className="text-xl font-semibold text-white">Add Project</h2>
+            <div className="ui-modal-header flex items-start justify-between gap-4">
+              <div>
+                <p className="ui-page-kicker">Create</p>
+                <h2 id="add-project-title" className="text-xl font-semibold text-[color:var(--color-text)]">Add Project</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddProjectModalOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-[color:var(--color-text-muted)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
+                aria-label="Close add project dialog"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="p-6">
+            <div className="ui-modal-body">
               <AddProjectForm
                 onClose={() => setIsAddProjectModalOpen(false)}
                 onProjectCreated={() => {

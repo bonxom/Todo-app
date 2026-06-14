@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Folder, X } from 'lucide-react';
 import TaskCard from './TaskCard';
-import TaskDetailForm from '../Todo/Form/TaskDetailForm';
+import TaskDetailButton from '../Todo/TaskDetailButton';
 import GiveUpDialog from '../Dialog/GiveUpDialog';
 import DeleteDialog from '../Dialog/DeleteDialog';
 import { taskService } from '../../api/apiService';
@@ -15,6 +15,24 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
   const [isGiveUpModalOpen, setIsGiveUpModalOpen] = useState(false);
   const [taskToGiveUp, setTaskToGiveUp] = useState(null);
   const [deletingTaskId, setDeletingTaskId] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const completedTasks = tasks.filter((task) => task.status === 'completed').length;
+  const totalTasks = tasks.length;
+  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const handleEdit = (task) => {
     setSelectedTask(task);
@@ -29,7 +47,7 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
   const confirmGiveUp = async () => {
     try {
       await taskService.giveUpTask(taskToGiveUp);
-      if (onTaskUpdated) onTaskUpdated();
+      onTaskUpdated?.();
       setIsGiveUpModalOpen(false);
       setTaskToGiveUp(null);
     } catch (error) {
@@ -47,14 +65,13 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
     try {
       setDeletingTaskId(taskToDelete);
       setIsDeleteModalOpen(false);
-      
+
       await taskService.deleteTask(taskToDelete);
-      
-      // Wait for animation to complete, then refresh
+
       setTimeout(() => {
         setDeletingTaskId(null);
         setTaskToDelete(null);
-        if (onTaskUpdated) onTaskUpdated();
+        onTaskUpdated?.();
       }, 300);
     } catch (error) {
       console.error('Failed to delete task:', error);
@@ -63,151 +80,121 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
       setTaskToDelete(null);
     }
   };
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const completedTasks = tasks.filter(task => task.status === 'completed').length;
-  const totalTasks = tasks.length;
 
   const modalContent = (
     <>
-    {isEditModalOpen && (
-      <div 
-        className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm bg-black/30"
-        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-        onClick={() => {
+      <TaskDetailButton
+        isOpen={isEditModalOpen}
+        task={selectedTask}
+        onClose={() => {
           setIsEditModalOpen(false);
           setSelectedTask(null);
         }}
+        onTaskUpdated={onTaskUpdated}
+        onProjectCreated={onTaskUpdated}
+      />
+
+      <GiveUpDialog
+        isOpen={isGiveUpModalOpen}
+        onClose={() => {
+          setIsGiveUpModalOpen(false);
+          setTaskToGiveUp(null);
+        }}
+        onConfirm={confirmGiveUp}
+      />
+
+      <DeleteDialog
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setTaskToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+      />
+
+      <div
+        className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+        role="presentation"
       >
-        <div 
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-xl relative animate-fadeIn" 
-          style={{ maxHeight: '90vh' }}
-          onClick={(e) => e.stopPropagation()}
+        <div
+          className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[20px] border border-[color:var(--color-line)] bg-[var(--color-surface)] shadow-[var(--shadow-lg)] animate-fadeIn overscroll-contain"
+          onClick={(event) => event.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="category-detail-title"
         >
-          <div className="sticky top-0 bg-white rounded-t-2xl p-6 pb-4 border-b border-gray-100 z-10">
-            <button
-              onClick={() => {
-                setIsEditModalOpen(false);
-                setSelectedTask(null);
-              }}
-              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Close modal"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <h2 className="text-2xl font-bold text-gray-900 pr-10">Edit Task</h2>
-          </div>
-
-          <div className="px-6 py-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 100px)' }}>
-            <TaskDetailForm task={selectedTask} onClose={() => {
-              setIsEditModalOpen(false);
-              setSelectedTask(null);
-            }} onTaskUpdated={onTaskUpdated} onProjectCreated={onTaskUpdated} />
-          </div>
-        </div>
-      </div>
-    )}
-
-    <GiveUpDialog
-      isOpen={isGiveUpModalOpen}
-      onClose={() => {
-        setIsGiveUpModalOpen(false);
-        setTaskToGiveUp(null);
-      }}
-      onConfirm={confirmGiveUp}
-    />
-
-    <DeleteDialog
-      isOpen={isDeleteModalOpen}
-      onClose={() => {
-        setIsDeleteModalOpen(false);
-        setTaskToDelete(null);
-      }}
-      onConfirm={confirmDelete}
-    />
-
-    <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-      onClick={onClose}
-    >
-      <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden animate-fadeIn flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Category Header */}
-        <div className="bg-gradient-to-r from-violet-200 to-pink-100 border-b border-gray-200 p-6 flex-shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <Folder className="w-7 h-7 text-gray-700" />
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">{category}</h2>
-                <p className="mt-1 text-sm text-gray-600">
+          <div className="border-b border-[color:var(--color-line)] px-6 py-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--color-line)] bg-[var(--color-surface-muted)] text-[color:var(--color-accent)]">
+                    <Folder className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="ui-page-kicker">Category</p>
+                    <h2 id="category-detail-title" className="truncate text-2xl font-semibold text-[color:var(--color-text)]">
+                      {category}
+                    </h2>
+                  </div>
+                </div>
+                <p className="mt-3 max-w-3xl break-words text-sm leading-6 text-[color:var(--color-text-muted)]">
                   {description || 'Tasks grouped under this category appear here.'}
                 </p>
               </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-gray-600 hover:text-gray-800 transition-colors p-1 hover:bg-white/50 rounded-full"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-            <span>{completedTasks}/{totalTasks} completed</span>
-            <span>•</span>
-            <span>{totalTasks} total tasks</span>
-          </div>
-        </div>
 
-        {/* Tasks List */}
-        <div className="p-6 overflow-y-auto flex-1">
-          {tasks.length > 0 ? (
-            <div className="space-y-3">
-              {tasks.map((task) => (
-                <div
-                  key={task._id || task.id}
-                  className={`transition-all duration-300 ${
-                    deletingTaskId === (task._id || task.id)
-                      ? 'opacity-0 scale-95 pointer-events-none'
-                      : 'opacity-100 scale-100'
-                  }`}
-                >
-                  <TaskCard 
-                    task={task}
-                    showActions={true}
-                    onEdit={handleEdit}
-                    onGiveUp={handleGiveUp}
-                    onDelete={handleDelete}
-                    onTaskUpdated={onTaskUpdated}
-                  />
-                </div>
-              ))}
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-[color:var(--color-text-muted)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
+                aria-label="Close category details"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          ) : (
-            <div className="text-center py-12 text-gray-400">
-              <Folder className="w-16 h-16 mx-auto mb-3 opacity-50" />
-              <p className="text-lg font-medium">No tasks in this category</p>
-              <p className="text-sm mt-1">Create a task to get started</p>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="ui-chip ui-tabular">{totalTasks} tasks</span>
+              <span className="ui-chip ui-chip--success ui-tabular">{completedTasks} completed</span>
+              <span className="ui-chip ui-tabular">{progress}% complete</span>
             </div>
-          )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            {tasks.length > 0 ? (
+              <div className="space-y-3">
+                {tasks.map((task) => (
+                  <div
+                    key={task._id || task.id}
+                    className={`transition-[opacity,transform] duration-300 ${
+                      deletingTaskId === (task._id || task.id)
+                        ? 'pointer-events-none scale-[0.98] opacity-0'
+                        : 'scale-100 opacity-100'
+                    }`}
+                  >
+                    <TaskCard
+                      task={task}
+                      showActions
+                      onEdit={handleEdit}
+                      onGiveUp={handleGiveUp}
+                      onDelete={handleDelete}
+                      onTaskUpdated={onTaskUpdated}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[14px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-6 py-14 text-center">
+                <Folder className="mx-auto h-12 w-12 text-[color:var(--color-text-muted)]" aria-hidden="true" />
+                <p className="mt-4 text-lg font-semibold text-[color:var(--color-text)]">No tasks in this category</p>
+                <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
+                  Create a task or move one into this category to start tracking it here.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 

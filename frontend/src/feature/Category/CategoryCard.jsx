@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Folder, ChevronDown, X } from 'lucide-react';
+import { ChevronRight, Folder, Trash2 } from 'lucide-react';
 import TaskCard from './TaskCard';
 import CategoryDetailModal from './CategoryDetailModal';
 import TaskDetailButton from '../Todo/TaskDetailButton';
@@ -14,13 +13,20 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
+  const completedTasks = tasks.filter((task) => task.status === 'completed').length;
+  const totalTasks = tasks.length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const displayTasks = tasks.slice(0, 3);
+  const hasMore = tasks.length > 3;
+  const descriptionId = `category-${categoryId}-description`;
+
   const handleTaskClick = (task) => {
     setSelectedTask(task);
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteClick = (e) => {
-    e.stopPropagation();
+  const handleDeleteClick = (event) => {
+    event.stopPropagation();
     setIsDeleteDialogOpen(true);
   };
 
@@ -28,72 +34,59 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
     try {
       await categoryService.deleteCategory(categoryId);
       setIsDeleteDialogOpen(false);
-      if (onTaskUpdated) {
-        onTaskUpdated();
-      }
+      onTaskUpdated?.();
     } catch (error) {
       console.error('Failed to delete category:', error);
       alert(error.response?.data?.message || 'Failed to delete category. Please try again.');
     }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'move';
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
     setIsDragOver(true);
   };
 
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     setIsDragOver(false);
   };
 
-  const handleDrop = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDrop = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     setIsDragOver(false);
-    
-    const taskId = e.dataTransfer.getData('taskId');
-    const currentCategoryId = e.dataTransfer.getData('currentCategoryId');
-    
-    // Don't update if dropping in the same category
+
+    const taskId = event.dataTransfer.getData('taskId');
+    const currentCategoryId = event.dataTransfer.getData('currentCategoryId');
+
     if (currentCategoryId === categoryId) {
       return;
     }
-    
+
     try {
       await taskService.updateTask(taskId, { categoryId });
-      if (onTaskUpdated) {
-        onTaskUpdated();
-      }
+      onTaskUpdated?.();
     } catch (error) {
       console.error('Failed to move task:', error);
       alert(error.response?.data?.message || 'Failed to move task to this category.');
     }
   };
-  
-  const completedTasks = tasks.filter(task => task.status === 'completed').length;
-  const totalTasks = tasks.length;
-  const displayTasks = tasks.slice(0, 3);
-  const hasMore = tasks.length > 3;
 
   return (
     <>
-      {isEditModalOpen && createPortal(
-        <TaskDetailButton
-          isOpen={isEditModalOpen}
-          task={selectedTask}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedTask(null);
-          }}
-          onTaskUpdated={onTaskUpdated}
-          onProjectCreated={onTaskUpdated}
-        />,
-        document.body
-      )}
+      <TaskDetailButton
+        isOpen={isEditModalOpen}
+        task={selectedTask}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedTask(null);
+        }}
+        onTaskUpdated={onTaskUpdated}
+        onProjectCreated={onTaskUpdated}
+      />
 
       <CategoryDetailModal
         isOpen={isModalOpen}
@@ -103,84 +96,129 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
         tasks={tasks}
         onTaskUpdated={onTaskUpdated}
       />
-      
-      <div 
-        className={`bg-white rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 overflow-hidden relative ${
-          isDragOver ? 'ring-4 ring-purple-400 ring-opacity-50 scale-105' : ''
+
+      <article
+        className={`ui-section-card flex h-full flex-col overflow-hidden transition-[border-color,box-shadow,background-color] duration-200 ${
+          isDragOver
+            ? 'border-[color:var(--color-accent)] bg-[var(--color-accent-soft)]'
+            : 'hover:border-[color:var(--color-accent)]'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Delete Button */}
-        {category !== 'Uncategorized' && (
-          <button
-            onClick={handleDeleteClick}
-            className="absolute top-2 right-2 z-10 w-7 h-7 bg-red-400 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all shadow-md hover:shadow-lg"
-            aria-label="Delete category"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+        <div className="p-5">
+          <div className="flex items-start gap-3">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="ui-focus-ring min-w-0 flex-1 rounded-[10px] text-left"
+              aria-describedby={descriptionId}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--color-line)] bg-[var(--color-surface-muted)] text-[color:var(--color-accent)]">
+                  <Folder className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[color:var(--color-text-muted)]">
+                    Category
+                  </p>
+                  <h3 className="truncate text-lg font-semibold text-[color:var(--color-text)]">{category}</h3>
+                </div>
+              </div>
+            </button>
 
-        {/* Category Header */}
-        <div 
-          className="bg-gradient-to-r from-violet-200 to-pink-100 border-b border-gray-200 p-4 cursor-pointer hover:from-violet-300 hover:to-pink-200 transition-all select-none"
-          onClick={() => setIsModalOpen(true)}
-          style={{ userSelect: 'none', WebkitUserSelect: 'none', MozUserSelect: 'none', msUserSelect: 'none' }}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <Folder className="w-6 h-6 text-gray-600" />
-            <h3 className="text-lg font-semibold text-gray-800">{category}</h3>
+            {category !== 'Uncategorized' ? (
+              <button
+                type="button"
+                onClick={handleDeleteClick}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-danger)] transition-[background-color,border-color,color] duration-150 hover:border-[color:var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
+                aria-label={`Delete ${category}`}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            ) : null}
           </div>
-          <p className="mb-3 min-h-[2.5rem] text-sm text-gray-600">
+
+          <p
+            id={descriptionId}
+            className="mt-4 min-h-[3rem] break-words text-sm leading-6 text-[color:var(--color-text-muted)]"
+          >
             {description || 'No category description yet. Use categories to group work that shares a theme.'}
           </p>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>{completedTasks}/{totalTasks} completed</span>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="ui-chip ui-tabular">{totalTasks} tasks</span>
+            <span className="ui-chip ui-chip--success ui-tabular">{completedTasks} completed</span>
+            <span className="ui-chip ui-tabular">{completionRate}% complete</span>
+          </div>
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs text-[color:var(--color-text-muted)]">
+              <span>Progress</span>
+              <span className="ui-tabular">{completedTasks}/{totalTasks}</span>
+            </div>
+            <div
+              className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-surface-muted)]"
+              role="progressbar"
+              aria-label={`${category} progress`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={completionRate}
+            >
+              <div
+                className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-200"
+                style={{ width: `${completionRate}%` }}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Tasks List */}
-        <div className="p-4 space-y-2">
+        <div className="flex flex-1 flex-col border-t border-[color:var(--color-line)] px-5 pb-5 pt-4">
           {displayTasks.length > 0 ? (
-            <>
+            <div className="space-y-2.5">
               {displayTasks.map((task) => (
-                <TaskCard 
-                  key={task._id || task.id} 
+                <TaskCard
+                  key={task._id || task.id}
                   task={task}
                   onClick={handleTaskClick}
-                  quickActions={true}
+                  quickActions
+                  enableDrag
                   onTaskUpdated={onTaskUpdated}
                 />
               ))}
-              
-              {hasMore && (
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="w-full p-3 rounded-lg border-2 border-dashed border-gray-300 hover:border-purple-400 hover:bg-purple-50 transition-all text-gray-600 hover:text-purple-600 font-medium text-sm flex items-center justify-center gap-2"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                  <span>View {tasks.length - 3} more tasks</span>
-                </button>
-              )}
-            </>
+            </div>
           ) : (
-            <div className="text-center py-8 text-gray-400">
-              <p className="text-sm">No tasks in this category</p>
+            <div className="rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-8 text-center">
+              <p className="text-sm font-medium text-[color:var(--color-text)]">No tasks in this category</p>
+              <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">
+                Drag a task here or assign one from a task form.
+              </p>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Delete Confirmation Dialog */}
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <div className="text-xs text-[color:var(--color-text-muted)]">
+              {hasMore ? `${tasks.length - 3} more tasks available` : 'Recent tasks shown above'}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="ui-btn-tertiary shrink-0 px-0"
+            >
+              <span>{hasMore ? 'View All Tasks' : 'Open Details'}</span>
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </article>
+
       <DeleteCategoryDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         categoryName={category}
       />
-
     </>
   );
 };

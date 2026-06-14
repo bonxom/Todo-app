@@ -1,34 +1,48 @@
-const CategoryStats = ({ stats, entityLabel = 'Categories', accent = 'violet' }) => {
-  const primaryNumberClass = accent === 'sky'
-    ? 'from-sky-600 to-cyan-600'
-    : 'from-violet-600 to-fuchsia-600';
+const STAT_STYLES = {
+  neutral: 'text-[color:var(--color-text)]',
+  accent: 'text-[color:var(--color-accent)]',
+  success: 'text-[color:var(--color-success)]',
+  warning: 'text-[color:var(--color-warning)]',
+};
+
+const CategoryStats = ({ stats, entityLabel = 'Categories' }) => {
+  const items = [
+    {
+      id: 'groups',
+      label: entityLabel,
+      value: stats.totalGroups,
+      tone: 'accent',
+    },
+    {
+      id: 'tasks',
+      label: 'Visible Tasks',
+      value: stats.totalTasks,
+      tone: 'neutral',
+    },
+    {
+      id: 'completed',
+      label: 'Completed',
+      value: stats.completedTasks,
+      tone: 'success',
+    },
+    {
+      id: 'pending',
+      label: 'Pending',
+      value: stats.pendingTasks,
+      tone: 'warning',
+    },
+  ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div className="bg-white rounded-lg shadow-md p-4 text-center">
-        <div className={`text-2xl font-bold bg-gradient-to-r ${primaryNumberClass} bg-clip-text text-transparent`}>
-          {stats.totalGroups}
-        </div>
-        <div className="text-sm text-gray-600 mt-1">{entityLabel}</div>
-      </div>
-      <div className="bg-white rounded-lg shadow-md p-4 text-center">
-        <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          {stats.totalTasks}
-        </div>
-        <div className="text-sm text-gray-600 mt-1">Total Tasks</div>
-      </div>
-      <div className="bg-white rounded-lg shadow-md p-4 text-center">
-        <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
-          {stats.completedTasks}
-        </div>
-        <div className="text-sm text-gray-600 mt-1">Completed</div>
-      </div>
-      <div className="bg-white rounded-lg shadow-md p-4 text-center">
-        <div className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-          {stats.pendingTasks}
-        </div>
-        <div className="text-sm text-gray-600 mt-1">Pending</div>
-      </div>
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {items.map((item) => (
+        <section key={item.id} className="ui-section-card p-4">
+          <p className="text-xs font-medium text-[color:var(--color-text-muted)]">{item.label}</p>
+          <p className={`ui-tabular mt-2 text-2xl font-semibold ${STAT_STYLES[item.tone]}`}>
+            {item.value}
+          </p>
+        </section>
+      ))}
     </div>
   );
 };

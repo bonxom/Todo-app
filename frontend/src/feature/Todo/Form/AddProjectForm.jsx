@@ -47,32 +47,37 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="project-name" className="block text-sm font-medium text-gray-700 mb-2">
-          Project Name <span className="text-red-500">*</span>
+        <label htmlFor="project-name" className="mb-2 block text-sm font-medium text-[color:var(--color-text)]">
+          Project Name <span className="text-[color:var(--color-danger)]">*</span>
         </label>
         <input
           id="project-name"
+          name="project_name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Enter project name..."
-          className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 placeholder:text-gray-400 shadow-sm outline-none transition hover:border-gray-300 focus:border-sky-300 focus:ring-4 focus:ring-sky-200/60"
+          placeholder="Enter project name…"
+          className="ui-input"
           required
           autoFocus
+          autoComplete="off"
+          spellCheck={false}
         />
       </div>
 
       <div>
-        <label htmlFor="project-description" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="project-description" className="mb-2 block text-sm font-medium text-[color:var(--color-text)]">
           Description
         </label>
         <textarea
           id="project-description"
+          name="project_description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="What is this project for?"
+          placeholder="Describe what this project is for…"
           rows={3}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 placeholder:text-gray-400 shadow-sm outline-none transition hover:border-gray-300 focus:border-sky-300 focus:ring-4 focus:ring-sky-200/60 resize-none"
+          className="ui-input"
+          autoComplete="off"
         />
       </div>
 
@@ -83,16 +88,16 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
             handleReset();
             onClose();
           }}
-          className="flex-1 h-11 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all"
+          className="ui-btn-secondary flex-1"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 h-11 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-700 hover:to-cyan-700 text-white font-medium rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="ui-btn-primary flex-1 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? (project?._id ? 'Saving...' : 'Adding...') : (project?._id ? 'Save Project' : 'Add Project')}
+          {isSubmitting ? (project?._id ? 'Saving…' : 'Adding…') : (project?._id ? 'Save Project' : 'Add Project')}
         </button>
       </div>
     </form>
