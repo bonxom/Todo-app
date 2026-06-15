@@ -1,5 +1,6 @@
 const DATE_ONLY_PATTERN = /^(\d{4})[-/](\d{2})[-/](\d{2})$/;
-const DATE_TIME_LOCAL_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/;
+const DATE_TIME_LOCAL_BARE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(:\d{2})?$/;
+const DATE_TIME_WITH_TZ_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(:\d{2})?(Z|[+-]\d{2}:\d{2})$/;
 const DISPLAY_DATE_TIME_PATTERN = /^(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})$/;
 
 export const getStartOfToday = () => {
@@ -36,7 +37,19 @@ export const normalizeTaskDateInput = (value) => {
             };
         }
 
-        const dateTimeLocalMatch = value.match(DATE_TIME_LOCAL_PATTERN);
+        // If the string has a timezone offset (e.g. +07:00 or Z), parse it
+        // with new Date() which correctly handles the offset.
+        const dateTimeWithTzMatch = value.match(DATE_TIME_WITH_TZ_PATTERN);
+        if (dateTimeWithTzMatch) {
+            const parsed = new Date(value);
+            return Number.isNaN(parsed.getTime())
+                ? { error: "Invalid date value" }
+                : { shouldUpdate: true, value: parsed };
+        }
+
+        // Bare datetime-local (no timezone offset) — use component extraction
+        // to construct date in server local time.
+        const dateTimeLocalMatch = value.match(DATE_TIME_LOCAL_BARE_PATTERN);
         if (dateTimeLocalMatch) {
             const [, year, month, day, hour, minute] = dateTimeLocalMatch;
             return {

@@ -12,6 +12,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
     new: false,
     confirm: false,
   });
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -27,9 +28,11 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.newPassword !== formData.confirmPassword) {
-      alert('New passwords do not match!');
+      setFormError('Confirm the same new password in both fields.');
       return;
     }
+
+    setFormError('');
     onSave({
       currentPassword: formData.currentPassword,
       newPassword: formData.newPassword,
@@ -40,108 +43,140 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
+  const updateField = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (formError) {
+      setFormError('');
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-    >
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-fadeIn">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Change Password</h2>
+    <div className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 overscroll-contain">
+      <div
+        className="ui-modal-shell animate-fadeIn"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="change-password-title"
+      >
+        <div className="ui-modal-header flex items-center justify-between gap-4">
+          <div>
+            <h2 id="change-password-title" className="m-0 text-xl font-semibold text-[var(--color-text)]">
+              Change Password
+            </h2>
+            <p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">
+              Update the password you use to sign in to your account.
+            </p>
+          </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="ui-modal-close-button ui-focus-ring"
+            aria-label="Close change password dialog"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Current Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPasswords.current ? 'text' : 'password'}
-                value={formData.currentPassword}
-                onChange={(e) =>
-                  setFormData({ ...formData, currentPassword: e.target.value })
-                }
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => togglePasswordVisibility('current')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+        <form onSubmit={handleSubmit}>
+          <div className="ui-modal-body space-y-4">
+            <div>
+              <label htmlFor="current-password" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+                Current Password
+              </label>
+              <div className="relative">
+                <input
+                  id="current-password"
+                  name="currentPassword"
+                  type={showPasswords.current ? 'text' : 'password'}
+                  value={formData.currentPassword}
+                  onChange={(e) => updateField('currentPassword', e.target.value)}
+                  autoComplete="current-password"
+                  className="ui-input pr-12"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('current')}
+                  className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
+                  aria-label={showPasswords.current ? 'Hide current password' : 'Show current password'}
+                >
+                  {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="new-password" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+                New Password
+              </label>
+              <div className="relative">
+                <input
+                  id="new-password"
+                  name="newPassword"
+                  type={showPasswords.new ? 'text' : 'password'}
+                  value={formData.newPassword}
+                  onChange={(e) => updateField('newPassword', e.target.value)}
+                  autoComplete="new-password"
+                  className="ui-input pr-12"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('new')}
+                  className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
+                  aria-label={showPasswords.new ? 'Hide new password' : 'Show new password'}
+                >
+                  {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="confirm-password" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+                Confirm New Password
+              </label>
+              <div className="relative">
+                <input
+                  id="confirm-password"
+                  name="confirmPassword"
+                  type={showPasswords.confirm ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={(e) => updateField('confirmPassword', e.target.value)}
+                  autoComplete="new-password"
+                  className="ui-input pr-12"
+                  aria-describedby={formError ? 'password-form-error' : undefined}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('confirm')}
+                  className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
+                  aria-label={showPasswords.confirm ? 'Hide confirm new password' : 'Show confirm new password'}
+                >
+                  {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {formError ? (
+                <p id="password-form-error" className="mt-2 mb-0 text-sm text-[var(--color-danger)]" aria-live="polite">
+                  {formError}
+                </p>
+              ) : null}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              New Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPasswords.new ? 'text' : 'password'}
-                value={formData.newPassword}
-                onChange={(e) =>
-                  setFormData({ ...formData, newPassword: e.target.value })
-                }
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => togglePasswordVisibility('new')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm New Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPasswords.confirm ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={(e) =>
-                  setFormData({ ...formData, confirmPassword: e.target.value })
-                }
-                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => togglePasswordVisibility('confirm')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-4">
+          <div className="ui-modal-footer">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="ui-btn-secondary ui-focus-ring min-w-[8.5rem] flex-1"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90 transition-opacity"
+              className="ui-btn-primary ui-focus-ring min-w-[8.5rem] flex-1"
             >
               Change Password
             </button>

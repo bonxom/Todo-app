@@ -1,17 +1,9 @@
 import { useState } from 'react';
-import { CircleCheckBig, Frown, Play } from 'lucide-react';
+import { CircleCheckBig, Frown, Play, Pencil, Trash2, Flag } from 'lucide-react';
 import { formatDateTime } from '../../utils/dateTime';
 
 const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const priorityColors = {
-    high: 'bg-red-100 text-red-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    low: 'bg-green-100 text-green-800',
-  };
-
-  const categoryColors = 'bg-purple-100 text-purple-800';
-  const projectColors = 'bg-sky-100 text-sky-800';
 
   const getDaysLeft = (deadline) => {
     const today = new Date();
@@ -23,28 +15,26 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete 
     return diffDays;
   };
 
-  const getDeadlineColor = (daysLeft) => {
-    if (daysLeft < 0) return 'bg-red-100 text-red-700';
-    if (daysLeft <= 2) return 'bg-orange-100 text-orange-700';
-    if (daysLeft <= 7) return 'bg-yellow-100 text-yellow-700';
-    return 'bg-gray-100 text-gray-600';
+  const getDeadlineChip = (daysLeft) => {
+    if (daysLeft < 0) return 'ui-chip--danger';
+    if (daysLeft <= 2) return 'ui-chip--warning';
+    return '';
   };
 
   const formatDaysLeft = (daysLeft) => {
-    if (daysLeft < 0) return `${Math.abs(daysLeft)} days overdue`;
+    if (daysLeft < 0) return `${Math.abs(daysLeft)}d overdue`;
     if (daysLeft === 0) return 'Due today';
     if (daysLeft === 1) return '1 day left';
-    return `${daysLeft} days left`;
+    return `${daysLeft}d left`;
   };
 
   const isPending = task.status === 'pending';
 
   return (
     <div 
-      className={`rounded-2xl shadow-sm p-5 flex items-start gap-4 hover:shadow-md transition-all select-none ${
-        isPending ? 'bg-gray-50/80 border-2 border-dashed border-transparent hover:border-gray-300' : 'bg-white/80'
+      className={`ui-section-card p-4 flex items-start gap-4 transition-[border-color,box-shadow] duration-200 hover:border-[var(--color-accent)] ${
+        isPending ? 'border-dashed' : ''
       }`}
-      style={{ userSelect: 'none' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -52,115 +42,92 @@ const TaskItem = ({ task, onToggleComplete, onEdit, onStart, onGiveUp, onDelete 
         type="checkbox"
         checked={task.status === 'completed'}
         onChange={() => onToggleComplete(task._id)}
-        className="mt-1.5 w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+        className="mt-1 h-5 w-5 rounded border-[var(--color-line)] accent-[var(--color-accent)] cursor-pointer"
         aria-label={task.status === 'completed' ? `Mark ${task.title} as in progress` : `Mark ${task.title} as completed`}
       />
       
       <div className="flex-1 min-w-0">
         <h3
-          className={`text-[15px] font-medium mb-2.5 ${
-            task.status === 'completed' ? 'line-through text-gray-400' : 
-            isPending ? 'text-gray-500' : 'text-gray-900'
+          className={`text-[15px] font-medium leading-snug ${
+            task.status === 'completed' ? 'line-through text-[var(--color-text-muted)]' : 
+            isPending ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text)]'
           }`}
         >
           {task.title}
         </h3>
-        <div className="flex gap-2 mt-3">
+        <div className="flex flex-wrap gap-1.5 mt-2">
           {task.projectId?.name && (
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-medium ${projectColors}`}
-            >
-              {task.projectId.name}
-            </span>
+            <span className="ui-chip ui-chip--accent">{task.projectId.name}</span>
           )}
           {task.categoryId?.name && (
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-medium ${categoryColors || 'bg-gray-100 text-gray-800'}`}
-            >
-              {task.categoryId.name}
+            <span className="ui-chip">{task.categoryId.name}</span>
+          )}
+          {task.priority && (
+            <span className={`ui-chip ${task.priority.toLowerCase() === 'high' ? 'ui-chip--danger' : task.priority.toLowerCase() === 'low' ? 'ui-chip--success' : 'ui-chip--warning'}`}>
+              {task.priority.toLowerCase()}
             </span>
           )}
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-medium ${
-              priorityColors[task.priority?.toLowerCase()] || 'bg-gray-100 text-gray-800'
-            }`}
-          >
-            {task.priority?.toLowerCase()}
-          </span>
-        </div>
-      </div>
-      
-      <div className="flex flex-col items-end gap-2">
-        <div className="flex items-center gap-1">
-          {isPending && isHovered && (
-            <button
-              onClick={() => onStart(task._id)}
-              className="px-3 py-1.5 text-sm font-medium text-purple-600 border-2 border-dashed border-purple-400 hover:bg-purple-50 rounded-lg transition-all flex items-center gap-1.5"
-              aria-label="Start task"
-            >
-              <Play className="w-4 h-4" />
-              Try
-            </button>
-          )}
-          <button
-            onClick={() => onEdit(task)}
-            className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
-            aria-label="Edit task"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
-          {task.status === 'in-progress' && (
-            <button
-              onClick={() => onGiveUp(task._id)}
-              className="p-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-xl transition-all"
-              aria-label="Give up task"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-              </svg>
-            </button>
-          )}
-          <button
-            onClick={() => onDelete(task._id)}
-            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all"
-            aria-label="Delete task"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="flex items-center gap-2">
           {isPending && (
-            <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-700">
-              Pending
-            </span>
+            <span className="ui-chip">Pending</span>
           )}
           {task.dueDate && task.status !== 'completed' && task.status !== 'given-up' && (
-            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getDeadlineColor(getDaysLeft(task.dueDate))}`}>
+            <span className={`ui-chip ui-tabular ${getDeadlineChip(getDaysLeft(task.dueDate))}`}>
               {formatDaysLeft(getDaysLeft(task.dueDate))}
             </span>
           )}
+          {task.status === 'completed' && task.completedAt && (
+            <span className="ui-chip ui-chip--success">
+              <CircleCheckBig className="h-3.5 w-3.5" aria-hidden="true" />
+              Done {formatDateTime(task.completedAt)}
+            </span>
+          )}
+          {task.status === 'given-up' && (
+            <span className="ui-chip">
+              <Frown className="h-3.5 w-3.5" aria-hidden="true" />
+              Given up
+            </span>
+          )}
         </div>
-        {task.dueDate && (
-          <span className="text-xs text-gray-500">
-            Due {formatDateTime(task.dueDate)}
-          </span>
+      </div>
+      
+      <div className="flex items-center gap-1 shrink-0">
+        {isPending && isHovered && (
+          <button
+            type="button"
+            onClick={() => onStart(task._id)}
+            className="ui-btn-secondary !min-h-[2rem] !px-3 !text-xs"
+            aria-label={`Start ${task.title}`}
+          >
+            <Play className="h-3.5 w-3.5" aria-hidden="true" />
+            Start
+          </button>
         )}
-        {task.status === 'completed' && task.completedAt && (
-          <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 flex items-center gap-1.5">
-            <CircleCheckBig className="w-3.5 h-3.5" />
-            <span>Done at {formatDateTime(task.completedAt)}</span>
-          </span>
+        <button
+          type="button"
+          onClick={() => onEdit(task)}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] transition-[background-color,color] duration-150 hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+          aria-label={`Edit ${task.title}`}
+        >
+          <Pencil className="h-4 w-4" aria-hidden="true" />
+        </button>
+        {task.status === 'in-progress' && (
+          <button
+            type="button"
+            onClick={() => onGiveUp(task._id)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-warning)] transition-[background-color,color] duration-150 hover:bg-[var(--color-warning-soft)]"
+            aria-label={`Give up ${task.title}`}
+          >
+            <Flag className="h-4 w-4" aria-hidden="true" />
+          </button>
         )}
-        {task.status === 'given-up' && (
-          <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 flex items-center gap-1.5">
-            <Frown className="w-3.5 h-3.5" />
-            <span>Given Up</span>
-          </span>
-        )}
+        <button
+          type="button"
+          onClick={() => onDelete(task._id)}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-danger)] transition-[background-color,color] duration-150 hover:bg-[var(--color-danger-soft)]"
+          aria-label={`Delete ${task.title}`}
+        >
+          <Trash2 className="h-4 w-4" aria-hidden="true" />
+        </button>
       </div>
     </div>
   );

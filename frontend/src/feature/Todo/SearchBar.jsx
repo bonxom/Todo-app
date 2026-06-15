@@ -1,7 +1,7 @@
 const SearchBar = ({
   searchTerm,
   onSearchChange,
-  placeholder = "Search tasks...",
+  placeholder = "Search tasks\u2026",
 }) => {
   const hasValue = (searchTerm ?? "").length > 0;
 
@@ -13,19 +13,7 @@ const SearchBar = ({
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={placeholder}
         aria-label="Search tasks"
-        className="
-          peer w-full
-          h-12
-          rounded-2xl
-          border border-gray-200 bg-white/80
-          !pl-12 pr-12
-          text-[15px]
-          text-gray-900 placeholder:text-gray-400
-          shadow-sm
-          outline-none transition
-          hover:border-gray-300
-          focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60
-        "
+        className="ui-input peer w-full !pl-12 !pr-12"
       />
 
       {/* Search icon */}
@@ -34,8 +22,8 @@ const SearchBar = ({
           pointer-events-none
           absolute left-4 top-1/2 -translate-y-1/2
           h-5 w-5
-          text-gray-400 transition-colors
-          peer-focus:text-purple-600
+          text-[var(--color-text-muted)] transition-colors
+          peer-focus-visible:text-[var(--color-accent)]
         "
         fill="none"
         stroke="currentColor"
@@ -57,15 +45,15 @@ const SearchBar = ({
           onClick={() => onSearchChange("")}
           className="
             absolute right-3 top-1/2 -translate-y-1/2
-            p-1
-            rounded-lg
-            text-gray-400 hover:text-gray-700 hover:bg-gray-100
-            transition
+            inline-flex h-7 w-7 items-center justify-center
+            rounded-[var(--radius-sm)]
+            text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]
+            transition-[background-color,color] duration-150
           "
           aria-label="Clear search"
           title="Clear"
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>

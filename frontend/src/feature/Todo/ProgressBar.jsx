@@ -3,19 +3,18 @@ const ProgressBar = ({
   total,
   title = 'Progress',
   compact = false,
-  accentClassName = 'from-blue-500 to-purple-600',
   emptyLabel = 'No tasks yet',
 }) => {
   const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <div className={`bg-white/80 rounded-2xl shadow-sm ${compact ? 'p-4' : 'p-6'}`}>
+    <div className={`ui-section-card ${compact ? 'p-4' : 'ui-card-padding'}`}>
       <div className={`flex items-center justify-between ${compact ? 'mb-2' : 'mb-3'}`}>
-        <h3 className={`${compact ? 'text-sm' : 'text-lg'} font-semibold text-gray-800`}>{title}</h3>
-        <span className={`${compact ? 'text-sm' : 'text-lg'} font-bold text-purple-600`}>{percentage}%</span>
+        <h3 className={`${compact ? 'text-sm' : 'text-base'} font-semibold text-[var(--color-text)]`}>{title}</h3>
+        <span className={`${compact ? 'text-sm' : 'text-base'} ui-tabular font-semibold text-[var(--color-accent)]`}>{percentage}%</span>
       </div>
       <div
-        className={`w-full bg-gray-200 rounded-full overflow-hidden ${compact ? 'h-2.5' : 'h-3'}`}
+        className={`w-full overflow-hidden rounded-full bg-[var(--color-surface-muted)] ${compact ? 'h-2' : 'h-2.5'}`}
         role="progressbar"
         aria-label={title}
         aria-valuemin={0}
@@ -23,11 +22,11 @@ const ProgressBar = ({
         aria-valuenow={percentage}
       >
         <div
-          className={`h-full bg-gradient-to-r transition-all duration-300 ${accentClassName}`}
+          className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-200"
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <p className={`text-gray-500 mt-2 ${compact ? 'text-xs' : 'text-sm'}`}>
+      <p className={`text-[var(--color-text-muted)] mt-2 ${compact ? 'text-xs' : 'text-sm'}`}>
         {total > 0 ? `${completed} completed · ${total} total tasks` : emptyLabel}
       </p>
     </div>

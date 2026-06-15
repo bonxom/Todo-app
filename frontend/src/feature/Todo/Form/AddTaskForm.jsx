@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import AddCategoryForm from './AddCategoryForm';
 import AddProjectForm from './AddProjectForm';
 import { taskService, categoryService, projectService } from '../../../api/apiService';
-import { toMidnightDateTimeLocalValue } from '../../../utils/dateTime';
+import { toMidnightDateTimeLocalValue, toISOStringLocal } from '../../../utils/dateTime';
+import DateTimeInput from '../../../component/DateTimeInput';
 
 const AddTaskForm = ({
   onClose,
@@ -81,7 +83,7 @@ const AddTaskForm = ({
         projectId: projectId || undefined,
         priority,
         status: 'in-progress',
-        dueDate: dueDate,
+        dueDate: toISOStringLocal(dueDate),
         description,
       };
       
@@ -105,16 +107,16 @@ const AddTaskForm = ({
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-            Task Title <span className="text-red-500">*</span>
+          <label htmlFor="title" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+            Task Title <span className="text-[var(--color-danger)]">*</span>
           </label>
           <input
             id="title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter task title..."
-            className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 placeholder:text-gray-400 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            placeholder="Enter task title…"
+            className="ui-input"
             required
             autoFocus
           />
@@ -122,7 +124,7 @@ const AddTaskForm = ({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="category" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
               Category
             </label>
             <select
@@ -135,17 +137,17 @@ const AddTaskForm = ({
                   setCategoryId(e.target.value);
                 }
               }}
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+              className="ui-input"
             >
               {categories.map((cat) => (
                 <option key={cat._id} value={cat._id}>{cat.name}</option>
               ))}
-              <option value="__add_more__" className="text-purple-600 font-medium">+ Add more</option>
+              <option value="__add_more__">+ Add more</option>
             </select>
           </div>
 
           <div>
-            <label htmlFor="project" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="project" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
               Project
             </label>
             <select
@@ -158,25 +160,25 @@ const AddTaskForm = ({
                   setProjectId(e.target.value);
                 }
               }}
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-sky-300 focus:ring-4 focus:ring-sky-200/60"
+              className="ui-input"
             >
               <option value="">No project</option>
               {projects.map((project) => (
                 <option key={project._id} value={project._id}>{project.name}</option>
               ))}
-              <option value="__add_project__" className="text-sky-600 font-medium">+ Add project</option>
+              <option value="__add_project__">+ Add project</option>
             </select>
           </div>
 
           <div>
-            <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="priority" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
               Priority
             </label>
             <select
               id="priority"
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+              className="ui-input"
             >
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
@@ -186,31 +188,29 @@ const AddTaskForm = ({
         </div>
 
         <div>
-          <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-2">
-            Due Date <span className="text-red-500">*</span>
+          <label htmlFor="dueDate" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+            Due Date <span className="text-[var(--color-danger)]">*</span>
           </label>
-          <input
+          <DateTimeInput
             id="dueDate"
-            type="datetime-local"
             value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            step="60"
-            className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            onChange={(val) => setDueDate(val)}
+            className="ui-input"
             required
           />
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="description" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
             Description
           </label>
           <textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter task description..."
+            placeholder="Enter task description…"
             rows={3}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 placeholder:text-gray-400 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60 resize-none"
+            className="ui-input"
           />
         </div>
 
@@ -221,27 +221,40 @@ const AddTaskForm = ({
               handleReset();
               onClose();
             }}
-            className="flex-1 h-11 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all"
+            className="ui-btn-secondary flex-1"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="ui-btn-primary flex-1 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? 'Adding...' : 'Add Task'}
+            {isSubmitting ? 'Adding…' : 'Add Task'}
           </button>
         </div>
       </form>
 
       {showAddCategory && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 rounded-t-2xl">
-              <h2 className="text-xl font-semibold text-gray-900">Add Category</h2>
+        <div
+          className="ui-modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
+          onClick={() => setShowAddCategory(false)}
+          role="presentation"
+        >
+          <div
+            className="ui-modal-shell w-full max-w-md animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="inline-add-category-title"
+          >
+            <div className="ui-modal-header flex items-start justify-between gap-4">
+              <h2 id="inline-add-category-title" className="text-xl font-semibold text-[var(--color-text)]">Add Category</h2>
+              <button type="button" onClick={() => setShowAddCategory(false)} className="ui-modal-close-button" aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="px-6 py-5">
+            <div className="ui-modal-body">
               <AddCategoryForm 
                 onClose={() => setShowAddCategory(false)} 
                 onCategoryCreated={(newCategory) => {
@@ -254,12 +267,25 @@ const AddTaskForm = ({
       )}
 
       {showAddProject && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 rounded-t-2xl">
-              <h2 className="text-xl font-semibold text-gray-900">Add Project</h2>
+        <div
+          className="ui-modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
+          onClick={() => setShowAddProject(false)}
+          role="presentation"
+        >
+          <div
+            className="ui-modal-shell w-full max-w-md animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="inline-add-project-title"
+          >
+            <div className="ui-modal-header flex items-start justify-between gap-4">
+              <h2 id="inline-add-project-title" className="text-xl font-semibold text-[var(--color-text)]">Add Project</h2>
+              <button type="button" onClick={() => setShowAddProject(false)} className="ui-modal-close-button" aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="px-6 py-5">
+            <div className="ui-modal-body">
               <AddProjectForm
                 onClose={() => setShowAddProject(false)}
                 onProjectCreated={(newProject) => {

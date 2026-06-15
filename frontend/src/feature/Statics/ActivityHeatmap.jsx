@@ -258,9 +258,6 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
           <div className="max-w-3xl">
             <p className="ui-page-kicker">Completion Rhythm</p>
             <h2 className="mt-3 text-2xl font-semibold text-[color:var(--color-text)]">Daily Activity Heatmap</h2>
-            <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
-              A year-long ledger of completed work. Darker cells mark heavier completion days, and every in-range day stays visible.
-            </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">

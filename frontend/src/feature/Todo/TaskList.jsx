@@ -12,9 +12,9 @@ const TaskList = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {Array.from({ length: 3 }).map((_, index) => (
-          <div key={index} className="h-28 animate-pulse rounded-[1.75rem] border border-gray-200 bg-white/80 shadow-sm" />
+          <div key={index} className="h-24 animate-pulse ui-section-card" />
         ))}
       </div>
     );
@@ -22,11 +22,11 @@ const TaskList = ({
 
   if (tasks.length === 0) {
     return (
-      <div className="rounded-[1.75rem] border border-dashed border-gray-200 bg-white/80 p-8 text-center shadow-sm">
-        <p className="text-lg font-semibold text-gray-900">
+      <div className="ui-section-card border-dashed px-6 py-10 text-center">
+        <p className="text-base font-semibold text-[var(--color-text)]">
           {emptyState?.title || 'No tasks found'}
         </p>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
           {emptyState?.description || 'Add a new task to get started.'}
         </p>
       </div>
@@ -34,7 +34,7 @@ const TaskList = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {tasks.map((task) => (
         <TaskItem
           key={task._id || task.id}

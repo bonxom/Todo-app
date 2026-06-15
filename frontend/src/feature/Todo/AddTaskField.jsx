@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Plus } from 'lucide-react';
 import { categoryService } from '../../api/apiService';
 
 const AddTaskForm = ({ onAddTask }) => {
@@ -38,32 +39,32 @@ const AddTaskForm = ({ onAddTask }) => {
   };
 
   return (
-    <div className="bg-white/80 rounded-2xl shadow-sm p-6 mb-6">
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="flex gap-4">
+    <div className="ui-section-card ui-card-padding">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex gap-3">
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Add a new task..."
-            className="flex-1 h-12 px-4 rounded-2xl border border-gray-200 bg-white/80 text-[15px] text-gray-900 placeholder:text-gray-400 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            placeholder="Add a new task…"
+            className="ui-input flex-1"
+            aria-label="Task title"
           />
           <button
             type="submit"
-            className="h-12 bg-gray-800 hover:bg-gray-900 text-white px-6 rounded-2xl flex items-center gap-2 transition-all shadow-sm"
+            className="ui-btn-primary"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus className="h-4 w-4" aria-hidden="true" />
             <span>Add</span>
           </button>
         </div>
         
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="h-12 px-4 rounded-2xl border border-gray-200 bg-white/80 text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            className="ui-input"
+            aria-label="Category"
           >
             {categories.map((cat) => (
               <option key={cat._id} value={cat.name}>{cat.name}</option>
@@ -73,7 +74,8 @@ const AddTaskForm = ({ onAddTask }) => {
           <select
             value={priority}
             onChange={(e) => setPriority(e.target.value)}
-            className="h-12 px-4 rounded-2xl border border-gray-200 bg-white/80 text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            className="ui-input"
+            aria-label="Priority"
           >
             <option value="Low">Low</option>
             <option value="Medium">Medium</option>
@@ -86,4 +88,3 @@ const AddTaskForm = ({ onAddTask }) => {
 };
 
 export default AddTaskForm;
-

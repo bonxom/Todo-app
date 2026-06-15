@@ -1,84 +1,52 @@
+const STATUS_OPTIONS = [
+  { id: 'all', label: 'All' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'in-progress', label: 'In Progress' },
+  { id: 'completed', label: 'Completed' },
+  { id: 'given-up', label: 'Given Up' },
+];
+
 const TaskSelector = ({ selectedStatus, onStatusChange }) => {
-  const handleAllClick = () => {
-    const allSelected = selectedStatus.length === 4 && 
-      selectedStatus.includes('pending') && 
-      selectedStatus.includes('in-progress') && 
-      selectedStatus.includes('completed') && 
-      selectedStatus.includes('given-up');
-    
-    if (allSelected) {
-      onStatusChange([]);
-    } else {
-      onStatusChange(['pending', 'in-progress', 'completed', 'given-up']);
-    }
-  };
-
-  const handleStatusToggle = (status) => {
-    if (selectedStatus.includes(status)) {
-      onStatusChange(selectedStatus.filter(s => s !== status));
-    } else {
-      onStatusChange([...selectedStatus, status]);
-    }
-  };
-
   const isAllSelected = selectedStatus.length === 4 && 
     selectedStatus.includes('pending') && 
     selectedStatus.includes('in-progress') && 
     selectedStatus.includes('completed') && 
     selectedStatus.includes('given-up');
 
+  const handleToggle = (id) => {
+    if (id === 'all') {
+      onStatusChange(isAllSelected ? [] : ['pending', 'in-progress', 'completed', 'given-up']);
+      return;
+    }
+
+    if (selectedStatus.includes(id)) {
+      onStatusChange(selectedStatus.filter(s => s !== id));
+    } else {
+      onStatusChange([...selectedStatus, id]);
+    }
+  };
+
   return (
-    <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
-      <button
-        onClick={handleAllClick}
-        className={`px-6 py-2 rounded-full font-medium transition-all ${
-          isAllSelected
-            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-            : 'bg-white/80 text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-        }`}
-      >
-        All
-      </button>
-      <button
-        onClick={() => handleStatusToggle('pending')}
-        className={`px-6 py-2 rounded-full font-medium transition-all ${
-          selectedStatus.includes('pending')
-            ? 'bg-gray-200 text-gray-700 border-2 border-gray-400 shadow-sm'
-            : 'bg-white/80 text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-        }`}
-      >
-        Pending Tasks
-      </button>
-      <button
-        onClick={() => handleStatusToggle('in-progress')}
-        className={`px-6 py-2 rounded-full font-medium transition-all ${
-          selectedStatus.includes('in-progress')
-            ? 'bg-gray-200 text-gray-700 border-2 border-gray-400 shadow-sm'
-            : 'bg-white/80 text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-        }`}
-      >
-        In Progress Tasks
-      </button>
-      <button
-        onClick={() => handleStatusToggle('completed')}
-        className={`px-6 py-2 rounded-full font-medium transition-all ${
-          selectedStatus.includes('completed')
-            ? 'bg-gray-200 text-gray-700 border-2 border-gray-400 shadow-sm'
-            : 'bg-white/80 text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-        }`}
-      >
-        Completed Tasks
-      </button>
-      <button
-        onClick={() => handleStatusToggle('given-up')}
-        className={`px-6 py-2 rounded-full font-medium transition-all ${
-          selectedStatus.includes('given-up')
-            ? 'bg-gray-200 text-gray-700 border-2 border-gray-400 shadow-sm'
-            : 'bg-white/80 text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-        }`}
-      >
-        Given Up Tasks
-      </button>
+    <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by status">
+      {STATUS_OPTIONS.map((option) => {
+        const isSelected = option.id === 'all' ? isAllSelected : selectedStatus.includes(option.id);
+
+        return (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => handleToggle(option.id)}
+            className={`inline-flex items-center rounded-full border px-3.5 py-2 text-sm font-medium transition-[background-color,border-color,color] duration-150 ${
+              isSelected
+                ? 'border-transparent bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                : 'border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]'
+            }`}
+            aria-pressed={isSelected}
+          >
+            {option.label}
+          </button>
+        );
+      })}
     </div>
   );
 };

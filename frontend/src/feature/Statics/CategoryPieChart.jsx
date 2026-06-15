@@ -62,7 +62,6 @@ const CategoryPieChart = ({ dailyStats }) => {
   return (
     <DonutChartCard
       title="Completed Tasks by Category"
-      description="Category totals across completed work in the current statistics range."
       total={chartData.total}
       totalLabel="Done"
       items={chartData.items}

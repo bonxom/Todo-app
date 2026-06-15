@@ -1,7 +1,7 @@
 import { useMemo, useState, memo } from 'react';
 import { taskService } from '../../api/apiService';
 import { isSameDay, sortTasksByDueTime } from './calendarUtils';
-import { formatDateTime } from '../../utils/dateTime';
+import { formatDateTime, toISOStringLocal } from '../../utils/dateTime';
 
 const formatCellTime = (value) => {
   if (!value) return 'No due';
@@ -81,8 +81,11 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
       const newDueDate = new Date(day);
       newDueDate.setHours(0, 0, 0, 0);
 
+      const pad = (v) => String(v).padStart(2, '0');
+      const localValue = `${newDueDate.getFullYear()}-${pad(newDueDate.getMonth() + 1)}-${pad(newDueDate.getDate())}T00:00`;
+
       await taskService.updateTask(taskId, {
-        dueDate: newDueDate.toISOString()
+        dueDate: toISOStringLocal(localValue)
       });
 
       if (onTaskUpdated) {

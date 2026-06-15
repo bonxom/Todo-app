@@ -224,9 +224,6 @@ const LineChart = ({ dailyStats }) => {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-[color:var(--color-text)]">Daily Completion Trend</h2>
-          <p className="mt-2 max-w-2xl text-sm text-[color:var(--color-text-muted)]">
-            Compare completed and given-up tasks over time without the extra dashboard chrome.
-          </p>
         </div>
         <span className="ui-chip ui-tabular">{rangeLabel}</span>
       </div>

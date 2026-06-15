@@ -11,11 +11,10 @@ import ProjectOverviewGrid from '../feature/Todo/ProjectOverviewGrid';
 import ChatBubble from '../component/ChatBuble';
 import AddCategoryForm from '../feature/Todo/Form/AddCategoryForm';
 import AddProjectForm from '../feature/Todo/Form/AddProjectForm';
-import GiveUpDialog from '../feature/Dialog/GiveUpDialog';
-import DeleteDialog from '../feature/Dialog/DeleteDialog';
 import { taskService, projectService } from '../api/apiService';
 import { useTaskRefresh } from '../context/useTaskRefresh';
 import { toggleTaskCompletion } from '../utils/taskCompletion';
+import { X } from 'lucide-react';
 
 const ALL_PROJECT_FILTER = 'all-projects';
 const STANDALONE_PROJECT_FILTER = 'standalone-projects';
@@ -261,8 +260,6 @@ const TodoPage = () => {
       name: 'All Tasks',
       description: 'See every task across standalone work and project-based work.',
       ...overallSummary,
-      badgeClassName: 'bg-indigo-100 text-indigo-700',
-      accentClassName: 'from-indigo-500 to-purple-600',
       progressLabel: 'Overall completion',
       emptyLabel: 'No tasks yet',
     };
@@ -275,10 +272,8 @@ const TodoPage = () => {
         isProject: true,
         eyebrow: 'Project',
         name: project.name,
-        description: project.description || 'No description yet. Use this space to capture the goal of the work.',
+        description: project.description || 'No description yet.',
         ...summary,
-        badgeClassName: 'bg-sky-100 text-sky-700',
-        accentClassName: 'from-sky-500 to-cyan-600',
         progressLabel: `${project.name} progress`,
         emptyLabel: 'No tasks in this project yet',
       };
@@ -291,8 +286,6 @@ const TodoPage = () => {
       name: 'Standalone',
       description: 'Tasks that stay outside a project but still belong in your daily list.',
       ...standaloneSummary,
-      badgeClassName: 'bg-slate-100 text-slate-700',
-      accentClassName: 'from-slate-500 to-slate-700',
       progressLabel: 'Standalone progress',
       emptyLabel: 'No standalone tasks right now',
     };
@@ -304,8 +297,8 @@ const TodoPage = () => {
     return (
       <>
         <MainLayout>
-          <div className="flex justify-center items-center min-h-full">
-            <div className="text-gray-500">Loading tasks...</div>
+          <div className="ui-page-shell flex min-h-full items-center justify-center">
+            <div className="text-sm text-[var(--color-text-muted)]">Loading tasks…</div>
           </div>
         </MainLayout>
         <ChatBubble key="chat-bubble-stable" />
@@ -337,121 +330,171 @@ const TodoPage = () => {
       onProjectCreated={fetchTasksAndProjects}
     />
 
-    <GiveUpDialog
-      isOpen={isGiveUpModalOpen}
-      onClose={() => {
-        setIsGiveUpModalOpen(false);
-        setTaskToGiveUp(null);
-      }}
-      onConfirm={confirmGiveUp}
-    />
+    <ChatBubble />
 
-    <DeleteDialog
-      isOpen={isDeleteModalOpen}
-      onClose={() => {
-        setIsDeleteModalOpen(false);
-        setTaskToDelete(null);
-      }}
-      onConfirm={confirmDelete}
-    />
-      
-      <MainLayout>
-      <div className="flex justify-center items-start min-h-full p-6">
-        <div className="w-full max-w-6xl mx-auto bg-gray-100/50 backdrop-blur-sm rounded-[28px] shadow-lg p-6 sm:p-8">
-          <div className="mb-8">
-            <h1 className="flex justify-center text-3xl font-bold mb-3 bg-gradient-to-r bg-linear-to-br from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              My Todo App
-            </h1> 
-            <p className="flex justify-center text-gray-500 mb-2">Stay organized and productive</p>
-            <div className="flex justify-center gap-2 text-sm text-gray-500">
-              <span>{visibleSummary.completed} completed</span>
-              <span>·</span>
-              <span>{visibleSummary.total} visible tasks</span>
-              {selectedProject && (
-                <>
-                  <span>·</span>
-                  <span>{selectedProject.name}</span>
-                </>
-              )}
-            </div>
+    <MainLayout>
+      <div className="ui-page-shell">
+        <header className="ui-page-header">
+          <p className="ui-page-kicker">Workspace</p>
+          <h1 className="ui-page-title">Todos</h1>
+          <div className="flex flex-wrap gap-2 text-sm">
+            <span className="ui-chip ui-tabular">{visibleSummary.completed} completed</span>
+            <span className="ui-chip ui-tabular">{visibleSummary.total} visible tasks</span>
+            {selectedProject && (
+              <span className="ui-chip ui-chip--accent">{selectedProject.name}</span>
+            )}
           </div>
+        </header>
 
-          {errorMessage ? (
-            <div className="mb-6 rounded-[1.6rem] border border-amber-200 bg-amber-50/80 px-5 py-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-amber-900">Unable to refresh the latest todo data</p>
-                  <p className="mt-1 text-sm text-amber-700">{errorMessage}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={fetchTasksAndProjects}
-                  className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-300 bg-white px-4 text-sm font-medium text-amber-800 transition-all hover:bg-amber-100"
-                >
-                  Retry
-                </button>
+        {errorMessage ? (
+          <section className="ui-section-card ui-card-padding">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-warning)]">Unable to refresh the latest todo data</p>
+                <p className="mt-1 text-sm text-[var(--color-text-muted)]">{errorMessage}</p>
               </div>
+              <button
+                type="button"
+                onClick={fetchTasksAndProjects}
+                className="ui-btn-secondary"
+              >
+                Retry
+              </button>
             </div>
-          ) : null}
+          </section>
+        ) : null}
 
-          <ActionButtons 
-            onAddTask={() => openAddTask()} 
-            onAddCategory={() => setIsAddCategoryModalOpen(true)}
-            onAddProject={() => setIsAddProjectModalOpen(true)}
+        <ActionButtons 
+          onAddTask={() => openAddTask()} 
+          onAddCategory={() => setIsAddCategoryModalOpen(true)}
+          onAddProject={() => setIsAddProjectModalOpen(true)}
+        />
+
+        <ProjectOverviewGrid
+          items={projectCards}
+          selectedProjectId={selectedProjectId}
+          onSelectProject={setSelectedProjectId}
+          onCreateProject={() => setIsAddProjectModalOpen(true)}
+          onAddTaskToProject={openAddTask}
+        />
+
+        <div className="flex flex-col gap-5">
+          <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+          <TaskSelector 
+            selectedStatus={selectedStatus}
+            onStatusChange={setSelectedStatus}
           />
-
-          <div className="mb-6">
-            <ProjectOverviewGrid
-              items={projectCards}
-              selectedProjectId={selectedProjectId}
-              onSelectProject={setSelectedProjectId}
-              onCreateProject={() => setIsAddProjectModalOpen(true)}
-              onAddTaskToProject={openAddTask}
-            />
-          </div>
-
-          <div className="flex flex-col gap-6 my-6">
-            <div>
-              <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-            </div>
-            <TaskSelector 
-              selectedStatus={selectedStatus}
-              onStatusChange={setSelectedStatus}
-            />
-          </div>
-
-          <TaskList
-            tasks={filteredTasks}
-            isLoading={isLoading && !isInitialLoad}
-            emptyState={taskListEmptyState}
-            onToggleComplete={handleToggleComplete}
-            onEdit={handleEdit}
-            onStart={handleStart}
-            onGiveUp={handleGiveUp}
-            onDelete={handleDelete}
-          />
-
-          <div className="mt-6">
-            <ProgressBar
-              title={selectedProject ? `${selectedProject.name} progress` : 'Overall progress'}
-              completed={visibleSummary.completed}
-              total={visibleSummary.total}
-              accentClassName={selectedProject ? 'from-sky-500 to-cyan-600' : 'from-blue-500 to-purple-600'}
-              emptyLabel={selectedProject ? 'No tasks in this project yet' : 'No tasks yet'}
-            />
-          </div>
         </div>
+
+        <TaskList
+          tasks={filteredTasks}
+          isLoading={isLoading && !isInitialLoad}
+          emptyState={taskListEmptyState}
+          onToggleComplete={handleToggleComplete}
+          onEdit={handleEdit}
+          onStart={handleStart}
+          onGiveUp={handleGiveUp}
+          onDelete={handleDelete}
+        />
+
+        <ProgressBar
+          title={selectedProject ? `${selectedProject.name}` : 'Overall progress'}
+          completed={visibleSummary.completed}
+          total={visibleSummary.total}
+          emptyLabel={selectedProject ? 'No tasks in this project yet' : 'No tasks yet'}
+        />
       </div>
     </MainLayout>
     
+    {/* Give Up Dialog */}
+    {isGiveUpModalOpen && (
+      <div
+        className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
+        onClick={() => { setIsGiveUpModalOpen(false); setTaskToGiveUp(null); }}
+        role="presentation"
+      >
+        <div
+          className="ui-modal-shell w-full max-w-md animate-fadeIn"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="giveup-dialog-title"
+        >
+          <div className="ui-modal-header">
+            <h2 id="giveup-dialog-title" className="text-xl font-semibold text-[var(--color-text)]">Give Up Task</h2>
+          </div>
+          <div className="ui-modal-body">
+            <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
+              Are you sure you want to give up this task? You are choosing not to continue working on it.
+            </p>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => { setIsGiveUpModalOpen(false); setTaskToGiveUp(null); }} className="ui-btn-secondary flex-1">Cancel</button>
+              <button type="button" onClick={confirmGiveUp} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-white transition-[background-color,border-color] duration-150 hover:opacity-90">Give Up</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Delete Dialog */}
+    {isDeleteModalOpen && (
+      <div
+        className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
+        onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }}
+        role="presentation"
+      >
+        <div
+          className="ui-modal-shell w-full max-w-md animate-fadeIn"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-dialog-title"
+        >
+          <div className="ui-modal-header">
+            <h2 id="delete-dialog-title" className="text-xl font-semibold text-[var(--color-text)]">Delete Task</h2>
+          </div>
+          <div className="ui-modal-body">
+            <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
+              Are you sure you want to delete this task? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }} className="ui-btn-secondary flex-1">Cancel</button>
+              <button type="button" onClick={confirmDelete} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-white transition-[background-color,border-color] duration-150 hover:opacity-90">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     {/* Add Category Modal */}
     {isAddCategoryModalOpen && (
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4">
-            <h2 className="text-xl font-semibold text-white">Add New Category</h2>
+      <div
+        className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+        onClick={() => setIsAddCategoryModalOpen(false)}
+        role="presentation"
+      >
+        <div
+          className="ui-modal-shell w-full max-w-lg animate-fadeIn"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-cat-title"
+        >
+          <div className="ui-modal-header flex items-start justify-between gap-4">
+            <div>
+              <p className="ui-page-kicker">Create</p>
+              <h2 id="add-cat-title" className="text-xl font-semibold text-[var(--color-text)]">Add Category</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAddCategoryModalOpen(false)}
+              className="ui-modal-close-button"
+              aria-label="Close add category dialog"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <div className="p-6">
+          <div className="ui-modal-body">
             <AddCategoryForm
               onClose={() => setIsAddCategoryModalOpen(false)}
               onCategoryCreated={() => {
@@ -464,12 +507,33 @@ const TodoPage = () => {
     )}
 
     {isAddProjectModalOpen && (
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-          <div className="bg-gradient-to-r from-sky-600 to-cyan-600 px-6 py-4">
-            <h2 className="text-xl font-semibold text-white">Add New Project</h2>
+      <div
+        className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+        onClick={() => setIsAddProjectModalOpen(false)}
+        role="presentation"
+      >
+        <div
+          className="ui-modal-shell w-full max-w-lg animate-fadeIn"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-proj-title"
+        >
+          <div className="ui-modal-header flex items-start justify-between gap-4">
+            <div>
+              <p className="ui-page-kicker">Create</p>
+              <h2 id="add-proj-title" className="text-xl font-semibold text-[var(--color-text)]">Add Project</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAddProjectModalOpen(false)}
+              className="ui-modal-close-button"
+              aria-label="Close add project dialog"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <div className="p-6">
+          <div className="ui-modal-body">
             <AddProjectForm
               onClose={() => setIsAddProjectModalOpen(false)}
               onProjectCreated={(project) => {
@@ -482,8 +546,6 @@ const TodoPage = () => {
         </div>
       </div>
     )}
-
-    <ChatBubble />
   </>
   );
 };

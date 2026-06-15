@@ -6,7 +6,6 @@ import ProfileStats from '../feature/Profile/ProfileStats';
 import ProfileActions from '../feature/Profile/ProfileActions';
 import EditProfileModal from '../feature/Profile/EditProfileModal';
 import ChangePasswordModal from '../feature/Profile/ChangePasswordModal';
-import AvatarUpload from '../feature/Profile/AvtUpload';
 import ChatBubble from '../component/ChatBuble';
 import { authService, taskService, categoryService } from '../api/apiService';
 import { useAuth } from '../context/useAuth';
@@ -66,7 +65,6 @@ const ProfilePage = () => {
 
   const handleSaveProfile = async (formData) => {
     try {
-      console.log('Save profile:', formData);
       await authService.updateInfo(formData);
       
       // Refresh user data
@@ -84,7 +82,6 @@ const ProfilePage = () => {
 
   const handleSavePassword = async (passwordData) => {
     try {
-      console.log('Change password:', passwordData);
       await authService.changePassword(passwordData);
       setIsPasswordModalOpen(false);
       alert('Password changed successfully!');
@@ -97,8 +94,10 @@ const ProfilePage = () => {
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="flex justify-center items-center min-h-full">
-          <div className="text-gray-500">Loading...</div>
+        <div className="ui-page-shell">
+          <section className="ui-section-card ui-card-padding" aria-live="polite">
+            <p className="m-0 text-sm text-[var(--color-text-muted)]">Loading profile…</p>
+          </section>
         </div>
       </MainLayout>
     );
@@ -107,8 +106,12 @@ const ProfilePage = () => {
   if (!user) {
     return (
       <MainLayout>
-        <div className="flex justify-center items-center min-h-full">
-          <div className="text-red-500">Failed to load user data</div>
+        <div className="ui-page-shell">
+          <section className="ui-section-card ui-card-padding">
+            <p className="m-0 text-sm font-medium text-[var(--color-danger)]">
+              Failed to load profile details.
+            </p>
+          </section>
         </div>
       </MainLayout>
     );
@@ -117,6 +120,7 @@ const ProfilePage = () => {
   return (
     <>
       <EditProfileModal
+        key={`edit-profile-${isEditModalOpen ? 'open' : 'closed'}-${user?.id ?? user?.email ?? 'user'}-${user?.updatedAt ?? ''}`}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         user={user}
@@ -124,23 +128,37 @@ const ProfilePage = () => {
       />
 
       <ChangePasswordModal
+        key={`change-password-${isPasswordModalOpen ? 'open' : 'closed'}`}
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
         onSave={handleSavePassword}
       />
 
       <MainLayout>
-        <div className="flex justify-center items-start min-h-full p-6 cursor-default select-none">
-          <div className="w-full max-w-4xl mx-auto bg-gray-100/50 backdrop-blur-sm rounded-xl shadow-lg p-8">
-            <ProfileHeader user={user} onAvatarUpdate={fetchUserData} />
-            <ProfileStats stats={stats} />
-            
-            <ProfileActions
-              onEditProfile={handleEditProfile}
-              onChangePassword={handleChangePassword}
-            />
-            
-            <ProfileInfo user={user} />
+        <div className="ui-page-shell">
+          <header className="ui-page-header">
+            <p className="ui-page-kicker">Account</p>
+            <h1 className="ui-page-title">Account Settings</h1>
+            <p className="ui-page-description">
+              Review your profile details, keep account information current, and manage
+              the credentials you use to sign in.
+            </p>
+          </header>
+
+          <ProfileHeader user={user} onAvatarUpdate={fetchUserData} />
+
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.95fr)] xl:items-start">
+            <div className="space-y-6">
+              <ProfileActions
+                onEditProfile={handleEditProfile}
+                onChangePassword={handleChangePassword}
+              />
+              <ProfileInfo user={user} />
+            </div>
+
+            <div className="space-y-6">
+              <ProfileStats stats={stats} />
+            </div>
           </div>
         </div>
       </MainLayout>

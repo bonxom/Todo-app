@@ -144,7 +144,7 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
             id={descriptionId}
             className="mt-4 min-h-[3rem] break-words text-sm leading-6 text-[color:var(--color-text-muted)]"
           >
-            {description || 'No category description yet. Use categories to group work that shares a theme.'}
+            {description || 'No category description yet.'}
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">

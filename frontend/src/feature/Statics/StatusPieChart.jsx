@@ -37,7 +37,6 @@ const StatusPieChart = ({ stats }) => {
   return (
     <DonutChartCard
       title="Task Status Mix"
-      description="A calm view of how your task inventory is distributed across current working states."
       total={chartData.total}
       totalLabel="Tasks"
       items={chartData.items}

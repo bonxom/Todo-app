@@ -107,18 +107,7 @@ const StatisticsPage = () => {
             <header className="ui-page-header">
               <p className="ui-page-kicker">Statistics</p>
               <h1 className="ui-page-title">Statistics</h1>
-              <p className="ui-page-description">
-                Review completion pace, task mix, and the specific days when work actually moved forward.
-              </p>
             </header>
-
-            <section className="ui-section-card ui-card-padding">
-              <div className="flex flex-wrap items-center gap-2 text-sm text-[color:var(--color-text-muted)]">
-                <span className="ui-chip">365-day activity ledger</span>
-                <span className="ui-chip ui-tabular">{normalizedDailyStats.length} recorded days</span>
-                <span className="ui-chip">Click a heatmap day to inspect completed tasks</span>
-              </div>
-            </section>
 
             <StatsSummary stats={stats} />
 

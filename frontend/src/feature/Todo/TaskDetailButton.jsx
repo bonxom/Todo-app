@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import TaskDetailForm from './Form/TaskDetailForm';
 
 const TaskDetailButton = ({ isOpen, task, onClose, onTaskUpdated, onProjectCreated }) => {
@@ -32,31 +33,31 @@ const TaskDetailButton = ({ isOpen, task, onClose, onTaskUpdated, onProjectCreat
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm"
+      className="ui-modal-overlay fixed inset-0 z-[80] flex items-center justify-center p-4"
       onClick={onClose}
       role="presentation"
     >
       <div 
-        className="relative max-h-[90vh] w-full max-w-xl animate-fadeIn overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="ui-modal-shell w-full max-w-xl animate-fadeIn"
+        style={{ maxHeight: '90vh' }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-detail-title"
       >
-        <div className="sticky top-0 bg-white rounded-t-2xl p-6 pb-4 border-b border-gray-100 z-10">
+        <div className="ui-modal-header flex items-start justify-between gap-4">
+          <h2 id="task-detail-title" className="text-xl font-semibold text-[var(--color-text)]">Edit Task</h2>
           <button
+            type="button"
             onClick={onClose}
-            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Close modal"
+            className="ui-modal-close-button"
+            aria-label="Close edit task dialog"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-4 w-4" />
           </button>
-          <h2 id="task-detail-title" className="text-2xl font-bold text-gray-900 pr-10">Edit Task</h2>
         </div>
 
-        <div className="px-6 py-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 100px)' }}>
+        <div className="ui-modal-body overflow-y-auto" style={{ maxHeight: 'calc(90vh - 100px)' }}>
           <TaskDetailForm
             task={task}
             onClose={onClose}

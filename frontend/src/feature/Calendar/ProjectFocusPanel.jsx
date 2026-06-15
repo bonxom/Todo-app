@@ -37,9 +37,6 @@ const ProjectFocusPanel = ({
               <FolderKanban className="h-4 w-4 text-[var(--color-accent)]" aria-hidden="true" />
               <p className="text-sm font-semibold text-[var(--color-text)]">Project filters</p>
             </div>
-            <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-              Search projects, stack filters, and keep standalone tasks visible when nothing is selected.
-            </p>
           </div>
           <button
             type="button"
@@ -89,7 +86,6 @@ const ProjectFocusPanel = ({
       <div className="flex min-h-0 flex-1 flex-col px-5 py-4">
         <label className="relative mb-4 block">
           <span className="sr-only">Search projects</span>
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" aria-hidden="true" />
           <input
             type="search"
             name="projectSearch"

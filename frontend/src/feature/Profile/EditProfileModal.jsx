@@ -28,84 +28,94 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-    >
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-fadeIn">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Edit Profile</h2>
+    <div className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 overscroll-contain">
+      <div
+        className="ui-modal-shell animate-fadeIn"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-profile-title"
+      >
+        <div className="ui-modal-header flex items-center justify-between gap-4">
+          <div>
+            <h2 id="edit-profile-title" className="m-0 text-xl font-semibold text-[var(--color-text)]">
+              Edit Profile
+            </h2>
+            <p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">
+              Update the details shown across your account.
+            </p>
+          </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="ui-modal-close-button ui-focus-ring"
+            aria-label="Close edit profile dialog"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-              required
-            />
+        <form onSubmit={handleSubmit}>
+          <div className="ui-modal-body space-y-4">
+            <div>
+              <label htmlFor="profile-name" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+                Full Name
+              </label>
+              <input
+                id="profile-name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                autoComplete="name"
+                className="ui-input"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="profile-email" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+                Email
+              </label>
+              <input
+                id="profile-email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                autoComplete="email"
+                spellCheck={false}
+                className="ui-input"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="profile-dob" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+                Birthday
+              </label>
+              <input
+                id="profile-dob"
+                name="dob"
+                type="date"
+                value={formData.dob}
+                onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                autoComplete="bday"
+                className="ui-input"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Birthday
-            </label>
-            <input
-              type="date"
-              value={formData.dob}
-              onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-            />
-          </div>
-
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nationality
-            </label>
-            <input
-              type="text"
-              value={formData.nationality}
-              onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-              placeholder="e.g., Vietnamese, American"
-            />
-          </div> */}
-
-          <div className="flex gap-3 pt-4">
+          <div className="ui-modal-footer">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="ui-btn-secondary ui-focus-ring min-w-[8.5rem] flex-1"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:opacity-90 transition-opacity"
+              className="ui-btn-primary ui-focus-ring min-w-[8.5rem] flex-1"
             >
               Save Changes
             </button>

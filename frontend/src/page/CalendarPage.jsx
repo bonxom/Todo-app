@@ -67,14 +67,6 @@ const CalendarPage = () => {
               <div>
                 <p className="ui-page-kicker">Planning View</p>
                 <h1 className="ui-page-title">Calendar</h1>
-                <p className="ui-page-description">
-                  See due work by week or month, then narrow the board to the projects that matter right now.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2 text-sm">
-                <span className="ui-chip ui-tabular">Week default</span>
-                <span className="ui-chip">Standalone tasks stay visible</span>
               </div>
             </div>
           </header>

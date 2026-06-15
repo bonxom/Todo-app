@@ -1,8 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import AddCategoryForm from './AddCategoryForm';
 import AddProjectForm from './AddProjectForm';
 import { taskService, categoryService, projectService } from '../../../api/apiService';
-import { toDateTimeLocalValue } from '../../../utils/dateTime';
+import { toDateTimeLocalValue, toISOStringLocal } from '../../../utils/dateTime';
+import DateTimeInput from '../../../component/DateTimeInput';
+
+const STATUS_STYLES = {
+  pending: 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] border-[var(--color-line)]',
+  'in-progress': 'bg-[var(--color-accent-soft)] text-[var(--color-accent)] border-[var(--color-accent-soft)]',
+  completed: 'bg-[var(--color-success-soft)] text-[var(--color-success)] border-[var(--color-success-soft)]',
+  'given-up': 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] border-[var(--color-line)]',
+};
+
+const STATUS_LABELS = {
+  pending: 'Pending',
+  'in-progress': 'In Progress',
+  completed: 'Completed',
+  'given-up': 'Given Up',
+};
 
 const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
   const [title, setTitle] = useState('');
@@ -25,36 +41,6 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
   const taskStartDate = task?.startDate || '';
   const taskDueDate = task?.dueDate || '';
   const taskDescription = task?.description || '';
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
-      case 'in-progress':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'completed':
-        return 'bg-green-50 text-green-700 border-green-200';
-      case 'given-up':
-        return 'bg-gray-100 text-gray-700 border-gray-300';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'Pending';
-      case 'in-progress':
-        return 'In Progress';
-      case 'completed':
-        return 'Completed';
-      case 'given-up':
-        return 'Given Up';
-      default:
-        return status;
-    }
-  };
 
   const fetchCategories = useCallback(async (selectCategoryId) => {
     try {
@@ -129,8 +115,8 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
         categoryId: categoryId || undefined,
         projectId: projectId || undefined,
         priority,
-        startDate: startDate || undefined,
-        dueDate: dueDate || undefined,
+        startDate: toISOStringLocal(startDate) || undefined,
+        dueDate: toISOStringLocal(dueDate) || undefined,
         description,
       };
       
@@ -153,35 +139,35 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-2">
-            Task Title <span className="text-red-500">*</span>
+          <label htmlFor="edit-title" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+            Task Title <span className="text-[var(--color-danger)]">*</span>
           </label>
         <input
           id="edit-title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter task title..."
-          className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 placeholder:text-gray-400 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+          placeholder="Enter task title…"
+          className="ui-input"
           required
           autoFocus
         />
       </div>
 
       <div>
-        <label htmlFor="edit-status" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="edit-status" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
           Status
         </label>
         <div
-          className={`w-full h-11 px-4 rounded-xl border-2 flex items-center text-[15px] font-medium ${getStatusColor(task?.status)}`}
+          className={`flex h-11 items-center rounded-[var(--radius-md)] border px-4 text-sm font-medium ${STATUS_STYLES[task?.status] || STATUS_STYLES.pending}`}
         >
-          {getStatusLabel(task?.status)}
+          {STATUS_LABELS[task?.status] || task?.status}
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="edit-category" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="edit-category" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
             Category
           </label>
           <select
@@ -194,17 +180,17 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
                 setCategoryId(e.target.value);
               }
             }}
-            className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            className="ui-input"
           >
             {categories.map((cat) => (
               <option key={cat._id} value={cat._id}>{cat.name}</option>
             ))}
-            <option value="__add_more__" className="text-purple-600 font-medium">+ Add more</option>
+            <option value="__add_more__">+ Add more</option>
           </select>
         </div>
 
         <div>
-          <label htmlFor="edit-project" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="edit-project" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
             Project
           </label>
           <select
@@ -217,25 +203,25 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
                 setProjectId(e.target.value);
               }
             }}
-            className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-sky-300 focus:ring-4 focus:ring-sky-200/60"
+            className="ui-input"
           >
             <option value="">No project</option>
             {projects.map((project) => (
               <option key={project._id} value={project._id}>{project.name}</option>
             ))}
-            <option value="__add_project__" className="text-sky-600 font-medium">+ Add project</option>
+            <option value="__add_project__">+ Add project</option>
           </select>
         </div>
 
         <div>
-          <label htmlFor="edit-priority" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="edit-priority" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
             Priority
           </label>
           <select
             id="edit-priority"
             value={priority}
             onChange={(e) => setPriority(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            className="ui-input"
           >
             <option value="Low">Low</option>
             <option value="Medium">Medium</option>
@@ -246,46 +232,42 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="edit-startDate" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="edit-startDate" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
             Start Date
           </label>
-          <input
+          <DateTimeInput
             id="edit-startDate"
-            type="datetime-local"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            step="60"
-            className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            onChange={(val) => setStartDate(val)}
+            className="ui-input"
           />
         </div>
 
         <div>
-          <label htmlFor="edit-dueDate" className="block text-sm font-medium text-gray-700 mb-2">
-            Due Date <span className="text-red-500">*</span>
+          <label htmlFor="edit-dueDate" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+            Due Date <span className="text-[var(--color-danger)]">*</span>
           </label>
-          <input
+          <DateTimeInput
             id="edit-dueDate"
-            type="datetime-local"
             value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            step="60"
-            className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60"
+            onChange={(val) => setDueDate(val)}
+            className="ui-input"
             required
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="edit-description" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
           Description
         </label>
         <textarea
           id="edit-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter task description..."
+          placeholder="Enter task description…"
           rows={3}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[15px] text-gray-900 placeholder:text-gray-400 shadow-sm outline-none transition hover:border-gray-300 focus:border-purple-300 focus:ring-4 focus:ring-purple-200/60 resize-none"
+          className="ui-input"
         />
       </div>
 
@@ -293,27 +275,40 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 h-11 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all"
+          className="ui-btn-secondary flex-1"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="ui-btn-primary flex-1 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
+          {isSubmitting ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
       </form>
 
       {showAddCategory && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 rounded-t-2xl">
-              <h2 className="text-xl font-semibold text-gray-900">Add Category</h2>
+        <div
+          className="ui-modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
+          onClick={() => setShowAddCategory(false)}
+          role="presentation"
+        >
+          <div
+            className="ui-modal-shell w-full max-w-md animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-inline-add-cat-title"
+          >
+            <div className="ui-modal-header flex items-start justify-between gap-4">
+              <h2 id="edit-inline-add-cat-title" className="text-xl font-semibold text-[var(--color-text)]">Add Category</h2>
+              <button type="button" onClick={() => setShowAddCategory(false)} className="ui-modal-close-button" aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="px-6 py-5">
+            <div className="ui-modal-body">
               <AddCategoryForm 
                 onClose={() => setShowAddCategory(false)}
                 onCategoryCreated={(newCategory) => {
@@ -326,12 +321,25 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
       )}
 
       {showAddProject && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-            <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 rounded-t-2xl">
-              <h2 className="text-xl font-semibold text-gray-900">Add Project</h2>
+        <div
+          className="ui-modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
+          onClick={() => setShowAddProject(false)}
+          role="presentation"
+        >
+          <div
+            className="ui-modal-shell w-full max-w-md animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-inline-add-proj-title"
+          >
+            <div className="ui-modal-header flex items-start justify-between gap-4">
+              <h2 id="edit-inline-add-proj-title" className="text-xl font-semibold text-[var(--color-text)]">Add Project</h2>
+              <button type="button" onClick={() => setShowAddProject(false)} className="ui-modal-close-button" aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="px-6 py-5">
+            <div className="ui-modal-body">
               <AddProjectForm
                 onClose={() => setShowAddProject(false)}
                 onProjectCreated={(newProject) => {

@@ -122,9 +122,6 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
             <h2 className="mt-1 text-2xl font-semibold text-[var(--color-text)]">
               Keep the selected day visible while you scan the week or month
             </h2>
-            <p className="mt-3 text-sm text-[var(--color-text-muted)]">
-              Project filters narrow the board without hiding standalone tasks. Click any day to review the exact-day workload below the calendar.
-            </p>
           </div>
 
           <div className="flex flex-col gap-2 sm:items-end">
@@ -146,28 +143,9 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
                 Generate
               </button>
             </div>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Add Project lives in the filter rail so the main calendar keeps one primary action.
-            </p>
           </div>
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2 border-t border-[var(--color-line)] pt-4 text-sm">
-          <span className="ui-chip ui-tabular">
-            {viewMode === 'week' ? 'Week View' : 'Month View'} · {viewLabel}
-          </span>
-          <span className="ui-chip">
-            {validSelectedProjectIds.length > 0
-              ? `${validSelectedProjectIds.length} project filter${validSelectedProjectIds.length > 1 ? 's' : ''}`
-              : 'All projects'}
-          </span>
-          <span className="ui-chip ui-tabular">
-            {selectedTasks.length} task{selectedTasks.length === 1 ? '' : 's'} on selected day
-          </span>
-          <span className="ui-chip">
-            {validSelectedProjectIds.length === 0 ? 'Standalone tasks included' : 'Filtered to selected projects'}
-          </span>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2.05fr)_minmax(300px,0.78fr)]">
