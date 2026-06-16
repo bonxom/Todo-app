@@ -1,26 +1,31 @@
 services:
-  mongodb:
-    image: mongodb/mongodb-community-server:8.0-ubuntu2204
-    container_name: mongodb
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: todoapp-backend
     restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      - "1818:27017"   # để vẫn truy cập từ máy host qua localhost:1818 (tuỳ chọn)
-    volumes:
-      - mongo_data:/data/db
+      - "4000:4000"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: todoapp-frontend
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 5000
     ports:
       - "3636:5000"
-  
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "4000:4000"
-
-volumes:
-  mongo_data:
