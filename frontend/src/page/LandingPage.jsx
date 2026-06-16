@@ -9,11 +9,14 @@ import '../styles/landing.css';
 const LandingPage = () => {
   return (
     <div className="landing-page">
+      <a className="skip-link" href="#landing-main">Skip to main content</a>
       <Navbar />
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <CTA />
+      <main id="landing-main">
+        <Hero />
+        <Features />
+        <HowItWorks />
+        <CTA />
+      </main>
       <Footer />
     </div>
   );

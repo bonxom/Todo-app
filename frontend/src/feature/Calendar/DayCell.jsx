@@ -17,9 +17,9 @@ const formatCellTime = (value) => {
 };
 
 const priorityDotStyle = {
-  High: { background: 'var(--color-danger)' },
-  Medium: { background: 'var(--color-warning)' },
-  Low: { background: 'var(--color-success)' },
+  High: { background: '#ef4444' },   // Red
+  Medium: { background: '#f59e0b' }, // Amber / Yellow
+  Low: { background: '#22c55e' },    // Green
 };
 
 const taskPreviewTone = (task) => {
@@ -50,7 +50,6 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
   const [isDragOver, setIsDragOver] = useState(false);
   const taskCount = tasks?.length || 0;
   const hasOverdue = tasks?.some(task => task.isOverDue);
-  const hasHighPriority = tasks?.some(task => task.priority === 'High');
   const previewLimit = viewMode === 'week' ? 3 : 2;
   const sortedTasks = useMemo(() => {
     return sortTasksByDueTime(tasks || []);
@@ -137,22 +136,6 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
           >
             {day.getDate()}
           </span>
-          {taskCount > 0 && (
-            <span
-              className="ui-chip ui-tabular min-h-0 px-2 py-1 text-[11px]"
-              style={{
-                background: hasOverdue
-                  ? 'var(--color-danger-soft)'
-                  : hasHighPriority
-                    ? 'var(--color-accent-soft)'
-                    : 'var(--color-surface-muted)',
-                borderColor: hasOverdue ? 'transparent' : 'var(--color-line)',
-                color: hasOverdue ? 'var(--color-danger)' : 'var(--color-text-muted)',
-              }}
-            >
-              {taskCount}
-            </span>
-          )}
         </div>
 
         {taskCount > 0 && (
@@ -189,7 +172,6 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
                       style={{ color: previewTone.metaColor }}
                     >
                       <span className="ui-tabular">{formatCellTime(task.dueDate)}</span>
-                      {task.priority === 'High' ? ' · High' : ''}
                     </div>
                   </div>
                 </div>

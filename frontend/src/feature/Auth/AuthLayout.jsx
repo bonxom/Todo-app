@@ -1,28 +1,40 @@
-import { CheckSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const AuthLayout = ({ children }) => {
+const AuthLayout = ({ children, mode = 'login' }) => {
+  const isRegister = mode === 'register';
+
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 py-10 relative overflow-hidden">
-      {/* Background Decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/4 -left-1/4 w-[50%] h-[50%] bg-pink-300 rounded-full blur-[100px] opacity-30" />
-        <div className="absolute bottom-0 right-0 w-[40%] h-[40%] bg-purple-500 rounded-full blur-[100px] opacity-20" />
-      </div>
+    <main className="auth-page-shell">
+      <a className="skip-link" href="#auth-form">Skip to account form</a>
+      <div className="auth-page-container">
+        <Link to="/" className="auth-home-link">
+          <span className="ui-shell-brand-mark" aria-hidden="true">
+            <img src="/ech.jpeg" alt="" className="brand-mark-image" />
+          </span>
+          <span>TodoApp</span>
+        </Link>
 
-      {/* Main Card */}
-      <div className="relative bg-white rounded-4xl shadow-2xl w-full max-w-[1000px] min-h-[650px] overflow-hidden flex flex-col md:flex-row z-10">
-        
-        {/* Mobile Header */}
-        <div className="md:hidden p-6 pb-0 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 mb-2">
-            <CheckSquare className="w-6 h-6 text-white" />
+        <section className="auth-shell ui-section-card">
+          <aside className="auth-aside" aria-label="TodoApp workspace summary">
+            <h1>{isRegister ? 'Build your task workspace.' : 'Welcome back to your workspace.'}</h1>
+            <video
+              className="auth-aside-video"
+              autoPlay
+              loop
+              muted
+              playsInline
+              aria-hidden="true"
+            >
+              <source src="/robothihi1.mp4" type="video/mp4" />
+            </video>
+          </aside>
+
+          <div className="auth-form-panel" id="auth-form">
+            {children}
           </div>
-          <h1 className="text-2xl font-bold text-blue-600">TodoApp</h1>
-        </div>
-
-        {children}
+        </section>
       </div>
-    </div>
+    </main>
   );
 };
 

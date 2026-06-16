@@ -1,36 +1,52 @@
+import { CheckSquare, LayoutDashboard, PlusCircle } from 'lucide-react';
+
 const HowItWorks = () => {
   const steps = [
     {
       number: '01',
-      title: 'Create an Account',
-      description: 'Sign up in seconds and get started with your personal task manager.'
+      Icon: LayoutDashboard,
+      title: 'Open Your Workspace',
+      description: 'Create an account and land in the same dashboard used for everyday planning.'
     },
     {
       number: '02',
-      title: 'Add Your Tasks',
-      description: 'Quickly add tasks with details, priorities, and categories.'
+      Icon: PlusCircle,
+      title: 'Capture the Work',
+      description: 'Add tasks with projects, categories, dates, and the details you need later.'
     },
     {
       number: '03',
-      title: 'Stay Organized',
-      description: 'Track progress, complete tasks, and boost your productivity.'
+      Icon: CheckSquare,
+      title: 'Review Progress',
+      description: 'Use calendar and statistics views to keep your next actions honest.'
     }
   ];
 
   return (
-    <section className="how-it-works-section">
+    <section className="landing-section" id="how-it-works">
       <div className="how-it-works-container">
-        <h2 className="how-it-works-title">How It Works</h2>
-        <p className="how-it-works-subtitle">Get started in three simple steps</p>
+        <header className="landing-section-header">
+          <p className="ui-page-kicker">Workflow</p>
+          <h2 className="how-it-works-title">How It Works</h2>
+          <p className="how-it-works-subtitle">A short path from account setup to a working task system.</p>
+        </header>
         <div className="steps-container">
-          {steps.map((step, index) => (
-            <div key={index} className="step-card">
-              <div className="text-5xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">{step.number}</div>
-              <h3 className="step-title">{step.title}</h3>
-              <p className="step-description">{step.description}</p>
-              {index < steps.length - 1 && <div className="step-connector"></div>}
-            </div>
-          ))}
+          {steps.map((step) => {
+            const StepIcon = step.Icon;
+
+            return (
+              <article key={step.number} className="step-card">
+                <div className="step-number-row">
+                  <span className="step-number ui-tabular">{step.number}</span>
+                  <span className="step-icon">
+                    <StepIcon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                </div>
+                <h3 className="step-title">{step.title}</h3>
+                <p className="step-description">{step.description}</p>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

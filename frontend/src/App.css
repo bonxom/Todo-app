@@ -4,6 +4,30 @@
   transition: margin-left 220ms ease;
 }
 
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1000;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.625rem 0.875rem;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 1rem));
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus-visible {
+  outline: 2px solid var(--ring-focus-outline);
+  outline-offset: 2px;
+  transform: translateY(0);
+}
+
 .ui-main-content {
   padding: clamp(1rem, 2.2vw, 1.5rem);
   min-width: 0;
@@ -65,6 +89,14 @@
 
 .ui-card-padding {
   padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.calendar-page-shell {
+  width: min(100%, 84rem);
+}
+
+.calendar-page-shell .ui-card-padding {
+  padding-inline: clamp(0.75rem, 1.1vw, 1rem);
 }
 
 .ui-btn-primary,
@@ -445,6 +477,7 @@ textarea.ui-input {
   height: 2.5rem;
   place-items: center;
   flex-shrink: 0;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--color-accent) 18%, var(--color-line));
   border-radius: var(--radius-lg);
   background: var(--color-accent-soft);
@@ -452,6 +485,12 @@ textarea.ui-input {
   box-shadow: var(--shadow-xs);
   font-size: 0.95rem;
   font-weight: 700;
+}
+
+.brand-mark-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .ui-shell-brand-copy {
@@ -626,9 +665,35 @@ textarea.ui-input {
   width: 2.25rem;
   height: 2.25rem;
   place-items: center;
+  isolation: isolate;
   border-radius: 999px;
   background: var(--color-accent-soft);
   color: var(--color-accent);
+}
+
+.ui-assistant-bubble__icon > svg {
+  position: relative;
+  z-index: 2;
+}
+
+.ui-assistant-bubble__hover-video {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: 1;
+  width: 10rem;
+  height: 10rem;
+  object-fit: contain;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(2);
+  transition:
+    opacity 120ms ease,
+    transform 160ms ease;
+}
+
+.ui-assistant-bubble:hover .ui-assistant-bubble__hover-video {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .ui-assistant-bubble__copy {
@@ -655,6 +720,7 @@ textarea.ui-input {
   position: absolute;
   top: -0.125rem;
   right: -0.125rem;
+  z-index: 3;
   width: 0.625rem;
   height: 0.625rem;
   border: 2px solid var(--color-surface);

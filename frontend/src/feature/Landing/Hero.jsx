@@ -1,48 +1,80 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { CalendarDays, CheckCircle2, FolderKanban, Sparkles } from 'lucide-react';
 
 const Hero = () => {
-  const navigate = useNavigate();
-
   return (
     <section className="hero-section">
       <div className="hero-content">
+        <p className="ui-page-kicker">Personal Task Workspace</p>
         <h1 className="hero-title">
-          Organize Your Life,<br />
-          <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">One Task at a Time</span>
+          Plan the day, track the work, and keep projects moving.
         </h1>
         <p className="hero-description">
-          A powerful yet simple task management app to help you stay organized,
-          focused, and productive. Track your tasks, set priorities, and achieve your goals.
+          TodoApp brings tasks, categories, calendars, and progress into the same calm workspace
+          your dashboard already uses every day.
         </p>
         <div className="hero-buttons">
-          <button 
-            className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
-            onClick={() => navigate('/register')}
-          >
-            Get Started Free
-          </button>
-          <button 
-            className="bg-white text-purple-600 font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl border-2 border-purple-600 hover:bg-purple-50 transform hover:-translate-y-0.5 transition-all duration-200"
-            onClick={() => navigate('/login')}
-          >
+          <Link className="ui-btn-primary" to="/register">
+            Create Workspace
+          </Link>
+          <Link className="ui-btn-secondary" to="/login">
             Sign In
-          </button>
+          </Link>
+        </div>
+        <div className="hero-meta" aria-label="Product highlights">
+          <span className="ui-chip ui-chip--accent">
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+            AI task help
+          </span>
+          <span className="ui-chip">
+            <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
+            Calendar ready
+          </span>
+          <span className="ui-chip">Progress stats</span>
         </div>
       </div>
-      <div className="hero-image">
-        <div className="hero-illustration">
-          <div className="floating-card card-1">
-            <div className="card-icon">✓</div>
-            <div className="card-text">Complete Project</div>
+
+      <div className="hero-preview" aria-label="TodoApp dashboard preview">
+        <div className="hero-preview-header">
+          <div>
+            <p className="ui-page-kicker">Today</p>
+            <h2>Focus List</h2>
           </div>
-          <div className="floating-card card-2">
-            <div className="card-icon">📋</div>
-            <div className="card-text">Daily Tasks</div>
+          <span className="ui-chip ui-chip--success">3 active</span>
+        </div>
+
+        <div className="hero-progress">
+          <div className="hero-progress-copy">
+            <span>Project Completion</span>
+            <strong className="ui-tabular">68%</strong>
           </div>
-          <div className="floating-card card-3">
-            <div className="card-icon">🎯</div>
-            <div className="card-text">Goals</div>
+          <div className="hero-progress-track" aria-hidden="true">
+            <span />
           </div>
+        </div>
+
+        <div className="hero-task-list">
+          <article className="hero-task-card is-complete">
+            <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+            <div>
+              <h3>Review category plan</h3>
+              <p>Completed this morning</p>
+            </div>
+          </article>
+          <article className="hero-task-card">
+            <FolderKanban className="h-5 w-5" aria-hidden="true" />
+            <div>
+              <h3>Prepare launch checklist</h3>
+              <p>Project - In progress</p>
+            </div>
+          </article>
+          <article className="hero-task-card">
+            <CalendarDays className="h-5 w-5" aria-hidden="true" />
+            <div>
+              <h3>Schedule weekly review</h3>
+              <p>Calendar - Tomorrow</p>
+            </div>
+          </article>
         </div>
       </div>
     </section>

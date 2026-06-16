@@ -182,7 +182,9 @@ const Sidebar = ({
         </div>
 
         <div className={`ui-shell-brand ${showLabels ? '' : 'justify-center'}`}>
-          <div className="ui-shell-brand-mark" aria-hidden="true">T</div>
+          <div className="ui-shell-brand-mark" aria-hidden="true">
+            <img src="/ech.jpeg" alt="" className="brand-mark-image" />
+          </div>
           {showLabels && (
             <div className="ui-shell-brand-copy">
               <p className="text-sm font-semibold text-[var(--color-text)]">TodoApp</p>

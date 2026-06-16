@@ -3,9 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../feature/Auth/AuthLayout';
 import LoginForm from '../feature/Auth/LoginForm';
 import RegisterForm from '../feature/Auth/RegisterForm';
-import AuthOverlay from '../feature/Auth/AuthOverlay';
 import { authService } from '../api/apiService';
 import { useAuth } from '../context/useAuth';
+import '../styles/auth.css';
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -15,7 +15,6 @@ const AuthPage = () => {
   const initialMode = location.pathname === '/register' ? 'register' : 'login';
   const [mode, setMode] = useState(initialMode);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     const newMode = location.pathname === '/register' ? 'register' : 'login';
@@ -26,19 +25,13 @@ const AuthPage = () => {
   const handleLoginSubmit = async (credentials, setErrors) => {
     try {
       setIsLoading(true);
-      console.log('Login attempt with:', { email: credentials.email });
       
       const response = await authService.login(credentials);
-      console.log('Login response:', response);
       setSession(response);
       
-      console.log('Login successful, redirecting...');
-      // Redirect to main page
       navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Login error:', error);
-      console.error('Error message:', error.message);
-      console.error('Error response:', error.response);
       const errorMessage = error?.message || 'Login failed. Please try again.';
       setErrors({ password: errorMessage });
     } finally {
@@ -69,87 +62,53 @@ const AuthPage = () => {
   };
 
   const switchMode = (newMode) => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    
     setMode(newMode);
     navigate(newMode === 'login' ? '/login' : '/register', { replace: true });
-    
-    setTimeout(() => setIsAnimating(false), 700);
   };
 
   return (
-    <>
-    {/* HOME BUTTON */}
-    <button
-      onClick={() => navigate('/')}
-      className="absolute top-6 left-6 z-50 p-3 rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5 group"
-      aria-label="Go to home"
-    >
-      <svg 
-        className="w-6 h-6 text-purple-600 group-hover:text-purple-700 transition-colors" 
-        fill="none" 
-        stroke="currentColor" 
-        viewBox="0 0 24 24"
-      >
-        <path 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          strokeWidth={2} 
-          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" 
-        />
-      </svg>
-    </button>
-    <AuthLayout>
+    <AuthLayout mode={mode}>
+      <div className="auth-card">
+        <div className="auth-card-header">
+          <div>
+            <p className="ui-page-kicker">Account</p>
+            <h2>{mode === 'login' ? 'Sign In' : 'Create Workspace'}</h2>
+            <p>
+              {mode === 'login'
+                ? 'Continue to your tasks, projects, calendar, and statistics.'
+                : 'Set up your account and start organizing tasks in one workspace.'}
+            </p>
+          </div>
 
-
-      {/* LEFT SIDE: LOGIN FORM */}
-      <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center transition-all duration-700 absolute md:relative top-0 left-0 h-full bg-white
-        ${mode === 'login' 
-          ? 'z-30 opacity-100 translate-x-0 pointer-events-auto' 
-          : 'z-0 opacity-0 pointer-events-none'
-        }
-        ${mode === 'register' && 'hidden md:flex'}
-      `}>
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h2>
-          <p className="text-gray-500">Sign in to manage your tasks</p>
+          <div className="auth-mode-toggle" role="group" aria-label="Authentication mode">
+            <button
+              type="button"
+              className="auth-mode-button"
+              data-active={mode === 'login'}
+              aria-pressed={mode === 'login'}
+              onClick={() => switchMode('login')}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              className="auth-mode-button"
+              data-active={mode === 'register'}
+              aria-pressed={mode === 'register'}
+              onClick={() => switchMode('register')}
+            >
+              Sign Up
+            </button>
+          </div>
         </div>
 
-        <LoginForm onSubmit={handleLoginSubmit} isLoading={isLoading} />
-        <video 
-          className="fixed -bottom-20 left-1/2 w-96 h-96 z-0 shadow-bottom"
-          style={{
-            transform: 'translate(calc(-50%), calc(50%))'
-          }}
-          autoPlay
-          loop
-          muted
-        >
-          <source src="/robothihi1.mp4" type="video/mp4" />
-        </video>
+        {mode === 'login' ? (
+          <LoginForm onSubmit={handleLoginSubmit} isLoading={isLoading} />
+        ) : (
+          <RegisterForm onSubmit={handleRegisterSubmit} isLoading={isLoading} />
+        )}
       </div>
-
-      {/* RIGHT SIDE: REGISTER FORM */}
-      <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center transition-all duration-700 absolute md:relative top-0 right-0 h-full bg-white
-        ${mode === 'register'
-          ? 'z-30 opacity-100 translate-x-0 pointer-events-auto' 
-          : 'z-0 opacity-0 pointer-events-none'
-        }
-        ${mode === 'login' && 'hidden md:flex'}
-      `}>
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
-          <p className="text-gray-500">Join us to start managing your tasks</p>
-        </div>
-
-        <RegisterForm onSubmit={handleRegisterSubmit} isLoading={isLoading} />
-      </div>
-
-      {/* THE SLIDING OVERLAY */}
-      <AuthOverlay mode={mode} onSwitchMode={switchMode} />
     </AuthLayout>
-    </>
   );
 };
 

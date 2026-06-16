@@ -61,7 +61,7 @@ const CalendarPage = () => {
   return (
     <>
       <MainLayout>
-        <div className="ui-page-shell">
+        <div className="ui-page-shell calendar-page-shell">
           <header className="ui-page-header">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>

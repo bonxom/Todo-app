@@ -12,8 +12,8 @@ const MAIN_APP_ROUTE = '/dashboard';
 
 const AuthLoadingScreen = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white text-gray-500">
-      Checking your session...
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-canvas)] text-sm font-medium text-[var(--color-text-muted)]">
+      Checking your session…
     </div>
   );
 };

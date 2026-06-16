@@ -1,4 +1,8 @@
+import { useId } from 'react';
+
 const Input = ({ 
+  id,
+  name,
   label, 
   type = 'text', 
   value, 
@@ -7,33 +11,46 @@ const Input = ({
   fullWidth = false,
   className = '',
   icon,
-  error
+  error,
+  autoComplete,
+  inputMode,
+  spellCheck,
 }) => {
-  const widthStyle = fullWidth ? 'w-full' : '';
+  const generatedId = useId();
+  const inputId = id || `${name || 'auth-input'}-${generatedId}`;
+  const errorId = error ? `${inputId}-error` : undefined;
+  const widthStyle = fullWidth ? 'auth-field--full' : '';
   
   return (
-    <div className={widthStyle}>
+    <div className={`auth-field ${widthStyle}`}>
       {label && (
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="auth-label" htmlFor={inputId}>
           {label}
         </label>
       )}
-      <div className="relative">
+      <div className="auth-input-wrap">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2">
+          <div className="auth-input-icon" aria-hidden="true">
             {icon}
           </div>
         )}
         <input
+          id={inputId}
+          name={name}
           type={type}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className={`w-full px-4 py-3 ${icon ? 'pl-11' : ''} rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${className} ${error ? 'border-red-500' : ''}`}
+          autoComplete={autoComplete}
+          inputMode={inputMode}
+          spellCheck={spellCheck}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={errorId}
+          className={`ui-input auth-input ${icon ? 'auth-input--with-icon' : ''} ${error ? 'auth-input--error' : ''} ${className}`}
         />
       </div>
       {error && (
-        <p className="text-red-500 text-sm mt-1">{error}</p>
+        <p className="auth-error" id={errorId} aria-live="polite">{error}</p>
       )}
     </div>
   );

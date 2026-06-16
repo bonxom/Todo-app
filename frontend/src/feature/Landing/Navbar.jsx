@@ -1,31 +1,26 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
-  const navigate = useNavigate();
-
   return (
-    <nav className="landing-navbar">
+    <nav className="landing-navbar" aria-label="Landing navigation">
       <div className="navbar-container">
-        <div className="navbar-brand">
-          <h2 className="bg-gradient-to-r from-pink-700 via-purple-700 to-pink-700 bg-clip-text text-transparent">TodoApp</h2>
-        </div>
+        <Link to="/" className="landing-brand" aria-label="TodoApp home">
+          <span className="landing-brand-mark" aria-hidden="true">
+            <img src="/ech.jpeg" alt="" className="brand-mark-image" />
+          </span>
+          <span>TodoApp</span>
+        </Link>
         <div className="navbar-menu">
           <a href="#features" className="navbar-link">Features</a>
           <a href="#how-it-works" className="navbar-link">How It Works</a>
         </div>
         <div className="navbar-actions">
-          <button 
-            className="btn btn-text"
-            onClick={() => navigate('/login')}
-          >
+          <Link className="ui-btn-tertiary landing-nav-action" to="/login">
             Sign In
-          </button>
-          <button 
-            className="bg-gradient-to-r from-blue-600 to-purple-500 hover:from-purple-700 hover:to-blue-600 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
-            onClick={() => navigate('/register')}
-          >
+          </Link>
+          <Link className="ui-btn-primary landing-nav-action" to="/register">
             Get Started
-          </button>
+          </Link>
         </div>
       </div>
     </nav>

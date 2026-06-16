@@ -1,54 +1,63 @@
+import { BarChart3, CalendarCheck, FolderTree, ListChecks, Search, WandSparkles } from 'lucide-react';
+
 const Features = () => {
   const features = [
     {
-      icon: '📝',
-      title: 'Easy Task Management',
-      description: 'Create, edit, and organize your tasks effortlessly. Keep track of everything you need to do in one place.'
+      Icon: ListChecks,
+      title: 'Task Command Center',
+      description: 'Create, edit, filter, and complete tasks from a focused workspace built for daily use.'
     },
     {
-      icon: '🗂️',
-      title: 'Smart Categories',
-      description: 'Organize tasks into custom categories. Work, personal, shopping - keep everything neatly separated.'
+      Icon: FolderTree,
+      title: 'Categories & Projects',
+      description: 'Group related work by theme or outcome so every list stays easy to scan.'
     },
     {
-      icon: '⭐',
-      title: 'Priority System',
-      description: 'Mark tasks as important and set priorities. Focus on what matters most and never miss a deadline.'
+      Icon: CalendarCheck,
+      title: 'Calendar Planning',
+      description: 'See due work in context and keep weekly commitments visible before they drift.'
     },
     {
-      icon: '📊',
+      Icon: BarChart3,
       title: 'Progress Tracking',
-      description: 'Visualize your productivity with intuitive progress bars and statistics. See how much you accomplish.'
+      description: 'Track completions, active work, and status patterns with the same visual language as the app.'
     },
     {
-      icon: '🔍',
+      Icon: Search,
       title: 'Quick Search',
-      description: 'Find any task instantly with powerful search and filtering. Save time and stay organized.'
+      description: 'Find the right task quickly with compact search and filtering controls.'
     },
     {
-      icon: '🎨',
-      title: 'Beautiful Interface',
-      description: 'Enjoy a clean, modern design that makes task management a pleasure. Work in an interface you love.'
+      Icon: WandSparkles,
+      title: 'AI Task Assist',
+      description: 'Use assistant support when a project needs to become a clear set of next actions.'
     }
   ];
 
   return (
-    <section className="features-section">
+    <section className="landing-section landing-section--muted" id="features">
       <div className="features-container">
-        <div className="features-header">
+        <header className="landing-section-header">
+          <p className="ui-page-kicker">Features</p>
           <h2 className="features-title">Everything You Need to Stay Productive</h2>
           <p className="features-subtitle">
-            Powerful features designed to help you manage tasks efficiently
+            The public pages now introduce the same focused workspace users see after signing in.
           </p>
-        </div>
+        </header>
         <div className="features-grid">
-          {features.map((feature, index) => (
-            <div key={index} className="feature-card">
-              <div className="feature-icon">{feature.icon}</div>
-              <h3 className="feature-title">{feature.title}</h3>
-              <p className="feature-description">{feature.description}</p>
-            </div>
-          ))}
+          {features.map((feature) => {
+            const FeatureIcon = feature.Icon;
+
+            return (
+              <article key={feature.title} className="feature-card">
+                <div className="feature-icon">
+                  <FeatureIcon className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <h3 className="feature-title">{feature.title}</h3>
+                <p className="feature-description">{feature.description}</p>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

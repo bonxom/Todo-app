@@ -1,47 +1,59 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 const PasswordInput = ({ 
+  id,
+  name,
   label, 
   value, 
   onChange, 
   placeholder = '••••••••', 
   fullWidth = false,
   className = '',
-  error
+  error,
+  autoComplete = 'current-password',
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const widthStyle = fullWidth ? 'w-full' : '';
+  const generatedId = useId();
+  const inputId = id || `${name || 'auth-password'}-${generatedId}`;
+  const errorId = error ? `${inputId}-error` : undefined;
+  const widthStyle = fullWidth ? 'auth-field--full' : '';
   
   return (
-    <div className={widthStyle}>
+    <div className={`auth-field ${widthStyle}`}>
       {label && (
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="auth-label" htmlFor={inputId}>
           {label}
         </label>
       )}
-      <div className="relative">
+      <div className="auth-input-wrap">
         <input
+          id={inputId}
+          name={name}
           type={showPassword ? 'text' : 'password'}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className={`w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${className} ${error ? 'border-red-500' : ''}`}
+          autoComplete={autoComplete}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={errorId}
+          className={`ui-input auth-input auth-input--password ${error ? 'auth-input--error' : ''} ${className}`}
         />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+          className="auth-password-toggle"
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
         >
           {showPassword ? (
-            <EyeOff className="w-5 h-5" />
+            <EyeOff className="h-4 w-4" aria-hidden="true" />
           ) : (
-            <Eye className="w-5 h-5" />
+            <Eye className="h-4 w-4" aria-hidden="true" />
           )}
         </button>
       </div>
       {error && (
-        <p className="text-red-500 text-sm mt-1">{error}</p>
+        <p className="auth-error" id={errorId} aria-live="polite">{error}</p>
       )}
     </div>
   );

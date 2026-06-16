@@ -54,9 +54,6 @@ const ProjectFocusWeekAgenda = ({
               <h3 className="mt-1 text-xl font-semibold text-[var(--color-text)]">
                 {selectedDate ? formatDateTime(selectedDate) : 'Pick a day from the week strip'}
               </h3>
-              <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-                Tasks stay sorted by time so the day reads from earliest due item to latest.
-              </p>
             </div>
           </div>
 
@@ -69,24 +66,6 @@ const ProjectFocusWeekAgenda = ({
                   {selectedProjectCount} filtered project{selectedProjectCount > 1 ? 's' : ''}
                 </span>
               ) : null}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={onAddTask}
-                className="ui-btn-secondary ui-focus-ring"
-              >
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Add Task
-              </button>
-              <button
-                type="button"
-                onClick={onGenerateTasks}
-                className="ui-btn-tertiary ui-focus-ring"
-              >
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                Generate
-              </button>
             </div>
           </div>
         </div>

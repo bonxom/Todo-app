@@ -6,7 +6,7 @@ import ProjectFocusWeekAgenda from './ProjectFocusWeekAgenda';
 import DetailRequestModal from './DetailRequestModal';
 import AddTaskModal from '../Dialog/AddTaskModal';
 import AddProjectForm from '../Todo/Form/AddProjectForm';
-import { addDays, formatMonthLabel, formatWeekLabel, getDateKey, groupTasksByDate, sortTasksByDueTime, startOfDay } from './calendarUtils';
+import { addDays, getDateKey, groupTasksByDate, sortTasksByDueTime, startOfDay } from './calendarUtils';
 import { toMidnightDateTimeLocalValue } from '../../utils/dateTime';
 
 const getProjectId = (task) => task.projectId?._id || task.projectId || null;
@@ -111,43 +111,9 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
   const openAddTask = () => setIsAddTaskModalOpen(true);
   const openGenerateTasks = () => setIsGenerateModalOpen(true);
   const openAddProject = () => setIsAddProjectModalOpen(true);
-  const viewLabel = viewMode === 'week' ? formatWeekLabel(currentDate) : formatMonthLabel(currentDate);
 
   return (
     <section className="space-y-6">
-      <div className="ui-section-card ui-card-padding">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-sm font-medium text-[var(--color-accent)]">Deadline planner</p>
-            <h2 className="mt-1 text-2xl font-semibold text-[var(--color-text)]">
-              Keep the selected day visible while you scan the week or month
-            </h2>
-          </div>
-
-          <div className="flex flex-col gap-2 sm:items-end">
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={openAddTask}
-                className="ui-btn-primary ui-focus-ring"
-              >
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Add Task
-              </button>
-              <button
-                type="button"
-                onClick={openGenerateTasks}
-                className="ui-btn-secondary ui-focus-ring"
-              >
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                Generate
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2.05fr)_minmax(300px,0.78fr)]">
         <div className="space-y-6">
           <CalendarGrid
@@ -161,6 +127,26 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
             viewMode={viewMode}
             showViewModeToggle
             onViewModeChange={handleViewModeChange}
+            actions={(
+              <>
+                <button
+                  type="button"
+                  onClick={openAddTask}
+                  className="ui-btn-primary ui-focus-ring"
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Add Task
+                </button>
+                <button
+                  type="button"
+                  onClick={openGenerateTasks}
+                  className="ui-btn-secondary ui-focus-ring"
+                >
+                  <Sparkles className="h-4 w-4" aria-hidden="true" />
+                  Generate
+                </button>
+              </>
+            )}
           />
 
           <ProjectFocusWeekAgenda

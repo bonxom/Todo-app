@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import Button from './Button';
 import Input from './Input';
@@ -32,6 +31,10 @@ const LoginForm = ({ onSubmit, isLoading }) => {
     e.preventDefault();
     
     if (!validateForm()) {
+      const form = e.currentTarget;
+      window.requestAnimationFrame(() => {
+        form.querySelector('[aria-invalid="true"]')?.focus();
+      });
       return;
     }
     
@@ -39,57 +42,54 @@ const LoginForm = ({ onSubmit, isLoading }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
-      <div>
-        <Input
-          label="Email"
-          type="email"
-          value={credentials.email}
-          onChange={(e) => {
-            setCredentials({ ...credentials, email: e.target.value });
-            if (errors.email) setErrors({ ...errors, email: undefined });
-          }}
-          placeholder="your@email.com"
-          fullWidth
-          className="bg-gray-50"
-          error={errors.email}
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="auth-form" noValidate>
+      <Input
+        label="Email"
+        name="email"
+        type="email"
+        value={credentials.email}
+        onChange={(e) => {
+          setCredentials({ ...credentials, email: e.target.value });
+          if (errors.email) setErrors({ ...errors, email: undefined });
+        }}
+        placeholder="you@example.com…"
+        autoComplete="email"
+        inputMode="email"
+        spellCheck={false}
+        fullWidth
+        error={errors.email}
+      />
       
-      <div>
-        <PasswordInput
-          label="Password"
-          value={credentials.password}
-          onChange={(e) => {
-            setCredentials({ ...credentials, password: e.target.value });
-            if (errors.password) setErrors({ ...errors, password: undefined });
-          }}
-          placeholder="••••••••"
-          fullWidth
-          className="bg-gray-50"
-          error={errors.password}
-        />
-      </div>
+      <PasswordInput
+        label="Password"
+        name="password"
+        value={credentials.password}
+        onChange={(e) => {
+          setCredentials({ ...credentials, password: e.target.value });
+          if (errors.password) setErrors({ ...errors, password: undefined });
+        }}
+        placeholder="Enter your password…"
+        autoComplete="current-password"
+        fullWidth
+        error={errors.password}
+      />
       
-      <div className="flex justify-between items-center text-sm">
-        <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
-          <input type="checkbox" className="rounded border-gray-300 text-blue-600" />
+      <div className="auth-form-row">
+        <label className="auth-checkbox-label">
+          <input type="checkbox" name="remember" />
           Remember me
         </label>
-        <Link to="/forgot-password" className="text-blue-600 hover:text-blue-700 font-semibold">
-          Forgot password?
-        </Link>
       </div>
 
       <Button
         type="submit"
         fullWidth
         size="lg"
-        variant="purple"
-        disabled={isLoading}
-        icon={<LogIn className="w-5 h-5" />}
+        variant="primary"
+        loading={isLoading}
+        icon={<LogIn className="h-4 w-4" aria-hidden="true" />}
       >
-        {isLoading ? 'Signing in...' : 'Sign In'}
+        {isLoading ? 'Signing in…' : 'Sign In'}
       </Button>
     </form>
   );
