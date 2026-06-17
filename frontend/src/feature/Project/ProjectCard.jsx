@@ -4,12 +4,14 @@ import ProjectDetailModal from './ProjectDetailModal';
 import AddProjectForm from '../Todo/Form/AddProjectForm';
 import DeleteProjectDialog from './DeleteProjectDialog';
 import TaskCard from '../Category/TaskCard';
-import { projectService } from '../../api/apiService';
+import { projectService, taskService } from '../../api/apiService';
+import { getTaskDragData } from '../../utils/taskDrag';
 
 const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const completedTasks = tasks.filter((task) => task.status === 'completed').length;
   const pendingTasks = tasks.filter((task) => task.status === 'pending').length;
@@ -27,6 +29,48 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
     } catch (error) {
       console.error('Failed to delete project:', error);
       alert(error.response?.data?.message || 'Failed to delete project. Please try again.');
+    }
+  };
+
+  const handleDragEnter = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.contains(event.relatedTarget)) {
+      return;
+    }
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
+
+    const { taskId, currentProjectId } = getTaskDragData(event);
+
+    if (!taskId || currentProjectId === project._id) {
+      return;
+    }
+
+    try {
+      await taskService.updateTask(taskId, { projectId: project._id });
+      onTaskUpdated?.();
+    } catch (error) {
+      console.error('Failed to move task to project:', error);
+      alert(error.response?.data?.message || 'Failed to move task to this project.');
     }
   };
 
@@ -92,7 +136,18 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
         </div>
       ) : null}
 
-      <article className="ui-section-card flex h-full flex-col overflow-hidden transition-[border-color,box-shadow] duration-200 hover:border-[color:var(--color-accent)]">
+      <article
+        className={`ui-drop-zone ui-section-card flex h-full flex-col overflow-hidden transition-[border-color,box-shadow,background-color,transform] duration-200 ${
+          isDragOver
+            ? 'border-[color:var(--color-accent)] bg-[var(--color-accent-soft)]'
+            : 'hover:border-[color:var(--color-accent)]'
+        }`}
+        data-drag-active={isDragOver ? 'true' : 'false'}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <div className="p-5">
           <div className="flex items-start gap-3">
             <button
@@ -177,6 +232,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
                   task={task}
                   onClick={() => setIsDetailOpen(true)}
                   onTaskUpdated={onTaskUpdated}
+                  enableDrag
                 />
               ))}
             </div>
@@ -184,7 +240,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
             <div className="rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-8 text-center">
               <p className="text-sm font-medium text-[color:var(--color-text)]">No tasks match this view yet</p>
               <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">
-                Assign tasks to this project from the Todo page or from task edit forms.
+                Drag a task here or assign one from a task form.
               </p>
             </div>
           )}

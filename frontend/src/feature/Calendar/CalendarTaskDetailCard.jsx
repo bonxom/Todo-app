@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CalendarClock, Check, CircleDot, FolderKanban, Pencil, Tag, Trash2, XCircle } from 'lucide-react';
 import { formatDateTime } from '../../utils/dateTime';
 import { toggleTaskCompletion } from '../../utils/taskCompletion';
+import { setTaskDragData } from '../../utils/taskDrag';
 
 const formatLabel = (value) => {
   if (!value) return 'None';
@@ -108,9 +109,7 @@ const CalendarTaskDetailCard = ({
 
   const handleDragStart = (event) => {
     event.stopPropagation();
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('taskId', taskId);
-    event.dataTransfer.setData('currentCategoryId', task.categoryId?._id || task.categoryId || '');
+    setTaskDragData(event, task);
   };
 
   const handleOpen = () => {
@@ -180,7 +179,7 @@ const CalendarTaskDetailCard = ({
     <article
       draggable={Boolean(taskId)}
       onDragStart={handleDragStart}
-      className={`rounded-[16px] border p-4 ${isCompleted ? 'opacity-85' : ''}`}
+      className={`cursor-grab rounded-[16px] border p-4 active:cursor-grabbing ${isCompleted ? 'opacity-85' : ''}`}
       style={cardStyle}
     >
       <div className="flex items-start gap-3">

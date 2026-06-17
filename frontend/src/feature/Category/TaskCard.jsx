@@ -8,6 +8,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { taskService } from '../../api/apiService';
+import { setTaskDragData } from '../../utils/taskDrag';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
   month: 'short',
@@ -152,9 +153,7 @@ const TaskCard = ({
     if (!enableDrag) return;
 
     event.stopPropagation();
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('taskId', task._id);
-    event.dataTransfer.setData('currentCategoryId', task.categoryId?._id || task.categoryId);
+    setTaskDragData(event, task);
   };
 
   const handleKeyDown = (event) => {

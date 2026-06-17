@@ -154,7 +154,7 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
             <div className="flex flex-wrap gap-2 text-sm">
               <span className="ui-chip ui-tabular">{completedTasks}/{totalTasks} completed</span>
               <span className="ui-chip ui-tabular">{totalTasks} total tasks</span>
-              <span className="ui-chip">Sorted by due time</span>
+              <span className="ui-chip">In progress first</span>
             </div>
           </div>
 

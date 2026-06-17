@@ -1,7 +1,8 @@
 import { useMemo, useState, memo } from 'react';
 import { taskService } from '../../api/apiService';
 import { isSameDay, sortTasksByDueTime } from './calendarUtils';
-import { formatDateTime, toISOStringLocal } from '../../utils/dateTime';
+import { formatDateTime, toDateTimeLocalValue, toISOStringLocal } from '../../utils/dateTime';
+import { getTaskDragData, setTaskDragData } from '../../utils/taskDrag';
 
 const formatCellTime = (value) => {
   if (!value) return 'No due';
@@ -46,8 +47,22 @@ const taskPreviewTone = (task) => {
   };
 };
 
+const buildDroppedDueDate = (targetDay, sourceDueDate) => {
+  const nextDueDate = new Date(targetDay);
+  const sourceDate = sourceDueDate ? new Date(sourceDueDate) : null;
+
+  if (sourceDate && !Number.isNaN(sourceDate.getTime())) {
+    nextDueDate.setHours(sourceDate.getHours(), sourceDate.getMinutes(), 0, 0);
+    return nextDueDate;
+  }
+
+  nextDueDate.setHours(0, 0, 0, 0);
+  return nextDueDate;
+};
+
 const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onTaskUpdated, viewMode = 'month' }) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [draggingTaskId, setDraggingTaskId] = useState(null);
   const taskCount = tasks?.length || 0;
   const hasOverdue = tasks?.some(task => task.isOverDue);
   const previewLimit = viewMode === 'week' ? 3 : 2;
@@ -72,19 +87,18 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
     e.stopPropagation();
     setIsDragOver(false);
 
-    const taskId = e.dataTransfer.getData('taskId');
+    const { taskId, currentDueDate } = getTaskDragData(e);
     if (!taskId) return;
 
-    try {
-      // Set dueDate to the day being dropped on
-      const newDueDate = new Date(day);
-      newDueDate.setHours(0, 0, 0, 0);
+    if (currentDueDate && isSameDay(currentDueDate, day)) {
+      return;
+    }
 
-      const pad = (v) => String(v).padStart(2, '0');
-      const localValue = `${newDueDate.getFullYear()}-${pad(newDueDate.getMonth() + 1)}-${pad(newDueDate.getDate())}T00:00`;
+    try {
+      const newDueDate = buildDroppedDueDate(day, currentDueDate);
 
       await taskService.updateTask(taskId, {
-        dueDate: toISOStringLocal(localValue)
+        dueDate: toISOStringLocal(toDateTimeLocalValue(newDueDate))
       });
 
       if (onTaskUpdated) {
@@ -108,7 +122,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
         ${viewMode === 'week' ? 'min-h-[132px] p-3' : 'min-h-[96px] p-2.5'}
         ${!isCurrentMonth ? 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]' : 'text-[var(--color-text)]'}
         ${isSelected ? 'shadow-[var(--shadow-xs)]' : ''}
-        ${isDragOver ? 'shadow-[var(--shadow-sm)]' : ''}
+        ${isDragOver ? 'shadow-[var(--shadow-sm)] ring-2 ring-[color:var(--color-accent)] ring-offset-2 ring-offset-[var(--color-canvas)]' : ''}
       `}
       style={{
         borderColor: isSelected || isToday
@@ -142,11 +156,24 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
           <div className="flex flex-1 flex-col gap-1.5">
             {sortedTasks.slice(0, previewLimit).map((task, idx) => {
               const previewTone = taskPreviewTone(task);
+              const taskId = task._id || task.id || `${idx}`;
 
               return (
               <div
-                key={task._id || task.id || idx}
-                className={`rounded-lg border px-2 py-1.5 text-left ${task.status === 'completed' ? 'opacity-80' : ''}`}
+                key={taskId}
+                draggable={Boolean(task._id || task.id)}
+                onDragStart={(event) => {
+                  event.stopPropagation();
+                  setTaskDragData(event, task);
+                  setDraggingTaskId(taskId);
+                }}
+                onDragEnd={() => {
+                  setDraggingTaskId(null);
+                  setIsDragOver(false);
+                }}
+                className={`rounded-lg border px-2 py-1.5 text-left transition-[border-color,background-color,box-shadow,opacity,transform] duration-150 ${
+                  task.status === 'completed' ? 'opacity-80' : ''
+                } ${draggingTaskId === taskId ? 'opacity-60' : ''} cursor-grab active:cursor-grabbing`}
                 style={{
                   borderColor: previewTone.borderColor,
                   background: previewTone.background,

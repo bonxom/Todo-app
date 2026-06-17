@@ -6,6 +6,7 @@ import DetailRequestModal from './DetailRequestModal';
 import AddTaskModal from '../Dialog/AddTaskModal';
 import CalendarTaskDetailCard from './CalendarTaskDetailCard';
 import { formatDateTime, toMidnightDateTimeLocalValue } from '../../utils/dateTime';
+import { sortTasksByDueTime } from './calendarUtils';
 
 const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated, summaryOnly = false }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -22,15 +23,7 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated, summaryOnly = false
 
   const isToday = selectedDate && selectedDate.toDateString() === today.toDateString();
 
-  const sortedTasks = [...tasks].sort((a, b) => {
-    const priorityOrder = { High: 0, Medium: 1, Low: 2 };
-    const statusOrder = { 'in-progress': 0, pending: 1, completed: 2, 'given-up': 3 };
-
-    const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-    if (priorityDiff !== 0) return priorityDiff;
-
-    return statusOrder[a.status] - statusOrder[b.status];
-  });
+  const sortedTasks = sortTasksByDueTime(tasks);
 
   const MAX_DISPLAY_TASKS = 4;
   const displayTasks = sortedTasks.slice(0, MAX_DISPLAY_TASKS);

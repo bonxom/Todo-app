@@ -5,6 +5,7 @@ import CategoryDetailModal from './CategoryDetailModal';
 import TaskDetailButton from '../Todo/TaskDetailButton';
 import DeleteCategoryDialog from '../Dialog/DeleteCategoryDialog';
 import { categoryService, taskService } from '../../api/apiService';
+import { getTaskDragData } from '../../utils/taskDrag';
 
 const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,9 +49,18 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
     setIsDragOver(true);
   };
 
+  const handleDragEnter = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(true);
+  };
+
   const handleDragLeave = (event) => {
     event.preventDefault();
     event.stopPropagation();
+    if (event.currentTarget.contains(event.relatedTarget)) {
+      return;
+    }
     setIsDragOver(false);
   };
 
@@ -59,10 +69,9 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
     event.stopPropagation();
     setIsDragOver(false);
 
-    const taskId = event.dataTransfer.getData('taskId');
-    const currentCategoryId = event.dataTransfer.getData('currentCategoryId');
+    const { taskId, currentCategoryId } = getTaskDragData(event);
 
-    if (currentCategoryId === categoryId) {
+    if (!taskId || currentCategoryId === categoryId) {
       return;
     }
 
@@ -98,11 +107,13 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
       />
 
       <article
-        className={`ui-section-card flex h-full flex-col overflow-hidden transition-[border-color,box-shadow,background-color] duration-200 ${
+        className={`ui-drop-zone ui-section-card flex h-full flex-col overflow-hidden transition-[border-color,box-shadow,background-color,transform] duration-200 ${
           isDragOver
             ? 'border-[color:var(--color-accent)] bg-[var(--color-accent-soft)]'
             : 'hover:border-[color:var(--color-accent)]'
         }`}
+        data-drag-active={isDragOver ? 'true' : 'false'}
+        onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}

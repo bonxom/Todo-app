@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CalendarDays, CheckCircle2, Plus, Sparkles } from 'lucide-react';
+import { CalendarDays, CheckCircle2 } from 'lucide-react';
 import TaskDetailButton from '../Todo/TaskDetailButton';
 import CalendarTaskDetailCard from './CalendarTaskDetailCard';
 import { formatDateTime } from '../../utils/dateTime';
@@ -10,8 +10,6 @@ const ProjectFocusWeekAgenda = ({
   tasks,
   selectedProjectCount = 0,
   onTaskUpdated,
-  onAddTask,
-  onGenerateTasks,
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);

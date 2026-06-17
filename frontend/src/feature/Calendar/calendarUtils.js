@@ -97,8 +97,13 @@ export const getTaskDueTimestamp = (task) => {
   return Number.isNaN(date.getTime()) ? Number.POSITIVE_INFINITY : date.getTime();
 };
 
+const getTaskStatusRank = (task) => (task?.status === 'in-progress' ? 0 : 1);
+
 export const sortTasksByDueTime = (tasks = []) => (
   [...tasks].sort((left, right) => {
+    const statusDiff = getTaskStatusRank(left) - getTaskStatusRank(right);
+    if (statusDiff !== 0) return statusDiff;
+
     const dueDiff = getTaskDueTimestamp(left) - getTaskDueTimestamp(right);
     if (dueDiff !== 0) return dueDiff;
 

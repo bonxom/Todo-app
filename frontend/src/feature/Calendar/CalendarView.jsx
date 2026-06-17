@@ -154,8 +154,6 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
             tasks={selectedTasks}
             selectedProjectCount={validSelectedProjectIds.length}
             onTaskUpdated={onTaskUpdated}
-            onAddTask={openAddTask}
-            onGenerateTasks={openGenerateTasks}
           />
         </div>
 
