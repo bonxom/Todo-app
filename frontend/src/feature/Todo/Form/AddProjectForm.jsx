@@ -1,19 +1,35 @@
 import { useEffect, useState } from 'react';
 import { projectService } from '../../../api/apiService';
+import { DEFAULT_PROJECT_COLOR, getProjectColor } from '../../../utils/projectColor';
+
+const PROJECT_COLOR_SWATCHES = [
+  '#FFFFFF', '#FECACA', '#FED7AA', '#FEF3C7', '#D9F99D', '#BBF7D0',
+  '#A7F3D0', '#A5F3FC', '#BAE6FD', '#BFDBFE', '#C7D2FE', '#DDD6FE',
+  '#F5D0FE', '#FBCFE8', '#E5E7EB', '#FCA5A5', '#FB923C', '#FACC15',
+  '#84CC16', '#22C55E', '#14B8A6', '#06B6D4', '#3B82F6', '#6366F1',
+  '#8B5CF6', '#D946EF', '#EC4899', '#64748B',
+];
 
 const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = null }) => {
+  const projectId = project?._id;
+  const projectName = project?.name || '';
+  const projectDescription = project?.description || '';
+  const projectColor = getProjectColor(project);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [color, setColor] = useState(DEFAULT_PROJECT_COLOR);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    setName(project?.name || '');
-    setDescription(project?.description || '');
-  }, [project?._id, project?.name, project?.description]);
+    setName(projectName);
+    setDescription(projectDescription);
+    setColor(projectColor);
+  }, [projectColor, projectDescription, projectId, projectName]);
 
   const handleReset = () => {
-    setName(project?.name || '');
-    setDescription(project?.description || '');
+    setName(projectName);
+    setDescription(projectDescription);
+    setColor(projectColor);
   };
 
   const handleSubmit = async (e) => {
@@ -25,10 +41,11 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
       const payload = {
         name,
         description,
+        color,
       };
 
-      const savedProject = project?._id
-        ? await projectService.updateProject(project._id, payload)
+      const savedProject = projectId
+        ? await projectService.updateProject(projectId, payload)
         : await projectService.createProject(payload);
 
       onProjectCreated?.(savedProject);
@@ -59,11 +76,63 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
           placeholder="Enter project name…"
           className="ui-input"
           required
-          autoFocus
           autoComplete="off"
           spellCheck={false}
         />
       </div>
+
+      <fieldset>
+        <legend className="mb-2 block text-sm font-medium text-[color:var(--color-text)]">
+          Project Color
+        </legend>
+        <div
+          className="grid grid-cols-7 gap-2 rounded-[14px] border border-[color:var(--color-line)] bg-[var(--color-surface-muted)] p-3 sm:grid-cols-9"
+          role="radiogroup"
+          aria-label="Project color"
+        >
+          {PROJECT_COLOR_SWATCHES.map((swatch) => {
+            const isSelected = color === swatch;
+            const isLight = swatch === '#FFFFFF' || swatch === '#FEF3C7' || swatch === '#E5E7EB';
+
+            return (
+              <button
+                key={swatch}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={`Select ${swatch} as project color`}
+                onClick={() => setColor(swatch)}
+                className="ui-focus-ring flex h-7 w-7 items-center justify-center rounded-full transition-[transform,box-shadow] duration-150 hover:scale-110"
+                style={{
+                  backgroundColor: swatch,
+                  border: isLight ? '1px solid var(--color-line)' : '1px solid transparent',
+                  boxShadow: isSelected
+                    ? '0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent)'
+                    : 'none',
+                }}
+              >
+                <span className="sr-only">{isSelected ? 'Selected' : ''}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-3 flex items-center gap-3">
+          <label htmlFor="project-custom-color" className="text-sm font-medium text-[color:var(--color-text)]">
+            Custom
+          </label>
+          <input
+            id="project-custom-color"
+            name="project_color"
+            type="color"
+            value={color}
+            onChange={(event) => setColor(event.target.value.toUpperCase())}
+            className="h-9 w-12 cursor-pointer rounded-lg border border-[color:var(--color-line)] bg-[var(--color-surface)] p-1"
+            autoComplete="off"
+          />
+          <span className="ui-chip ui-tabular">{color}</span>
+        </div>
+      </fieldset>
 
       <div>
         <label htmlFor="project-description" className="mb-2 block text-sm font-medium text-[color:var(--color-text)]">
@@ -97,7 +166,7 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
           disabled={isSubmitting}
           className="ui-btn-primary flex-1 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? (project?._id ? 'Saving…' : 'Adding…') : (project?._id ? 'Save Project' : 'Add Project')}
+          {isSubmitting ? (projectId ? 'Saving…' : 'Adding…') : (projectId ? 'Save Project' : 'Add Project')}
         </button>
       </div>
     </form>

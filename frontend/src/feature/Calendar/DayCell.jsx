@@ -3,6 +3,7 @@ import { taskService } from '../../api/apiService';
 import { isSameDay, sortTasksByDueTime } from './calendarUtils';
 import { formatDateTime, toDateTimeLocalValue, toISOStringLocal } from '../../utils/dateTime';
 import { getTaskDragData, setTaskDragData } from '../../utils/taskDrag';
+import { getTaskProjectColor } from '../../utils/projectColor';
 
 const formatCellTime = (value) => {
   if (!value) return 'No due';
@@ -119,7 +120,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
       onDrop={handleDrop}
       className={`
         cursor-pointer rounded-[14px] border text-left transition-[background-color,border-color,box-shadow,transform] duration-150
-        ${viewMode === 'week' ? 'min-h-[132px] p-3' : 'min-h-[96px] p-2.5'}
+        overflow-hidden ${viewMode === 'week' ? 'min-h-[132px] py-3' : 'min-h-[96px] py-2.5'}
         ${!isCurrentMonth ? 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]' : 'text-[var(--color-text)]'}
         ${isSelected ? 'shadow-[var(--shadow-xs)]' : ''}
         ${isDragOver ? 'shadow-[var(--shadow-sm)] ring-2 ring-[color:var(--color-accent)] ring-offset-2 ring-offset-[var(--color-canvas)]' : ''}
@@ -142,8 +143,8 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
         transform: isDragOver ? 'translateY(-1px)' : undefined,
       }}
     >
-      <div className="flex flex-col h-full">
-        <div className="mb-1 flex items-center justify-between">
+      <div className="flex h-full flex-col">
+        <div className={`mb-1 flex items-center justify-between ${viewMode === 'week' ? 'px-3' : 'px-2.5'}`}>
           <span
             className={`text-sm font-semibold ${isCurrentMonth ? '' : 'opacity-75'}`}
             style={{ color: isToday || isSelected ? 'var(--color-accent)' : undefined }}
@@ -153,10 +154,11 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
         </div>
 
         {taskCount > 0 && (
-          <div className="flex flex-1 flex-col gap-1.5">
+          <div className="flex flex-1 flex-col gap-1.5 px-1.5">
             {sortedTasks.slice(0, previewLimit).map((task, idx) => {
               const previewTone = taskPreviewTone(task);
               const taskId = task._id || task.id || `${idx}`;
+              const projectColor = task.projectId ? getTaskProjectColor(task) : null;
 
               return (
               <div
@@ -171,12 +173,14 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
                   setDraggingTaskId(null);
                   setIsDragOver(false);
                 }}
-                className={`rounded-lg border px-2 py-1.5 text-left transition-[border-color,background-color,box-shadow,opacity,transform] duration-150 ${
+                className={`w-full rounded-lg border px-2 py-1.5 text-left transition-[border-color,background-color,box-shadow,opacity,transform] duration-150 ${
                   task.status === 'completed' || task.status === 'given-up' ? 'opacity-80' : ''
                 } ${draggingTaskId === taskId ? 'opacity-60' : ''} cursor-grab active:cursor-grabbing`}
                 style={{
                   borderColor: previewTone.borderColor,
                   background: previewTone.background,
+                  borderLeftColor: projectColor || previewTone.borderColor,
+                  borderLeftWidth: projectColor ? '4px' : undefined,
                 }}
                 title={`${task.title} • ${task.priority || 'Medium'} • ${formatDateTime(task.dueDate, 'No due date')}`}
               >
@@ -206,7 +210,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
             );
           })}
             {taskCount > previewLimit && (
-              <span className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+              <span className={`mt-0.5 text-xs text-[var(--color-text-muted)] ${viewMode === 'week' ? 'px-3' : 'px-2.5'}`}>
                 +{taskCount - previewLimit} more
               </span>
             )}

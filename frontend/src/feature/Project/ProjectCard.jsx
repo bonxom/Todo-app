@@ -6,6 +6,7 @@ import DeleteProjectDialog from './DeleteProjectDialog';
 import TaskCard from '../Category/TaskCard';
 import { projectService, taskService } from '../../api/apiService';
 import { getTaskDragData } from '../../utils/taskDrag';
+import { getProjectColor } from '../../utils/projectColor';
 
 const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -19,6 +20,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   const previewTasks = tasks.slice(0, 3);
   const descriptionId = `project-${project._id}-description`;
+  const projectColor = getProjectColor(project);
 
   const handleConfirmDelete = async () => {
     try {
@@ -147,6 +149,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        style={{ borderLeftColor: projectColor, borderLeftWidth: '6px' }}
       >
         <div className="p-5">
           <div className="flex items-start gap-3">

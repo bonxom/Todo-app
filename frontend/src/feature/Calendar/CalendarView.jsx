@@ -164,6 +164,7 @@ const CalendarView = ({ tasks, projects, onTaskUpdated }) => {
             onToggleProject={handleProjectToggle}
             onClearProjects={() => setSelectedProjectIds([])}
             onAddProject={openAddProject}
+            onProjectUpdated={onTaskUpdated}
           />
         </div>
       </div>

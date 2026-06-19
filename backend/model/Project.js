@@ -19,7 +19,11 @@ const projectSchema = new mongoose.Schema({
     color: {
         type: String,
         trim: true,
-        default: ""
+        default: "#E5E7EB",
+        validate: {
+            validator: (value) => /^#[0-9A-Fa-f]{6}$/.test(value),
+            message: "Project color must be a six-digit hex color"
+        }
     }
 }, {
     timestamps: true

@@ -3,6 +3,7 @@ import { CalendarClock, Check, CircleDot, FolderKanban, Pencil, Tag, Trash2, X }
 import { formatDateTime } from '../../utils/dateTime';
 import { toggleTaskCompletion, toggleTaskGiveUp } from '../../utils/taskCompletion';
 import { setTaskDragData } from '../../utils/taskDrag';
+import { getTaskProjectColor } from '../../utils/projectColor';
 
 const formatLabel = (value) => {
   if (!value) return 'None';
@@ -105,10 +106,13 @@ const CalendarTaskDetailCard = ({
   const isMutedStatus = isCompleted || isGivenUp;
   const priorityStyle = getPriorityStyle(task.priority);
   const statusStyle = getStatusStyle(task.status);
+  const projectColor = task.projectId ? getTaskProjectColor(task) : null;
   const cardStyle = {
     borderColor: task.isOverDue && !isMutedStatus ? 'var(--color-danger-soft)' : 'var(--color-line)',
     background: isMutedStatus ? 'var(--color-surface-muted)' : 'var(--color-surface)',
     boxShadow: 'var(--shadow-xs)',
+    borderLeftColor: projectColor || (task.isOverDue && !isMutedStatus ? 'var(--color-danger-soft)' : 'var(--color-line)'),
+    borderLeftWidth: projectColor ? '5px' : undefined,
   };
 
   const handleDragStart = (event) => {

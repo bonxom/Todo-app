@@ -76,12 +76,29 @@ const withSummary = (project, summary) => ({
     summary
 });
 
+const normalizeProjectColor = (color) => {
+    if (color === undefined) {
+        return { value: undefined };
+    }
+
+    if (typeof color !== "string" || !/^#[0-9A-Fa-f]{6}$/.test(color.trim())) {
+        return { error: "Project color must be a six-digit hex color" };
+    }
+
+    return { value: color.trim().toUpperCase() };
+};
+
 export const createProject = async (req, res) => {
     try {
         const { name, description, color } = req.body;
 
         if (typeof name !== "string" || !name.trim()) {
             return res.status(400).json({ message: "Name is required" });
+        }
+
+        const normalizedColor = normalizeProjectColor(color);
+        if (normalizedColor.error) {
+            return res.status(400).json({ message: normalizedColor.error });
         }
 
         const userId = req.user._id;
@@ -94,7 +111,7 @@ export const createProject = async (req, res) => {
             userId,
             name: name.trim(),
             description,
-            color
+            color: normalizedColor.value
         });
 
         res.status(201).json({
@@ -175,7 +192,12 @@ export const updateProject = async (req, res) => {
             update.name = name.trim();
         }
         if (description !== undefined) update.description = description;
-        if (color !== undefined) update.color = color;
+
+        const normalizedColor = normalizeProjectColor(color);
+        if (normalizedColor.error) {
+            return res.status(400).json({ message: normalizedColor.error });
+        }
+        if (normalizedColor.value !== undefined) update.color = normalizedColor.value;
 
         if (Object.keys(update).length === 0) {
             return res.status(400).json({ message: "No fields to update" });
