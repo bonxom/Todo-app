@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { CalendarClock, Check, CircleDot, FolderKanban, Pencil, Tag, Trash2, XCircle } from 'lucide-react';
+import { CalendarClock, Check, CircleDot, FolderKanban, Pencil, Tag, Trash2, X } from 'lucide-react';
 import { formatDateTime } from '../../utils/dateTime';
-import { toggleTaskCompletion } from '../../utils/taskCompletion';
+import { toggleTaskCompletion, toggleTaskGiveUp } from '../../utils/taskCompletion';
 import { setTaskDragData } from '../../utils/taskDrag';
 
 const formatLabel = (value) => {
@@ -52,6 +52,7 @@ const getStatusStyle = (status) => {
   if (status === 'completed') return chipStyles.success;
   if (status === 'in-progress') return chipStyles.accent;
   if (status === 'pending') return chipStyles.warning;
+  if (status === 'given-up') return chipStyles.danger;
   return chipStyles.neutral;
 };
 
@@ -90,20 +91,23 @@ const CalendarTaskDetailCard = ({
   mode = 'panel',
   onClick,
   onEdit,
-  onGiveUp,
   onDelete,
   onTaskUpdated,
 }) => {
   const [isCompletionUpdating, setIsCompletionUpdating] = useState(false);
+  const [isGiveUpUpdating, setIsGiveUpUpdating] = useState(false);
   const projectName = task.projectId?.name || 'Standalone';
   const categoryName = task.categoryId?.name || 'Uncategorized';
   const taskId = task._id || task.id;
   const isCompleted = task.status === 'completed';
+  const isGivenUp = task.status === 'given-up';
+  const isGiveUpAvailable = task.status === 'in-progress' || isGivenUp;
+  const isMutedStatus = isCompleted || isGivenUp;
   const priorityStyle = getPriorityStyle(task.priority);
   const statusStyle = getStatusStyle(task.status);
   const cardStyle = {
-    borderColor: task.isOverDue ? 'var(--color-danger-soft)' : 'var(--color-line)',
-    background: isCompleted ? 'var(--color-surface-muted)' : 'var(--color-surface)',
+    borderColor: task.isOverDue && !isMutedStatus ? 'var(--color-danger-soft)' : 'var(--color-line)',
+    background: isMutedStatus ? 'var(--color-surface-muted)' : 'var(--color-surface)',
     boxShadow: 'var(--shadow-xs)',
   };
 
@@ -137,13 +141,32 @@ const CalendarTaskDetailCard = ({
     }
   };
 
+  const handleToggleGiveUp = async (event) => {
+    event.stopPropagation();
+
+    if (isGiveUpUpdating || !isGiveUpAvailable) {
+      return;
+    }
+
+    try {
+      setIsGiveUpUpdating(true);
+      await toggleTaskGiveUp(task);
+      onTaskUpdated?.();
+    } catch (error) {
+      console.error('Failed to update task give-up status:', error);
+      alert(error.response?.data?.message || 'Failed to update task give-up status.');
+    } finally {
+      setIsGiveUpUpdating(false);
+    }
+  };
+
   const details = (
     <>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h3
             className={`min-w-0 break-words text-sm font-semibold ${
-              isCompleted ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text)]'
+              isMutedStatus ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text)]'
             }`}
           >
             {task.title}
@@ -179,24 +202,41 @@ const CalendarTaskDetailCard = ({
     <article
       draggable={Boolean(taskId)}
       onDragStart={handleDragStart}
-      className={`cursor-grab rounded-[16px] border p-4 active:cursor-grabbing ${isCompleted ? 'opacity-85' : ''}`}
+      className={`cursor-grab rounded-[16px] border p-4 active:cursor-grabbing ${isMutedStatus ? 'opacity-85' : ''}`}
       style={cardStyle}
     >
       <div className="flex items-start gap-3">
-        <button
-          type="button"
-          onClick={handleToggleCompletion}
-          disabled={isCompletionUpdating}
-          aria-pressed={isCompleted}
-          aria-label={isCompleted ? `Mark ${task.title} as in progress` : `Mark ${task.title} as completed`}
-          className={`ui-focus-ring mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition-[background-color,border-color,color] duration-150 disabled:cursor-wait disabled:opacity-70 ${
-            isCompleted
-              ? 'border-[var(--color-success)] bg-[var(--color-success)] text-white'
-              : 'border-[var(--color-line)] bg-[var(--color-surface)] text-transparent hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)]'
-          }`}
-        >
-          <Check className="h-4 w-4" aria-hidden="true" />
-        </button>
+        <div className="mt-0.5 flex w-6 shrink-0 flex-col items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handleToggleCompletion}
+            disabled={isCompletionUpdating}
+            aria-pressed={isCompleted}
+            aria-label={isCompleted ? `Mark ${task.title} as in progress` : `Mark ${task.title} as completed`}
+            className={`ui-focus-ring inline-flex h-6 w-6 items-center justify-center rounded-lg border transition-[background-color,border-color,color] duration-150 disabled:cursor-wait disabled:opacity-70 ${
+              isCompleted
+                ? 'border-[var(--color-success)] bg-[var(--color-success)] text-white'
+                : 'border-[var(--color-line)] bg-[var(--color-surface)] text-transparent hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)]'
+            }`}
+          >
+            <Check className="h-4 w-4" aria-hidden="true" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleToggleGiveUp}
+            disabled={isGiveUpUpdating || !isGiveUpAvailable}
+            aria-pressed={isGivenUp}
+            aria-label={isGivenUp ? `Restore ${task.title} to in progress` : `Give up ${task.title}`}
+            className={`ui-focus-ring inline-flex h-6 w-6 items-center justify-center rounded-lg border transition-[background-color,border-color,color] duration-150 disabled:cursor-not-allowed disabled:opacity-45 ${
+              isGivenUp
+                ? 'border-[var(--color-danger)] bg-[var(--color-danger)] text-white'
+                : 'border-[var(--color-danger-soft)] bg-[var(--color-surface)] text-[var(--color-danger)] hover:border-[var(--color-danger)] hover:bg-[var(--color-danger-soft)]'
+            }`}
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
 
         <div className="min-w-0 flex-1">
           {mode === 'panel' ? (
@@ -225,18 +265,6 @@ const CalendarTaskDetailCard = ({
             >
               <Pencil className="h-4 w-4" aria-hidden="true" />
             </IconAction>
-            {task.status === 'in-progress' ? (
-              <IconAction
-                label={`Give up ${task.title}`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onGiveUp?.(taskId);
-                }}
-                tone="warning"
-              >
-                <XCircle className="h-4 w-4" aria-hidden="true" />
-              </IconAction>
-            ) : null}
             <IconAction
               label={`Delete ${task.title}`}
               onClick={(event) => {

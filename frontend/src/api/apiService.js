@@ -124,6 +124,14 @@ export const taskService = {
     return response.data;
   },
 
+  // Restore task from given up to in progress
+  restoreTask: async (taskId) => {
+    const response = await axiosInstance.put(`/api/tasks/${taskId}`, buildTaskMutationPayload({
+      status: 'in-progress',
+    }));
+    return response.data;
+  },
+
   // Delete task
   deleteTask: async (taskId) => {
     const response = await axiosInstance.delete(`/api/tasks/${taskId}`);

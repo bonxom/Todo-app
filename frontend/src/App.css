@@ -621,6 +621,52 @@ textarea.ui-input {
   line-height: 1.2;
 }
 
+.ui-topbar-actions {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ui-global-task-filter {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1;
+  padding: 0 0.875rem;
+  touch-action: manipulation;
+  white-space: nowrap;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.ui-global-task-filter:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 24%, var(--color-line));
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.ui-global-task-filter[data-active="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+  color: #fff;
+}
+
 .ui-icon-button,
 .ui-avatar-button {
   display: inline-flex;
@@ -848,6 +894,21 @@ textarea.ui-input {
 
   .ui-topbar {
     padding-inline: 0.75rem;
+  }
+
+  .ui-topbar-actions {
+    gap: 0.5rem;
+  }
+
+  .ui-global-task-filter {
+    max-width: 11.25rem;
+    padding-inline: 0.625rem;
+  }
+
+  .ui-global-task-filter span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .ui-topbar-subtitle,

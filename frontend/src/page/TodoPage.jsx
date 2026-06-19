@@ -13,6 +13,7 @@ import AddCategoryForm from '../feature/Todo/Form/AddCategoryForm';
 import AddProjectForm from '../feature/Todo/Form/AddProjectForm';
 import { taskService, projectService } from '../api/apiService';
 import { useTaskRefresh } from '../context/useTaskRefresh';
+import { useTaskFilter, useVisibleTasks } from '../context/useTaskFilter';
 import { toggleTaskCompletion } from '../utils/taskCompletion';
 import { X } from 'lucide-react';
 
@@ -30,6 +31,7 @@ const sortTasksByDueDate = (taskList) => {
 
 const TodoPage = () => {
   const { refreshTrigger } = useTaskRefresh();
+  const { onlyInProgress } = useTaskFilter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -96,6 +98,8 @@ const TodoPage = () => {
   useEffect(() => {
     fetchTasksAndProjects();
   }, [fetchTasksAndProjects, refreshTrigger]);
+
+  const visibleTasks = useVisibleTasks(tasks);
 
   const handleToggleComplete = async (taskId) => {
     try {
@@ -166,7 +170,7 @@ const TodoPage = () => {
   };
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
+    return visibleTasks.filter((task) => {
       const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = selectedStatus.includes(task.status);
       const taskProjectId = task.projectId?._id || task.projectId || null;
@@ -178,16 +182,16 @@ const TodoPage = () => {
 
       return matchesSearch && matchesStatus && matchesProject;
     });
-  }, [tasks, searchTerm, selectedStatus, selectedProjectId]);
+  }, [visibleTasks, searchTerm, selectedStatus, selectedProjectId]);
 
   const overallSummary = useMemo(() => {
-    const completed = tasks.filter((task) => task.status === 'completed').length;
+    const completed = visibleTasks.filter((task) => task.status === 'completed').length;
 
     return {
       completed,
-      total: tasks.length,
+      total: visibleTasks.length,
     };
-  }, [tasks]);
+  }, [visibleTasks]);
 
   const visibleSummary = useMemo(() => {
     const completed = filteredTasks.filter((task) => task.status === 'completed').length;
@@ -235,15 +239,22 @@ const TodoPage = () => {
       };
     }
 
+    if (onlyInProgress) {
+      return {
+        title: 'No in-progress tasks visible',
+        description: 'Turn off the global in-progress filter to see completed, pending, and given-up tasks.',
+      };
+    }
+
     return {
       title: 'No tasks yet',
       description: 'Add your first task to start building a daily list and project progress.',
     };
-  }, [searchTerm, selectedProject, selectedProjectId, selectedStatus.length]);
+  }, [onlyInProgress, searchTerm, selectedProject, selectedProjectId, selectedStatus.length]);
 
   const projectCards = useMemo(() => {
     const buildSummary = (projectId) => {
-      const projectTasks = tasks.filter((task) => {
+      const projectTasks = visibleTasks.filter((task) => {
         const taskProjectId = task.projectId?._id || task.projectId || null;
         return projectId === STANDALONE_PROJECT_FILTER ? !taskProjectId : taskProjectId === projectId;
       });
@@ -291,7 +302,7 @@ const TodoPage = () => {
     };
 
     return [allCard, ...projectItems, standaloneCard];
-  }, [projects, tasks, overallSummary]);
+  }, [projects, visibleTasks, overallSummary]);
 
   if (isInitialLoad && isLoading) {
     return (

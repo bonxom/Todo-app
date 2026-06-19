@@ -4,6 +4,7 @@ import CalendarView from '../feature/Calendar/CalendarView';
 import ChatBubble from '../component/ChatBuble';
 import { projectService, taskService } from '../api/apiService';
 import { useTaskRefresh } from '../context/useTaskRefresh';
+import { useVisibleTasks } from '../context/useTaskFilter';
 
 const CalendarPage = () => {
   const { refreshTrigger } = useTaskRefresh();
@@ -44,6 +45,8 @@ const CalendarPage = () => {
       fetchCalendarData();
     }
   }, [fetchCalendarData, refreshTrigger]);
+
+  const visibleTasks = useVisibleTasks(tasks);
 
   if (isInitialLoad && isLoading) {
     return (
@@ -87,7 +90,7 @@ const CalendarPage = () => {
             </div>
           ) : (
             <CalendarView
-              tasks={tasks}
+              tasks={visibleTasks}
               projects={projects}
               onTaskUpdated={fetchCalendarData}
             />

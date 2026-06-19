@@ -9,6 +9,7 @@ import AddCategoryForm from '../feature/Todo/Form/AddCategoryForm';
 import AddProjectForm from '../feature/Todo/Form/AddProjectForm';
 import { categoryService, projectService, taskService } from '../api/apiService';
 import { useTaskRefresh } from '../context/useTaskRefresh';
+import { useVisibleTasks } from '../context/useTaskFilter';
 
 const VIEW_CONFIG = {
   categories: {
@@ -97,11 +98,13 @@ const CategoryPage = () => {
     };
   }, [isAddCategoryModalOpen, isAddProjectModalOpen]);
 
+  const globallyVisibleTasks = useVisibleTasks(tasks);
+
   const filteredTasks = useMemo(() => {
     return selectedStatus === 'all'
-      ? tasks
-      : tasks.filter((task) => task.status === selectedStatus);
-  }, [tasks, selectedStatus]);
+      ? globallyVisibleTasks
+      : globallyVisibleTasks.filter((task) => task.status === selectedStatus);
+  }, [globallyVisibleTasks, selectedStatus]);
 
   const categoryItems = useMemo(() => {
     const groupedTasks = new Map();

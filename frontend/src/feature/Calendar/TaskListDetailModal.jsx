@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import TaskDetailButton from '../Todo/TaskDetailButton';
-import GiveUpDialog from '../Dialog/GiveUpDialog';
 import DeleteDialog from '../Dialog/DeleteDialog';
 import { taskService } from '../../api/apiService';
 import CalendarTaskDetailCard from './CalendarTaskDetailCard';
@@ -14,30 +13,11 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
-  const [isGiveUpModalOpen, setIsGiveUpModalOpen] = useState(false);
-  const [taskToGiveUp, setTaskToGiveUp] = useState(null);
   const [deletingTaskId, setDeletingTaskId] = useState(null);
 
   const handleEdit = (task) => {
     setSelectedTask(task);
     setIsEditModalOpen(true);
-  };
-
-  const handleGiveUp = (taskId) => {
-    setTaskToGiveUp(taskId);
-    setIsGiveUpModalOpen(true);
-  };
-
-  const confirmGiveUp = async () => {
-    try {
-      await taskService.giveUpTask(taskToGiveUp);
-      if (onTaskUpdated) onTaskUpdated();
-      setIsGiveUpModalOpen(false);
-      setTaskToGiveUp(null);
-    } catch (error) {
-      console.error('Failed to give up task:', error);
-      alert(error.response?.data?.message || 'Failed to give up task.');
-    }
   };
 
   const handleDelete = (taskId) => {
@@ -95,15 +75,6 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
         }}
         onTaskUpdated={onTaskUpdated}
         onProjectCreated={onTaskUpdated}
-      />
-
-      <GiveUpDialog
-        isOpen={isGiveUpModalOpen}
-        onClose={() => {
-          setIsGiveUpModalOpen(false);
-          setTaskToGiveUp(null);
-        }}
-        onConfirm={confirmGiveUp}
       />
 
       <DeleteDialog
@@ -175,7 +146,6 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
                       mode="modal"
                       summaryOnly={summaryOnly}
                       onEdit={handleEdit}
-                      onGiveUp={handleGiveUp}
                       onDelete={handleDelete}
                       onTaskUpdated={onTaskUpdated}
                     />

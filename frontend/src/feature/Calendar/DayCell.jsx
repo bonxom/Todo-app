@@ -24,19 +24,19 @@ const priorityDotStyle = {
 };
 
 const taskPreviewTone = (task) => {
+  if (task.status === 'completed' || task.status === 'given-up') {
+    return {
+      borderColor: 'var(--color-line)',
+      background: 'var(--color-surface-muted)',
+      metaColor: task.status === 'given-up' ? 'var(--color-danger)' : 'var(--color-text-muted)',
+    };
+  }
+
   if (task.isOverDue) {
     return {
       borderColor: 'var(--color-danger-soft)',
       background: 'var(--color-surface)',
       metaColor: 'var(--color-danger)',
-    };
-  }
-
-  if (task.status === 'completed') {
-    return {
-      borderColor: 'var(--color-line)',
-      background: 'var(--color-surface-muted)',
-      metaColor: 'var(--color-text-muted)',
     };
   }
 
@@ -172,7 +172,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
                   setIsDragOver(false);
                 }}
                 className={`rounded-lg border px-2 py-1.5 text-left transition-[border-color,background-color,box-shadow,opacity,transform] duration-150 ${
-                  task.status === 'completed' ? 'opacity-80' : ''
+                  task.status === 'completed' || task.status === 'given-up' ? 'opacity-80' : ''
                 } ${draggingTaskId === taskId ? 'opacity-60' : ''} cursor-grab active:cursor-grabbing`}
                 style={{
                   borderColor: previewTone.borderColor,
@@ -188,7 +188,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
                   />
                   <div className="min-w-0">
                     <div className={`truncate text-[11px] font-semibold ${
-                      task.status === 'completed'
+                      task.status === 'completed' || task.status === 'given-up'
                         ? 'text-[var(--color-text-muted)] line-through'
                         : 'text-[var(--color-text)]'
                     }`}>

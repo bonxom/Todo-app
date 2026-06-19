@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Menu, User } from 'lucide-react';
+import { ArrowLeft, ListFilter, Menu, User } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
+import { useTaskFilter } from '../context/useTaskFilter';
 
 const getAvatarUrl = (user) => {
   const avatarFields = [
@@ -61,6 +62,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { onlyInProgress, toggleOnlyInProgress } = useTaskFilter();
   const avatarUrl = getAvatarUrl(user);
   const [brokenAvatarUrl, setBrokenAvatarUrl] = useState('');
   const showAvatar = Boolean(avatarUrl) && brokenAvatarUrl !== avatarUrl;
@@ -114,25 +116,38 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => navigate('/profile')}
-        className="ui-avatar-button ui-focus-ring"
-        aria-label="Go to profile"
-      >
-        {showAvatar ? (
-          <img
-            src={avatarUrl}
-            alt={user?.name ? `${user.name} avatar` : 'User avatar'}
-            className="h-full w-full rounded-full object-cover"
-            width={40}
-            height={40}
-            onError={() => setBrokenAvatarUrl(avatarUrl)}
-          />
-        ) : (
-          <User className="h-5 w-5" aria-hidden="true" />
-        )}
-      </button>
+      <div className="ui-topbar-actions">
+        <button
+          type="button"
+          onClick={toggleOnlyInProgress}
+          className="ui-global-task-filter ui-focus-ring"
+          aria-pressed={onlyInProgress}
+          data-active={onlyInProgress ? 'true' : 'false'}
+        >
+          <ListFilter className="h-4 w-4" aria-hidden="true" />
+          <span>Only show in-progress</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate('/profile')}
+          className="ui-avatar-button ui-focus-ring"
+          aria-label="Go to profile"
+        >
+          {showAvatar ? (
+            <img
+              src={avatarUrl}
+              alt={user?.name ? `${user.name} avatar` : 'User avatar'}
+              className="h-full w-full rounded-full object-cover"
+              width={40}
+              height={40}
+              onError={() => setBrokenAvatarUrl(avatarUrl)}
+            />
+          ) : (
+            <User className="h-5 w-5" aria-hidden="true" />
+          )}
+        </button>
+      </div>
     </header>
   );
 };
