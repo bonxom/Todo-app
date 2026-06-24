@@ -108,7 +108,7 @@ const CalendarGrid = ({
         </div>
       </div>
 
-      <div className="mb-3 grid grid-cols-7 gap-2">
+      <div className="mb-3 grid grid-cols-7 gap-2" data-cal-header-grid>
         {WEEK_DAYS.map((day) => (
           <div
             key={day}
@@ -119,7 +119,7 @@ const CalendarGrid = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-2" data-cal-day-grid>
         {calendarDays.map(({ date, isCurrentMonth }, index) => {
           const dateKey = getDateKey(date);
           const isToday = isSameDay(date, today);

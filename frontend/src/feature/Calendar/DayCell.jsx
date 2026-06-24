@@ -154,7 +154,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
         </div>
 
         {taskCount > 0 && (
-          <div className="flex flex-1 flex-col gap-1.5 px-1.5">
+          <div className="flex flex-1 flex-col gap-1.5 px-1.5" data-cal-task-list>
             {sortedTasks.slice(0, previewLimit).map((task, idx) => {
               const previewTone = taskPreviewTone(task);
               const taskId = task._id || task.id || `${idx}`;
@@ -173,6 +173,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
                   setDraggingTaskId(null);
                   setIsDragOver(false);
                 }}
+                data-cal-task-card
                 className={`w-full rounded-lg border px-2 py-1.5 text-left transition-[border-color,background-color,box-shadow,opacity,transform] duration-150 ${
                   task.status === 'completed' || task.status === 'given-up' ? 'opacity-80' : ''
                 } ${draggingTaskId === taskId ? 'opacity-60' : ''} cursor-grab active:cursor-grabbing`}
@@ -189,9 +190,10 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
                     className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
                     style={priorityDotStyle[task.priority] || { background: 'var(--color-text-muted)' }}
                     aria-hidden="true"
+                    data-cal-priority-dot
                   />
                   <div className="min-w-0">
-                    <div className={`truncate text-[11px] font-semibold ${
+                    <div data-cal-task-name className={`truncate text-[11px] font-semibold ${
                       task.status === 'completed' || task.status === 'given-up'
                         ? 'text-[var(--color-text-muted)] line-through'
                         : 'text-[var(--color-text)]'
@@ -199,6 +201,7 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
                       {task.title}
                     </div>
                     <div
+                      data-cal-due-time
                       className="mt-0.5 text-[10px]"
                       style={{ color: previewTone.metaColor }}
                     >
