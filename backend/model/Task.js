@@ -56,6 +56,7 @@ const taskSchema = new mongoose.Schema({
 
 taskSchema.index({ categoryId: 1 });
 taskSchema.index({ projectId: 1 });
+taskSchema.index({ dueDate: 1 });
 
 const Task = mongoose.model("Task", taskSchema);
 export default Task;

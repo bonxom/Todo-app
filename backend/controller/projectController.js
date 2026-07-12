@@ -3,10 +3,13 @@ import Task from "../model/Task.js";
 
 const createEmptySummary = () => ({
     totalTasks: 0,
+    finishedTasks: 0,
     pendingTasks: 0,
     inProgressTasks: 0,
     completedTasks: 0,
     givenUpTasks: 0,
+    scheduledTasks: 0,
+    canComplete: false,
     completionRate: 0
 });
 
@@ -16,8 +19,11 @@ const FINISHED_TASK_STATUSES = ["completed", "given-up"];
 const addCompletionRate = (summary) => {
     const { _id, ...rest } = summary;
     const totalTasks = rest.totalTasks || 0;
+    const finishedTasks = (rest.completedTasks || 0) + (rest.givenUpTasks || 0);
     return {
         ...rest,
+        finishedTasks,
+        canComplete: totalTasks > 0 && finishedTasks === totalTasks,
         completionRate: totalTasks > 0
             ? Math.round((rest.completedTasks / totalTasks) * 100)
             : 0
@@ -50,6 +56,9 @@ const getProjectSummaryMap = async (projectIds) => {
                 },
                 givenUpTasks: {
                     $sum: { $cond: [{ $eq: ["$status", "given-up"] }, 1, 0] }
+                },
+                scheduledTasks: {
+                    $sum: { $cond: [{ $ifNull: ["$dueDate", false] }, 1, 0] }
                 }
             }
         }

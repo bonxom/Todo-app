@@ -1,5 +1,4 @@
 import { useMemo, useState, memo } from 'react';
-import { taskService } from '../../api/apiService';
 import { isSameDay, sortTasksByDueTime } from './calendarUtils';
 import { formatDateTime, toDateTimeLocalValue, toISOStringLocal } from '../../utils/dateTime';
 import { getTaskDragData, isCopyDragRequested, setTaskDragData } from '../../utils/taskDrag';
@@ -61,7 +60,17 @@ const buildDroppedDueDate = (targetDay, sourceDueDate) => {
   return nextDueDate;
 };
 
-const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick, onTaskUpdated, viewMode = 'month' }) => {
+const DayCell = memo(({
+  day,
+  isToday,
+  isSelected,
+  isCurrentMonth,
+  tasks,
+  onClick,
+  onTaskDueDateChange,
+  onTaskCopy,
+  viewMode = 'month',
+}) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [draggingTaskId, setDraggingTaskId] = useState(null);
   const taskCount = tasks?.length || 0;
@@ -109,30 +118,17 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
 
         const { projectStatus, ...copyPayload } = taskCopyPayload;
 
-        await taskService.createTask({
+        await onTaskCopy?.({
           ...copyPayload,
           projectId: projectStatus === 'completed' ? undefined : copyPayload.projectId,
-          status: 'in-progress',
-          dueDate: nextDueDate,
-        });
-
-        if (onTaskUpdated) {
-          onTaskUpdated();
-        }
+        }, nextDueDate);
 
         return;
       }
 
-      await taskService.updateTask(taskId, {
-        dueDate: nextDueDate
-      });
-
-      if (onTaskUpdated) {
-        onTaskUpdated();
-      }
+      await onTaskDueDateChange?.(taskId, nextDueDate);
     } catch (error) {
       console.error('Failed to update task deadline:', error);
-      alert('Failed to update task deadline.');
     }
   };
 

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { clearStoredAuth, getStoredToken } from './authStorage';
 
 const baseURL = import.meta.env.VITE_SERVER_URL?.trim() || undefined;
+const enableApiDebugLogs = import.meta.env.VITE_API_DEBUG === 'true' || false;
 
 const isSessionAuthFailure = (error) => {
   const status = error.response?.status;
@@ -37,9 +38,11 @@ const axiosInstance = axios.create({
 // Request interceptor - add token to requests and adjust timeout for AI endpoints
 axiosInstance.interceptors.request.use(
   (config) => {
-    console.log('Request:', config.method?.toUpperCase(), config.url);
-    console.log('Request data:', config.data);
-    console.log('Base URL:', config.baseURL);
+    if (enableApiDebugLogs) {
+      console.log('Request:', config.method?.toUpperCase(), config.url);
+      console.log('Request data:', config.data);
+      console.log('Base URL:', config.baseURL);
+    }
     
     // Increase timeout for AI endpoints (they need more time)
     if (config.url?.includes('/api/ai/')) {
@@ -61,7 +64,9 @@ axiosInstance.interceptors.request.use(
 // Response interceptor - handle errors
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.log('Response received:', response.status, response.data);
+    if (enableApiDebugLogs) {
+      console.log('Response received:', response.status, response.data);
+    }
     return response;
   },
   (error) => {

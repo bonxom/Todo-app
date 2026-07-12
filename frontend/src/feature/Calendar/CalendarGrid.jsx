@@ -20,6 +20,8 @@ const CalendarGrid = ({
   onResetToToday,
   tasksByDate,
   onTaskUpdated,
+  onTaskDueDateChange,
+  onTaskCopy,
   viewMode = 'month',
   showViewModeToggle = false,
   onViewModeChange,
@@ -136,6 +138,8 @@ const CalendarGrid = ({
               tasks={tasks}
               onClick={onDateSelect}
               onTaskUpdated={onTaskUpdated}
+              onTaskDueDateChange={onTaskDueDateChange}
+              onTaskCopy={onTaskCopy}
               viewMode={viewMode}
             />
           );

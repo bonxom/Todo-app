@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { CalendarClock, Check, CircleDot, FolderKanban, Pencil, Tag, Trash2, X } from 'lucide-react';
 import { formatDateTime } from '../../utils/dateTime';
-import { toggleTaskCompletion, toggleTaskGiveUp } from '../../utils/taskCompletion';
 import { setTaskDragData } from '../../utils/taskDrag';
 import { getTaskProjectColor } from '../../utils/projectColor';
 
@@ -93,7 +92,7 @@ const CalendarTaskDetailCard = ({
   onClick,
   onEdit,
   onDelete,
-  onTaskUpdated,
+  onTaskStatusChange,
 }) => {
   const [isCompletionUpdating, setIsCompletionUpdating] = useState(false);
   const [isGiveUpUpdating, setIsGiveUpUpdating] = useState(false);
@@ -135,11 +134,9 @@ const CalendarTaskDetailCard = ({
 
     try {
       setIsCompletionUpdating(true);
-      await toggleTaskCompletion(task);
-      onTaskUpdated?.();
+      await onTaskStatusChange?.(task, isCompleted ? 'in-progress' : 'completed');
     } catch (error) {
       console.error('Failed to update task completion:', error);
-      alert(error.response?.data?.message || 'Failed to update task completion.');
     } finally {
       setIsCompletionUpdating(false);
     }
@@ -154,11 +151,9 @@ const CalendarTaskDetailCard = ({
 
     try {
       setIsGiveUpUpdating(true);
-      await toggleTaskGiveUp(task);
-      onTaskUpdated?.();
+      await onTaskStatusChange?.(task, isGivenUp ? 'in-progress' : 'given-up');
     } catch (error) {
       console.error('Failed to update task give-up status:', error);
-      alert(error.response?.data?.message || 'Failed to update task give-up status.');
     } finally {
       setIsGiveUpUpdating(false);
     }

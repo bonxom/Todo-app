@@ -127,6 +127,38 @@ const applyCompletionTimestampTransition = (update, currentStatus) => {
     }
 };
 
+const parseTaskDateRangeQuery = (queryParams) => {
+    const { startDate, endDate } = queryParams;
+
+    if (startDate === undefined && endDate === undefined) {
+        return {};
+    }
+
+    if (!startDate || !endDate) {
+        return { error: 'Both startDate and endDate are required for date range filtering' };
+    }
+
+    const parsedStartDate = new Date(startDate);
+    const parsedEndDate = new Date(endDate);
+
+    if (Number.isNaN(parsedStartDate.getTime()) || Number.isNaN(parsedEndDate.getTime())) {
+        return { error: 'Invalid date range' };
+    }
+
+    if (parsedStartDate > parsedEndDate) {
+        return { error: 'startDate must be before or equal to endDate' };
+    }
+
+    return {
+        filter: {
+            dueDate: {
+                $gte: parsedStartDate,
+                $lte: parsedEndDate
+            }
+        }
+    };
+};
+
 export const createTask = async (req, res) => {
     try {
         const { title, description, status, priority, categoryId, projectId, startDate, dueDate } = req.body;
@@ -199,7 +231,15 @@ export const createTask = async (req, res) => {
 export const getAllTasks = async (req, res) => {
     try {
         const query = await buildTaskAccessQuery(req.user);
-        const tasks = await populateTaskQuery(Task.find(query));
+        const dateRange = parseTaskDateRangeQuery(req.query);
+        if (dateRange.error) {
+            return res.status(400).json({ message: dateRange.error });
+        }
+
+        const tasks = await populateTaskQuery(Task.find({
+            ...query,
+            ...(dateRange.filter || {})
+        }).sort({ dueDate: 1, createdAt: -1 }));
         
         res.status(200).json(tasks);
     } catch (error) {

@@ -6,18 +6,28 @@ import ProjectFocusWeekAgenda from './ProjectFocusWeekAgenda';
 import DetailRequestModal from './DetailRequestModal';
 import AddTaskModal from '../Dialog/AddTaskModal';
 import AddProjectForm from '../Todo/Form/AddProjectForm';
-import { projectService } from '../../api/apiService';
 import { addDays, getDateKey, groupTasksByDate, sortTasksByDueTime, startOfDay } from './calendarUtils';
 import { toMidnightDateTimeLocalValue } from '../../utils/dateTime';
-import { PROJECT_STATUS, canCompleteProject, filterProjectsByVisibility } from '../../utils/projectStatus';
+import { PROJECT_STATUS, filterProjectsByVisibility } from '../../utils/projectStatus';
 
 const getProjectId = (task) => task.projectId?._id || task.projectId || null;
 
-const CalendarView = ({ tasks, allTasks = tasks, projects, onTaskUpdated }) => {
+const CalendarView = ({
+  tasks,
+  projects,
+  onTaskUpdated,
+  currentDate,
+  viewMode,
+  onCurrentDateChange,
+  onViewModeChange,
+  onTaskStatusChange,
+  onTaskDelete,
+  onTaskDueDateChange,
+  onTaskCopy,
+  onProjectStatusChange,
+}) => {
   const today = useMemo(() => startOfDay(new Date()), []);
-  const [currentDate, setCurrentDate] = useState(today);
   const [selectedDate, setSelectedDate] = useState(today);
-  const [viewMode, setViewMode] = useState('week');
   const [selectedProjectIds, setSelectedProjectIds] = useState([]);
   const [showCompletedProjects, setShowCompletedProjects] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
@@ -55,20 +65,19 @@ const CalendarView = ({ tasks, allTasks = tasks, projects, onTaskUpdated }) => {
     const selectedDayKey = getDateKey(selectedDate);
 
     return visibleProjects.map((project) => {
-      const projectTasks = allTasks.filter((task) => getProjectId(task) === project._id);
-      const scheduledCount = tasks.filter((task) => getProjectId(task) === project._id && task.dueDate).length;
+      const summary = project.summary || {};
       const selectedDayCount = (allTasksByDate[selectedDayKey] || [])
         .filter((task) => getProjectId(task) === project._id)
         .length;
 
       return {
         ...project,
-        canComplete: canCompleteProject(projectTasks),
-        scheduledCount,
+        canComplete: Boolean(summary.canComplete),
+        scheduledCount: summary.scheduledTasks || 0,
         selectedDayCount,
       };
     });
-  }, [allTasks, allTasksByDate, visibleProjects, selectedDate, tasks]);
+  }, [allTasksByDate, visibleProjects, selectedDate]);
 
   const initialProjectIdForNewTask = validSelectedProjectIds.length === 1
     ? validSelectedProjectIds[0]
@@ -76,12 +85,12 @@ const CalendarView = ({ tasks, allTasks = tasks, projects, onTaskUpdated }) => {
 
   const handleNavigate = (direction) => {
     if (viewMode === 'week') {
-      setCurrentDate((previousDate) => addDays(previousDate, direction * 7));
+      onCurrentDateChange?.((previousDate) => addDays(previousDate, direction * 7));
       setSelectedDate((previousDate) => addDays(previousDate, direction * 7));
       return;
     }
 
-    setCurrentDate((previousDate) => new Date(
+    onCurrentDateChange?.((previousDate) => new Date(
       previousDate.getFullYear(),
       previousDate.getMonth() + direction,
       1
@@ -89,7 +98,7 @@ const CalendarView = ({ tasks, allTasks = tasks, projects, onTaskUpdated }) => {
   };
 
   const handleResetToToday = () => {
-    setCurrentDate(today);
+    onCurrentDateChange?.(today);
     setSelectedDate(today);
   };
 
@@ -98,15 +107,15 @@ const CalendarView = ({ tasks, allTasks = tasks, projects, onTaskUpdated }) => {
     setSelectedDate(normalizedDate);
 
     if (viewMode === 'week') {
-      setCurrentDate(normalizedDate);
+      onCurrentDateChange?.(normalizedDate);
     }
   };
 
   const handleViewModeChange = (nextMode) => {
-    setViewMode(nextMode);
+    onViewModeChange?.(nextMode);
 
     if (nextMode === 'week') {
-      setCurrentDate(selectedDate);
+      onCurrentDateChange?.(selectedDate);
     }
   };
 
@@ -120,22 +129,18 @@ const CalendarView = ({ tasks, allTasks = tasks, projects, onTaskUpdated }) => {
 
   const handleCompleteProject = async (projectId) => {
     try {
-      await projectService.updateProject(projectId, { status: PROJECT_STATUS.COMPLETED });
+      await onProjectStatusChange?.(projectId, PROJECT_STATUS.COMPLETED);
       setSelectedProjectIds((previousIds) => previousIds.filter((value) => value !== projectId));
-      onTaskUpdated?.();
     } catch (error) {
       console.error('Failed to complete project:', error);
-      alert(error.response?.data?.message || 'Failed to complete project.');
     }
   };
 
   const handleRestoreProject = async (projectId) => {
     try {
-      await projectService.updateProject(projectId, { status: PROJECT_STATUS.ACTIVE });
-      onTaskUpdated?.();
+      await onProjectStatusChange?.(projectId, PROJECT_STATUS.ACTIVE);
     } catch (error) {
       console.error('Failed to restore project:', error);
-      alert(error.response?.data?.message || 'Failed to restore project.');
     }
   };
 
@@ -155,6 +160,8 @@ const CalendarView = ({ tasks, allTasks = tasks, projects, onTaskUpdated }) => {
             onResetToToday={handleResetToToday}
             tasksByDate={activeTasksByDate}
             onTaskUpdated={onTaskUpdated}
+            onTaskDueDateChange={onTaskDueDateChange}
+            onTaskCopy={onTaskCopy}
             viewMode={viewMode}
             showViewModeToggle
             onViewModeChange={handleViewModeChange}
@@ -185,6 +192,8 @@ const CalendarView = ({ tasks, allTasks = tasks, projects, onTaskUpdated }) => {
             tasks={selectedTasks}
             selectedProjectCount={validSelectedProjectIds.length}
             onTaskUpdated={onTaskUpdated}
+            onTaskStatusChange={onTaskStatusChange}
+            onTaskDelete={onTaskDelete}
           />
         </div>
 

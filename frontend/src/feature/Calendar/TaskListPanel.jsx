@@ -8,7 +8,14 @@ import CalendarTaskDetailCard from './CalendarTaskDetailCard';
 import { formatDateTime, toMidnightDateTimeLocalValue } from '../../utils/dateTime';
 import { sortTasksByDueTime } from './calendarUtils';
 
-const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated, summaryOnly = false }) => {
+const TaskListPanel = ({
+  selectedDate,
+  tasks,
+  onTaskUpdated,
+  onTaskStatusChange,
+  onTaskDelete,
+  summaryOnly = false,
+}) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -48,6 +55,8 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated, summaryOnly = false
         selectedDate={selectedDate}
         tasks={sortedTasks}
         onTaskUpdated={onTaskUpdated}
+        onTaskStatusChange={onTaskStatusChange}
+        onTaskDelete={onTaskDelete}
         summaryOnly={summaryOnly}
       />
 
@@ -114,6 +123,8 @@ const TaskListPanel = ({ selectedDate, tasks, onTaskUpdated, summaryOnly = false
                   setIsEditModalOpen(true);
                 }}
                 onTaskUpdated={onTaskUpdated}
+                onTaskStatusChange={onTaskStatusChange}
+                onTaskDelete={onTaskDelete}
               />
             ))}
 

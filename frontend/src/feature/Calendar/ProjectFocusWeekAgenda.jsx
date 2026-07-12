@@ -10,6 +10,8 @@ const ProjectFocusWeekAgenda = ({
   tasks,
   selectedProjectCount = 0,
   onTaskUpdated,
+  onTaskStatusChange,
+  onTaskDelete,
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -81,6 +83,8 @@ const ProjectFocusWeekAgenda = ({
                 setIsEditModalOpen(true);
               }}
               onTaskUpdated={onTaskUpdated}
+              onTaskStatusChange={onTaskStatusChange}
+              onTaskDelete={onTaskDelete}
             />
           ))
         ) : (

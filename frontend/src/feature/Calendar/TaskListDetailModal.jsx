@@ -3,12 +3,20 @@ import { createPortal } from 'react-dom';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import TaskDetailButton from '../Todo/TaskDetailButton';
 import DeleteDialog from '../Dialog/DeleteDialog';
-import { taskService } from '../../api/apiService';
 import CalendarTaskDetailCard from './CalendarTaskDetailCard';
 import { formatDateTime } from '../../utils/dateTime';
 import { sortTasksByDueTime } from './calendarUtils';
 
-const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdated, summaryOnly = false }) => {
+const TaskListDetailModal = ({
+  isOpen,
+  onClose,
+  selectedDate,
+  tasks,
+  onTaskUpdated,
+  onTaskStatusChange,
+  onTaskDelete,
+  summaryOnly = false,
+}) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -30,13 +38,11 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
       setDeletingTaskId(taskToDelete);
       setIsDeleteModalOpen(false);
       
-      await taskService.deleteTask(taskToDelete);
+      await onTaskDelete?.(taskToDelete);
       
-      // Wait for animation to complete, then refresh
       setTimeout(() => {
         setDeletingTaskId(null);
         setTaskToDelete(null);
-        if (onTaskUpdated) onTaskUpdated();
       }, 300);
     } catch (error) {
       console.error('Failed to delete task:', error);
@@ -148,6 +154,7 @@ const TaskListDetailModal = ({ isOpen, onClose, selectedDate, tasks, onTaskUpdat
                       onEdit={handleEdit}
                       onDelete={handleDelete}
                       onTaskUpdated={onTaskUpdated}
+                      onTaskStatusChange={onTaskStatusChange}
                     />
                   </div>
                 ))}
