@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 
 const pad = (v) => String(v).padStart(2, '0');
 
@@ -50,43 +50,37 @@ const parseDisplayValue = (displayStr) => {
  * - All other props are forwarded to the underlying <input>.
  */
 const DateTimeInput = ({ value, onChange, className = '', ...rest }) => {
-  const [displayText, setDisplayText] = useState(() => toDisplayValue(value));
+  const [draftText, setDraftText] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const lastExternalValue = useRef(value);
-
-  // Sync display text when the external value changes (not from user typing)
-  useEffect(() => {
-    if (value !== lastExternalValue.current) {
-      lastExternalValue.current = value;
-      setDisplayText(toDisplayValue(value));
-      setHasError(false);
-    }
-  }, [value]);
+  const externalDisplayText = toDisplayValue(value);
+  const displayText = isEditing ? draftText : externalDisplayText;
 
   const handleChange = (e) => {
     const raw = e.target.value;
-    setDisplayText(raw);
+    setDraftText(raw);
 
     const parsed = parseDisplayValue(raw);
     if (parsed) {
       setHasError(false);
-      lastExternalValue.current = parsed;
       onChange?.(parsed);
     } else if (raw === '') {
       setHasError(false);
-      lastExternalValue.current = '';
       onChange?.('');
     } else {
       setHasError(true);
     }
   };
 
+  const handleFocus = () => {
+    setDraftText(displayText);
+    setIsEditing(true);
+  };
+
   const handleBlur = () => {
-    // On blur, if invalid, revert to last valid value
-    if (hasError) {
-      setDisplayText(toDisplayValue(value));
-      setHasError(false);
-    }
+    setDraftText('');
+    setHasError(false);
+    setIsEditing(false);
   };
 
   return (
@@ -94,6 +88,7 @@ const DateTimeInput = ({ value, onChange, className = '', ...rest }) => {
       type="text"
       inputMode="numeric"
       value={displayText}
+      onFocus={handleFocus}
       onChange={handleChange}
       onBlur={handleBlur}
       placeholder="dd/mm/YYYY HH:mm"

@@ -15,7 +15,7 @@ const TASK_POPULATE = [
     },
     {
         path: 'projectId',
-        select: 'name description color userId',
+        select: 'name description color status userId',
         populate: {
             path: 'userId',
             select: 'name email'
@@ -81,7 +81,7 @@ const buildTaskAccessQuery = async (user) => {
     return { $or: ownershipClauses };
 };
 
-const resolveProjectUpdate = async (projectId, userId) => {
+const resolveProjectUpdate = async (projectId, userId, currentProjectId = null) => {
     if (projectId === undefined) {
         return { shouldUpdate: false };
     }
@@ -96,6 +96,12 @@ const resolveProjectUpdate = async (projectId, userId) => {
     const project = await Project.findById(projectId);
     if (!project || project.userId.toString() !== userId.toString()) {
         return { error: 'Invalid projectId' };
+    }
+
+    const normalizedCurrentProjectId = currentProjectId?.toString?.() || null;
+    const normalizedNextProjectId = project._id.toString();
+    if (project.status === 'completed' && normalizedNextProjectId !== normalizedCurrentProjectId) {
+        return { error: 'Completed projects cannot be assigned to tasks' };
     }
 
     return {
@@ -270,7 +276,8 @@ export const updateTask = async (req, res) => {
                 update.categoryId = categoryId;
             }
         }
-        const projectUpdate = await resolveProjectUpdate(projectId, req.user._id);
+        const currentProjectId = task.projectId?._id || task.projectId || null;
+        const projectUpdate = await resolveProjectUpdate(projectId, req.user._id, currentProjectId);
         if (projectUpdate.error) {
             return res.status(400).json({ message: projectUpdate.error });
         }

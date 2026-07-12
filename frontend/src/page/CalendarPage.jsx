@@ -24,8 +24,7 @@ const CalendarPage = () => {
         projectService.getAllProjects(),
       ]);
 
-      const tasksWithDueDate = allTasks.filter(task => task.dueDate);
-      setTasks(tasksWithDueDate);
+      setTasks(allTasks);
       setProjects(allProjects || []);
     } catch (error) {
       console.error('Error fetching calendar data:', error);
@@ -91,6 +90,7 @@ const CalendarPage = () => {
           ) : (
             <CalendarView
               tasks={visibleTasks}
+              allTasks={tasks}
               projects={projects}
               onTaskUpdated={fetchCalendarData}
             />

@@ -10,6 +10,9 @@ const createEmptySummary = () => ({
     completionRate: 0
 });
 
+const PROJECT_STATUSES = ["active", "completed"];
+const FINISHED_TASK_STATUSES = ["completed", "given-up"];
+
 const addCompletionRate = (summary) => {
     const { _id, ...rest } = summary;
     const totalTasks = rest.totalTasks || 0;
@@ -86,6 +89,31 @@ const normalizeProjectColor = (color) => {
     }
 
     return { value: color.trim().toUpperCase() };
+};
+
+const getProjectCompletionEligibility = async (projectId) => {
+    const summary = await Task.aggregate([
+        {
+            $match: {
+                projectId
+            }
+        },
+        {
+            $group: {
+                _id: "$projectId",
+                totalTasks: { $sum: 1 },
+                unfinishedTasks: {
+                    $sum: {
+                        $cond: [{ $in: ["$status", FINISHED_TASK_STATUSES] }, 0, 1]
+                    }
+                }
+            }
+        }
+    ]);
+
+    const result = summary[0] || { totalTasks: 0, unfinishedTasks: 0 };
+
+    return result.totalTasks > 0 && result.unfinishedTasks === 0;
 };
 
 export const createProject = async (req, res) => {
@@ -173,7 +201,7 @@ export const getProjectById = async (req, res) => {
 export const updateProject = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, color } = req.body;
+        const { name, description, color, status } = req.body;
 
         const project = await Project.findById(id);
         if (!project) {
@@ -198,6 +226,22 @@ export const updateProject = async (req, res) => {
             return res.status(400).json({ message: normalizedColor.error });
         }
         if (normalizedColor.value !== undefined) update.color = normalizedColor.value;
+        if (status !== undefined) {
+            if (!PROJECT_STATUSES.includes(status)) {
+                return res.status(400).json({ message: "Invalid project status" });
+            }
+
+            if (status === "completed") {
+                const canCompleteProject = await getProjectCompletionEligibility(project._id);
+                if (!canCompleteProject) {
+                    return res.status(400).json({
+                        message: "Project can only be completed when it has at least one task and every task is completed or given up"
+                    });
+                }
+            }
+
+            update.status = status;
+        }
 
         if (Object.keys(update).length === 0) {
             return res.status(400).json({ message: "No fields to update" });
@@ -272,7 +316,7 @@ export const getProjectTasks = async (req, res) => {
             })
             .populate({
                 path: "projectId",
-                select: "name color description userId",
+                select: "name color description status userId",
                 populate: {
                     path: "userId",
                     select: "name email"

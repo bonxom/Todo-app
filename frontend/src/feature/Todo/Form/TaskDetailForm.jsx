@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import AddCategoryForm from './AddCategoryForm';
 import AddProjectForm from './AddProjectForm';
 import { taskService, categoryService, projectService } from '../../../api/apiService';
 import { toDateTimeLocalValue, toISOStringLocal } from '../../../utils/dateTime';
 import DateTimeInput from '../../../component/DateTimeInput';
+import { isActiveProject, isCompletedProject } from '../../../utils/projectStatus';
 
 const STATUS_STYLES = {
   pending: 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] border-[var(--color-line)]',
@@ -33,6 +34,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState([]);
   const [projects, setProjects] = useState([]);
+  const activeProjects = useMemo(() => projects.filter(isActiveProject), [projects]);
   const fallbackCategoryId = categories[0]?._id || '';
   const taskCategoryId = task?.categoryId?._id || task?.categoryId || '';
   const taskProjectId = task?.projectId?._id || task?.projectId || '';
@@ -41,6 +43,9 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
   const taskStartDate = task?.startDate || '';
   const taskDueDate = task?.dueDate || '';
   const taskDescription = task?.description || '';
+  const currentCompletedProject = useMemo(() => (
+    projects.find((project) => project._id === taskProjectId && isCompletedProject(project)) || null
+  ), [projects, taskProjectId]);
 
   const fetchCategories = useCallback(async (selectCategoryId) => {
     try {
@@ -113,7 +118,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
       const updatedTask = {
         title,
         categoryId: categoryId || undefined,
-        projectId: projectId || undefined,
+        projectId: projectId || null,
         priority,
         startDate: toISOStringLocal(startDate) || undefined,
         dueDate: toISOStringLocal(dueDate) || undefined,
@@ -206,7 +211,12 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
             className="ui-input"
           >
             <option value="">No project</option>
-            {projects.map((project) => (
+            {currentCompletedProject ? (
+              <option value={currentCompletedProject._id} disabled>
+                {currentCompletedProject.name} (completed)
+              </option>
+            ) : null}
+            {activeProjects.map((project) => (
               <option key={project._id} value={project._id}>{project.name}</option>
             ))}
             <option value="__add_project__">+ Add project</option>

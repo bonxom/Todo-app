@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, FolderOpen, Pencil, Trash2, X } from 'lucide-react';
+import { Check, ChevronRight, FolderOpen, Pencil, RotateCcw, Trash2, X } from 'lucide-react';
 import ProjectDetailModal from './ProjectDetailModal';
 import AddProjectForm from '../Todo/Form/AddProjectForm';
 import DeleteProjectDialog from './DeleteProjectDialog';
@@ -7,6 +7,7 @@ import TaskCard from '../Category/TaskCard';
 import { projectService, taskService } from '../../api/apiService';
 import { getTaskDragData } from '../../utils/taskDrag';
 import { getProjectColor } from '../../utils/projectColor';
+import { PROJECT_STATUS, canCompleteProject, isCompletedProject } from '../../utils/projectStatus';
 
 const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -21,6 +22,9 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
   const previewTasks = tasks.slice(0, 3);
   const descriptionId = `project-${project._id}-description`;
   const projectColor = getProjectColor(project);
+  const isProjectCompleted = isCompletedProject(project);
+  const completionTasks = project.completionTasks || tasks;
+  const isCompletionEligible = !isProjectCompleted && canCompleteProject(completionTasks);
 
   const handleConfirmDelete = async () => {
     try {
@@ -37,12 +41,20 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
   const handleDragEnter = (event) => {
     event.preventDefault();
     event.stopPropagation();
+    if (isProjectCompleted) {
+      event.dataTransfer.dropEffect = 'none';
+      return;
+    }
     setIsDragOver(true);
   };
 
   const handleDragOver = (event) => {
     event.preventDefault();
     event.stopPropagation();
+    if (isProjectCompleted) {
+      event.dataTransfer.dropEffect = 'none';
+      return;
+    }
     event.dataTransfer.dropEffect = 'move';
     setIsDragOver(true);
   };
@@ -61,6 +73,10 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
     event.stopPropagation();
     setIsDragOver(false);
 
+    if (isProjectCompleted) {
+      return;
+    }
+
     const { taskId, currentProjectId } = getTaskDragData(event);
 
     if (!taskId || currentProjectId === project._id) {
@@ -73,6 +89,26 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
     } catch (error) {
       console.error('Failed to move task to project:', error);
       alert(error.response?.data?.message || 'Failed to move task to this project.');
+    }
+  };
+
+  const handleCompleteProject = async () => {
+    try {
+      await projectService.updateProject(project._id, { status: PROJECT_STATUS.COMPLETED });
+      onProjectUpdated?.();
+    } catch (error) {
+      console.error('Failed to complete project:', error);
+      alert(error.response?.data?.message || 'Failed to complete project.');
+    }
+  };
+
+  const handleRestoreProject = async () => {
+    try {
+      await projectService.updateProject(project._id, { status: PROJECT_STATUS.ACTIVE });
+      onProjectUpdated?.();
+    } catch (error) {
+      console.error('Failed to restore project:', error);
+      alert(error.response?.data?.message || 'Failed to restore project.');
     }
   };
 
@@ -143,7 +179,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
           isDragOver
             ? 'border-[color:var(--color-accent)] bg-[var(--color-accent-soft)]'
             : 'hover:border-[color:var(--color-accent)]'
-        }`}
+        } ${isProjectCompleted ? 'opacity-75' : ''}`}
         data-drag-active={isDragOver ? 'true' : 'false'}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
@@ -173,6 +209,26 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
             </button>
 
             <div className="flex items-center gap-2">
+              {isCompletionEligible ? (
+                <button
+                  type="button"
+                  onClick={handleCompleteProject}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--color-success)] bg-[var(--color-success-soft)] text-[color:var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-white"
+                  aria-label={`Complete and hide ${project.name}`}
+                >
+                  <Check className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : null}
+              {isProjectCompleted ? (
+                <button
+                  type="button"
+                  onClick={handleRestoreProject}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] transition-[background-color,border-color,color] duration-150 hover:border-[color:var(--color-accent)] hover:bg-[var(--color-accent-soft)] hover:text-[color:var(--color-accent)]"
+                  aria-label={`Restore ${project.name}`}
+                >
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(true)}

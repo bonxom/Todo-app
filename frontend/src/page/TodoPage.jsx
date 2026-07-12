@@ -15,6 +15,7 @@ import { taskService, projectService } from '../api/apiService';
 import { useTaskRefresh } from '../context/useTaskRefresh';
 import { useTaskFilter, useVisibleTasks } from '../context/useTaskFilter';
 import { toggleTaskCompletion } from '../utils/taskCompletion';
+import { PROJECT_STATUS, canCompleteProject, filterProjectsByVisibility } from '../utils/projectStatus';
 import { X } from 'lucide-react';
 
 const ALL_PROJECT_FILTER = 'all-projects';
@@ -48,6 +49,7 @@ const TodoPage = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [projects, setProjects] = useState([]);
+  const [showCompletedProjects, setShowCompletedProjects] = useState(false);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [initialTaskProjectId, setInitialTaskProjectId] = useState('');
@@ -131,8 +133,32 @@ const TodoPage = () => {
   };
 
   const openAddTask = (projectId = '') => {
-    setInitialTaskProjectId(projectId);
+    const project = projects.find((item) => item._id === projectId);
+    setInitialTaskProjectId(project?.status === PROJECT_STATUS.COMPLETED ? '' : projectId);
     setIsModalOpen(true);
+  };
+
+  const handleCompleteProject = async (projectId) => {
+    try {
+      await projectService.updateProject(projectId, { status: PROJECT_STATUS.COMPLETED });
+      if (selectedProjectId === projectId) {
+        setSelectedProjectId(ALL_PROJECT_FILTER);
+      }
+      await fetchTasksAndProjects();
+    } catch (error) {
+      console.error('Failed to complete project:', error);
+      alert(error.response?.data?.message || 'Failed to complete project.');
+    }
+  };
+
+  const handleRestoreProject = async (projectId) => {
+    try {
+      await projectService.updateProject(projectId, { status: PROJECT_STATUS.ACTIVE });
+      await fetchTasksAndProjects();
+    } catch (error) {
+      console.error('Failed to restore project:', error);
+      alert(error.response?.data?.message || 'Failed to restore project.');
+    }
   };
 
   const handleGiveUp = async (taskId) => {
@@ -275,12 +301,19 @@ const TodoPage = () => {
       emptyLabel: 'No tasks yet',
     };
 
-    const projectItems = projects.map((project) => {
+    const visibleProjects = filterProjectsByVisibility(projects, showCompletedProjects);
+    const projectItems = visibleProjects.map((project) => {
       const summary = buildSummary(project._id);
+      const projectTasks = tasks.filter((task) => {
+        const taskProjectId = task.projectId?._id || task.projectId || null;
+        return taskProjectId === project._id;
+      });
 
       return {
         id: project._id,
         isProject: true,
+        status: project.status,
+        canComplete: canCompleteProject(projectTasks),
         eyebrow: 'Project',
         name: project.name,
         description: project.description || 'No description yet.',
@@ -302,7 +335,7 @@ const TodoPage = () => {
     };
 
     return [allCard, ...projectItems, standaloneCard];
-  }, [projects, visibleTasks, overallSummary]);
+  }, [projects, showCompletedProjects, tasks, visibleTasks, overallSummary]);
 
   if (isInitialLoad && isLoading) {
     return (
@@ -387,6 +420,10 @@ const TodoPage = () => {
           onSelectProject={setSelectedProjectId}
           onCreateProject={() => setIsAddProjectModalOpen(true)}
           onAddTaskToProject={openAddTask}
+          showCompletedProjects={showCompletedProjects}
+          onShowCompletedProjectsChange={setShowCompletedProjects}
+          onCompleteProject={handleCompleteProject}
+          onRestoreProject={handleRestoreProject}
         />
 
         <div className="flex flex-col gap-5">

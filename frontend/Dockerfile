@@ -11,17 +11,16 @@ RUN npm ci
 
 COPY . .
 
-# RUN npm run build
+RUN npm run build
 
 # Stage 2: Serve the application with Nginx
 # Sử dụng image Nginx nhẹ để phục vụ ứng dụng đã build
 # FROM nginx:alpine
 
-# COPY --from=builder /app/dist /usr/share/nginx/html
+FROM nginx:alpine
 
-# Cổng của frontend
-EXPOSE 5000 
+COPY --from=builder /app/dist /usr/share/nginx/html
 
+EXPOSE 80
 
-# CMD ["nginx", "-g", "daemon off;"]
-CMD ["npm", "run", "dev"]
+CMD ["nginx", "-g", "daemon off;"]

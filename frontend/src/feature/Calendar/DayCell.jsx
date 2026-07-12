@@ -2,7 +2,7 @@ import { useMemo, useState, memo } from 'react';
 import { taskService } from '../../api/apiService';
 import { isSameDay, sortTasksByDueTime } from './calendarUtils';
 import { formatDateTime, toDateTimeLocalValue, toISOStringLocal } from '../../utils/dateTime';
-import { getTaskDragData, setTaskDragData } from '../../utils/taskDrag';
+import { getTaskDragData, isCopyDragRequested, setTaskDragData } from '../../utils/taskDrag';
 import { getTaskProjectColor } from '../../utils/projectColor';
 
 const formatCellTime = (value) => {
@@ -74,6 +74,8 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    const copyState = isCopyDragRequested(e);
+    e.dataTransfer.dropEffect = copyState.shouldCopy ? 'copy' : 'move';
     setIsDragOver(true);
   };
 
@@ -88,7 +90,8 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
     e.stopPropagation();
     setIsDragOver(false);
 
-    const { taskId, currentDueDate } = getTaskDragData(e);
+    const copyState = isCopyDragRequested(e);
+    const { taskId, currentDueDate, taskCopyPayload } = getTaskDragData(e);
     if (!taskId) return;
 
     if (currentDueDate && isSameDay(currentDueDate, day)) {
@@ -97,9 +100,31 @@ const DayCell = memo(({ day, isToday, isSelected, isCurrentMonth, tasks, onClick
 
     try {
       const newDueDate = buildDroppedDueDate(day, currentDueDate);
+      const nextDueDate = toISOStringLocal(toDateTimeLocalValue(newDueDate));
+
+      if (copyState.shouldCopy) {
+        if (!taskCopyPayload?.title) {
+          throw new Error('Missing task data for copy');
+        }
+
+        const { projectStatus, ...copyPayload } = taskCopyPayload;
+
+        await taskService.createTask({
+          ...copyPayload,
+          projectId: projectStatus === 'completed' ? undefined : copyPayload.projectId,
+          status: 'in-progress',
+          dueDate: nextDueDate,
+        });
+
+        if (onTaskUpdated) {
+          onTaskUpdated();
+        }
+
+        return;
+      }
 
       await taskService.updateTask(taskId, {
-        dueDate: toISOStringLocal(toDateTimeLocalValue(newDueDate))
+        dueDate: nextDueDate
       });
 
       if (onTaskUpdated) {

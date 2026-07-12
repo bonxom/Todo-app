@@ -1,5 +1,6 @@
-import { Plus } from 'lucide-react';
+import { Check, Plus, RotateCcw } from 'lucide-react';
 import ProgressBar from './ProgressBar';
+import { isCompletedProject } from '../../utils/projectStatus';
 
 const ProjectOverviewGrid = ({
   items,
@@ -7,6 +8,10 @@ const ProjectOverviewGrid = ({
   onSelectProject,
   onCreateProject,
   onAddTaskToProject,
+  showCompletedProjects,
+  onShowCompletedProjectsChange,
+  onCompleteProject,
+  onRestoreProject,
 }) => {
   return (
     <section className="space-y-4" aria-labelledby="project-overview-heading">
@@ -21,19 +26,31 @@ const ProjectOverviewGrid = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onCreateProject}
-          className="ui-btn-secondary"
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          <span>Add Project</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="inline-flex min-h-[2.5rem] items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-sm font-medium text-[var(--color-text-muted)]">
+            <input
+              type="checkbox"
+              checked={showCompletedProjects}
+              onChange={(event) => onShowCompletedProjectsChange?.(event.target.checked)}
+              className="h-4 w-4 rounded border-[var(--color-line)] accent-[var(--color-accent)]"
+            />
+            Show Completed Projects
+          </label>
+          <button
+            type="button"
+            onClick={onCreateProject}
+            className="ui-btn-secondary"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            <span>Add Project</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
           const isSelected = selectedProjectId === item.id;
+          const isCompleted = isCompletedProject(item);
 
           return (
             <article
@@ -42,7 +59,7 @@ const ProjectOverviewGrid = ({
                 isSelected
                   ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-[var(--shadow-sm)]'
                   : 'hover:border-[var(--color-accent)]'
-              }`}
+              } ${isCompleted ? 'opacity-75' : ''}`}
             >
               <button
                 type="button"
@@ -81,7 +98,29 @@ const ProjectOverviewGrid = ({
               </div>
 
               <div className="relative z-20 mt-5 flex flex-col gap-2 sm:flex-row">
-                {item.isProject ? (
+                {item.isProject && item.canComplete ? (
+                  <button
+                    type="button"
+                    onClick={() => onCompleteProject?.(item.id)}
+                    className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-success)] bg-[var(--color-success-soft)] px-4 text-sm font-semibold text-[var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-white"
+                    aria-label={`Complete and hide ${item.name}`}
+                  >
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                    <span>Complete</span>
+                  </button>
+                ) : null}
+                {item.isProject && isCompleted ? (
+                  <button
+                    type="button"
+                    onClick={() => onRestoreProject?.(item.id)}
+                    className="ui-btn-secondary flex-1"
+                    aria-label={`Restore ${item.name}`}
+                  >
+                    <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                    <span>Restore</span>
+                  </button>
+                ) : null}
+                {item.isProject && !isCompleted ? (
                   <button
                     type="button"
                     onClick={() => onAddTaskToProject?.(item.id)}

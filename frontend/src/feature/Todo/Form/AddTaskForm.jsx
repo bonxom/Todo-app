@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import AddCategoryForm from './AddCategoryForm';
 import AddProjectForm from './AddProjectForm';
 import { taskService, categoryService, projectService } from '../../../api/apiService';
 import { toMidnightDateTimeLocalValue, toISOStringLocal } from '../../../utils/dateTime';
 import DateTimeInput from '../../../component/DateTimeInput';
+import { isActiveProject } from '../../../utils/projectStatus';
 
 const AddTaskForm = ({
   onClose,
@@ -24,6 +25,7 @@ const AddTaskForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState([]);
   const [projects, setProjects] = useState([]);
+  const activeProjects = useMemo(() => projects.filter(isActiveProject), [projects]);
 
   const fetchCategories = useCallback(async (selectCategoryId) => {
     try {
@@ -46,7 +48,10 @@ const AddTaskForm = ({
       setProjects(projectsData);
 
       if (selectProjectId) {
-        setProjectId(selectProjectId);
+        const canSelectProject = projectsData.some((project) => (
+          isActiveProject(project) && project._id === selectProjectId
+        ));
+        setProjectId(canSelectProject ? selectProjectId : '');
       }
     } catch (error) {
       console.error('Failed to fetch projects:', error);
@@ -59,8 +64,14 @@ const AddTaskForm = ({
   }, [fetchCategories, fetchProjects]);
 
   useEffect(() => {
-    setProjectId(initialProjectId);
-  }, [initialProjectId]);
+    if (!initialProjectId) {
+      setProjectId('');
+      return;
+    }
+
+    const canSelectProject = activeProjects.some((project) => project._id === initialProjectId);
+    setProjectId(canSelectProject ? initialProjectId : '');
+  }, [activeProjects, initialProjectId]);
 
   const handleReset = () => {
     setTitle('');
@@ -163,7 +174,7 @@ const AddTaskForm = ({
               className="ui-input"
             >
               <option value="">No project</option>
-              {projects.map((project) => (
+              {activeProjects.map((project) => (
                 <option key={project._id} value={project._id}>{project.name}</option>
               ))}
               <option value="__add_project__">+ Add project</option>

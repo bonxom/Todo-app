@@ -24,12 +24,18 @@ const projectSchema = new mongoose.Schema({
             validator: (value) => /^#[0-9A-Fa-f]{6}$/.test(value),
             message: "Project color must be a six-digit hex color"
         }
+    },
+    status: {
+        type: String,
+        enum: ["active", "completed"],
+        default: "active"
     }
 }, {
     timestamps: true
 });
 
 projectSchema.index({ userId: 1, name: 1 }, { unique: true });
+projectSchema.index({ userId: 1, status: 1 });
 
 projectSchema.statics.findByUserAndName = function(userId, name) {
     return this.findOne({ userId, name });

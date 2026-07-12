@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { FolderKanban, Pencil, Plus, Search, X } from 'lucide-react';
+import { Check, FolderKanban, Pencil, Plus, RotateCcw, X } from 'lucide-react';
 import AddProjectForm from '../Todo/Form/AddProjectForm';
 import { getProjectColor } from '../../utils/projectColor';
+import { isCompletedProject } from '../../utils/projectStatus';
 
 const ProjectFocusPanel = ({
   projects,
@@ -10,6 +11,10 @@ const ProjectFocusPanel = ({
   onClearProjects,
   onAddProject,
   onProjectUpdated,
+  showCompletedProjects,
+  onShowCompletedProjectsChange,
+  onCompleteProject,
+  onRestoreProject,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingProject, setEditingProject] = useState(null);
@@ -96,6 +101,15 @@ const ProjectFocusPanel = ({
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
+          <label className="inline-flex min-h-8 items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-xs font-medium text-[var(--color-text-muted)]">
+            <input
+              type="checkbox"
+              checked={showCompletedProjects}
+              onChange={(event) => onShowCompletedProjectsChange?.(event.target.checked)}
+              className="h-3.5 w-3.5 rounded border-[var(--color-line)] accent-[var(--color-accent)]"
+            />
+            Show Completed Projects
+          </label>
           <span className="ui-chip ui-tabular">
             {hasProjectFilter ? `${selectedProjectIds.length} selected` : 'All tasks'}
           </span>
@@ -150,11 +164,14 @@ const ProjectFocusPanel = ({
             const scheduledCount = project.scheduledCount || 0;
             const selectedDayCount = project.selectedDayCount || 0;
             const projectColor = getProjectColor(project);
+            const isCompleted = isCompletedProject(project);
 
             return (
               <article
                 key={project._id}
-                className="relative overflow-hidden rounded-[14px] border text-left transition-[background-color,border-color,box-shadow] duration-150"
+                className={`relative overflow-hidden rounded-[14px] border text-left transition-[background-color,border-color,box-shadow,opacity] duration-150 ${
+                  isCompleted ? 'opacity-75' : ''
+                }`}
                 style={{
                   borderTopColor: isSelected ? 'var(--color-accent)' : 'var(--color-line)',
                   borderRightColor: isSelected ? 'var(--color-accent)' : 'var(--color-line)',
@@ -180,6 +197,26 @@ const ProjectFocusPanel = ({
                     </p>
                   </div>
                   <div className="pointer-events-auto flex items-center gap-2">
+                    {!isCompleted && project.canComplete ? (
+                      <button
+                        type="button"
+                        onClick={() => onCompleteProject?.(project._id)}
+                        className="ui-focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-[var(--color-success)] bg-[var(--color-success-soft)] text-[var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-white"
+                        aria-label={`Complete and hide ${project.name}`}
+                      >
+                        <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    ) : null}
+                    {isCompleted ? (
+                      <button
+                        type="button"
+                        onClick={() => onRestoreProject?.(project._id)}
+                        className="ui-focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-[background-color,border-color,color] duration-150 hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)]"
+                        aria-label={`Restore ${project.name}`}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => setEditingProject(project)}

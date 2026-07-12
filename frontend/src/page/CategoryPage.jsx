@@ -10,6 +10,7 @@ import AddProjectForm from '../feature/Todo/Form/AddProjectForm';
 import { categoryService, projectService, taskService } from '../api/apiService';
 import { useTaskRefresh } from '../context/useTaskRefresh';
 import { useVisibleTasks } from '../context/useTaskFilter';
+import { filterProjectsByVisibility } from '../utils/projectStatus';
 
 const VIEW_CONFIG = {
   categories: {
@@ -44,6 +45,7 @@ const CategoryPage = () => {
   const { refreshTrigger } = useTaskRefresh();
   const [categories, setCategories] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [showCompletedProjects, setShowCompletedProjects] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedView, setSelectedView] = useState('categories');
@@ -134,6 +136,7 @@ const CategoryPage = () => {
 
   const projectItems = useMemo(() => {
     const groupedTasks = new Map();
+    const groupedCompletionTasks = new Map();
 
     filteredTasks.forEach((task) => {
       const projectId = getRelationId(task.projectId);
@@ -146,15 +149,28 @@ const CategoryPage = () => {
       groupedTasks.get(projectId).push(task);
     });
 
-    const items = projects.map((project) => ({
+    tasks.forEach((task) => {
+      const projectId = getRelationId(task.projectId);
+      if (!projectId) return;
+
+      if (!groupedCompletionTasks.has(projectId)) {
+        groupedCompletionTasks.set(projectId, []);
+      }
+
+      groupedCompletionTasks.get(projectId).push(task);
+    });
+
+    const visibleProjects = filterProjectsByVisibility(projects, showCompletedProjects);
+    const items = visibleProjects.map((project) => ({
       ...project,
       tasks: groupedTasks.get(project._id) || [],
+      completionTasks: groupedCompletionTasks.get(project._id) || [],
     }));
 
     return selectedStatus === 'all'
       ? items
       : items.filter((item) => item.tasks.length > 0);
-  }, [projects, filteredTasks, selectedStatus]);
+  }, [projects, filteredTasks, selectedStatus, showCompletedProjects, tasks]);
 
   const activeItems = selectedView === 'categories' ? categoryItems : projectItems;
   const activeConfig = VIEW_CONFIG[selectedView];
@@ -247,20 +263,33 @@ const CategoryPage = () => {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (selectedView === 'categories') {
-                      setIsAddCategoryModalOpen(true);
-                    } else {
-                      setIsAddProjectModalOpen(true);
-                    }
-                  }}
-                  className="ui-btn-primary w-full sm:w-auto"
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  <span>{activeConfig.addLabel}</span>
-                </button>
+                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+                  {selectedView === 'projects' ? (
+                    <label className="inline-flex min-h-[2.5rem] items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--color-line)] bg-[var(--color-surface)] px-3 text-sm font-medium text-[color:var(--color-text-muted)]">
+                      <input
+                        type="checkbox"
+                        checked={showCompletedProjects}
+                        onChange={(event) => setShowCompletedProjects(event.target.checked)}
+                        className="h-4 w-4 rounded border-[color:var(--color-line)] accent-[var(--color-accent)]"
+                      />
+                      Show Completed Projects
+                    </label>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (selectedView === 'categories') {
+                        setIsAddCategoryModalOpen(true);
+                      } else {
+                        setIsAddProjectModalOpen(true);
+                      }
+                    }}
+                    className="ui-btn-primary w-full sm:w-auto"
+                  >
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    <span>{activeConfig.addLabel}</span>
+                  </button>
+                </div>
               </div>
 
               <div className="mt-5 border-t border-[color:var(--color-line)] pt-5">
