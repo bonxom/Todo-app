@@ -91,7 +91,7 @@ export const validateServerEnv = () => {
     }
 };
 
-export const getAiApiKey = () => process.env.API_KEY?.trim() || null;
+export const getAiApiKey = () => process.env.AI_API_KEY?.trim() || null;
 
 export const getAiBaseUrl = () => process.env.AI_BASE_URL?.trim() || null;
 
