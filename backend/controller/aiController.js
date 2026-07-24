@@ -4,7 +4,6 @@ import Task from "../model/Task.js";
 import { addPendingTask } from "./statController.js";
 import { normalizeTaskDateInput } from "../utils/dateTime.js";
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
 import { getAiApiKey, getAiBaseUrl, getAiModel } from "../config/env.js";
 
 const getAiClient = () => {
@@ -19,7 +18,7 @@ const getAiClient = () => {
         throw new Error("Missing required environment variable: AI_BASE_URL");
     }
 
-    return new OpenAI({ apiKey, baseURL });
+    return new OpenAI({ apiKey, baseURL, timeout: 60000 });
 };
 
 export const generateTasksWithRequirement = async (req, res) => {
@@ -84,17 +83,21 @@ Create 3 practical, actionable tasks with:
             throw new Error("Missing required environment variable: AI_MODEL_NAME");
         }
 
+        const rawSchema = tasksArraySchema.toJSONSchema();
+        // OpenAI's json_schema mode requires specific fields; DeepSeek doesn't support it.
+        // Use json_object + system prompt for broad provider compatibility.
+        const { $schema, ...jsonSchema } = rawSchema;
+
         const response = await ai.chat.completions.create({
             model,
-            messages: [{ role: "user", content: prompt }],
-            response_format: {
-                type: "json_schema",
-                json_schema: {
-                    name: "tasks",
-                    strict: true,
-                    schema: zodToJsonSchema(tasksArraySchema),
+            messages: [
+                {
+                    role: "system",
+                    content: `You must respond with a JSON array of exactly 3 task objects. Follow this JSON Schema:\n${JSON.stringify(jsonSchema, null, 2)}`,
                 },
-            },
+                { role: "user", content: prompt },
+            ],
+            response_format: { type: "json_object" },
         });
 
         const content = response.choices[0]?.message?.content;
