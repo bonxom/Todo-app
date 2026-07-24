@@ -1,20 +1,25 @@
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import Category from "../model/Category.js";
 import Task from "../model/Task.js";
 import { addPendingTask } from "./statController.js";
 import { normalizeTaskDateInput } from "../utils/dateTime.js";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { getAiApiKey } from "../config/env.js";
+import { getAiApiKey, getAiBaseUrl, getAiModel } from "../config/env.js";
 
 const getAiClient = () => {
     const apiKey = getAiApiKey();
+    const baseURL = getAiBaseUrl();
 
     if (!apiKey) {
-        throw new Error("Missing required environment variable: API_KEY");
+        throw new Error("Missing required environment variable: AI_API_KEY");
     }
 
-    return new GoogleGenAI({ apiKey });
+    if (!baseURL) {
+        throw new Error("Missing required environment variable: AI_BASE_URL");
+    }
+
+    return new OpenAI({ apiKey, baseURL });
 };
 
 export const generateTasksWithRequirement = async (req, res) => {
@@ -74,16 +79,29 @@ Create 3 practical, actionable tasks with:
 
         const tasksArraySchema = z.array(taskSchema).length(3);
 
-        const response = await ai.models.generateContent({
-            model: "gemini-3-flash-preview",
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseJsonSchema: zodToJsonSchema(tasksArraySchema),
+        const model = getAiModel();
+        if (!model) {
+            throw new Error("Missing required environment variable: AI_MODEL_NAME");
+        }
+
+        const response = await ai.chat.completions.create({
+            model,
+            messages: [{ role: "user", content: prompt }],
+            response_format: {
+                type: "json_schema",
+                json_schema: {
+                    name: "tasks",
+                    strict: true,
+                    schema: zodToJsonSchema(tasksArraySchema),
+                },
             },
         });
 
-        const generatedTasks = tasksArraySchema.parse(JSON.parse(response.text));
+        const content = response.choices[0]?.message?.content;
+        if (!content) {
+            throw new Error("Empty response from AI");
+        }
+        const generatedTasks = tasksArraySchema.parse(JSON.parse(content));
 
         console.log("Generated tasks:", generatedTasks);
         console.log("Category map:", categoryMap);
@@ -166,18 +184,29 @@ and answer questions about task organization, categories, priorities, and time m
 If user want to auto generate tasks, advise them to use the task generation mode.
 Provide short, clear, concise, and friendly responses.`;
 
-        const response = await ai.models.generateContent({
-            model: "gemini-3-flash-preview",
-            contents: userInput, 
-            config: {
-                systemInstruction: sysInstruction,
-            }
+        const model = getAiModel();
+        if (!model) {
+            throw new Error("Missing required environment variable: AI_MODEL_NAME");
+        }
+
+        const response = await ai.chat.completions.create({
+            model,
+            messages: [
+                { role: "system", content: sysInstruction },
+                { role: "user", content: userInput },
+            ],
         });
-        console.log(response.text);
+
+        const content = response.choices[0]?.message?.content;
+        if (!content) {
+            throw new Error("Empty response from AI");
+        }
+
+        console.log(content);
         res.status(200).json({
             success: true,
             message: "Response generated successfully",
-            data: response.text
+            data: content
         });
     } catch (error) {
         console.error("Error generating response:", error);
