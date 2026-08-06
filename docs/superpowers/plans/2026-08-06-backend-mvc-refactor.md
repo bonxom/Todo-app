@@ -353,7 +353,12 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   console.error('Unhandled error:', err);
-  res.status(500).json({ message: 'Internal server error' });
+
+  if (req.path.startsWith('/api/') || req.path === '/healthz') {
+    return res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+
+  res.status(500).send('Internal server error');
 };
 ```
 
@@ -819,9 +824,6 @@ export const statRepository = {
     return Stat.findOne({ userId });
   },
 
-  createOrFind(userId) {
-    return Stat.findOne({ userId }) || new Stat({ userId });
-  },
 
   async getTasksByUser(user) {
     if (user.role === 'ADMIN') {
@@ -1094,6 +1096,7 @@ This file is large (~200 lines) because it consolidates all the incremental stat
 import Stat from '../models/Stat.js';
 import { statRepository } from '../repositories/statRepository.js';
 import { DATE_KEY_PATTERN } from '../constants/datePatterns.js';
+import { ValidationError } from '../utils/errors.js';
 
 const toDateKey = (value) => {
   const date = new Date(value);
@@ -1188,7 +1191,7 @@ const serializeCompletedTask = (task) => ({
 
 async function rebuildStats(user) {
   const tasks = await statRepository.getTasksByUser(user);
-  let stats = await statRepository.findByUser(user);
+  let stats = await statRepository.findByUser(user._id);
 
   if (!stats) {
     stats = new Stat({ userId: user._id });
@@ -1357,6 +1360,10 @@ export const statService = {
   getStats: (user) => rebuildStats(user),
 
   async getCompletedTasksByDate(user, date) {
+    if (!DATE_KEY_PATTERN.test(date || '')) {
+      throw new ValidationError('A valid date query in YYYY-MM-DD format is required.');
+    }
+
     const tasks = await statRepository.getTasksByUser(user);
     return tasks
       .filter((task) => task.status === 'completed' && toDateKey(getTaskCompletionDate(task)) === date)
@@ -1802,7 +1809,7 @@ export const taskService = {
   },
 
   async update(id, data, user) {
-    const task = await taskRepository.findById(id);
+    const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new NotFoundError('Task not found');
     verifyOwnership(task, user);
 
@@ -1855,7 +1862,7 @@ export const taskService = {
   },
 
   async finish(id, user) {
-    const task = await taskRepository.findById(id);
+    const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new NotFoundError('Task not found');
     verifyOwnership(task, user);
 
@@ -1878,7 +1885,7 @@ export const taskService = {
   },
 
   async start(id, user) {
-    const task = await taskRepository.findById(id);
+    const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new NotFoundError('Task not found');
     verifyOwnership(task, user);
 
@@ -1892,7 +1899,7 @@ export const taskService = {
   },
 
   async giveUp(id, user) {
-    const task = await taskRepository.findById(id);
+    const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new NotFoundError('Task not found');
     verifyOwnership(task, user);
 
@@ -1912,7 +1919,7 @@ export const taskService = {
   },
 
   async delete(id, user) {
-    const task = await taskRepository.findById(id);
+    const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new NotFoundError('Task not found');
     verifyOwnership(task, user);
 
@@ -2037,11 +2044,17 @@ export const authService = {
   },
 
   async updateInfo(userId, data) {
-    if (Object.keys(data).length === 0) {
+    const ALLOWED_FIELDS = ['email', 'name', 'dob', 'nationality', 'avatarUrl'];
+    const filtered = {};
+    for (const key of ALLOWED_FIELDS) {
+      if (data[key] !== undefined) filtered[key] = data[key];
+    }
+
+    if (Object.keys(filtered).length === 0) {
       throw new ValidationError('No fields to update');
     }
 
-    const user = await userRepository.updateById(userId, data);
+    const user = await userRepository.updateById(userId, filtered);
     if (!user) throw new NotFoundError('User not found');
     return user;
   },
@@ -2341,18 +2354,7 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
-export const uploadAvatar = async (req, res, next) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    await userService.update(req.params.id, { avatarUrl });
-    res.status(200).json({ message: 'Avatar uploaded successfully', avatarUrl });
-  } catch (error) {
-    next(error);
-  }
-};
+
 ```
 
 - [ ] **Step 3: Rewrite controllers/statController.js**
@@ -2766,7 +2768,7 @@ export default router;
 
 ```js
 import express from 'express';
-import { createUser, getAllUsers, getUserById, updateUser, deleteUser, uploadAvatar } from '../controllers/userController.js';
+import { createUser, getAllUsers, getUserById, updateUser, deleteUser } from '../controllers/userController.js';
 import { protect, authorize } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import { createUserSchema, updateUserSchema } from '../validations/userValidation.js';
