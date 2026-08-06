@@ -63,7 +63,9 @@ export const validateServerEnv = (): void => {
 
   if (!process.env.MONGO_URI) missing.push('MONGO_URI');
   if (!process.env.JWT_SECRET) missing.push('JWT_SECRET');
+  if (!process.env.JWT_REFRESH_SECRET) missing.push('JWT_REFRESH_SECRET');
   if (!process.env.JWT_ACCESS_EXPIRES_IN) missing.push('JWT_ACCESS_EXPIRES_IN');
+  if (!process.env.JWT_REFRESH_EXPIRES_IN) missing.push('JWT_REFRESH_EXPIRES_IN');
   if (!process.env.SALT_ROUNDS) missing.push('SALT_ROUNDS');
 
   if (missing.length > 0) {

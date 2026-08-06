@@ -7,10 +7,10 @@ export const registerUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { user, token } = await authService.register(
+    const { user, accessToken, refreshToken, token } = await authService.register(
       req.validatedBody as Record<string, unknown>
     );
-    res.status(201).json({ message: 'Registration successful', user, token });
+    res.status(201).json({ message: 'Registration successful', user, accessToken, refreshToken, token });
   } catch (error) {
     next(error);
   }
@@ -23,18 +23,43 @@ export const loginUser = async (
 ): Promise<void> => {
   try {
     const body = req.validatedBody as Record<string, unknown>;
-    const { user, token } = await authService.login(
+    const { user, accessToken, refreshToken, token } = await authService.login(
       body.email as string,
       body.password as string
     );
-    res.status(200).json({ message: 'Login successful', user, token });
+    res.status(200).json({ message: 'Login successful', user, accessToken, refreshToken, token });
   } catch (error) {
     next(error);
   }
 };
 
-export const logoutUser = async (req: Request, res: Response): Promise<void> => {
-  res.status(200).json({ message: 'Logout successful' });
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const body = req.validatedBody as Record<string, unknown> | undefined;
+    const refreshTokenString = (body?.refreshToken ?? req.body?.refreshToken) as string;
+    const tokens = await authService.refreshToken(refreshTokenString);
+    res.status(200).json({ message: 'Token refreshed successfully', ...tokens });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logoutUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const refreshTokenString = req.body?.refreshToken as string | undefined;
+    await authService.logout(refreshTokenString);
+    res.status(200).json({ message: 'Logout successful' });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const getMe = async (

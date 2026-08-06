@@ -1,21 +1,51 @@
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { userRepository } from '../repositories/userRepository.js';
+import { invalidatedTokenRepository } from '../repositories/invalidatedTokenRepository.js';
 import { ValidationError, UnauthorizedError, NotFoundError } from '../utils/errors.js';
 import { IUserDocument } from '../types/IUser.js';
 
 interface JwtPayload {
   id: string;
+  exp?: number;
 }
 
-const generateToken = (id: mongoose.Types.ObjectId | string): string => {
-  return jwt.sign({ id }, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions['expiresIn'],
-  });
+interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  token: string; // backward compat alias for accessToken
+}
+
+const getRefreshSecret = (): string => process.env.JWT_REFRESH_SECRET!;
+
+const generateAccessToken = (id: mongoose.Types.ObjectId | string): string => {
+  const expiresIn = process.env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions['expiresIn'];
+  return jwt.sign({ id }, process.env.JWT_SECRET!, { expiresIn });
+};
+
+const generateRefreshToken = (userId: mongoose.Types.ObjectId | string): string => {
+  const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN as jwt.SignOptions['expiresIn'];
+  return jwt.sign({ id: userId }, getRefreshSecret(), { expiresIn });
+};
+
+const addTokenToBlacklist = async (tokenString: string): Promise<void> => {
+  if (!tokenString) return;
+  const decoded = jwt.decode(tokenString) as JwtPayload | null;
+  const expiresAt = decoded?.exp
+    ? new Date(decoded.exp * 1000)
+    : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  try {
+    await invalidatedTokenRepository.create({ token: tokenString, expiresAt });
+  } catch (error: unknown) {
+    // If it's already in the blacklist (duplicate key error), ignore it
+    if ((error as { code?: number }).code !== 11000) throw error;
+  }
 };
 
 export const authService = {
-  async register(data: Record<string, unknown>): Promise<{ user: IUserDocument; token: string }> {
+  async register(
+    data: Record<string, unknown>
+  ): Promise<{ user: IUserDocument } & AuthTokens> {
     const existing = await userRepository.findByEmail(data.email as string);
     if (existing) throw new ValidationError('Email already exists');
 
@@ -28,21 +58,60 @@ export const authService = {
       role: 'USER',
     });
 
-    const token = generateToken(user._id);
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
-    return { user, token };
+    return { user, accessToken, refreshToken, token: accessToken };
   },
 
-  async login(email: string, password: string): Promise<{ user: IUserDocument; token: string }> {
+  async login(
+    email: string,
+    password: string
+  ): Promise<{ user: IUserDocument } & AuthTokens> {
     const user = await userRepository.findByEmailWithPassword(email);
     if (!user) throw new UnauthorizedError('Invalid email or password');
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) throw new UnauthorizedError('Invalid email or password');
 
-    const token = generateToken(user._id);
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
-    return { user, token };
+    return { user, accessToken, refreshToken, token: accessToken };
+  },
+
+  async refreshToken(refreshTokenString: string): Promise<AuthTokens> {
+    if (!refreshTokenString) {
+      throw new UnauthorizedError('Refresh token is required');
+    }
+
+    let decoded: JwtPayload;
+    try {
+      decoded = jwt.verify(refreshTokenString, getRefreshSecret()) as JwtPayload;
+    } catch {
+      throw new UnauthorizedError('Invalid or expired refresh token');
+    }
+
+    // Check if token is in the blacklist
+    const isBlacklisted = await invalidatedTokenRepository.findByToken(refreshTokenString);
+    if (isBlacklisted) {
+      throw new UnauthorizedError('Refresh token has been revoked');
+    }
+
+    // Generate new tokens (Token Rotation)
+    const newAccessToken = generateAccessToken(decoded.id);
+    const newRefreshToken = generateRefreshToken(decoded.id);
+
+    // Blacklist the old refresh token
+    await addTokenToBlacklist(refreshTokenString);
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken, token: newAccessToken };
+  },
+
+  async logout(refreshTokenString?: string): Promise<void> {
+    if (refreshTokenString) {
+      await addTokenToBlacklist(refreshTokenString);
+    }
   },
 
   async getMe(userId: mongoose.Types.ObjectId | string): Promise<IUserDocument> {
