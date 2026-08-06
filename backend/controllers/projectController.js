@@ -1,347 +1,57 @@
-import Project from "../models/Project.js";
-import Task from "../models/Task.js";
+import { projectService } from '../services/projectService.js';
 
-const createEmptySummary = () => ({
-    totalTasks: 0,
-    finishedTasks: 0,
-    pendingTasks: 0,
-    inProgressTasks: 0,
-    completedTasks: 0,
-    givenUpTasks: 0,
-    scheduledTasks: 0,
-    canComplete: false,
-    completionRate: 0
-});
-
-const PROJECT_STATUSES = ["active", "completed"];
-const FINISHED_TASK_STATUSES = ["completed", "given-up"];
-
-const addCompletionRate = (summary) => {
-    const { _id, ...rest } = summary;
-    const totalTasks = rest.totalTasks || 0;
-    const finishedTasks = (rest.completedTasks || 0) + (rest.givenUpTasks || 0);
-    return {
-        ...rest,
-        finishedTasks,
-        canComplete: totalTasks > 0 && finishedTasks === totalTasks,
-        completionRate: totalTasks > 0
-            ? Math.round((rest.completedTasks / totalTasks) * 100)
-            : 0
-    };
+export const createProject = async (req, res, next) => {
+  try {
+    const project = await projectService.create(req.validatedBody, req.user._id);
+    res.status(201).json({ message: 'Project created successfully', project });
+  } catch (error) {
+    next(error);
+  }
 };
 
-const getProjectSummaryMap = async (projectIds) => {
-    if (projectIds.length === 0) {
-        return new Map();
-    }
-
-    const summaries = await Task.aggregate([
-        {
-            $match: {
-                projectId: { $in: projectIds }
-            }
-        },
-        {
-            $group: {
-                _id: "$projectId",
-                totalTasks: { $sum: 1 },
-                pendingTasks: {
-                    $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] }
-                },
-                inProgressTasks: {
-                    $sum: { $cond: [{ $eq: ["$status", "in-progress"] }, 1, 0] }
-                },
-                completedTasks: {
-                    $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] }
-                },
-                givenUpTasks: {
-                    $sum: { $cond: [{ $eq: ["$status", "given-up"] }, 1, 0] }
-                },
-                scheduledTasks: {
-                    $sum: { $cond: [{ $ifNull: ["$dueDate", false] }, 1, 0] }
-                }
-            }
-        }
-    ]);
-
-    return new Map(
-        summaries.map((summary) => [
-            summary._id.toString(),
-            addCompletionRate(summary)
-        ])
-    );
+export const getAllProjects = async (req, res, next) => {
+  try {
+    const projects = await projectService.getAll(req.user);
+    res.status(200).json(projects);
+  } catch (error) {
+    next(error);
+  }
 };
 
-const getSingleProjectSummary = async (projectId) => {
-    const summaryMap = await getProjectSummaryMap([projectId]);
-    return summaryMap.get(projectId.toString()) || createEmptySummary();
+export const getProjectById = async (req, res, next) => {
+  try {
+    const project = await projectService.getById(req.params.id, req.user);
+    res.status(200).json(project);
+  } catch (error) {
+    next(error);
+  }
 };
 
-const getProjectOwnerId = (project) => project.userId?._id?.toString?.() || project.userId?.toString?.() || null;
-
-const canAccessProject = (project, user) => {
-    return user.role === "ADMIN" || getProjectOwnerId(project) === user._id.toString();
+export const updateProject = async (req, res, next) => {
+  try {
+    const project = await projectService.update(req.params.id, req.validatedBody, req.user);
+    res.status(200).json({ message: 'Project updated successfully', project });
+  } catch (error) {
+    next(error);
+  }
 };
 
-const withSummary = (project, summary) => ({
-    ...project.toObject(),
-    summary
-});
-
-const normalizeProjectColor = (color) => {
-    if (color === undefined) {
-        return { value: undefined };
-    }
-
-    if (typeof color !== "string" || !/^#[0-9A-Fa-f]{6}$/.test(color.trim())) {
-        return { error: "Project color must be a six-digit hex color" };
-    }
-
-    return { value: color.trim().toUpperCase() };
+export const deleteProject = async (req, res, next) => {
+  try {
+    await projectService.delete(req.params.id, req.user);
+    res.status(200).json({
+      message: 'Project deleted successfully. Related tasks were kept and unassigned from the project.',
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-const getProjectCompletionEligibility = async (projectId) => {
-    const summary = await Task.aggregate([
-        {
-            $match: {
-                projectId
-            }
-        },
-        {
-            $group: {
-                _id: "$projectId",
-                totalTasks: { $sum: 1 },
-                unfinishedTasks: {
-                    $sum: {
-                        $cond: [{ $in: ["$status", FINISHED_TASK_STATUSES] }, 0, 1]
-                    }
-                }
-            }
-        }
-    ]);
-
-    const result = summary[0] || { totalTasks: 0, unfinishedTasks: 0 };
-
-    return result.totalTasks > 0 && result.unfinishedTasks === 0;
-};
-
-export const createProject = async (req, res) => {
-    try {
-        const { name, description, color } = req.body;
-
-        if (typeof name !== "string" || !name.trim()) {
-            return res.status(400).json({ message: "Name is required" });
-        }
-
-        const normalizedColor = normalizeProjectColor(color);
-        if (normalizedColor.error) {
-            return res.status(400).json({ message: normalizedColor.error });
-        }
-
-        const userId = req.user._id;
-        const existingProject = await Project.findByUserAndName(userId, name.trim());
-        if (existingProject) {
-            return res.status(400).json({ message: "Project name already exists for this user" });
-        }
-
-        const project = await Project.create({
-            userId,
-            name: name.trim(),
-            description,
-            color: normalizedColor.value
-        });
-
-        res.status(201).json({
-            message: "Project created successfully",
-            project: withSummary(project, createEmptySummary())
-        });
-    } catch (error) {
-        if (error.code === 11000) {
-            return res.status(400).json({ message: "Project name already exists for this user" });
-        }
-
-        console.error("Error creating project:", error.message);
-        res.status(500).json({ message: "Internal server error" });
-    }
-};
-
-export const getAllProjects = async (req, res) => {
-    try {
-        const query = req.user.role === "ADMIN" ? {} : { userId: req.user._id };
-        const projects = await Project.find(query)
-            .populate("userId", "name email")
-            .sort({ createdAt: -1 });
-
-        const summaryMap = await getProjectSummaryMap(projects.map((project) => project._id));
-
-        res.status(200).json(
-            projects.map((project) => withSummary(
-                project,
-                summaryMap.get(project._id.toString()) || createEmptySummary()
-            ))
-        );
-    } catch (error) {
-        console.error("Error getting all projects:", error.message);
-        res.status(500).json({ message: "Internal server error" });
-    }
-};
-
-export const getProjectById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const project = await Project.findById(id).populate("userId", "name email");
-
-        if (!project) {
-            return res.status(404).json({ message: "Project not found" });
-        }
-
-        if (!canAccessProject(project, req.user)) {
-            return res.status(403).json({ message: "You don't have permission to access this project" });
-        }
-
-        const summary = await getSingleProjectSummary(project._id);
-        res.status(200).json(withSummary(project, summary));
-    } catch (error) {
-        console.error("Error getting project by ID:", error.message);
-        res.status(500).json({ message: "Internal server error" });
-    }
-};
-
-export const updateProject = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, description, color, status } = req.body;
-
-        const project = await Project.findById(id);
-        if (!project) {
-            return res.status(404).json({ message: "Project not found" });
-        }
-
-        if (!canAccessProject(project, req.user)) {
-            return res.status(403).json({ message: "You don't have permission to update this project" });
-        }
-
-        const update = {};
-        if (name !== undefined) {
-            if (typeof name !== "string" || !name.trim()) {
-                return res.status(400).json({ message: "Project name cannot be empty" });
-            }
-            update.name = name.trim();
-        }
-        if (description !== undefined) update.description = description;
-
-        const normalizedColor = normalizeProjectColor(color);
-        if (normalizedColor.error) {
-            return res.status(400).json({ message: normalizedColor.error });
-        }
-        if (normalizedColor.value !== undefined) update.color = normalizedColor.value;
-        if (status !== undefined) {
-            if (!PROJECT_STATUSES.includes(status)) {
-                return res.status(400).json({ message: "Invalid project status" });
-            }
-
-            if (status === "completed") {
-                const canCompleteProject = await getProjectCompletionEligibility(project._id);
-                if (!canCompleteProject) {
-                    return res.status(400).json({
-                        message: "Project can only be completed when it has at least one task and every task is completed or given up"
-                    });
-                }
-            }
-
-            update.status = status;
-        }
-
-        if (Object.keys(update).length === 0) {
-            return res.status(400).json({ message: "No fields to update" });
-        }
-
-        const updatedProject = await Project.findByIdAndUpdate(
-            id,
-            { $set: update },
-            { new: true, runValidators: true }
-        ).populate("userId", "name email");
-
-        const summary = await getSingleProjectSummary(updatedProject._id);
-        res.status(200).json({
-            message: "Project updated successfully",
-            project: withSummary(updatedProject, summary)
-        });
-    } catch (error) {
-        if (error.code === 11000) {
-            return res.status(400).json({ message: "Project name already exists for this user" });
-        }
-
-        console.error("Error updating project:", error.message);
-        res.status(500).json({ message: "Internal server error" });
-    }
-};
-
-export const deleteProject = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const project = await Project.findById(id);
-        if (!project) {
-            return res.status(404).json({ message: "Project not found" });
-        }
-
-        if (!canAccessProject(project, req.user)) {
-            return res.status(403).json({ message: "You don't have permission to delete this project" });
-        }
-
-        await Project.findOneAndDelete({ _id: id });
-
-        res.status(200).json({
-            message: "Project deleted successfully. Related tasks were kept and unassigned from the project."
-        });
-    } catch (error) {
-        console.error("Error deleting project:", error.message);
-        res.status(500).json({ message: "Internal server error" });
-    }
-};
-
-export const getProjectTasks = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const project = await Project.findById(id).populate("userId", "name email");
-
-        if (!project) {
-            return res.status(404).json({ message: "Project not found" });
-        }
-
-        if (!canAccessProject(project, req.user)) {
-            return res.status(403).json({ message: "You don't have permission to access this project" });
-        }
-
-        const tasks = await Task.find({ projectId: project._id })
-            .populate({
-                path: "categoryId",
-                select: "name userId",
-                populate: {
-                    path: "userId",
-                    select: "name email"
-                }
-            })
-            .populate({
-                path: "projectId",
-                select: "name color description status userId",
-                populate: {
-                    path: "userId",
-                    select: "name email"
-                }
-            })
-            .sort({ dueDate: 1, createdAt: -1 });
-
-        const summary = await getSingleProjectSummary(project._id);
-
-        res.status(200).json({
-            project: withSummary(project, summary),
-            summary,
-            tasks
-        });
-    } catch (error) {
-        console.error("Error getting project tasks:", error.message);
-        res.status(500).json({ message: "Internal server error" });
-    }
+export const getProjectTasks = async (req, res, next) => {
+  try {
+    const result = await projectService.getProjectTasks(req.params.id, req.user);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
 };

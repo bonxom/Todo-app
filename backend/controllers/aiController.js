@@ -1,222 +1,27 @@
-import OpenAI from "openai";
-import Category from "../models/Category.js";
-import Task from "../models/Task.js";
-import { addPendingTask } from "./statController.js";
-import { normalizeTaskDateInput } from "../utils/dateTime.js";
-import { z } from "zod";
-import { getAiApiKey, getAiBaseUrl, getAiModel } from "../config/env.js";
+import { aiService } from '../services/aiService.js';
 
-const getAiClient = () => {
-    const apiKey = getAiApiKey();
-    const baseURL = getAiBaseUrl();
-
-    if (!apiKey) {
-        throw new Error("Missing required environment variable: AI_API_KEY");
-    }
-
-    if (!baseURL) {
-        throw new Error("Missing required environment variable: AI_BASE_URL");
-    }
-
-    return new OpenAI({ apiKey, baseURL, timeout: 60000 });
+export const generateTasksWithRequirement = async (req, res, next) => {
+  try {
+    const tasks = await aiService.generateTasks(req.validatedBody.userRequirement, req.user._id);
+    res.status(201).json({
+      success: true,
+      message: '3 tasks generated successfully',
+      data: tasks,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const generateTasksWithRequirement = async (req, res) => {
-    try {
-        const ai = getAiClient();
-        const { userRequirement } = req.body;
-        
-        if (!userRequirement) {
-            return res.status(400).json({ 
-                success: false,
-                message: "userRequirement is required" 
-            });
-        }
-
-        // Get user's categories
-        const userId = req.user._id;
-        const categories = await Category.find({ userId });
-        
-        // Build category map for AI prompt
-        const categoryMap = {};
-        categories.forEach(category => {
-            categoryMap[category.name] = category._id.toString();
-        });
-
-        const categoryNames = categories.map(c => c.name).join(", ");
-        const categoryInfo = categories.length > 0 
-            ? `Available categories: ${categoryNames}. Choose the most appropriate category or pick the Uncategorized category.`
-            : "No categories available yet.";
-
-        // Define task schema dynamically
-        const taskSchema = z.object({
-            title: z.string().min(1).max(100).describe("Clear, concise task title"),
-            description: z.string().max(500).optional().describe("Detailed task description"),
-            priority: z.enum(['Low', 'Medium', 'High']).optional().describe("Task priority level"),
-            categoryName: z.string().optional().nullable().describe(`Category name. ${categoryInfo}`),
-            dueDate: z.string().optional().describe("Due date in ISO format (YYYY-MM-DD)"),
-        });
-
-        const today = new Date().toISOString().split('T')[0];
-        const prompt = `Generate EXACTLY 3 tasks (as an array) based on the following user requirement: "${userRequirement}". 
-
-Available categories (choose ONE of these EXACT names for each task or pick the "Uncategorized" category if none fit):
-${categories.map(c => `- "${c.name}"`).join('\n')}
-
-IMPORTANT: 
-- Return an ARRAY of EXACTLY 3 TASK OBJECTS
-- For categoryName, you MUST use the EXACT category name from the list above (case-sensitive)
-- Do NOT make up new category names. If uncertain, use null
-- Make each task unique and actionable
-
-Create 3 practical, actionable tasks with:
-- title: brief and clear
-- description: detailed explanation
-- priority: Low, Medium, or High
-- categoryName: one of the exact names listed above, or null
-- dueDate: YYYY-MM-DD format if applicable (based on today: ${today})`;
-
-        const tasksArraySchema = z.array(taskSchema).length(3);
-
-        const model = getAiModel();
-        if (!model) {
-            throw new Error("Missing required environment variable: AI_MODEL_NAME");
-        }
-
-        const rawSchema = tasksArraySchema.toJSONSchema();
-        // OpenAI's json_schema mode requires specific fields; DeepSeek doesn't support it.
-        // Use json_object + system prompt for broad provider compatibility.
-        const { $schema, ...jsonSchema } = rawSchema;
-
-        const response = await ai.chat.completions.create({
-            model,
-            messages: [
-                {
-                    role: "system",
-                    content: `You must respond with a JSON array of exactly 3 task objects. Follow this JSON Schema:\n${JSON.stringify(jsonSchema, null, 2)}`,
-                },
-                { role: "user", content: prompt },
-            ],
-            response_format: { type: "json_object" },
-        });
-
-        const content = response.choices[0]?.message?.content;
-        if (!content) {
-            throw new Error("Empty response from AI");
-        }
-        const generatedTasks = tasksArraySchema.parse(JSON.parse(content));
-
-        console.log("Generated tasks:", generatedTasks);
-        console.log("Category map:", categoryMap);
-        
-        // Process and save all 3 tasks
-        const savedTasks = [];
-        
-        for (const generatedTask of generatedTasks) {
-            // Validate and map categoryName to categoryId
-            let categoryId = null;
-            if (generatedTask.categoryName) {
-                // Check exact match (case-sensitive)
-                if (categoryMap[generatedTask.categoryName]) {
-                    categoryId = categoryMap[generatedTask.categoryName];
-                } else {
-                    const categoryNameLower = generatedTask.categoryName.toLowerCase();
-                    const matchedCategory = categories.find(c => c.name.toLowerCase() === categoryNameLower);
-                    
-                    if (matchedCategory) {
-                        categoryId = matchedCategory._id.toString();
-                    } else {
-                        if (categoryMap['Uncategorized']) {
-                            categoryId = categoryMap['Uncategorized'];
-                        }
-                    }
-                }
-            }
-            
-            // Create and save the task to database
-            const dueDateUpdate = normalizeTaskDateInput(generatedTask.dueDate);
-            if (dueDateUpdate.error) {
-                continue;
-            }
-
-            const newTask = new Task({
-                title: generatedTask.title,
-                description: generatedTask.description || "",
-                priority: generatedTask.priority || "Medium",
-                status: "pending",
-                categoryId: categoryId,
-                dueDate: dueDateUpdate.shouldUpdate ? dueDateUpdate.value : undefined,
-            });
-
-            const savedTask = await newTask.save();
-            savedTasks.push(savedTask);
-            
-            // Update stats: totalTasks +1, pendingTasks +1 (AI gen task có status pending)
-            await addPendingTask(userId);
-        }
-
-        res.status(201).json({
-            success: true,
-            message: "3 tasks generated successfully",
-            data: savedTasks
-        });
-    } catch (error) {
-        console.error("Error generating task:", error);
-        res.status(500).json({ 
-            success: false,
-            message: "Failed to generate task",
-            error: error.message 
-        });
-    }
-}
-
-export const responseToUser = async (req, res) => {
-    try {
-        const ai = getAiClient();
-        const { userInput } = req.body;
-        if (!userInput) {
-            return res.status(400).json({ 
-                success: false,
-                message: "userInput is required" 
-            });
-        }
-
-        const sysInstruction = `You are a helpful assistant for a TodoApp your name is Đạt. 
-Help users manage tasks, provide productivity tips, 
-and answer questions about task organization, categories, priorities, and time management. 
-If user want to auto generate tasks, advise them to use the task generation mode.
-Provide short, clear, concise, and friendly responses.`;
-
-        const model = getAiModel();
-        if (!model) {
-            throw new Error("Missing required environment variable: AI_MODEL_NAME");
-        }
-
-        const response = await ai.chat.completions.create({
-            model,
-            messages: [
-                { role: "system", content: sysInstruction },
-                { role: "user", content: userInput },
-            ],
-        });
-
-        const content = response.choices[0]?.message?.content;
-        if (!content) {
-            throw new Error("Empty response from AI");
-        }
-
-        console.log(content);
-        res.status(200).json({
-            success: true,
-            message: "Response generated successfully",
-            data: content
-        });
-    } catch (error) {
-        console.error("Error generating response:", error);
-        res.status(500).json({ 
-            success: false,
-            message: "Failed to generate response",
-            error: error.message 
-        });
-    }
-}
+export const responseToUser = async (req, res, next) => {
+  try {
+    const content = await aiService.chatResponse(req.validatedBody.userInput);
+    res.status(200).json({
+      success: true,
+      message: 'Response generated successfully',
+      data: content,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
