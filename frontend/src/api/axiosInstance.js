@@ -1,39 +1,39 @@
 import axios from 'axios';
-import { clearStoredAuth, getStoredToken } from './authStorage';
+import { clearStoredAuth, getStoredRefreshToken, getStoredToken, updateStoredTokens } from './authStorage';
 
 const baseURL = import.meta.env.VITE_SERVER_URL?.trim() || undefined;
 const enableApiDebugLogs = import.meta.env.VITE_API_DEBUG === 'true' || false;
 
-const isSessionAuthFailure = (error) => {
-  const status = error.response?.status;
-  const message = error.response?.data?.message?.toLowerCase() ?? '';
-  const requestUrl = error.config?.url ?? '';
-  const hasStoredToken = Boolean(getStoredToken());
-
-  if (status !== 401 || !hasStoredToken) {
-    return false;
-  }
-
-  if (requestUrl.includes('/api/auth/login') || requestUrl.includes('/api/auth/register')) {
-    return false;
-  }
-
-  return (
-    requestUrl.includes('/api/auth/me') ||
-    message.includes('not authorized') ||
-    message.includes('token') ||
-    message.includes('unauthorized') ||
-    message.includes('jwt')
-  );
-};
-
 const axiosInstance = axios.create({
   baseURL,
-  timeout: 30000, // Increased to 30 seconds for general requests
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
+const handleAuthFailure = () => {
+  clearStoredAuth();
+  const currentPath = window.location.pathname;
+  if (!['/login', '/register'].includes(currentPath)) {
+    window.location.replace('/login');
+  }
+};
 
 // Request interceptor - add token to requests and adjust timeout for AI endpoints
 axiosInstance.interceptors.request.use(
@@ -43,12 +43,12 @@ axiosInstance.interceptors.request.use(
       console.log('Request data:', config.data);
       console.log('Base URL:', config.baseURL);
     }
-    
+
     // Increase timeout for AI endpoints (they need more time)
     if (config.url?.includes('/api/ai/')) {
-      config.timeout = 60000; // 60 seconds for AI requests
+      config.timeout = 60000;
     }
-    
+
     const token = getStoredToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -61,7 +61,7 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Response interceptor - handle errors
+// Response interceptor - handle errors & refresh tokens
 axiosInstance.interceptors.response.use(
   (response) => {
     if (enableApiDebugLogs) {
@@ -69,35 +69,89 @@ axiosInstance.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
-    console.error('Response error:', error);
-    
-    if (error.response) {
-      console.error('Error response status:', error.response.status);
-      console.error('Error response data:', error.response.data);
-      
-      // Handle 401 - Unauthorized
-      if (isSessionAuthFailure(error)) {
-        clearStoredAuth();
+  async (error) => {
+    const originalRequest = error.config;
 
-        // Only redirect if not on login/register page
-        const currentPath = window.location.pathname;
-        if (!['/login', '/register'].includes(currentPath)) {
-          window.location.replace('/login');
-        }
+    if (enableApiDebugLogs) {
+      console.error('Response error:', error);
+    }
+
+    if (!error.response) {
+      if (error.request) {
+        console.error('No response received:', error.request);
+        return Promise.reject(new Error('No response from server'));
       }
-      
-      // Handle other errors
-      const message = error.response.data?.message || 'An error occurred';
-      console.error('Error message:', message);
-      return Promise.reject(new Error(message));
-    } else if (error.request) {
-      console.error('No response received:', error.request);
-      return Promise.reject(new Error('No response from server'));
-    } else {
-      console.error('Request setup error:', error.message);
       return Promise.reject(error);
     }
+
+    const { status } = error.response;
+    const requestUrl = originalRequest?.url ?? '';
+
+    // Check if 401 Unauthorized
+    if (status === 401) {
+      const isAuthEndpoint =
+        requestUrl.includes('/api/auth/login') ||
+        requestUrl.includes('/api/auth/register') ||
+        requestUrl.includes('/api/auth/refresh');
+
+      if (isAuthEndpoint || originalRequest._retry) {
+        handleAuthFailure();
+        const message = error.response.data?.message || 'Authentication failed';
+        return Promise.reject(new Error(message));
+      }
+
+      const refreshToken = getStoredRefreshToken();
+
+      if (!refreshToken) {
+        handleAuthFailure();
+        const message = error.response.data?.message || 'Session expired';
+        return Promise.reject(new Error(message));
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshBaseUrl = baseURL || '';
+        const refreshResponse = await axios.post(`${refreshBaseUrl}/api/auth/refresh`, {
+          refreshToken,
+        });
+
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken, token: fallbackToken } = refreshResponse.data;
+        const effectiveToken = newAccessToken || fallbackToken;
+
+        updateStoredTokens({
+          accessToken: effectiveToken,
+          refreshToken: newRefreshToken,
+        });
+
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${effectiveToken}`;
+        originalRequest.headers.Authorization = `Bearer ${effectiveToken}`;
+
+        processQueue(null, effectiveToken);
+        return axiosInstance(originalRequest);
+      } catch (refreshErr) {
+        processQueue(refreshErr, null);
+        handleAuthFailure();
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    const message = error.response.data?.message || 'An error occurred';
+    return Promise.reject(new Error(message));
   }
 );
 

@@ -2,8 +2,8 @@ import { authService } from '../services/authService.js';
 
 export const registerUser = async (req, res, next) => {
   try {
-    const { user, token } = await authService.register(req.validatedBody);
-    res.status(201).json({ message: 'Registration successful', user, token });
+    const { user, accessToken, refreshToken, token } = await authService.register(req.validatedBody);
+    res.status(201).json({ message: 'Registration successful', user, accessToken, refreshToken, token });
   } catch (error) {
     next(error);
   }
@@ -11,15 +11,35 @@ export const registerUser = async (req, res, next) => {
 
 export const loginUser = async (req, res, next) => {
   try {
-    const { user, token } = await authService.login(req.validatedBody.email, req.validatedBody.password);
-    res.status(200).json({ message: 'Login successful', user, token });
+    const { user, accessToken, refreshToken, token } = await authService.login(
+      req.validatedBody.email,
+      req.validatedBody.password
+    );
+    res.status(200).json({ message: 'Login successful', user, accessToken, refreshToken, token });
   } catch (error) {
     next(error);
   }
 };
 
-export const logoutUser = async (req, res) => {
-  res.status(200).json({ message: 'Logout successful' });
+export const refreshToken = async (req, res, next) => {
+  try {
+    const refreshTokenString = req.validatedBody?.refreshToken || req.body?.refreshToken;
+    const tokens = await authService.refreshToken(refreshTokenString);
+    res.status(200).json({ message: 'Token refreshed successfully', ...tokens });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logoutUser = async (req, res, next) => {
+  try {
+    const refreshTokenString = req.body?.refreshToken;
+    const userId = req.user?._id;
+    await authService.logout(refreshTokenString, userId);
+    res.status(200).json({ message: 'Logout successful' });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const getMe = async (req, res, next) => {
@@ -36,7 +56,7 @@ export const changePassword = async (req, res, next) => {
     await authService.changePassword(
       req.user._id,
       req.validatedBody.currentPassword,
-      req.validatedBody.newPassword,
+      req.validatedBody.newPassword
     );
     res.status(200).json({ message: 'Password changed successfully' });
   } catch (error) {

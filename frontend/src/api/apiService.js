@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance';
-import { clearStoredAuth, persistAuthSession, updateStoredUser } from './authStorage';
+import { clearStoredAuth, getStoredRefreshToken, persistAuthSession, updateStoredUser } from './authStorage';
 import {
   buildTaskMutationPayload,
   normalizeProject,
@@ -19,6 +19,13 @@ export const authService = {
   // Login user
   login: async (credentials) => {
     const response = await axiosInstance.post('/api/auth/login', credentials);
+    persistAuthSession(response.data);
+    return response.data;
+  },
+
+  // Refresh token
+  refreshToken: async (refreshToken) => {
+    const response = await axiosInstance.post('/api/auth/refresh', { refreshToken });
     persistAuthSession(response.data);
     return response.data;
   },
@@ -46,7 +53,8 @@ export const authService = {
   // Logout
   logout: async () => {
     try {
-      const response = await axiosInstance.post('/api/auth/logout');
+      const refreshToken = getStoredRefreshToken();
+      const response = await axiosInstance.post('/api/auth/logout', { refreshToken });
       return response.data;
     } finally {
       clearStoredAuth();

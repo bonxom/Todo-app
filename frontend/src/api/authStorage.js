@@ -1,4 +1,5 @@
 const AUTH_TOKEN_KEY = 'token';
+const AUTH_REFRESH_TOKEN_KEY = 'refreshToken';
 const AUTH_USER_KEY = 'user';
 
 const canUseStorage = () => typeof window !== 'undefined';
@@ -9,6 +10,14 @@ export const getStoredToken = () => {
   }
 
   return localStorage.getItem(AUTH_TOKEN_KEY);
+};
+
+export const getStoredRefreshToken = () => {
+  if (!canUseStorage()) {
+    return null;
+  }
+
+  return localStorage.getItem(AUTH_REFRESH_TOKEN_KEY);
 };
 
 export const getStoredUser = () => {
@@ -30,21 +39,40 @@ export const getStoredUser = () => {
   }
 };
 
-export const persistAuthSession = ({ token, user }) => {
+export const persistAuthSession = ({ token, accessToken, refreshToken, user }) => {
   if (!canUseStorage()) {
     return;
   }
 
-  if (token) {
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
+  const effectiveAccessToken = accessToken || token;
+
+  if (effectiveAccessToken) {
+    localStorage.setItem(AUTH_TOKEN_KEY, effectiveAccessToken);
+  }
+
+  if (refreshToken) {
+    localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, refreshToken);
   }
 
   if (user) {
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  }
+};
+
+export const updateStoredTokens = ({ token, accessToken, refreshToken }) => {
+  if (!canUseStorage()) {
     return;
   }
 
-  localStorage.removeItem(AUTH_USER_KEY);
+  const effectiveAccessToken = accessToken || token;
+
+  if (effectiveAccessToken) {
+    localStorage.setItem(AUTH_TOKEN_KEY, effectiveAccessToken);
+  }
+
+  if (refreshToken) {
+    localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, refreshToken);
+  }
 };
 
 export const updateStoredUser = (user) => {
@@ -66,5 +94,6 @@ export const clearStoredAuth = () => {
   }
 
   localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
   localStorage.removeItem(AUTH_USER_KEY);
 };

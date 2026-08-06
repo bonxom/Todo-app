@@ -109,6 +109,8 @@ userSchema.pre('findOneAndDelete', async function () {
         
         // Delete all categories of this user
         await Category.deleteMany({ userId: userToDelete._id });
+
+
     }
 });
 

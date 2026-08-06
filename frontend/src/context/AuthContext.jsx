@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
 
   const setSession = useCallback((session) => {
     persistAuthSession(session);
-    setToken(session?.token ?? null);
+    setToken(session?.accessToken || session?.token || null);
     setUser(session?.user ?? null);
   }, []);
 
