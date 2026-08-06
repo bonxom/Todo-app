@@ -1,6 +1,6 @@
 import express from 'express';
-import { getCompletedTasksByDate, getStats } from '../controller/statController.js';
-import { protect } from '../middleware/auth.js';
+import { getCompletedTasksByDate, getStats } from '../controllers/statController.js';
+import { protect } from '../middlewares/auth.js';
 
 const router = express.Router();
 

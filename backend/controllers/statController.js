@@ -1,7 +1,7 @@
-import Stat from "../model/Stat.js";
-import Task from "../model/Task.js";
-import Category from "../model/Category.js";
-import Project from "../model/Project.js";
+import Stat from "../models/Stat.js";
+import Task from "../models/Task.js";
+import Category from "../models/Category.js";
+import Project from "../models/Project.js";
 
 const toDateKey = (value) => {
     const date = new Date(value);

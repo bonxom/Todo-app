@@ -4,13 +4,13 @@ import { connectDB } from "./config/db.js";
 import cors from "cors";    
 import morgan from "morgan";
 
-import userRouter from "./route/userRoute.js";
-import categoryRouter from "./route/categoryRoute.js";
-import projectRouter from "./route/projectRoute.js";
-import taskRouter from "./route/taskRoute.js";
-import authRouter from "./route/authRoute.js";
-import aiRouter from "./route/aiRoutes.js";
-import statRouter from "./route/statRoute.js";
+import userRouter from "./routes/userRoute.js";
+import categoryRouter from "./routes/categoryRoute.js";
+import projectRouter from "./routes/projectRoute.js";
+import taskRouter from "./routes/taskRoute.js";
+import authRouter from "./routes/authRoute.js";
+import aiRouter from "./routes/aiRoutes.js";
+import statRouter from "./routes/statRoute.js";
 import {
     createCorsOptions,
     getServerConfig,

@@ -1,5 +1,5 @@
-import { generateTasksWithRequirement, responseToUser } from "../controller/aiController.js";
-import { protect, authorize } from '../middleware/auth.js';
+import { generateTasksWithRequirement, responseToUser } from "../controllers/aiController.js";
+import { protect, authorize } from '../middlewares/auth.js';
 import express from 'express';
 
 const router = express.Router();

@@ -1,7 +1,7 @@
-import User from '../model/User.js';
-import Category from '../model/Category.js';
-import Stat from '../model/Stat.js';
-import Task from '../model/Task.js';
+import User from '../models/User.js';
+import Category from '../models/Category.js';
+import Stat from '../models/Stat.js';
+import Task from '../models/Task.js';
 
 const initCategory = ['Work', 'Personal', 'Health', 'Uncategorized'];
 

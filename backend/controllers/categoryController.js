@@ -1,5 +1,5 @@
-import Category from "../model/Category.js";
-import User from "../model/User.js";
+import Category from "../models/Category.js";
+import User from "../models/User.js";
 
 export const createCategory = async (req, res) => {
     try {

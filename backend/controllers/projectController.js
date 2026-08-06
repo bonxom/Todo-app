@@ -1,5 +1,5 @@
-import Project from "../model/Project.js";
-import Task from "../model/Task.js";
+import Project from "../models/Project.js";
+import Task from "../models/Task.js";
 
 const createEmptySummary = () => ({
     totalTasks: 0,

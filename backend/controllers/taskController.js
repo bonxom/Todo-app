@@ -1,6 +1,6 @@
-import Task from '../model/Task.js';
-import Category from '../model/Category.js';
-import Project from '../model/Project.js';
+import Task from '../models/Task.js';
+import Category from '../models/Category.js';
+import Project from '../models/Project.js';
 import { addCompletedTasks, addGivenUpTasks, addStartTask, addInProgressTask } from './statController.js';
 import { normalizeTaskDateInput } from '../utils/dateTime.js';
 

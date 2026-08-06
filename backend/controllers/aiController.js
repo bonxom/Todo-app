@@ -1,6 +1,6 @@
 import OpenAI from "openai";
-import Category from "../model/Category.js";
-import Task from "../model/Task.js";
+import Category from "../models/Category.js";
+import Task from "../models/Task.js";
 import { addPendingTask } from "./statController.js";
 import { normalizeTaskDateInput } from "../utils/dateTime.js";
 import { z } from "zod";

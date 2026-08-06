@@ -5,8 +5,8 @@ import {
     getCategoryById,
     updateCategory,
     deleteCategory
-} from "../controller/categoryController.js";
-import { protect, authorize } from "../middleware/auth.js";
+} from "../controllers/categoryController.js";
+import { protect, authorize } from "../middlewares/auth.js";
 
 const router = express.Router();
 

@@ -11,8 +11,8 @@ import {
     getTodayDeadlines,
     getTaskByStatus,
     getTaskByCategory
-} from "../controller/taskController.js";
-import { protect, authorize } from "../middleware/auth.js";
+} from "../controllers/taskController.js";
+import { protect, authorize } from "../middlewares/auth.js";
 
 const router = express.Router();
 
