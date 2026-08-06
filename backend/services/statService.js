@@ -1,5 +1,7 @@
 import Stat from '../models/Stat.js';
 import { statRepository } from '../repositories/statRepository.js';
+import { DATE_KEY_PATTERN } from '../constants/datePatterns.js';
+import { ValidationError } from '../utils/errors.js';
 
 const toDateKey = (value) => {
   const date = new Date(value);
@@ -92,7 +94,7 @@ const serializeCompletedTask = (task) => ({
 
 async function rebuildStats(user) {
   const tasks = await statRepository.getTasksByUser(user);
-  let stats = await statRepository.findByUser(user);
+  let stats = await statRepository.findByUser(user._id);
 
   if (!stats) {
     stats = new Stat({ userId: user._id });
@@ -258,6 +260,10 @@ export const statService = {
   getStats: (user) => rebuildStats(user),
 
   async getCompletedTasksByDate(user, date) {
+    if (!DATE_KEY_PATTERN.test(date || '')) {
+      throw new ValidationError('A valid date query in YYYY-MM-DD format is required.');
+    }
+
     const tasks = await statRepository.getTasksByUser(user);
     return tasks
       .filter((task) => task.status === 'completed' && toDateKey(getTaskCompletionDate(task)) === date)

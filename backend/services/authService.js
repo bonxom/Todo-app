@@ -62,11 +62,17 @@ export const authService = {
   },
 
   async updateInfo(userId, data) {
-    if (Object.keys(data).length === 0) {
+    const ALLOWED_FIELDS = ['email', 'name', 'dob', 'nationality', 'avatarUrl'];
+    const filtered = {};
+    for (const key of ALLOWED_FIELDS) {
+      if (data[key] !== undefined) filtered[key] = data[key];
+    }
+
+    if (Object.keys(filtered).length === 0) {
       throw new ValidationError('No fields to update');
     }
 
-    const user = await userRepository.updateById(userId, data);
+    const user = await userRepository.updateById(userId, filtered);
     if (!user) throw new NotFoundError('User not found');
     return user;
   },

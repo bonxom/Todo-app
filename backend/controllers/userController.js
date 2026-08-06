@@ -45,15 +45,3 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
-export const uploadAvatar = async (req, res, next) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    await userService.update(req.params.id, { avatarUrl });
-    res.status(200).json({ message: 'Avatar uploaded successfully', avatarUrl });
-  } catch (error) {
-    next(error);
-  }
-};

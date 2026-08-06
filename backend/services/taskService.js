@@ -155,7 +155,7 @@ export const taskService = {
   },
 
   async update(id, data, user) {
-    const task = await taskRepository.findById(id);
+    const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new NotFoundError('Task not found');
     verifyOwnership(task, user);
 
@@ -208,7 +208,7 @@ export const taskService = {
   },
 
   async finish(id, user) {
-    const task = await taskRepository.findById(id);
+    const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new NotFoundError('Task not found');
     verifyOwnership(task, user);
 
@@ -231,7 +231,7 @@ export const taskService = {
   },
 
   async start(id, user) {
-    const task = await taskRepository.findById(id);
+    const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new NotFoundError('Task not found');
     verifyOwnership(task, user);
 
@@ -245,7 +245,7 @@ export const taskService = {
   },
 
   async giveUp(id, user) {
-    const task = await taskRepository.findById(id);
+    const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new NotFoundError('Task not found');
     verifyOwnership(task, user);
 
@@ -265,7 +265,7 @@ export const taskService = {
   },
 
   async delete(id, user) {
-    const task = await taskRepository.findById(id);
+    const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new NotFoundError('Task not found');
     verifyOwnership(task, user);
 

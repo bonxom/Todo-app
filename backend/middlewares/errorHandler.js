@@ -10,5 +10,10 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   console.error('Unhandled error:', err);
-  res.status(500).json({ message: 'Internal server error' });
+
+  if (req.path.startsWith('/api/') || req.path === '/healthz') {
+    return res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+
+  res.status(500).send('Internal server error');
 };
