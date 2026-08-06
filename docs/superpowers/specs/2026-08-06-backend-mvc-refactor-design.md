@@ -184,7 +184,8 @@ Zod schemas per resource. Each export covers create and update variants:
 ```js
 // validations/taskValidation.js
 import { z } from 'zod';
-import { PRIORITIES, TASK_STATUSES } from '../constants/index.js';
+import { PRIORITIES } from '../constants/priority.js';
+import { TASK_STATUSES } from '../constants/taskStatus.js';
 
 export const createTaskSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
@@ -730,7 +731,7 @@ This is a structural refactor — behavior does not change. Migration can be don
 3. Create constants files (no dependencies)
 4. Create validation schemas (no dependencies)
 5. Create `middlewares/validate.js` and `middlewares/errorHandler.js`
-6. Rename `model/` → `models/`, `middleware/` → `middlewares/`
+6. Rename `model/` → `models/`, `middleware/` → `middlewares/`, `controller/` → `controllers/`, `route/` → `routes/` (update ALL imports across every file to match new paths)
 7. Create `libs/aiClient.js`
 8. Create `app.js` and `server.js`
 9. For each resource (order: category, user, project, task, stat, auth, ai):
