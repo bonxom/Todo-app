@@ -273,7 +273,7 @@ const CalendarPage = () => {
 
     const requestByStatus = {
       completed: () => taskService.finishTask(taskId),
-      'in-progress': () => taskService.restoreTask(taskId),
+      'in-progress': () => (task.status === 'pending' ? taskService.startTask(taskId) : taskService.restoreTask(taskId)),
       'given-up': () => taskService.giveUpTask(taskId),
     };
 

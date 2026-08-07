@@ -255,7 +255,7 @@ export const userService = {
 export const aiService = {
   // Generate tasks based on user requirement
   generateTasks: async (requirementData) => {
-    const response = await axiosInstance.post('/api/ai/require', requirementData);
+    const response = await axiosInstance.post('/api/ai/generate-tasks', requirementData);
     return response.data;
   },
 
