@@ -22,10 +22,5 @@ services:
       dockerfile: Dockerfile
     container_name: todoapp-frontend
     restart: unless-stopped
-    env_file:
-      - ./frontend/.env
-    environment:
-      NODE_ENV: production
-      VITE_SERVER_URL: ${VITE_SERVER_URL}
     ports:
       - "3636:80"
