@@ -5,8 +5,6 @@ services:
       dockerfile: Dockerfile
     container_name: todoapp-backend
     restart: unless-stopped
-    env_file:
-      - ./backend/.env
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0

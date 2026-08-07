@@ -8,6 +8,8 @@ const DEFAULT_ALLOWED_ORIGINS: string[] = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://103.211.207.65:3636',
+  'https://todo.onrender.com',
+  'http://todo.onrender.com'
 ];
 
 const normalizeOrigin = (origin: string): string => origin.replace(/\/+$/, '');

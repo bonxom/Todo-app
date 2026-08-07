@@ -7,6 +7,7 @@ import CalendarPage from '../page/CalendarPage';
 import AuthPage from '../page/AuthPage';
 import LandingPage from '../page/LandingPage';
 import StatisticsPage from '../page/StatisticsPage';
+import ErrorPage from '../page/ErrorPage';
 
 const MAIN_APP_ROUTE = '/dashboard';
 
@@ -65,6 +66,13 @@ const AppRouter = () => {
         <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
         <Route path="/statistics" element={<ProtectedRoute><StatisticsPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
+        {/* Error Pages */}
+        <Route path="/404" element={<ErrorPage code="404" />} />
+        <Route path="/403" element={<ErrorPage code="403" />} />
+        <Route path="/500" element={<ErrorPage code="500" />} />
+        <Route path="/503" element={<ErrorPage code="503" />} />
+        <Route path="*" element={<ErrorPage code="404" />} />
       </Routes>
     </BrowserRouter>
   );
