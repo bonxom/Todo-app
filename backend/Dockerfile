@@ -1,18 +1,14 @@
 FROM node:22-alpine
 
+RUN corepack enable
+
 WORKDIR /app
-# Tận dụng cache, chỉ copy package.json trước để cài dependencies
-# Điều này giúp tránh việc cài lại dependencies nếu chỉ có code thay đổi
-COPY package*.json ./ 
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Cài đặt dependencies
-# npm ci (clean install) sẽ đảm bảo cài đúng phiên bản được chỉ định trong package-lock.json
-# npm install có thể dẫn đến việc cài phiên bản mới hơn nếu package-lock.json không được cập nhật
-RUN npm ci 
+RUN pnpm install --frozen-lockfile
 
-# Copy toàn bộ mã nguồn vào container
 COPY . .
 
 EXPOSE 4000
 
-CMD ["npm", "run", "start"]
+CMD ["pnpm", "run", "start"]

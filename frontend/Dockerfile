@@ -1,19 +1,17 @@
 # Stage 1: Build the application
 FROM node:22-alpine AS builder
 
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+RUN corepack enable
 
-#####################
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN npm run build
+RUN pnpm run build
 
 # Stage 2: Serve the application with Nginx
-# Sử dụng image Nginx nhẹ để phục vụ ứng dụng đã build
-# FROM nginx:alpine
 
 FROM nginx:alpine AS production
 COPY nginx.conf /etc/nginx/conf.d/default.conf

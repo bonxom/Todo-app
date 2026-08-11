@@ -188,7 +188,7 @@ cd TodoApp
 2. **Backend Setup**
 ```bash
 cd backend
-npm install
+pnpm install
 
 # Create .env file
 echo "PORT=3001
@@ -198,16 +198,16 @@ JWT_SECRET=your_jwt_secret
 API_KEY=your_google_gemini_api_key" > .env
 
 # Start the backend server
-npm run dev
+pnpm run dev
 ```
 
 3. **Frontend Setup**
 ```bash
 cd frontend
-npm install
+pnpm install
 
 # Start the development server
-npm run dev
+pnpm run dev
 ```
 
 The application will be available at:

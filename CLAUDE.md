@@ -1,102 +1,176 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for coding agents working in this repository.
 
-## Common Commands
+## Project layout and toolchain
 
-### Backend (`backend/`)
+- `backend/`: Node 22, Express 5, TypeScript, Mongoose, Zod, and the OpenAI-compatible SDK.
+- `frontend/`: React 19, Vite 7, Tailwind CSS 4, and plain JavaScript/JSX.
+- The frontend and backend are separate pnpm projects. There is no root `package.json` or root workspace.
+- Both packages pin `pnpm@11.21.0`. Use pnpm only; do not recreate `package-lock.json`.
+- Run package commands from the corresponding package directory.
+
+## Setup and common commands
+
+Enable the package manager once:
+
 ```bash
-npm run dev          # Start with nodemon (auto-reload on changes)
-npm start            # Production start (node index.js)
+corepack enable
 ```
 
-### Frontend (`frontend/`)
+Install exactly from the committed lockfiles:
+
 ```bash
-npm run dev          # Vite dev server on port 5000 (--host 0.0.0.0)
-npm run build        # Vite production build → dist/
-npm run lint         # ESLint
-npm run preview      # Preview production build
+cd backend && pnpm install --frozen-lockfile
+cd frontend && pnpm install --frozen-lockfile
 ```
 
-### Docker
+Backend commands:
+
 ```bash
-docker compose up --build    # Build and start both services
-docker compose down           # Stop both
-# Backend exposed on :4000, frontend on :3636
+cd backend
+pnpm run dev       # tsx watch; default http://0.0.0.0:3001
+pnpm run start     # run server.ts without watch mode
+pnpm run build     # TypeScript type-check (tsc --noEmit)
 ```
 
-### Environment Variables
+Frontend commands:
 
-**Backend** (`backend/.env`):
-- `MONGO_URI` — MongoDB connection string (required)
-- `MONGO_NAME` — database name (optional)
-- `JWT_SECRET` — JWT signing secret (required)
-- `JWT_EXPIRES_IN` — token expiry, e.g. `7d` (required)
-- `SALT_ROUNDS` — bcrypt salt rounds, positive integer (required)
-- `API_KEY` — Google Gemini API key for AI features
-- `ALLOWED_ORIGINS` — comma-separated CORS origins (overrides defaults)
-- `PORT` / `HOST` — server bind config (default: 3001 / 0.0.0.0)
-- `VERCEL` — set automatically on Vercel; skips `app.listen()` when present
-
-**Frontend** (`frontend/.env`):
-- `VITE_SERVER_URL` — API base URL for axios (falls back to relative path if unset)
-
-## Architecture
-
-### Backend — Express 5 + Mongoose (ES Modules)
-
-Entry is `backend/index.js`. The server uses **lazy startup**: DB connection is deferred until the first request arrives (via `ensureAppReady` middleware wrapping all routes and the `/healthz` endpoint). This allows the app to export without listening when deployed on Vercel.
-
-**Task ownership model** — Tasks do not have a direct `userId` field. Instead, ownership is derived transitively through `categoryId` (Category → User) or `projectId` (Project → User). The `buildTaskAccessQuery` helper in `taskController.js` builds this query. Admin users bypass all ownership checks. This pattern means:
-- Tasks always belong to a category (default "Uncategorized" is enforced on creation).
-- When a category is deleted, its tasks are reassigned to the user's "Uncategorized" category.
-- When a project is deleted, its tasks get `projectId` set to `null`.
-
-**Standard route pattern**: Each route file uses `express.Router()`, imports controllers, and applies `protect` middleware (and optionally `authorize` for admin routes). Routes are mounted under `/api/<resource>` in `index.js`.
-
-**Default data on user creation**: When a User document is first saved, a post-save hook in the User model calls `createDefaultCategories()`, which creates four categories (Work, Personal, Health, Uncategorized) and assigns them to the user. Admin users are skipped.
-
-**Stats system**: `Stat` documents hold aggregate counters per user (`totalTasks`, `completedTasks`, etc.) and a `dailyStats` array of per-day records (with per-category breakdowns). Stats are updated incrementally by task controller actions (finish, giveUp, start) rather than computed on-the-fly. There's also a `initializeStats` function for recalculating from scratch.
-
-### Frontend — React 19 + Vite + Tailwind CSS v4
-
-**Context hierarchy** (in `App.jsx`):
-```
-AuthProvider → TaskRefreshProvider → TaskFilterProvider → AppRouter
-```
-- `AuthContext` — Stores JWT token and user object. On mount, tries to restore the session by calling `GET /api/auth/me`. Tracks `isAuthReady` to avoid flash-of-login-page.
-- `TaskRefreshContext` — Just an incrementing counter (`refreshTrigger`). Components call `triggerRefresh()` to signal that task lists should re-fetch.
-- `TaskFilterContext` — A global toggle for filtering tasks to "in-progress only". Provides `filterTasks(tasks)` which components use to filter before rendering.
-
-**API layer** (`src/api/`):
-- `axiosInstance.js` — Axios singleton with request interceptor (attaches Bearer token, extends timeout for `/api/ai/` endpoints to 60s) and response interceptor (logs errors, clears auth on 401 session failures and redirects to `/login`).
-- `apiService.js` — Organized as service objects (`authService`, `taskService`, `categoryService`, `projectService`, `aiService`, `statService`, `userService`). Each method wraps an axios call.
-- `authStorage.js` — localStorage helpers for token and user JSON (SSR-safe with `typeof window` guard).
-- `projectHelpers.js` — Normalizes project-related API responses.
-
-**Routing** (`src/route/AppRouter.jsx`):
-- `RootRoute` — `/` shows LandingPage for guests, redirects to `/dashboard` if authenticated.
-- `ProtectedRoute` — Redirects to `/login` if not authenticated. Wraps all app pages.
-- `PublicOnlyRoute` — Redirects to `/dashboard` if already authenticated. Wraps login/register.
-
-**Page/Feature pattern**: Each page is a thin wrapper in `src/page/` that composes feature components from `src/feature/<FeatureName>/`. Shared components live in `src/component/` (Sidebar, Topbar, ChatBuble). The layout shell is `MainLayout` which provides the responsive sidebar + topbar chrome.
-
-**Drag and drop**: Tasks can be dragged between categories/projects. `utils/taskDrag.js` provides `setTaskDragData` / `getTaskDragData` using the native HTML5 Drag and Drop API. Task data (id, categoryId, projectId, dueDate) is serialized into the `dataTransfer` object.
-
-**Calendar**: Built with custom components (not a library). Uses `date-fns` for date math. The calendar supports a "Project Focus" mode that filters to tasks of a specific project.
-
-**Key dependencies**: Chart.js + react-chartjs-2 for statistics charts, lucide-react for icons, date-fns for date utilities, Tailwind CSS v4 (Vite plugin, no separate config file needed).
-
-### Data Model Relationships
-
-```
-User ──< Category (userId)
-User ──< Project (userId)
-User ──< Stat (userId, one-to-one)
-Category ──< Task (categoryId)
-Project ──< Task (projectId, optional)
+```bash
+cd frontend
+pnpm run dev       # Vite on http://0.0.0.0:5000
+pnpm run lint      # ESLint
+pnpm run build     # production bundle in dist/
+pnpm run preview   # preview the production bundle
 ```
 
-### Vercel Deployment
+There is currently no automated test suite. The backend `pnpm test` script is a failing placeholder; do not report it as a passing test. For normal changes, the minimum verification is:
 
-Both frontend and backend have `.vercel` directories with their own Vercel project configurations. The backend `index.js` checks `process.env.VERCEL` and skips `app.listen()` when set, exporting `app` as a serverless function instead.
+```bash
+cd backend && pnpm run build
+cd frontend && pnpm run lint && pnpm run build
+```
+
+When a dependency changes, run `pnpm install` in that package and commit the matching `pnpm-lock.yaml`. Do not edit lockfiles manually.
+
+## Running locally
+
+Create `backend/.env` from `backend/.env.example`, then supply valid secrets and MongoDB settings. Run backend and frontend in separate terminals. The Vite config has no development proxy, so point the browser app directly at the local API:
+
+```bash
+cd backend && pnpm run dev
+cd frontend && VITE_SERVER_URL=http://localhost:3001 pnpm run dev
+```
+
+Useful health check:
+
+```bash
+curl http://localhost:3001/healthz
+```
+
+`/healthz` validates the backend environment and MongoDB connection; it is not a process-only liveness check.
+
+## Environment variables
+
+Backend variables validated at startup:
+
+- `MONGO_URI`
+- `JWT_SECRET`
+- `JWT_REFRESH_SECRET`
+- `JWT_ACCESS_EXPIRES_IN` (for example, `15m`)
+- `JWT_REFRESH_EXPIRES_IN` (for example, `7d`)
+- `SALT_ROUNDS` (positive integer)
+
+Optional backend configuration:
+
+- `MONGO_NAME`: database name.
+- `ALLOWED_ORIGINS`: comma-separated CORS origins; replaces the built-in allowlist when set.
+- `HOST` and `PORT`: defaults are `0.0.0.0` and `3001`.
+- `AI_API_KEY`, `AI_BASE_URL`, and `AI_MODEL_NAME`: all are required when using `/api/ai/*` endpoints.
+- `VERCEL`: suppresses `app.listen()` in `server.ts` when set by the deployment environment.
+
+The current code does not read `API_KEY` or `JWT_EXPIRES_IN`; use `AI_API_KEY` and `JWT_ACCESS_EXPIRES_IN` instead.
+
+Frontend variables:
+
+- `VITE_SERVER_URL`: Axios base URL. Set it to `http://localhost:3001` for separate local dev servers. Leave it unset in Docker so requests remain relative and Nginx proxies `/api/`.
+- `VITE_API_DEBUG=true`: enables verbose Axios request/response logging.
+
+Never commit real `.env` files or secrets.
+
+## Docker harness
+
+```bash
+docker compose build backend frontend
+docker compose up -d
+docker compose down
+```
+
+- Backend is exposed at `http://localhost:4000` and receives `backend/.env` through Compose.
+- Frontend is exposed at `http://localhost:3636` and is served by Nginx.
+- Frontend Nginx proxies `/api/` to `backend:4000` and falls back to `index.html` for client-side routes.
+- Each Docker build context is its package directory and uses its own frozen pnpm lockfile.
+- Docker ignore files are lowercase `.dockerignore`; filenames are case-sensitive on Linux.
+
+## Backend runtime and architecture
+
+### Startup
+
+- `backend/server.ts` loads dotenv, validates server environment, connects to MongoDB, and listens unless `VERCEL` is set.
+- `backend/app.ts` creates the Express app and exports it. Its memoized `ensureAppReady()` also validates configuration and connects to MongoDB before `/healthz` and all application routes. Failed initialization clears the promise so a later request can retry.
+- Routes are mounted at `/api/auth`, `/api/users`, `/api/categories`, `/api/projects`, `/api/tasks`, `/api/ai`, and `/api/stats`.
+
+### Request flow
+
+Keep backend changes in the existing direction:
+
+```text
+route -> middleware/validation -> controller -> service -> repository -> Mongoose model
+```
+
+- Routes compose `protect`, optional `authorize`, Zod `validate(...)`, and a controller.
+- Validated JSON is stored on `req.validatedBody`; use it instead of reparsing validated input from `req.body`.
+- Controllers translate HTTP input/output and pass failures to `next(error)`. Keep domain rules and database queries out of controllers.
+- Services own business rules, authorization/ownership checks, cross-repository orchestration, and stats updates.
+- Repositories own Mongoose queries, population, aggregation, and persistence details.
+- Throw the typed errors from `backend/utils/errors.ts` for expected failures. The central error middleware maps `AppError` instances to HTTP responses.
+- Authenticated request typing is augmented in `backend/types/express.d.ts` as `req.user` and `req.validatedBody`.
+
+This is NodeNext ESM TypeScript. Relative imports in `.ts` source intentionally use `.js` suffixes; preserve that convention.
+
+### Important domain invariants
+
+- Tasks have no direct `userId`. Non-admin access is derived from category and project ownership in `taskService`; admin users bypass that ownership filter.
+- Normal task creation resolves a missing category to the user's `Uncategorized` category. A project is optional, and completed projects cannot receive new task assignments.
+- Deleting a category reassigns its tasks to that user's `Uncategorized` category when available. Deleting a project clears `projectId` on its tasks.
+- New users receive Work, Personal, Health, and Uncategorized categories through the User model post-save flow.
+- Stats are rebuilt when fetched and are also adjusted incrementally during task mutations. Task lifecycle changes must keep stats consistent.
+- Access tokens and rotating refresh tokens use different secrets. Used refresh tokens are stored in `InvalidatedToken` and cannot be reused.
+
+## Frontend architecture
+
+The provider hierarchy in `src/App.jsx` is:
+
+```text
+ErrorBoundary
+  -> AuthProvider
+    -> TaskRefreshProvider
+      -> TaskFilterProvider
+        -> AppRouter
+```
+
+- Pages in `src/page/` are composition shells. Feature UI belongs in `src/feature/`; reusable application UI belongs in `src/component/`.
+- All backend calls should go through `src/api/apiService.js` and the shared `axiosInstance`. Keep endpoint normalization in API helpers rather than scattering it across components.
+- `axiosInstance` attaches the access token, uses a 60-second timeout for AI calls, serializes concurrent refresh attempts through one queue, rotates tokens, and clears auth on terminal 401 failures. Preserve this behavior when changing authentication.
+- Auth state persists `token`, `refreshToken`, and `user` in local storage. `AuthProvider` verifies an existing session through `GET /api/auth/me` before setting `isAuthReady`.
+- Protected routes redirect guests to `/login`; public-only auth routes redirect signed-in users to `/dashboard`.
+- Tailwind CSS is provided through the Vite plugin. The project also uses `App.css`, `index.css`, and feature-specific CSS, so follow the styling pattern of the area being changed.
+
+## Change discipline
+
+- Preserve user changes already present in the worktree and keep unrelated edits out of the task.
+- Do not edit `node_modules/`, `dist/`, generated lockfile internals, or real environment files.
+- Add or update Zod validation for request-body contract changes.
+- Keep authorization and ownership checks in place for every user-scoped read or mutation.
+- After changing routes or API response shapes, update both the backend service/controller and the corresponding frontend API helper/consumer.
+- Report the exact verification commands run and any remaining warnings or untested paths.

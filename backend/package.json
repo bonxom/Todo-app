@@ -1,6 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "packageManager": "pnpm@11.21.0",
   "description": "",
   "main": "server.ts",
   "type": "module",
@@ -19,6 +20,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
+    "@types/node": "^26.1.2",
     "tsx": "^4.23.9",
     "typescript": "^7.0.2"
   },

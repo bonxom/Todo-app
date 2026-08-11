@@ -10,7 +10,7 @@
     "outDir": "dist",
     "rootDir": ".",
     "resolveJsonModule": true,
-    "declaration": true,
+    "declaration": false,
     "sourceMap": true,
     "allowJs": true,
     "types": ["node"]
