@@ -3,14 +3,15 @@ import { createProject, deleteProject, getAllProjects, getProjectById, getProjec
 import { protect } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import { createProjectSchema, updateProjectSchema } from '../validations/projectValidation.js';
+import { idParamSchema } from '../validations/commonValidation.js';
 
 const router = express.Router();
 
-router.post('/', protect, validate(createProjectSchema), createProject);
+router.post('/', protect, validate({ body: createProjectSchema }), createProject);
 router.get('/', protect, getAllProjects);
-router.get('/:id/tasks', protect, getProjectTasks);
-router.get('/:id', protect, getProjectById);
-router.put('/:id', protect, validate(updateProjectSchema), updateProject);
-router.delete('/:id', protect, deleteProject);
+router.get('/:id/tasks', protect, validate({ params: idParamSchema }), getProjectTasks);
+router.get('/:id', protect, validate({ params: idParamSchema }), getProjectById);
+router.put('/:id', protect, validate({ params: idParamSchema, body: updateProjectSchema }), updateProject);
+router.delete('/:id', protect, validate({ params: idParamSchema }), deleteProject);
 
 export default router;

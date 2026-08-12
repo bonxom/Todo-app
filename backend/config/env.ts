@@ -1,4 +1,6 @@
 import { CorsOptions } from 'cors';
+import { AppError } from '../error/AppError.js';
+import { COMMON_ERROR } from '../error/definitions/commonErrors.js';
 
 const DEFAULT_ALLOWED_ORIGINS: string[] = [
   'https://fetodo-six.vercel.app',
@@ -44,7 +46,7 @@ export const createCorsOptions = (): CorsOptions => {
         callback(null, true);
         return;
       }
-      callback(new Error(`Origin '${origin}' is not allowed by CORS`));
+      callback(new AppError(COMMON_ERROR.CORS_NOT_ALLOWED));
     },
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

@@ -1,9 +1,12 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { createCorsOptions, getServerConfig, validateServerEnv } from './config/env.js';
 import { connectDB } from './config/db.js';
-import { errorHandler } from './middlewares/errorHandler.js';
+import { AppError } from './error/AppError.js';
+import { COMMON_ERROR } from './error/definitions/commonErrors.js';
+import { errorHandler, notFoundHandler, requestContext } from './error/index.js';
 import userRouter from './routes/userRoute.js';
 import categoryRouter from './routes/categoryRoute.js';
 import projectRouter from './routes/projectRoute.js';
@@ -13,6 +16,8 @@ import aiRouter from './routes/aiRoutes.js';
 import statRouter from './routes/statRoute.js';
 
 const app = express();
+
+app.use(requestContext);
 
 app.use(cors(createCorsOptions()));
 app.use(morgan('dev'));
@@ -34,22 +39,18 @@ const ensureAppReady = async (): Promise<void> => {
   return startupPromise;
 };
 
-app.get('/healthz', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    await ensureAppReady();
-    res.status(200).json({ ok: true });
-  } catch (error) {
-    next(error);
-  }
+app.get('/healthz', async (_req: Request, res: Response) => {
+  await ensureAppReady().catch((error: unknown) => {
+    throw new AppError(COMMON_ERROR.SERVICE_UNAVAILABLE, { cause: error });
+  });
+  res.status(200).json({ ok: true });
 });
 
 app.use(async (_req: Request, _res: Response, next: NextFunction) => {
-  try {
-    await ensureAppReady();
-    next();
-  } catch (error) {
-    next(error);
-  }
+  await ensureAppReady().catch((error: unknown) => {
+    throw new AppError(COMMON_ERROR.SERVICE_UNAVAILABLE, { cause: error });
+  });
+  next();
 });
 
 app.get('/', (_req: Request, res: Response) => {
@@ -64,6 +65,7 @@ app.use('/api/tasks', taskRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/stats', statRouter);
 
+app.use(notFoundHandler);
 app.use(errorHandler);
 
 export default app;

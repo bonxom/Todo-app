@@ -1,7 +1,9 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
-import { IUserDocument } from '../types/IUser.js';
+import { AppError } from '../error/AppError.js';
+import { AUTH_ERROR } from '../error/definitions/authErrors.js';
 
 interface JwtPayload {
   id: string;
@@ -9,56 +11,56 @@ interface JwtPayload {
 
 export const protect = async (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
-  let token: string | undefined;
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    throw new AppError(AUTH_ERROR.TOKEN_MISSING);
+  }
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+  const bearerMatch = /^Bearer ([^\s]+)$/.exec(authorization);
+  if (!bearerMatch) {
+    throw new AppError(AUTH_ERROR.TOKEN_INVALID);
+  }
 
-      req.user = (await User.findById(decoded.id).select('-password')) as IUserDocument;
-
-      if (!req.user) {
-        res.status(401).json({ message: 'Not authorized, user not found' });
-        return;
-      }
-
-      next();
-      return;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error in auth middleware:', message);
-      res.status(401).json({ message: 'Not authorized, token failed' });
-      return;
+  const token = bearerMatch[1];
+  let decoded: JwtPayload;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+  } catch (error: unknown) {
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new AppError(AUTH_ERROR.TOKEN_EXPIRED, { cause: error });
     }
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new AppError(AUTH_ERROR.TOKEN_INVALID, { cause: error });
+    }
+    throw error;
   }
 
-  if (!token) {
-    res.status(401).json({ message: 'Cannot find the token' });
-    return;
+  if (!decoded || typeof decoded.id !== 'string' || !mongoose.isObjectIdOrHexString(decoded.id)) {
+    throw new AppError(AUTH_ERROR.TOKEN_INVALID);
   }
+
+  const user = await User.findById(decoded.id).select('-password');
+  if (!user) {
+    throw new AppError(AUTH_ERROR.UNAUTHORIZED);
+  }
+
+  req.user = user;
+  next();
 };
 
 export const authorize = (...roles: string[]): RequestHandler => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
-      res.status(401).json({ message: 'Not authorized' });
-      return;
+      throw new AppError(AUTH_ERROR.UNAUTHORIZED);
     }
 
     const { role } = req.user;
 
     if (!roles.includes(role)) {
-      res
-        .status(403)
-        .json({ message: `User role '${role}' is not authorized to access this route` });
-      return;
+      throw new AppError(AUTH_ERROR.FORBIDDEN);
     }
     next();
   };

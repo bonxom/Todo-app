@@ -1,11 +1,35 @@
 import { z } from 'zod';
+import type { ZodType } from 'zod';
 import mongoose from 'mongoose';
+import OpenAI from 'openai';
 import { getAiClient } from '../libs/aiClient.js';
 import { getAiModel } from '../config/env.js';
 import { categoryRepository } from '../repositories/categoryRepository.js';
 import { taskRepository } from '../repositories/taskRepository.js';
 import { statService } from './statService.js';
 import { normalizeTaskDateInput } from '../utils/dateTime.js';
+import { AppError } from '../error/AppError.js';
+import { AI_ERROR } from '../error/definitions/aiErrors.js';
+
+const parseAiResponse = <T>(schema: ZodType<T>, content: string): T => {
+  try {
+    return schema.parse(JSON.parse(content));
+  } catch (error: unknown) {
+    throw new AppError(AI_ERROR.RESPONSE_INVALID, { cause: error });
+  }
+};
+
+const callAiProvider = async <T>(operation: () => Promise<T>): Promise<T> => {
+  try {
+    return await operation();
+  } catch (error: unknown) {
+    if (error instanceof AppError) throw error;
+    if (error instanceof OpenAI.APIConnectionTimeoutError) {
+      throw new AppError(AI_ERROR.PROVIDER_TIMEOUT, { cause: error });
+    }
+    throw new AppError(AI_ERROR.PROVIDER_ERROR, { cause: error });
+  }
+};
 
 export const aiService = {
   async generateTasks(
@@ -50,12 +74,12 @@ Create 3 practical, actionable tasks with:
 - dueDate: YYYY-MM-DD format if applicable (based on today: ${today})`;
 
     const model = getAiModel();
-    if (!model) throw new Error('Missing required environment variable: AI_MODEL_NAME');
+    if (!model) throw new AppError(AI_ERROR.CONFIG_MISSING);
 
     const rawSchema = tasksArraySchema.toJSONSchema();
     const { $schema, ...jsonSchema } = rawSchema;
 
-    const response = await ai.chat.completions.create({
+    const response = await callAiProvider(() => ai.chat.completions.create({
       model,
       messages: [
         {
@@ -65,12 +89,12 @@ Create 3 practical, actionable tasks with:
         { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },
-    });
+    }));
 
     const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error('Empty response from AI');
+    if (!content) throw new AppError(AI_ERROR.EMPTY_RESPONSE);
 
-    const generatedTasks = tasksArraySchema.parse(JSON.parse(content));
+    const generatedTasks = parseAiResponse(tasksArraySchema, content);
 
     const savedTasks: unknown[] = [];
 
@@ -119,18 +143,18 @@ If user want to auto generate tasks, advise them to use the task generation mode
 Provide short, clear, concise, and friendly responses.`;
 
     const model = getAiModel();
-    if (!model) throw new Error('Missing required environment variable: AI_MODEL_NAME');
+    if (!model) throw new AppError(AI_ERROR.CONFIG_MISSING);
 
-    const response = await ai.chat.completions.create({
+    const response = await callAiProvider(() => ai.chat.completions.create({
       model,
       messages: [
         { role: 'system', content: sysInstruction },
         { role: 'user', content: userInput },
       ],
-    });
+    }));
 
     const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error('Empty response from AI');
+    if (!content) throw new AppError(AI_ERROR.EMPTY_RESPONSE);
 
     return content;
   },

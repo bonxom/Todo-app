@@ -4,7 +4,10 @@ import { categoryRepository } from '../repositories/categoryRepository.js';
 import { projectRepository } from '../repositories/projectRepository.js';
 import { statService } from './statService.js';
 import { normalizeTaskDateInput } from '../utils/dateTime.js';
-import { NotFoundError, ValidationError, ForbiddenError } from '../utils/errors.js';
+import { AppError } from '../error/AppError.js';
+import { COMMON_ERROR } from '../error/definitions/commonErrors.js';
+import { CATEGORY_ERROR } from '../error/definitions/categoryErrors.js';
+import { TASK_ERROR } from '../error/definitions/taskErrors.js';
 import { TASK_STATUSES } from '../constants/taskStatus.js';
 import { ITaskDocument } from '../types/ITask.js';
 import { IUserDocument } from '../types/IUser.js';
@@ -37,13 +40,13 @@ const resolveCategory = async (
   if (categoryId) {
     const category = await categoryRepository.findById(categoryId);
     if (!category || category.userId.toString() !== userId.toString()) {
-      throw new ValidationError('Invalid categoryId');
+      throw new AppError(TASK_ERROR.CATEGORY_NOT_FOUND);
     }
     return categoryId as unknown as mongoose.Types.ObjectId;
   }
 
   const uncategorized = await categoryRepository.findByUserAndName(userId, 'Uncategorized');
-  if (!uncategorized) throw new ValidationError('Uncategorized category not found');
+  if (!uncategorized) throw new AppError(CATEGORY_ERROR.DEFAULT_CATEGORY_UNAVAILABLE);
   return uncategorized._id;
 };
 
@@ -57,13 +60,13 @@ const resolveProject = async (
 
   const project = await projectRepository.findById(projectId);
   if (!project || project.userId.toString() !== userId.toString()) {
-    throw new ValidationError('Invalid projectId');
+    throw new AppError(TASK_ERROR.PROJECT_NOT_FOUND);
   }
 
   const normalizedCurrent: string | null = currentProjectId?.toString?.() || null;
   const normalizedNext = project._id.toString();
   if (project.status === 'completed' && normalizedNext !== normalizedCurrent) {
-    throw new ValidationError('Completed projects cannot be assigned to tasks');
+    throw new AppError(TASK_ERROR.PROJECT_COMPLETED);
   }
 
   return { shouldUpdate: true, value: project._id };
@@ -157,7 +160,7 @@ const getOwnerId = (task: ITaskDocument): string | null => {
 const verifyOwnership = (task: ITaskDocument, user: IUserDocument): void => {
   if (user.role === 'ADMIN') return;
   if (getOwnerId(task) !== user._id.toString()) {
-    throw new ForbiddenError("You don't have permission to access this task");
+    throw new AppError(TASK_ERROR.ACCESS_DENIED);
   }
 };
 
@@ -176,7 +179,7 @@ export const taskService = {
     const dueDate = normalizeTaskDateInput(data.dueDate);
 
     if (startDate.error || dueDate.error) {
-      throw new ValidationError(startDate.error || dueDate.error);
+      throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
     }
 
     const task = await taskRepository.create({
@@ -200,7 +203,7 @@ export const taskService = {
   ): Promise<ITaskDocument[]> {
     const query = await buildTaskAccessQuery(user);
     const dateRange = parseDateRangeQuery(queryParams);
-    if (dateRange.error) throw new ValidationError(dateRange.error);
+    if (dateRange.error) throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
 
     return taskRepository.findPopulated({
       ...query,
@@ -213,7 +216,7 @@ export const taskService = {
     user: IUserDocument
   ): Promise<ITaskDocument> {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
     return task;
   },
@@ -224,7 +227,7 @@ export const taskService = {
     user: IUserDocument
   ): Promise<ITaskDocument | null> {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
 
     const update: Record<string, unknown> = {};
@@ -234,7 +237,7 @@ export const taskService = {
 
     if (data.status !== undefined) {
       if (!TASK_STATUSES.includes(data.status as string))
-        throw new ValidationError('Invalid status');
+        throw new AppError(TASK_ERROR.STATUS_INVALID);
       update.status = data.status;
     }
 
@@ -250,7 +253,7 @@ export const taskService = {
           user._id,
           'Uncategorized'
         );
-        if (!uncategorized) throw new ValidationError('Uncategorized category not found');
+        if (!uncategorized) throw new AppError(CATEGORY_ERROR.DEFAULT_CATEGORY_UNAVAILABLE);
         update.categoryId = uncategorized._id;
       } else {
         const newCategory = await categoryRepository.findById(data.categoryId as string);
@@ -258,7 +261,7 @@ export const taskService = {
           !newCategory ||
           newCategory.userId.toString() !== user._id.toString()
         ) {
-          throw new ValidationError('Invalid categoryId');
+          throw new AppError(TASK_ERROR.CATEGORY_NOT_FOUND);
         }
         update.categoryId = data.categoryId;
       }
@@ -272,13 +275,13 @@ export const taskService = {
       user._id,
       currentProjectId
     );
-    if (projectUpdate.error) throw new ValidationError(projectUpdate.error);
+    if (projectUpdate.error) throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
     if (projectUpdate.shouldUpdate) update.projectId = projectUpdate.value;
 
     const startDate = normalizeTaskDateInput(data.startDate);
     const dueDate = normalizeTaskDateInput(data.dueDate);
     if (startDate.error || dueDate.error) {
-      throw new ValidationError(startDate.error || dueDate.error);
+      throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
     }
     if (startDate.shouldUpdate) update.startDate = startDate.value;
     if (dueDate.shouldUpdate) update.dueDate = dueDate.value;
@@ -286,7 +289,7 @@ export const taskService = {
     applyCompletionTimestamp(update, task.status);
 
     if (Object.keys(update).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new AppError(TASK_ERROR.NO_FIELDS_TO_UPDATE);
     }
 
     return taskRepository.updateByIdPopulated(id, update);
@@ -297,10 +300,10 @@ export const taskService = {
     user: IUserDocument
   ): Promise<ITaskDocument | null> {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
 
-    if (task.status === 'completed') throw new ValidationError('Task is already completed');
+    if (task.status === 'completed') throw new AppError(TASK_ERROR.ALREADY_COMPLETED);
 
     const currentDate = new Date();
     task.status = 'completed';
@@ -326,11 +329,11 @@ export const taskService = {
     user: IUserDocument
   ): Promise<ITaskDocument | null> {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
 
     if (task.status !== 'pending')
-      throw new ValidationError('Only pending tasks can be started');
+      throw new AppError(TASK_ERROR.CANNOT_START);
 
     task.status = 'in-progress';
     await task.save();
@@ -344,11 +347,11 @@ export const taskService = {
     user: IUserDocument
   ): Promise<ITaskDocument | null> {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
 
     if (task.status !== 'in-progress')
-      throw new ValidationError('Only in-progress tasks can be given up');
+      throw new AppError(TASK_ERROR.CANNOT_GIVE_UP);
 
     task.status = 'given-up';
     await task.save();
@@ -371,7 +374,7 @@ export const taskService = {
     user: IUserDocument
   ): Promise<void> {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
 
     await taskRepository.deleteById(id);

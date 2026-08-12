@@ -18,8 +18,23 @@ export const changePasswordSchema = z.object({
   newPassword: z.string().min(6, 'New password must be at least 6 characters'),
 });
 
-export const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required'),
+const optionalRefreshTokenBodySchema = z.object({
+  refreshToken: z.string().optional(),
+});
+
+export const refreshTokenSchema = z.preprocess(
+  (value) => value === undefined ? {} : value,
+  optionalRefreshTokenBodySchema
+);
+
+export const logoutSchema = refreshTokenSchema;
+
+export const updateInfoSchema = z.object({
+  email: z.string().email().optional(),
+  name: z.string().min(1).max(100).optional(),
+  dob: z.string().optional(),
+  nationality: z.string().max(100).optional(),
+  avatarUrl: z.string().url().or(z.literal('')).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

@@ -3,13 +3,14 @@ import { createCategory, getAllCategories, getCategoryById, updateCategory, dele
 import { protect } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import { createCategorySchema, updateCategorySchema } from '../validations/categoryValidation.js';
+import { idParamSchema } from '../validations/commonValidation.js';
 
 const router = express.Router();
 
-router.post('/', protect, validate(createCategorySchema), createCategory);
+router.post('/', protect, validate({ body: createCategorySchema }), createCategory);
 router.get('/', protect, getAllCategories);
-router.get('/:id', protect, getCategoryById);
-router.put('/:id', protect, validate(updateCategorySchema), updateCategory);
-router.delete('/:id', protect, deleteCategory);
+router.get('/:id', protect, validate({ params: idParamSchema }), getCategoryById);
+router.put('/:id', protect, validate({ params: idParamSchema, body: updateCategorySchema }), updateCategory);
+router.delete('/:id', protect, validate({ params: idParamSchema }), deleteCategory);
 
 export default router;

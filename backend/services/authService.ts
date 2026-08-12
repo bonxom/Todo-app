@@ -2,7 +2,10 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { userRepository } from '../repositories/userRepository.js';
 import { invalidatedTokenRepository } from '../repositories/invalidatedTokenRepository.js';
-import { ValidationError, UnauthorizedError, NotFoundError } from '../utils/errors.js';
+import { AppError } from '../error/AppError.js';
+import { AUTH_ERROR } from '../error/definitions/authErrors.js';
+import { USER_ERROR } from '../error/definitions/userErrors.js';
+import { mapDatabaseError } from '../error/errorGuards.js';
 import { IUserDocument } from '../types/IUser.js';
 
 interface JwtPayload {
@@ -37,7 +40,7 @@ const addTokenToBlacklist = async (tokenString: string): Promise<void> => {
   try {
     await invalidatedTokenRepository.create({ token: tokenString, expiresAt });
   } catch (error: unknown) {
-    // If it's already in the blacklist (duplicate key error), ignore it
+    // Blacklisting is idempotent: only an existing token duplicate-key error is safe to ignore.
     if ((error as { code?: number }).code !== 11000) throw error;
   }
 };
@@ -47,16 +50,21 @@ export const authService = {
     data: Record<string, unknown>
   ): Promise<{ user: IUserDocument } & AuthTokens> {
     const existing = await userRepository.findByEmail(data.email as string);
-    if (existing) throw new ValidationError('Email already exists');
+    if (existing) throw new AppError(USER_ERROR.EMAIL_EXISTED);
 
-    const user = await userRepository.create({
-      email: data.email,
-      password: data.password,
-      name: data.name,
-      dob: data.dob,
-      nationality: data.nationality || 'Vietnam',
-      role: 'USER',
-    });
+    let user: IUserDocument;
+    try {
+      user = await userRepository.create({
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        dob: data.dob,
+        nationality: data.nationality || 'Vietnam',
+        role: 'USER',
+      });
+    } catch (error: unknown) {
+      throw mapDatabaseError(error, USER_ERROR.EMAIL_EXISTED);
+    }
 
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
@@ -69,10 +77,10 @@ export const authService = {
     password: string
   ): Promise<{ user: IUserDocument } & AuthTokens> {
     const user = await userRepository.findByEmailWithPassword(email);
-    if (!user) throw new UnauthorizedError('Invalid email or password');
+    if (!user) throw new AppError(AUTH_ERROR.INVALID_CREDENTIALS);
 
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) throw new UnauthorizedError('Invalid email or password');
+    if (!isMatch) throw new AppError(AUTH_ERROR.INVALID_CREDENTIALS);
 
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
@@ -80,22 +88,37 @@ export const authService = {
     return { user, accessToken, refreshToken, token: accessToken };
   },
 
-  async refreshToken(refreshTokenString: string): Promise<AuthTokens> {
+  async refreshToken(refreshTokenString?: string): Promise<AuthTokens> {
     if (!refreshTokenString) {
-      throw new UnauthorizedError('Refresh token is required');
+      throw new AppError(AUTH_ERROR.REFRESH_TOKEN_MISSING);
     }
 
     let decoded: JwtPayload;
     try {
       decoded = jwt.verify(refreshTokenString, getRefreshSecret()) as JwtPayload;
-    } catch {
-      throw new UnauthorizedError('Invalid or expired refresh token');
+    } catch (error: unknown) {
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new AppError(AUTH_ERROR.REFRESH_TOKEN_EXPIRED, { cause: error });
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new AppError(AUTH_ERROR.REFRESH_TOKEN_INVALID, { cause: error });
+      }
+      throw error;
+    }
+
+    if (!decoded || typeof decoded.id !== 'string' || !mongoose.isObjectIdOrHexString(decoded.id)) {
+      throw new AppError(AUTH_ERROR.REFRESH_TOKEN_INVALID);
     }
 
     // Check if token is in the blacklist
     const isBlacklisted = await invalidatedTokenRepository.findByToken(refreshTokenString);
     if (isBlacklisted) {
-      throw new UnauthorizedError('Refresh token has been revoked');
+      throw new AppError(AUTH_ERROR.REFRESH_TOKEN_REVOKED);
+    }
+
+    const user = await userRepository.findById(decoded.id);
+    if (!user) {
+      throw new AppError(AUTH_ERROR.UNAUTHORIZED);
     }
 
     // Generate new tokens (Token Rotation)
@@ -116,7 +139,7 @@ export const authService = {
 
   async getMe(userId: mongoose.Types.ObjectId | string): Promise<IUserDocument> {
     const user = await userRepository.findByIdPopulated(userId);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new AppError(USER_ERROR.NOT_FOUND);
     return user;
   },
 
@@ -126,13 +149,13 @@ export const authService = {
     newPassword: string
   ): Promise<void> {
     const user = await userRepository.findByIdWithPassword(userId);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new AppError(USER_ERROR.NOT_FOUND);
 
     const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) throw new UnauthorizedError('Current password is incorrect');
+    if (!isMatch) throw new AppError(USER_ERROR.CURRENT_PASSWORD_INCORRECT);
 
     const isSame = await user.comparePassword(newPassword);
-    if (isSame) throw new ValidationError('New password must be different from the current password');
+    if (isSame) throw new AppError(USER_ERROR.NEW_PASSWORD_SAME_AS_CURRENT);
 
     user.password = newPassword;
     await user.save();
@@ -149,16 +172,21 @@ export const authService = {
     }
 
     if (Object.keys(filtered).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new AppError(USER_ERROR.NO_FIELDS_TO_UPDATE);
     }
 
-    const user = await userRepository.updateById(userId, filtered);
-    if (!user) throw new NotFoundError('User not found');
+    let user: IUserDocument | null;
+    try {
+      user = await userRepository.updateById(userId, filtered);
+    } catch (error: unknown) {
+      throw mapDatabaseError(error, USER_ERROR.EMAIL_EXISTED);
+    }
+    if (!user) throw new AppError(USER_ERROR.NOT_FOUND);
     return user;
   },
 
   async selfDelete(userId: mongoose.Types.ObjectId | string): Promise<void> {
     const user = await userRepository.deleteById(userId);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new AppError(USER_ERROR.NOT_FOUND);
   },
 };

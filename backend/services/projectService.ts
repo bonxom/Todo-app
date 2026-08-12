@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
 import { projectRepository } from '../repositories/projectRepository.js';
 import { taskRepository } from '../repositories/taskRepository.js';
-import { NotFoundError, ValidationError, ForbiddenError } from '../utils/errors.js';
+import { AppError } from '../error/AppError.js';
+import { COMMON_ERROR } from '../error/definitions/commonErrors.js';
+import { PROJECT_ERROR } from '../error/definitions/projectErrors.js';
+import { mapDatabaseError } from '../error/errorGuards.js';
 import { PROJECT_STATUSES } from '../constants/projectStatus.js';
 import { FINISHED_STATUSES } from '../constants/taskStatus.js';
 import { IProjectDocument } from '../types/IProject.js';
@@ -135,21 +138,26 @@ export const projectService = {
     userId: mongoose.Types.ObjectId | string
   ): Promise<ProjectWithSummary> {
     if (typeof data.name !== 'string' || !data.name.trim()) {
-      throw new ValidationError('Name is required');
+      throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
     }
 
     const normalizedColor = normalizeColor(data.color);
-    if (normalizedColor.error) throw new ValidationError(normalizedColor.error);
+    if (normalizedColor.error) throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
 
     const existing = await projectRepository.findByUserAndName(userId, data.name.trim());
-    if (existing) throw new ValidationError('Project name already exists for this user');
+    if (existing) throw new AppError(PROJECT_ERROR.NAME_EXISTED);
 
-    const project = await projectRepository.create({
-      userId,
-      name: data.name.trim(),
-      description: data.description,
-      color: normalizedColor.value,
-    });
+    let project: IProjectDocument;
+    try {
+      project = await projectRepository.create({
+        userId,
+        name: data.name.trim(),
+        description: data.description,
+        color: normalizedColor.value,
+      });
+    } catch (error: unknown) {
+      throw mapDatabaseError(error, PROJECT_ERROR.NAME_EXISTED);
+    }
 
     return withSummary(project, createEmptySummary());
   },
@@ -171,9 +179,9 @@ export const projectService = {
     user: IUserDocument
   ): Promise<ProjectWithSummary> {
     const project = await projectRepository.findByIdPopulated(id);
-    if (!project) throw new NotFoundError('Project not found');
+    if (!project) throw new AppError(PROJECT_ERROR.NOT_FOUND);
     if (!canAccess(project, user))
-      throw new ForbiddenError("You don't have permission to access this project");
+      throw new AppError(PROJECT_ERROR.ACCESS_DENIED);
 
     const summary = await getSingleSummary(project._id);
     return withSummary(project, summary);
@@ -185,15 +193,15 @@ export const projectService = {
     user: IUserDocument
   ): Promise<ProjectWithSummary> {
     const project = await projectRepository.findById(id);
-    if (!project) throw new NotFoundError('Project not found');
+    if (!project) throw new AppError(PROJECT_ERROR.NOT_FOUND);
     if (!canAccess(project, user))
-      throw new ForbiddenError("You don't have permission to update this project");
+      throw new AppError(PROJECT_ERROR.ACCESS_DENIED);
 
     const update: Record<string, unknown> = {};
 
     if (data.name !== undefined) {
       if (typeof data.name !== 'string' || !data.name.trim()) {
-        throw new ValidationError('Project name cannot be empty');
+        throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
       }
       update.name = data.name.trim();
     }
@@ -201,19 +209,20 @@ export const projectService = {
     if (data.description !== undefined) update.description = data.description;
 
     const normalizedColor = normalizeColor(data.color);
-    if (normalizedColor.error) throw new ValidationError(normalizedColor.error);
+    if (normalizedColor.error) throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
     if (normalizedColor.value !== undefined) update.color = normalizedColor.value;
 
     if (data.status !== undefined) {
       if (!PROJECT_STATUSES.includes(data.status as string))
-        throw new ValidationError('Invalid project status');
+        throw new AppError(PROJECT_ERROR.STATUS_INVALID);
 
       if (data.status === 'completed') {
+        if (project.status === 'completed') {
+          throw new AppError(PROJECT_ERROR.ALREADY_COMPLETED);
+        }
         const eligible = await getCompletionEligibility(project._id);
         if (!eligible) {
-          throw new ValidationError(
-            'Project can only be completed when it has at least one task and every task is completed or given up'
-          );
+          throw new AppError(PROJECT_ERROR.CANNOT_BE_COMPLETED);
         }
       }
 
@@ -221,11 +230,16 @@ export const projectService = {
     }
 
     if (Object.keys(update).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new AppError(PROJECT_ERROR.NO_FIELDS_TO_UPDATE);
     }
 
-    const updated = await projectRepository.updateByIdPopulated(id, update);
-    if (!updated) throw new NotFoundError('Project not found');
+    let updated: IProjectDocument | null;
+    try {
+      updated = await projectRepository.updateByIdPopulated(id, update);
+    } catch (error: unknown) {
+      throw mapDatabaseError(error, PROJECT_ERROR.NAME_EXISTED);
+    }
+    if (!updated) throw new AppError(PROJECT_ERROR.NOT_FOUND);
     const summary = await getSingleSummary(updated._id);
     return withSummary(updated, summary);
   },
@@ -235,9 +249,9 @@ export const projectService = {
     user: IUserDocument
   ): Promise<void> {
     const project = await projectRepository.findById(id);
-    if (!project) throw new NotFoundError('Project not found');
+    if (!project) throw new AppError(PROJECT_ERROR.NOT_FOUND);
     if (!canAccess(project, user))
-      throw new ForbiddenError("You don't have permission to delete this project");
+      throw new AppError(PROJECT_ERROR.ACCESS_DENIED);
 
     await projectRepository.deleteById(id);
   },
@@ -247,9 +261,9 @@ export const projectService = {
     user: IUserDocument
   ): Promise<{ project: ProjectWithSummary; summary: ProjectSummary; tasks: unknown[] }> {
     const project = await projectRepository.findByIdPopulated(id);
-    if (!project) throw new NotFoundError('Project not found');
+    if (!project) throw new AppError(PROJECT_ERROR.NOT_FOUND);
     if (!canAccess(project, user))
-      throw new ForbiddenError("You don't have permission to access this project");
+      throw new AppError(PROJECT_ERROR.ACCESS_DENIED);
 
     const tasks = await taskRepository.findPopulated(
       { projectId: project._id },

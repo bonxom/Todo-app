@@ -6,7 +6,7 @@ import { generateTasksSchema, chatSchema } from '../validations/aiValidation.js'
 
 const router = express.Router();
 
-router.post('/generate-tasks', protect, validate(generateTasksSchema), generateTasksWithRequirement);
-router.post('/chat', protect, validate(chatSchema), responseToUser);
+router.post('/generate-tasks', protect, validate({ body: generateTasksSchema }), generateTasksWithRequirement);
+router.post('/chat', protect, validate({ body: chatSchema }), responseToUser);
 
 export default router;

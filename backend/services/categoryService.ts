@@ -1,14 +1,16 @@
 import mongoose from 'mongoose';
 import { categoryRepository } from '../repositories/categoryRepository.js';
 import { userRepository } from '../repositories/userRepository.js';
-import { NotFoundError, ValidationError, ForbiddenError } from '../utils/errors.js';
+import { AppError } from '../error/AppError.js';
+import { CATEGORY_ERROR } from '../error/definitions/categoryErrors.js';
+import { mapDatabaseError } from '../error/errorGuards.js';
 import { ICategoryDocument } from '../types/ICategory.js';
 import { IUserDocument } from '../types/IUser.js';
 
 const verifyOwnership = (category: ICategoryDocument, user: IUserDocument): void => {
   if (user.role === 'ADMIN') return;
   if (category.userId.toString() !== user._id.toString()) {
-    throw new ForbiddenError("You don't have permission to access this category");
+    throw new AppError(CATEGORY_ERROR.ACCESS_DENIED);
   }
 };
 
@@ -19,10 +21,15 @@ export const categoryService = {
   ): Promise<ICategoryDocument> {
     const existing = await categoryRepository.findByUserAndName(userId, data.name as string);
     if (existing) {
-      throw new ValidationError('Category name already exists for this user');
+      throw new AppError(CATEGORY_ERROR.NAME_EXISTED);
     }
 
-    const category = await categoryRepository.create({ ...data, userId });
+    let category: ICategoryDocument;
+    try {
+      category = await categoryRepository.create({ ...data, userId });
+    } catch (error: unknown) {
+      throw mapDatabaseError(error, CATEGORY_ERROR.NAME_EXISTED);
+    }
     await userRepository.addCategory(userId, category._id);
     return category;
   },
@@ -39,7 +46,7 @@ export const categoryService = {
     user: IUserDocument
   ): Promise<ICategoryDocument> {
     const category = await categoryRepository.findByIdPopulated(id);
-    if (!category) throw new NotFoundError('Category not found');
+    if (!category) throw new AppError(CATEGORY_ERROR.NOT_FOUND);
     verifyOwnership(category, user);
     return category;
   },
@@ -50,19 +57,26 @@ export const categoryService = {
     user: IUserDocument
   ): Promise<ICategoryDocument | null> {
     const category = await categoryRepository.findById(id);
-    if (!category) throw new NotFoundError('Category not found');
+    if (!category) throw new AppError(CATEGORY_ERROR.NOT_FOUND);
 
     if (category.name === 'Uncategorized') {
-      throw new ValidationError("Cannot update the 'Uncategorized' category");
+      throw new AppError(CATEGORY_ERROR.UNCATEGORIZED_CATEGORY_IMMUTABLE);
     }
 
     verifyOwnership(category, user);
 
     if (Object.keys(data).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new AppError(CATEGORY_ERROR.NO_FIELDS_TO_UPDATE);
     }
 
-    return categoryRepository.updateById(id, data);
+    try {
+      const updated = await categoryRepository.updateById(id, data);
+      if (!updated) throw new AppError(CATEGORY_ERROR.NOT_FOUND);
+      return updated;
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      throw mapDatabaseError(error, CATEGORY_ERROR.NAME_EXISTED);
+    }
   },
 
   async delete(
@@ -70,10 +84,10 @@ export const categoryService = {
     user: IUserDocument
   ): Promise<void> {
     const category = await categoryRepository.findById(id);
-    if (!category) throw new NotFoundError('Category not found');
+    if (!category) throw new AppError(CATEGORY_ERROR.NOT_FOUND);
 
     if (category.name === 'Uncategorized') {
-      throw new ValidationError("Cannot delete the 'Uncategorized' category");
+      throw new AppError(CATEGORY_ERROR.UNCATEGORIZED_CATEGORY_IMMUTABLE);
     }
 
     verifyOwnership(category, user);

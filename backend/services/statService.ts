@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 import Stat from '../models/Stat.js';
 import { statRepository } from '../repositories/statRepository.js';
 import { DATE_KEY_PATTERN } from '../constants/datePatterns.js';
-import { ValidationError } from '../utils/errors.js';
+import { AppError } from '../error/AppError.js';
+import { COMMON_ERROR } from '../error/definitions/commonErrors.js';
 import { IStatDocument, IDailyCategoryStat, IDailyStat } from '../types/IStat.js';
 import { ITaskDocument } from '../types/ITask.js';
 import { IUserDocument } from '../types/IUser.js';
@@ -346,7 +347,7 @@ export const statService = {
     date: string
   ): Promise<SerializedCompletedTask[]> {
     if (!DATE_KEY_PATTERN.test(date || '')) {
-      throw new ValidationError('A valid date query in YYYY-MM-DD format is required.');
+      throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
     }
 
     const tasks = await statRepository.getTasksByUser(user);
