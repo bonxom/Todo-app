@@ -1,0 +1,43 @@
+name: todoapp
+
+services:
+  backend:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME}/todoapp-backend:${IMAGE_TAG:-latest}
+    container_name: todoapp-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:4000/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  frontend:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME}/todoapp-frontend:${IMAGE_TAG:-latest}
+    container_name: todoapp-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3636:80"
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1/]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

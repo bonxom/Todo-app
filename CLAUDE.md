@@ -44,10 +44,10 @@ pnpm run build     # production bundle in dist/
 pnpm run preview   # preview the production bundle
 ```
 
-There is currently no automated test suite. The backend `pnpm test` script is a failing placeholder; do not report it as a passing test. For normal changes, the minimum verification is:
+The backend has a Vitest suite; the frontend currently has no automated test suite. For normal changes, the minimum verification is:
 
 ```bash
-cd backend && pnpm run build
+cd backend && pnpm run build && pnpm test
 cd frontend && pnpm run lint && pnpm run build
 ```
 
@@ -174,3 +174,30 @@ ErrorBoundary
 - Keep authorization and ownership checks in place for every user-scoped read or mutation.
 - After changing routes or API response shapes, update both the backend service/controller and the corresponding frontend API helper/consumer.
 - Report the exact verification commands run and any remaining warnings or untested paths.
+
+## Anthropic skill routing
+
+Project-local Anthropic skills live under `.claude/skills/<skill-name>/`. Before taking action, inspect the request and use the matching skill when one applies. Read that skill's `SKILL.md` completely before acting, and follow its workflow and bundled resources. Use only the relevant skills; combine skills when the task genuinely spans multiple domains.
+
+Use these triggers as a routing guide:
+
+- `algorithmic-art`: Create code-based generative art, p5.js sketches, particle systems, flow fields, or interactive canvas artwork.
+- `brainstorming`: Use before substantial design or implementation work when the problem, requirements, or solution space needs exploration; clarify goals and produce a design direction.
+- `cicd-pipeline-skill`: Create or update CI/CD pipeline configurations for GitHub Actions, Jenkins, GitLab CI, or Azure DevOps, including automated test execution.
+- `doc-coauthoring`: Co-author structured documentation, proposals, technical specifications, or decision documents.
+- `docx`: Create, read, edit, or convert Word `.docx`/`.dotx` files.
+- `frontend-design`: Design or reshape frontend UI; use it for visual direction, typography, layout, and distinctive styling.
+- `internal-comms`: Write internal status updates, leadership updates, newsletters, FAQs, incident reports, or similar communications.
+- `mcp-builder`: Build MCP servers that expose external APIs or services as well-designed LLM tools.
+- `node`: Apply Node.js/TypeScript best practices for native TypeScript, async code, streams, errors, testing, performance, and runtime configuration.
+- `pptx`: Create, read, edit, or convert PowerPoint `.pptx`/`.potx` presentations.
+- `theme-factory`: Apply or create a consistent visual theme for slides, documents, reports, or HTML artifacts.
+- `web-artifacts-builder`: Build complex multi-component React/Tailwind/shadcn HTML artifacts with state, routing, or rich interaction; do not use it for simple single-file markup.
+- `webapp-testing`: Test local web applications with Playwright, including UI flows, screenshots, and browser logs.
+- `web-design-guidelines`: Audit frontend UI for accessibility, usability, UX, and Web Interface Guidelines compliance.
+- `writing-plans`: Turn an agreed design or specification into a detailed, file-specific implementation plan before coding.
+- `executing-plans`: Execute an existing implementation plan task by task with checkpoints and verification.
+- `xlsx`: Create, read, edit, or transform spreadsheet files such as `.xlsx`, `.xlsm`, `.csv`, or `.tsv`.
+
+For a frontend task, normally use `frontend-design` for visual decisions, `web-artifacts-builder` only when a complex standalone artifact is requested, and `webapp-testing` for browser-based verification.
+For substantial feature work, prefer the Superpowers sequence `brainstorming` → `writing-plans` → `executing-plans`; skip it for small, unambiguous edits.
