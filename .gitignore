@@ -1,6 +1,6 @@
 .deploy/*
 deploy.sh
-.claude
 .agents
 .codex
+.vscode
 .vscode
