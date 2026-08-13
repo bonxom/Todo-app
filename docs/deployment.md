@@ -1,6 +1,11 @@
-# GitHub Actions deployment
+# GitHub Actions CI and deployment
 
-The workflow in `.github/workflows/ci-cd.yml` validates pull requests targeting `main`. It builds both Docker images without publishing them. A push or manual run on `main` publishes immutable commit-SHA tags and `latest` tags to Docker Hub, then deploys the SHA-tagged images over SSH.
+The workflows are split by responsibility:
+
+- `.github/workflows/ci.yml` runs automatically for pull requests targeting `main` and pushes to `main`. It validates the application; pull requests also build both Docker images without publishing them.
+- `.github/workflows/cd.yml` never runs automatically. Start it from **Actions → CD → Run workflow** and select the branch or tag to deploy. It builds and publishes immutable commit-SHA tags plus `latest`, then deploys the SHA-tagged images over SSH.
+
+The CD workflow begins with image publishing and does not repeat CI validation. Deploy only a ref whose CI checks have passed. Production deployments are serialized, so a second manual run will not execute concurrently with one already in progress.
 
 ## GitHub secrets
 
