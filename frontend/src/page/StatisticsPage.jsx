@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import MainLayout from '../layout/MainLayout';
-import { statService } from '../api/apiService';
+import { useStatsQuery } from '../features/statistics/api/statQueries';
 import LineChart from '../feature/Statics/LineChart';
 import StatusPieChart from '../feature/Statics/StatusPieChart';
 import CategoryPieChart from '../feature/Statics/CategoryPieChart';
@@ -8,30 +8,17 @@ import StatsSummary from '../feature/Statics/StatsSummary';
 import ActivityHeatmap from '../feature/Statics/ActivityHeatmap';
 import { normalizeDailyStats } from '../feature/Statics/statsUtils';
 import ChatBubble from '../component/ChatBuble';
+import { getApiErrorMessage } from '../shared/services/apiError';
 
 const StatisticsPage = () => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const statsQuery = useStatsQuery();
+  const stats = statsQuery.data || null;
+  const loading = statsQuery.isLoading;
+  const error = statsQuery.isError
+    ? getApiErrorMessage(statsQuery.error, 'Failed to load statistics. Please try again later.')
+    : null;
+
   const normalizedDailyStats = useMemo(() => normalizeDailyStats(stats?.dailyStats || []), [stats]);
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await statService.getUserStats();
-      setStats(data);
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-      setError('Failed to load statistics. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -65,7 +52,7 @@ const StatisticsPage = () => {
                 <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">{error}</p>
                 <button
                   type="button"
-                  onClick={fetchStats}
+                  onClick={() => statsQuery.refetch()}
                   className="ui-btn-secondary mt-6"
                 >
                   Try Again

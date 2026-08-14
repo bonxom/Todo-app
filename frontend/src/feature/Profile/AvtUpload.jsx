@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Camera, X } from 'lucide-react';
-import { authService } from '../../api/apiService';
+import { useUpdateProfileMutation } from '../../features/profile/api/userMutations';
+import { getApiErrorMessage } from '../../shared/services/apiError';
 
 const AvatarUpload = ({ onUploadSuccess }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
+  const updateProfileMutation = useUpdateProfileMutation();
+  const isUploading = updateProfileMutation.isPending;
 
   useEffect(() => {
     if (isOpen) {
@@ -28,9 +30,8 @@ const AvatarUpload = ({ onUploadSuccess }) => {
     e.preventDefault();
     if (!avatarUrl.trim()) return;
 
-    setIsUploading(true);
     try {
-      await authService.updateInfo({ avatarUrl });
+      await updateProfileMutation.mutateAsync({ avatarUrl });
       alert('Avatar updated successfully!');
       handleClose();
       if (onUploadSuccess) {
@@ -38,9 +39,7 @@ const AvatarUpload = ({ onUploadSuccess }) => {
       }
     } catch (error) {
       console.error('Error updating avatar:', error);
-      alert('Error updating avatar: ' + error.message);
-    } finally {
-      setIsUploading(false);
+      alert('Error updating avatar: ' + getApiErrorMessage(error));
     }
   };
 

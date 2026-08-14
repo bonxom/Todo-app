@@ -1,39 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
-import { categoryService } from '../../api/apiService';
+import { useCategoriesQuery } from '../../features/categories/api/categoryQueries';
 
 const AddTaskForm = ({ onAddTask }) => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [priority, setPriority] = useState('Medium');
-  const [categories, setCategories] = useState([]);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await categoryService.getAllCategories();
-        const categoriesData = Array.isArray(response) ? response : response.categories;
-        if (categoriesData && categoriesData.length > 0) {
-          setCategories(categoriesData);
-          setCategory(categoriesData[0]?.name || '');
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      }
-    };
-    fetchCategories();
-  }, []);
+  const categoriesQuery = useCategoriesQuery();
+  const categories = useMemo(() => categoriesQuery.data || [], [categoriesQuery.data]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (title.trim()) {
       onAddTask({
         title: title.trim(),
-        category,
+        category: category || categories[0]?.name || '',
         priority,
       });
       setTitle('');
-      setCategory(categories[0]?.name || '');
+      setCategory('');
       setPriority('Medium');
     }
   };
@@ -61,7 +47,7 @@ const AddTaskForm = ({ onAddTask }) => {
         
         <div className="flex gap-3">
           <select
-            value={category}
+            value={category || categories[0]?.name || ''}
             onChange={(e) => setCategory(e.target.value)}
             className="ui-input"
             aria-label="Category"

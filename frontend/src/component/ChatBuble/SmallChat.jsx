@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { X, Minimize2, MessageSquare, Sparkles } from 'lucide-react';
 import ChatField from './ChatField';
-import { aiService } from '../../api/apiService';
-import { useTaskRefresh } from '../../context/useTaskRefresh';
+import { useChatMutation, useGenerateTasksMutation } from '../../features/tasks/api/aiMutations';
 import { formatDateTime } from '../../utils/dateTime';
 
 const SmallChat = ({ onClose, onMinimize }) => {
-  const { triggerRefresh } = useTaskRefresh();
+  const chatMutation = useChatMutation();
+  const generateTasksMutation = useGenerateTasksMutation();
   const [mode, setMode] = useState('chat'); // 'chat' or 'taskAssistant'
   const [messages, setMessages] = useState([
     {
@@ -49,7 +49,7 @@ const SmallChat = ({ onClose, onMinimize }) => {
     try {
       if (mode === 'chat') {
         // Chat mode - normal conversation
-        const response = await aiService.getChatResponse({ userInput: text });
+        const response = await chatMutation.mutateAsync({ userInput: text });
         
         // Check if response exists and has data
         if (response && response.data && typeof response.data === 'string' && response.data.trim()) {
@@ -72,12 +72,11 @@ const SmallChat = ({ onClose, onMinimize }) => {
         }
       } else {
         // Task Assistant mode - generate tasks
-        const response = await aiService.generateTasks({ userRequirement: text });
+        const response = await generateTasksMutation.mutateAsync({ userRequirement: text });
         
         console.log('AI generateTasks response:', response);
         
         // Validate response structure before processing
-        // Response from apiService already contains the full backend response
         if (response && response.success === true && Array.isArray(response.data) && response.data.length > 0) {
           const tasksText = `Great! I've created **${response.data.length} task${response.data.length > 1 ? 's' : ''}** for you:\n\n${response.data.map((task, index) => 
             `**${index + 1}. ${task.title}**\n${task.description || ''}\nPriority: ${task.priority || 'Medium'}${task.dueDate ? `\nDue: ${formatDateTime(task.dueDate)}` : ''}`
@@ -90,9 +89,6 @@ const SmallChat = ({ onClose, onMinimize }) => {
             timestamp: new Date().toISOString(),
           };
           setMessages((prev) => [...prev, botResponse]);
-          
-          // Trigger refresh on all pages
-          triggerRefresh();
         } else {
           // More specific error message for task generation
           console.log('Task generation failed. Response:', response);

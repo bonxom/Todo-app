@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import AddCategoryForm from './AddCategoryForm';
 import AddProjectForm from './AddProjectForm';
-import { taskService, categoryService, projectService } from '../../../api/apiService';
+import { useUpdateTaskMutation } from '../../../features/tasks/api/taskMutations';
+import { useCategoriesQuery } from '../../../features/categories/api/categoryQueries';
+import { useProjectsQuery } from '../../../features/tasks/api/projectQueries';
 import { toDateTimeLocalValue, toISOStringLocal } from '../../../utils/dateTime';
 import DateTimeInput from '../../../component/DateTimeInput';
 import { isActiveProject, isCompletedProject } from '../../../utils/projectStatus';
+import { getApiErrorMessage } from '../../../shared/services/apiError';
 
 const STATUS_STYLES = {
   pending: 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] border-[var(--color-line)]',
@@ -22,102 +25,37 @@ const STATUS_LABELS = {
 };
 
 const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
-  const [title, setTitle] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [priority, setPriority] = useState('Medium');
-  const [startDate, setStartDate] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState(task?.title || '');
+  const [categoryId, setCategoryId] = useState(task?.categoryId?._id || task?.categoryId || '');
+  const [projectId, setProjectId] = useState(task?.projectId?._id || task?.projectId || '');
+  const [priority, setPriority] = useState(task?.priority || 'Medium');
+  const [startDate, setStartDate] = useState(toDateTimeLocalValue(task?.startDate || ''));
+  const [dueDate, setDueDate] = useState(toDateTimeLocalValue(task?.dueDate || ''));
+  const [description, setDescription] = useState(task?.description || '');
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [projects, setProjects] = useState([]);
+
+  const categoriesQuery = useCategoriesQuery();
+  const projectsQuery = useProjectsQuery();
+  const updateTaskMutation = useUpdateTaskMutation();
+
+  const categories = useMemo(() => categoriesQuery.data || [], [categoriesQuery.data]);
+  const projects = useMemo(() => projectsQuery.data || [], [projectsQuery.data]);
   const activeProjects = useMemo(() => projects.filter(isActiveProject), [projects]);
-  const fallbackCategoryId = categories[0]?._id || '';
-  const taskCategoryId = task?.categoryId?._id || task?.categoryId || '';
   const taskProjectId = task?.projectId?._id || task?.projectId || '';
-  const taskTitle = task?.title || '';
-  const taskPriority = task?.priority || 'Medium';
-  const taskStartDate = task?.startDate || '';
-  const taskDueDate = task?.dueDate || '';
-  const taskDescription = task?.description || '';
   const currentCompletedProject = useMemo(() => (
     projects.find((project) => project._id === taskProjectId && isCompletedProject(project)) || null
   ), [projects, taskProjectId]);
 
-  const fetchCategories = useCallback(async (selectCategoryId) => {
-    try {
-      const response = await categoryService.getAllCategories();
-      const categoriesData = Array.isArray(response) ? response : response.categories;
-      if (categoriesData) {
-        setCategories(categoriesData);
-        if (selectCategoryId) {
-          setCategoryId(selectCategoryId);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
-    }
-  }, []);
-
-  const fetchProjects = useCallback(async (selectProjectId) => {
-    try {
-      const projectsData = await projectService.getAllProjects();
-      setProjects(projectsData);
-      if (selectProjectId !== undefined) {
-        setProjectId(selectProjectId);
-      }
-    } catch (error) {
-      console.error('Failed to fetch projects:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCategories();
-    fetchProjects();
-  }, [fetchCategories, fetchProjects]);
-
-  useEffect(() => {
-    if (!task) {
-      return;
-    }
-
-    setTitle(taskTitle);
-    setCategoryId(taskCategoryId || fallbackCategoryId);
-    setProjectId(taskProjectId);
-    setPriority(taskPriority);
-    setStartDate(toDateTimeLocalValue(taskStartDate));
-    setDueDate(toDateTimeLocalValue(taskDueDate));
-    setDescription(taskDescription);
-  }, [
-    fallbackCategoryId,
-    task,
-    taskCategoryId,
-    taskDescription,
-    taskDueDate,
-    taskPriority,
-    taskProjectId,
-    taskStartDate,
-    taskTitle,
-  ]);
-
-  useEffect(() => {
-    if (!categoryId && categories.length > 0) {
-      setCategoryId(taskCategoryId || fallbackCategoryId);
-    }
-  }, [categories.length, categoryId, fallbackCategoryId, taskCategoryId]);
+  const isSubmitting = updateTaskMutation.isPending;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     try {
-      setIsSubmitting(true);
-      
       const updatedTask = {
         title,
-        categoryId: categoryId || undefined,
+        categoryId: categoryId || categories[0]?._id || undefined,
         projectId: projectId || null,
         priority,
         startDate: toISOStringLocal(startDate) || undefined,
@@ -125,7 +63,10 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
         description,
       };
       
-      await taskService.updateTask(task._id, updatedTask);
+      await updateTaskMutation.mutateAsync({
+        taskId: task._id || task.id,
+        payload: updatedTask,
+      });
       
       if (onTaskUpdated) {
         onTaskUpdated();
@@ -134,9 +75,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
       onClose();
     } catch (error) {
       console.error('Failed to update task:', error);
-      alert('Failed to update task. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      alert(getApiErrorMessage(error, 'Failed to update task. Please try again.'));
     }
   };
 
@@ -177,7 +116,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
           </label>
           <select
             id="edit-category"
-            value={categoryId}
+            value={categoryId || categories[0]?._id || ''}
             onChange={(e) => {
               if (e.target.value === '__add_more__') {
                 setShowAddCategory(true);
@@ -322,7 +261,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
               <AddCategoryForm 
                 onClose={() => setShowAddCategory(false)}
                 onCategoryCreated={(newCategory) => {
-                  fetchCategories(newCategory?._id || newCategory?.category?._id);
+                  setCategoryId(newCategory?._id || newCategory?.category?._id || '');
                 }}
               />
             </div>
@@ -353,7 +292,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
               <AddProjectForm
                 onClose={() => setShowAddProject(false)}
                 onProjectCreated={(newProject) => {
-                  fetchProjects(newProject?._id);
+                  setProjectId(newProject?._id || '');
                   onProjectCreated?.(newProject);
                 }}
               />

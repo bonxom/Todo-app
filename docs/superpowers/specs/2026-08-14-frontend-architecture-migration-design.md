@@ -88,16 +88,23 @@ The obsolete task refresh provider will be removed after consumers use query inv
 
 `useAuthStore` owns the access token, refresh token, current user, authentication readiness, and session actions. Its persisted representation uses the existing local-storage keys (`token`, `refreshToken`, and `user`) so current sessions remain compatible.
 
+The Zustand authentication store is the in-memory source of truth for the active session. The existing local-storage entries are its persisted representation, not a separate source of application state. Every session change must update both the in-memory store and local storage through shared session actions. This includes login, registration, logout, profile synchronization, and refresh-token rotation.
+
 The store exposes actions equivalent to the current context contract:
 
-- `setSession` persists tokens and user information.
-- `clearSession` removes all authentication state.
+- `setSession` updates the in-memory and persisted session (tokens and user information).
+- `updateTokens` synchronizes rotated access and refresh tokens without replacing the current user.
+- `clearSession` removes all in-memory and persisted authentication state.
 - `syncUser` updates the current user and persisted user record.
 - `setAuthReady` marks session restoration complete.
 
 An authentication bootstrap query calls `/api/auth/me` when a stored access token exists. Success synchronizes the returned user. Terminal failure clears the session. In either case, bootstrap marks authentication ready.
 
-The Axios transport reads tokens through framework-independent storage helpers. It must not import React hooks or depend directly on React rendering. The existing single-flight refresh queue, rotated refresh-token persistence, AI timeout, terminal-401 cleanup, and auth redirects remain intact.
+The Axios transport may access the store through the framework-independent `useAuthStore.getState()` API, but must not call React hooks or depend on React rendering. The existing single-flight refresh queue, rotated refresh-token persistence, AI timeout, terminal-401 cleanup, and auth redirects remain intact. After a successful token refresh, the interceptor must update both Zustand and local storage through `updateTokens` before processing the queued requests.
+
+Terminal authentication failure clears the Zustand session, removes all persisted authentication values, rejects the pending refresh queue, and redirects to `/login`. Network failures and server-side 5xx responses are not terminal authentication failures and must not automatically clear a valid persisted session.
+
+Logout and replacement of one authenticated session with another must remove all user-scoped React Query data so cached data from a previous user cannot be exposed to the next session.
 
 ### Task Filtering
 
@@ -105,7 +112,7 @@ The Axios transport reads tokens through framework-independent storage helpers. 
 
 ### Server State
 
-React Query owns tasks, projects, categories, statistics, and user-derived backend data. Every domain defines a query-key factory. Query hooks fetch data through focused service modules; mutation hooks call the corresponding service and invalidate affected keys on success.
+React Query owns tasks, projects, categories, statistics, and user-derived backend data. Every domain defines a typed query-key factory. Query hooks fetch data through focused service modules; mutation hooks call the corresponding service and invalidate affected keys on success.
 
 Invalidation must follow domain effects rather than a global counter. A task mutation may invalidate:
 
@@ -116,6 +123,47 @@ Invalidation must follow domain effects rather than a global counter. A task mut
 - statistics summaries and activity data.
 
 This replaces `TaskRefreshContext` and its incrementing `refreshTrigger`.
+
+#### Query Keys
+
+Every server-state domain defines a typed query-key factory. Components and mutation hooks must not construct ad hoc query keys.
+
+The minimum key hierarchy is:
+
+- `taskKeys.all`
+- `taskKeys.lists()`
+- `taskKeys.list(filters)`
+- `taskKeys.detail(taskId)`
+- `taskKeys.calendar({ startDate, endDate })`
+- `projectKeys.all`
+- `projectKeys.list()`
+- `projectKeys.detail(projectId)`
+- `projectKeys.tasks(projectId)`
+- `categoryKeys.all`
+- `categoryKeys.list()`
+- `categoryKeys.detail(categoryId)`
+- `categoryKeys.tasks(categoryId)`
+- `statKeys.all`
+- `statKeys.summary()`
+- `statKeys.activity(filters)`
+- `userKeys.me()`
+
+Query-key parameters must be serializable and normalized. Dates use stable string representations, and optional filters must be normalized before being included in a key.
+
+#### Optimistic Updates
+
+Existing optimistic user interactions must be preserved during the React Query migration. Calendar task and project mutations currently update the interface before the request completes and roll back when the request fails; this behavior must not be replaced by invalidation-only mutations.
+
+Optimistic mutations use the React Query lifecycle as follows:
+
+- `onMutate` cancels affected queries, captures their previous cached values, and applies the optimistic update with `setQueryData`.
+- `onError` restores the captured cache snapshot.
+- `onSuccess` replaces temporary or optimistic entities with the server response when necessary.
+- `onSettled` invalidates affected queries to reconcile the cache with the server.
+
+Temporary entities created optimistically must use collision-safe temporary IDs (such as nanoid or crypto.randomUUID) and must be replaced or removed after the request settles.
+
+Invalidation-only mutations remain acceptable where the existing UI does not provide optimistic behavior.
 
 ## Service Layer
 

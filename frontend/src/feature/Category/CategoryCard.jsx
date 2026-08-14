@@ -4,8 +4,10 @@ import TaskCard from './TaskCard';
 import CategoryDetailModal from './CategoryDetailModal';
 import TaskDetailButton from '../Todo/TaskDetailButton';
 import DeleteCategoryDialog from '../Dialog/DeleteCategoryDialog';
-import { categoryService, taskService } from '../../api/apiService';
+import { useDeleteCategoryMutation } from '../../features/categories/api/categoryMutations';
+import { useUpdateTaskMutation } from '../../features/tasks/api/taskMutations';
 import { getTaskDragData } from '../../utils/taskDrag';
+import { getApiErrorMessage } from '../../shared/services/apiError';
 
 const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,6 +23,9 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
   const hasMore = tasks.length > 3;
   const descriptionId = `category-${categoryId}-description`;
 
+  const deleteCategoryMutation = useDeleteCategoryMutation();
+  const updateTaskMutation = useUpdateTaskMutation();
+
   const handleTaskClick = (task) => {
     setSelectedTask(task);
     setIsEditModalOpen(true);
@@ -33,12 +38,12 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
 
   const handleConfirmDelete = async () => {
     try {
-      await categoryService.deleteCategory(categoryId);
+      await deleteCategoryMutation.mutateAsync(categoryId);
       setIsDeleteDialogOpen(false);
       onTaskUpdated?.();
     } catch (error) {
       console.error('Failed to delete category:', error);
-      alert(error.response?.data?.message || 'Failed to delete category. Please try again.');
+      alert(getApiErrorMessage(error, 'Failed to delete category. Please try again.'));
     }
   };
 
@@ -76,11 +81,14 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
     }
 
     try {
-      await taskService.updateTask(taskId, { categoryId });
+      await updateTaskMutation.mutateAsync({
+        taskId,
+        payload: { categoryId },
+      });
       onTaskUpdated?.();
     } catch (error) {
       console.error('Failed to move task:', error);
-      alert(error.response?.data?.message || 'Failed to move task to this category.');
+      alert(getApiErrorMessage(error, 'Failed to move task to this category.'));
     }
   };
 

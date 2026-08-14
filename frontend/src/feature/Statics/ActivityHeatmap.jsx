@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from 'react';
-import { statService } from '../../api/apiService';
+import { useMemo, useState } from 'react';
+import { useActivityQuery } from '../../features/statistics/api/statQueries';
 import { createHeatmapModel, formatDateKeyLabel } from './statsUtils';
 import { useTaskFilter, useVisibleTasks } from '../../context/useTaskFilter';
+import { getApiErrorMessage } from '../../shared/services/apiError';
 
 const CELL_LEVEL_STYLES = [
   'bg-[var(--color-surface-muted)] border-[color:var(--color-line)]',
@@ -134,10 +135,20 @@ const SummaryCard = ({ label, value }) => (
 const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = '' }) => {
   const [activeDateKey, setActiveDateKey] = useState(null);
   const [selectedDateKey, setSelectedDateKey] = useState(null);
-  const [completedTasks, setCompletedTasks] = useState([]);
-  const [isTaskListLoading, setIsTaskListLoading] = useState(false);
-  const [taskListError, setTaskListError] = useState('');
-  const taskListRequestId = useRef(0);
+
+  const activityQuery = useActivityQuery(selectedDateKey || undefined);
+  const isTaskListLoading = activityQuery.isLoading && Boolean(selectedDateKey);
+  const taskListError = activityQuery.isError
+    ? getApiErrorMessage(activityQuery.error, 'Unable to load completed tasks for this day.')
+    : '';
+  const completedTasks = useMemo(() => {
+    const data = activityQuery.data;
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.tasks)) return data.tasks;
+    return [];
+  }, [activityQuery.data]);
+
   const { onlyInProgress } = useTaskFilter();
   const visibleCompletedTasks = useVisibleTasks(completedTasks);
   const heatmap = useMemo(() => createHeatmapModel(dailyStats, 365), [dailyStats]);
@@ -183,38 +194,12 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
     return heatmap.weeks.flat().find((cell) => cell.dateKey === selectedDateKey) || null;
   }, [heatmap.weeks, selectedDateKey]);
 
-  const handleCellSelect = async (cell) => {
+  const handleCellSelect = (cell) => {
     if (!cell?.isInRange) {
       return;
     }
 
     setSelectedDateKey(cell.dateKey);
-    setCompletedTasks([]);
-    setTaskListError('');
-    setIsTaskListLoading(true);
-    const requestId = taskListRequestId.current + 1;
-    taskListRequestId.current = requestId;
-
-    try {
-      const response = await statService.getCompletedTasksByDate(cell.dateKey);
-
-      if (requestId !== taskListRequestId.current) {
-        return;
-      }
-
-      setCompletedTasks(Array.isArray(response?.tasks) ? response.tasks : []);
-    } catch (error) {
-      if (requestId !== taskListRequestId.current) {
-        return;
-      }
-
-      const message = error?.response?.data?.message || 'Unable to load completed tasks for this day.';
-      setTaskListError(message);
-    } finally {
-      if (requestId === taskListRequestId.current) {
-        setIsTaskListLoading(false);
-      }
-    }
   };
 
   if (isLoading) {

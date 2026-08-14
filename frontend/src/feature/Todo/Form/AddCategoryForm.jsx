@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { categoryService } from '../../../api/apiService';
+import { useCreateCategoryMutation } from '../../../features/categories/api/categoryMutations';
+import { getApiErrorMessage } from '../../../shared/services/apiError';
 
 const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createCategoryMutation = useCreateCategoryMutation();
+  const isSubmitting = createCategoryMutation.isPending;
 
   const handleReset = () => {
     setName('');
@@ -15,14 +17,12 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
     e.preventDefault();
     
     try {
-      setIsSubmitting(true);
-      
       const newCategory = {
         name,
         description,
       };
       
-      const response = await categoryService.createCategory(newCategory);
+      const response = await createCategoryMutation.mutateAsync(newCategory);
       
       if (onCategoryCreated) {
         onCategoryCreated(response);
@@ -32,9 +32,7 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
       onClose();
     } catch (error) {
       console.error('Failed to create category:', error);
-      alert(error.response?.data?.message || 'Failed to create category. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      alert(getApiErrorMessage(error, 'Failed to create category. Please try again.'));
     }
   };
 

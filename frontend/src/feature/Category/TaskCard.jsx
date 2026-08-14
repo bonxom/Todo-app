@@ -7,8 +7,9 @@ import {
   Play,
   Trash2,
 } from 'lucide-react';
-import { taskService } from '../../api/apiService';
+import { useFinishTaskMutation, useStartTaskMutation } from '../../features/tasks/api/taskMutations';
 import { setTaskDragData } from '../../utils/taskDrag';
+import { getApiErrorMessage } from '../../shared/services/apiError';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
   month: 'short',
@@ -118,13 +119,16 @@ const TaskCard = ({
   const isPending = task.status === 'pending';
   const isSimpleInteractive = Boolean(onClick) && !showActions && !quickActions;
 
+  const finishTaskMutation = useFinishTaskMutation();
+  const startTaskMutation = useStartTaskMutation();
+
   const handleFinishTask = async (event) => {
     event.stopPropagation();
     if (isFinishing) return;
 
     try {
       setIsFinishing(true);
-      await taskService.finishTask(task._id);
+      await finishTaskMutation.mutateAsync(task._id || task.id);
 
       setTimeout(() => {
         onTaskUpdated?.();
@@ -132,7 +136,7 @@ const TaskCard = ({
       }, 500);
     } catch (error) {
       console.error('Failed to finish task:', error);
-      alert('Failed to finish task.');
+      alert(getApiErrorMessage(error, 'Failed to finish task.'));
       setIsFinishing(false);
     }
   };
@@ -141,11 +145,11 @@ const TaskCard = ({
     event.stopPropagation();
 
     try {
-      await taskService.startTask(task._id);
+      await startTaskMutation.mutateAsync(task._id || task.id);
       onTaskUpdated?.();
     } catch (error) {
       console.error('Failed to start task:', error);
-      alert('Failed to start task.');
+      alert(getApiErrorMessage(error, 'Failed to start task.'));
     }
   };
 

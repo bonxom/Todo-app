@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { projectService } from '../../../api/apiService';
+import { useState } from 'react';
+import { useCreateProjectMutation, useUpdateProjectMutation } from '../../../features/tasks/api/projectMutations';
 import { DEFAULT_PROJECT_COLOR, getProjectColor } from '../../../utils/projectColor';
+import { getApiErrorMessage } from '../../../shared/services/apiError';
 
 const PROJECT_COLOR_SWATCHES = [
   '#FFFFFF', '#FECACA', '#FED7AA', '#FEF3C7', '#D9F99D', '#BBF7D0',
@@ -15,16 +16,13 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
   const projectName = project?.name || '';
   const projectDescription = project?.description || '';
   const projectColor = getProjectColor(project);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [color, setColor] = useState(DEFAULT_PROJECT_COLOR);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [name, setName] = useState(projectName);
+  const [description, setDescription] = useState(projectDescription);
+  const [color, setColor] = useState(projectColor);
 
-  useEffect(() => {
-    setName(projectName);
-    setDescription(projectDescription);
-    setColor(projectColor);
-  }, [projectColor, projectDescription, projectId, projectName]);
+  const createProjectMutation = useCreateProjectMutation();
+  const updateProjectMutation = useUpdateProjectMutation();
+  const isSubmitting = createProjectMutation.isPending || updateProjectMutation.isPending;
 
   const handleReset = () => {
     setName(projectName);
@@ -36,8 +34,6 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
     e.preventDefault();
 
     try {
-      setIsSubmitting(true);
-
       const payload = {
         name,
         description,
@@ -45,8 +41,8 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
       };
 
       const savedProject = projectId
-        ? await projectService.updateProject(projectId, payload)
-        : await projectService.createProject(payload);
+        ? await updateProjectMutation.mutateAsync({ projectId, payload })
+        : await createProjectMutation.mutateAsync(payload);
 
       onProjectCreated?.(savedProject);
       onProjectSaved?.(savedProject);
@@ -55,9 +51,7 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
       onClose();
     } catch (error) {
       console.error('Failed to create project:', error);
-      alert(error.response?.data?.message || error.message || 'Failed to save project. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      alert(getApiErrorMessage(error, 'Failed to save project. Please try again.'));
     }
   };
 

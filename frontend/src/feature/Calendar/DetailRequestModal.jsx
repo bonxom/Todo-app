@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { X, Sparkles } from 'lucide-react';
-import { aiService } from '../../api/apiService';
+import { useGenerateTasksMutation } from '../../features/tasks/api/aiMutations';
 import { formatDateTime } from '../../utils/dateTime';
 
 const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated }) => {
   const [userInput, setUserInput] = useState('');
   const [selectedTopics, setSelectedTopics] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const generateTasksMutation = useGenerateTasksMutation();
+  const isLoading = generateTasksMutation.isPending;
 
   const topics = [
     'Cooking',
@@ -35,8 +36,6 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
       return;
     }
 
-    setIsLoading(true);
-
     // Format date
     const dateStr = selectedDate ? formatDateTime(selectedDate) : 'today';
 
@@ -47,15 +46,13 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
     }
 
     try {
-      const response = await aiService.generateTasks({ userRequirement: requestString });
+      const response = await generateTasksMutation.mutateAsync({ userRequirement: requestString });
       
       if (response.success && response.data) {
-        // Call callback to refresh tasks
         if (onTasksGenerated) {
           onTasksGenerated();
         }
         
-        // Reset form and close
         setUserInput('');
         setSelectedTopics([]);
         onClose();
@@ -67,8 +64,6 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
     } catch (error) {
       console.error('Error generating tasks:', error);
       alert('Failed to generate tasks. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 

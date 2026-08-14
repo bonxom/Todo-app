@@ -5,7 +5,8 @@ import TaskCard from '../Category/TaskCard';
 import TaskDetailButton from '../Todo/TaskDetailButton';
 import GiveUpDialog from '../Dialog/GiveUpDialog';
 import DeleteDialog from '../Dialog/DeleteDialog';
-import { taskService } from '../../api/apiService';
+import { useDeleteTaskMutation, useGiveUpTaskMutation } from '../../features/tasks/api/taskMutations';
+import { getApiErrorMessage } from '../../shared/services/apiError';
 
 const ProjectDetailModal = ({
   isOpen,
@@ -23,6 +24,9 @@ const ProjectDetailModal = ({
   const [isGiveUpModalOpen, setIsGiveUpModalOpen] = useState(false);
   const [taskToGiveUp, setTaskToGiveUp] = useState(null);
   const [deletingTaskId, setDeletingTaskId] = useState(null);
+
+  const giveUpTaskMutation = useGiveUpTaskMutation();
+  const deleteTaskMutation = useDeleteTaskMutation();
 
   useEffect(() => {
     if (isOpen) {
@@ -55,13 +59,13 @@ const ProjectDetailModal = ({
 
   const confirmGiveUp = async () => {
     try {
-      await taskService.giveUpTask(taskToGiveUp);
+      await giveUpTaskMutation.mutateAsync(taskToGiveUp);
       onTaskUpdated?.();
       setIsGiveUpModalOpen(false);
       setTaskToGiveUp(null);
     } catch (error) {
       console.error('Failed to give up task:', error);
-      alert(error.response?.data?.message || 'Failed to give up task.');
+      alert(getApiErrorMessage(error, 'Failed to give up task.'));
     }
   };
 
@@ -74,7 +78,7 @@ const ProjectDetailModal = ({
     try {
       setDeletingTaskId(taskToDelete);
       setIsDeleteModalOpen(false);
-      await taskService.deleteTask(taskToDelete);
+      await deleteTaskMutation.mutateAsync(taskToDelete);
 
       setTimeout(() => {
         setDeletingTaskId(null);
@@ -83,7 +87,7 @@ const ProjectDetailModal = ({
       }, 300);
     } catch (error) {
       console.error('Failed to delete task:', error);
-      alert(error.response?.data?.message || 'Failed to delete task.');
+      alert(getApiErrorMessage(error, 'Failed to delete task.'));
       setDeletingTaskId(null);
       setTaskToDelete(null);
     }

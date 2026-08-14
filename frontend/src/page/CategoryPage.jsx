@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FolderOpen, LayoutGrid, Plus, X } from 'lucide-react';
 import MainLayout from '../layout/MainLayout';
 import CategoryGrid from '../feature/Category/CategoryGrid';
@@ -7,10 +7,12 @@ import ProjectGrid from '../feature/Project/ProjectGrid';
 import ChatBubble from '../component/ChatBuble';
 import AddCategoryForm from '../feature/Todo/Form/AddCategoryForm';
 import AddProjectForm from '../feature/Todo/Form/AddProjectForm';
-import { categoryService, projectService, taskService } from '../api/apiService';
-import { useTaskRefresh } from '../context/useTaskRefresh';
+import { useCategoriesQuery } from '../features/categories/api/categoryQueries';
+import { useProjectsQuery } from '../features/tasks/api/projectQueries';
+import { useTasksQuery } from '../features/tasks/api/taskQueries';
 import { useVisibleTasks } from '../context/useTaskFilter';
 import { filterProjectsByVisibility } from '../utils/projectStatus';
+import { getApiErrorMessage } from '../shared/services/apiError';
 
 const VIEW_CONFIG = {
   categories: {
@@ -42,51 +44,34 @@ const STATUS_OPTIONS = [
 const getRelationId = (value) => value?._id || value || null;
 
 const CategoryPage = () => {
-  const { refreshTrigger } = useTaskRefresh();
-  const [categories, setCategories] = useState([]);
-  const [projects, setProjects] = useState([]);
   const [showCompletedProjects, setShowCompletedProjects] = useState(false);
-  const [tasks, setTasks] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedView, setSelectedView] = useState('categories');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
 
-  const fetchWorkspaceData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setErrorMessage('');
+  const categoriesQuery = useCategoriesQuery();
+  const projectsQuery = useProjectsQuery();
+  const tasksQuery = useTasksQuery();
 
-      const [categoryResponse, projectResponse, taskResponse] = await Promise.all([
-        categoryService.getAllCategories(),
-        projectService.getAllProjects(),
-        taskService.getAllTasks(),
-      ]);
+  const categories = useMemo(() => categoriesQuery.data || [], [categoriesQuery.data]);
+  const projects = useMemo(() => projectsQuery.data || [], [projectsQuery.data]);
+  const tasks = useMemo(() => tasksQuery.data || [], [tasksQuery.data]);
 
-      setCategories(categoryResponse || []);
-      setProjects(projectResponse || []);
-      setTasks(taskResponse || []);
-    } catch (error) {
-      console.error('Error fetching category page data:', error);
-      setErrorMessage(error.response?.data?.message || 'Failed to load categories, projects, or tasks.');
-    } finally {
-      setIsLoading(false);
-      setIsInitialLoad(false);
-    }
-  }, []);
+  const isLoading = categoriesQuery.isLoading || projectsQuery.isLoading || tasksQuery.isLoading;
+  const errorMessage = categoriesQuery.isError
+    ? getApiErrorMessage(categoriesQuery.error, 'Failed to load categories.')
+    : projectsQuery.isError
+    ? getApiErrorMessage(projectsQuery.error, 'Failed to load projects.')
+    : tasksQuery.isError
+    ? getApiErrorMessage(tasksQuery.error, 'Failed to load tasks.')
+    : '';
 
-  useEffect(() => {
-    fetchWorkspaceData();
-  }, [fetchWorkspaceData]);
-
-  useEffect(() => {
-    if (refreshTrigger > 0) {
-      fetchWorkspaceData();
-    }
-  }, [fetchWorkspaceData, refreshTrigger]);
+  const refetchAll = () => {
+    categoriesQuery.refetch();
+    projectsQuery.refetch();
+    tasksQuery.refetch();
+  };
 
   useEffect(() => {
     if (isAddCategoryModalOpen || isAddProjectModalOpen) {
@@ -177,19 +162,19 @@ const CategoryPage = () => {
   const ActiveIcon = activeConfig.Icon;
 
   const stats = useMemo(() => {
-    const visibleTasks = activeItems.flatMap((item) => item.tasks);
+    const visibleTaskItems = activeItems.flatMap((item) => item.tasks);
 
     return {
       totalGroups: activeItems.length,
-      totalTasks: visibleTasks.length,
-      completedTasks: visibleTasks.filter((task) => task.status === 'completed').length,
-      pendingTasks: visibleTasks.filter((task) => task.status === 'pending').length,
+      totalTasks: visibleTaskItems.length,
+      completedTasks: visibleTaskItems.filter((task) => task.status === 'completed').length,
+      pendingTasks: visibleTaskItems.filter((task) => task.status === 'pending').length,
     };
   }, [activeItems]);
 
   const activeStatusLabel = STATUS_OPTIONS.find((option) => option.id === selectedStatus)?.label || 'All Tasks';
 
-  if (isInitialLoad && isLoading) {
+  if (isLoading) {
     return (
       <>
         <MainLayout>
@@ -327,7 +312,7 @@ const CategoryPage = () => {
                 <p className="mx-auto mt-2 max-w-2xl text-sm text-[color:var(--color-text-muted)]">{errorMessage}</p>
                 <button
                   type="button"
-                  onClick={fetchWorkspaceData}
+                  onClick={refetchAll}
                   className="ui-btn-secondary mt-6"
                 >
                   Try Again
@@ -343,14 +328,14 @@ const CategoryPage = () => {
             ) : selectedView === 'categories' ? (
               <CategoryGrid
                 items={categoryItems}
-                onTaskUpdated={fetchWorkspaceData}
+                onTaskUpdated={refetchAll}
                 onCreateCategory={() => setIsAddCategoryModalOpen(true)}
               />
             ) : (
               <ProjectGrid
                 items={projectItems}
-                onTaskUpdated={fetchWorkspaceData}
-                onProjectUpdated={fetchWorkspaceData}
+                onTaskUpdated={refetchAll}
+                onProjectUpdated={refetchAll}
                 onCreateProject={() => setIsAddProjectModalOpen(true)}
               />
             )}
@@ -390,7 +375,6 @@ const CategoryPage = () => {
                 onClose={() => setIsAddCategoryModalOpen(false)}
                 onCategoryCreated={() => {
                   setIsAddCategoryModalOpen(false);
-                  fetchWorkspaceData();
                 }}
               />
             </div>
@@ -430,7 +414,6 @@ const CategoryPage = () => {
                 onClose={() => setIsAddProjectModalOpen(false)}
                 onProjectCreated={() => {
                   setIsAddProjectModalOpen(false);
-                  fetchWorkspaceData();
                 }}
               />
             </div>

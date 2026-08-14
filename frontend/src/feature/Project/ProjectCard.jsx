@@ -4,16 +4,21 @@ import ProjectDetailModal from './ProjectDetailModal';
 import AddProjectForm from '../Todo/Form/AddProjectForm';
 import DeleteProjectDialog from './DeleteProjectDialog';
 import TaskCard from '../Category/TaskCard';
-import { projectService, taskService } from '../../api/apiService';
+import { useDeleteProjectMutation, useUpdateProjectMutation } from '../../features/tasks/api/projectMutations';
+import { useUpdateTaskMutation } from '../../features/tasks/api/taskMutations';
 import { getTaskDragData } from '../../utils/taskDrag';
 import { getProjectColor } from '../../utils/projectColor';
 import { PROJECT_STATUS, canCompleteProject, isCompletedProject } from '../../utils/projectStatus';
+import { getApiErrorMessage } from '../../shared/services/apiError';
 
 const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const deleteProjectMutation = useDeleteProjectMutation();
+  const updateProjectMutation = useUpdateProjectMutation();
+  const updateTaskMutation = useUpdateTaskMutation();
 
   const completedTasks = tasks.filter((task) => task.status === 'completed').length;
   const pendingTasks = tasks.filter((task) => task.status === 'pending').length;
@@ -28,13 +33,13 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
 
   const handleConfirmDelete = async () => {
     try {
-      await projectService.deleteProject(project._id);
+      await deleteProjectMutation.mutateAsync(project._id);
       setIsDeleteDialogOpen(false);
       setIsDetailOpen(false);
       onProjectUpdated?.();
     } catch (error) {
       console.error('Failed to delete project:', error);
-      alert(error.response?.data?.message || 'Failed to delete project. Please try again.');
+      alert(getApiErrorMessage(error, 'Failed to delete project. Please try again.'));
     }
   };
 
@@ -84,31 +89,40 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
     }
 
     try {
-      await taskService.updateTask(taskId, { projectId: project._id });
+      await updateTaskMutation.mutateAsync({
+        taskId,
+        payload: { projectId: project._id },
+      });
       onTaskUpdated?.();
     } catch (error) {
       console.error('Failed to move task to project:', error);
-      alert(error.response?.data?.message || 'Failed to move task to this project.');
+      alert(getApiErrorMessage(error, 'Failed to move task to this project.'));
     }
   };
 
   const handleCompleteProject = async () => {
     try {
-      await projectService.updateProject(project._id, { status: PROJECT_STATUS.COMPLETED });
+      await updateProjectMutation.mutateAsync({
+        projectId: project._id,
+        payload: { status: PROJECT_STATUS.COMPLETED },
+      });
       onProjectUpdated?.();
     } catch (error) {
       console.error('Failed to complete project:', error);
-      alert(error.response?.data?.message || 'Failed to complete project.');
+      alert(getApiErrorMessage(error, 'Failed to complete project.'));
     }
   };
 
   const handleRestoreProject = async () => {
     try {
-      await projectService.updateProject(project._id, { status: PROJECT_STATUS.ACTIVE });
+      await updateProjectMutation.mutateAsync({
+        projectId: project._id,
+        payload: { status: PROJECT_STATUS.ACTIVE },
+      });
       onProjectUpdated?.();
     } catch (error) {
       console.error('Failed to restore project:', error);
-      alert(error.response?.data?.message || 'Failed to restore project.');
+      alert(getApiErrorMessage(error, 'Failed to restore project.'));
     }
   };
 

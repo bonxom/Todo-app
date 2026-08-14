@@ -1,12 +1,10 @@
-import { useContext } from 'react';
-import TaskRefreshContext from './taskRefreshContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { invalidateWorkspaceQueries } from '../features/tasks/api/invalidation';
 
 export const useTaskRefresh = () => {
-  const context = useContext(TaskRefreshContext);
-
-  if (!context) {
-    throw new Error('useTaskRefresh must be used within TaskRefreshProvider');
-  }
-
-  return context;
+  const queryClient = useQueryClient();
+  return {
+    refreshTrigger: 0,
+    triggerRefresh: () => invalidateWorkspaceQueries(queryClient),
+  };
 };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import MainLayout from '../layout/MainLayout';
 import ActionButtons from '../feature/Todo/GenTaskButton';
 import AddTaskButton from '../feature/Todo/AddTaskButton';
@@ -11,11 +11,19 @@ import ProjectOverviewGrid from '../feature/Todo/ProjectOverviewGrid';
 import ChatBubble from '../component/ChatBuble';
 import AddCategoryForm from '../feature/Todo/Form/AddCategoryForm';
 import AddProjectForm from '../feature/Todo/Form/AddProjectForm';
-import { taskService, projectService } from '../api/apiService';
-import { useTaskRefresh } from '../context/useTaskRefresh';
+import { useTasksQuery } from '../features/tasks/api/taskQueries';
+import { useProjectsQuery } from '../features/tasks/api/projectQueries';
+import {
+  useDeleteTaskMutation,
+  useGiveUpTaskMutation,
+  useStartTaskMutation,
+  useUpdateTaskMutation,
+} from '../features/tasks/api/taskMutations';
+import { useUpdateProjectMutation } from '../features/tasks/api/projectMutations';
 import { useTaskFilter, useVisibleTasks } from '../context/useTaskFilter';
-import { toggleTaskCompletion } from '../utils/taskCompletion';
+import { getNextCompletionStatus } from '../utils/taskCompletion';
 import { PROJECT_STATUS, canCompleteProject, filterProjectsByVisibility } from '../utils/projectStatus';
+import { getApiErrorMessage } from '../shared/services/apiError';
 import { X } from 'lucide-react';
 
 const ALL_PROJECT_FILTER = 'all-projects';
@@ -31,12 +39,10 @@ const sortTasksByDueDate = (taskList) => {
 };
 
 const TodoPage = () => {
-  const { refreshTrigger } = useTaskRefresh();
   const { onlyInProgress } = useTaskFilter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [tasks, setTasks] = useState([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [isGiveUpModalOpen, setIsGiveUpModalOpen] = useState(false);
@@ -45,14 +51,32 @@ const TodoPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState(DEFAULT_STATUS_FILTERS);
   const [selectedProjectId, setSelectedProjectId] = useState(ALL_PROJECT_FILTER);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [projects, setProjects] = useState([]);
   const [showCompletedProjects, setShowCompletedProjects] = useState(false);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [initialTaskProjectId, setInitialTaskProjectId] = useState('');
+
+  // Queries & Mutations
+  const tasksQuery = useTasksQuery();
+  const projectsQuery = useProjectsQuery();
+
+  const updateTaskMutation = useUpdateTaskMutation();
+  const startTaskMutation = useStartTaskMutation();
+  const giveUpTaskMutation = useGiveUpTaskMutation();
+  const deleteTaskMutation = useDeleteTaskMutation();
+  const updateProjectMutation = useUpdateProjectMutation();
+
+  const rawTasks = useMemo(() => tasksQuery.data || [], [tasksQuery.data]);
+  const tasks = useMemo(() => sortTasksByDueDate(rawTasks), [rawTasks]);
+  const projects = useMemo(() => projectsQuery.data || [], [projectsQuery.data]);
+
+  const isLoading = tasksQuery.isLoading || projectsQuery.isLoading;
+  const isFetching = tasksQuery.isFetching || projectsQuery.isFetching;
+  const errorMessage = tasksQuery.isError
+    ? getApiErrorMessage(tasksQuery.error, 'Failed to load tasks.')
+    : projectsQuery.isError
+    ? getApiErrorMessage(projectsQuery.error, 'Failed to load projects.')
+    : '';
 
   // Lock body scroll when any modal is open
   useEffect(() => {
@@ -76,54 +100,30 @@ const TodoPage = () => {
     isAddProjectModalOpen,
   ]);
 
-  const fetchTasksAndProjects = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setErrorMessage('');
-      const [taskResponse, projectResponse] = await Promise.all([
-        taskService.getAllTasks(),
-        projectService.getAllProjects(),
-      ]);
-
-      const tasksData = Array.isArray(taskResponse) ? taskResponse : taskResponse.tasks || [];
-      setTasks(sortTasksByDueDate(tasksData));
-      setProjects(projectResponse || []);
-    } catch (error) {
-      console.error('Failed to fetch Todo data:', error);
-      setErrorMessage(error.response?.data?.message || 'Failed to load tasks or projects.');
-    } finally {
-      setIsLoading(false);
-      setIsInitialLoad(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTasksAndProjects();
-  }, [fetchTasksAndProjects, refreshTrigger]);
-
   const visibleTasks = useVisibleTasks(tasks);
 
   const handleToggleComplete = async (taskId) => {
     try {
-      const task = tasks.find(t => t._id === taskId);
-      
+      const task = tasks.find((t) => (t._id || t.id) === taskId);
       if (!task) return;
 
-      await toggleTaskCompletion(task);
-      await fetchTasksAndProjects();
+      const nextStatus = getNextCompletionStatus(task);
+      await updateTaskMutation.mutateAsync({
+        taskId,
+        payload: { status: nextStatus },
+      });
     } catch (error) {
       console.error('Failed to toggle task:', error);
-      alert(error.response?.data?.message || 'Failed to update task. Please try again.');
+      alert(getApiErrorMessage(error, 'Failed to update task. Please try again.'));
     }
   };
 
   const handleStart = async (taskId) => {
     try {
-      await taskService.startTask(taskId);
-      await fetchTasksAndProjects();
+      await startTaskMutation.mutateAsync(taskId);
     } catch (error) {
       console.error('Failed to start task:', error);
-      alert(error.response?.data?.message || 'Failed to start task. Please try again.');
+      alert(getApiErrorMessage(error, 'Failed to start task. Please try again.'));
     }
   };
 
@@ -140,24 +140,28 @@ const TodoPage = () => {
 
   const handleCompleteProject = async (projectId) => {
     try {
-      await projectService.updateProject(projectId, { status: PROJECT_STATUS.COMPLETED });
+      await updateProjectMutation.mutateAsync({
+        projectId,
+        payload: { status: PROJECT_STATUS.COMPLETED },
+      });
       if (selectedProjectId === projectId) {
         setSelectedProjectId(ALL_PROJECT_FILTER);
       }
-      await fetchTasksAndProjects();
     } catch (error) {
       console.error('Failed to complete project:', error);
-      alert(error.response?.data?.message || 'Failed to complete project.');
+      alert(getApiErrorMessage(error, 'Failed to complete project.'));
     }
   };
 
   const handleRestoreProject = async (projectId) => {
     try {
-      await projectService.updateProject(projectId, { status: PROJECT_STATUS.ACTIVE });
-      await fetchTasksAndProjects();
+      await updateProjectMutation.mutateAsync({
+        projectId,
+        payload: { status: PROJECT_STATUS.ACTIVE },
+      });
     } catch (error) {
       console.error('Failed to restore project:', error);
-      alert(error.response?.data?.message || 'Failed to restore project.');
+      alert(getApiErrorMessage(error, 'Failed to restore project.'));
     }
   };
 
@@ -168,13 +172,12 @@ const TodoPage = () => {
 
   const confirmGiveUp = async () => {
     try {
-      await taskService.giveUpTask(taskToGiveUp);
-      await fetchTasksAndProjects();
+      await giveUpTaskMutation.mutateAsync(taskToGiveUp);
       setIsGiveUpModalOpen(false);
       setTaskToGiveUp(null);
     } catch (error) {
       console.error('Failed to give up task:', error);
-      alert(error.response?.data?.message || 'Failed to give up task. Please try again.');
+      alert(getApiErrorMessage(error, 'Failed to give up task. Please try again.'));
     }
   };
 
@@ -185,19 +188,18 @@ const TodoPage = () => {
 
   const confirmDelete = async () => {
     try {
-      await taskService.deleteTask(taskToDelete);
-      await fetchTasksAndProjects();
+      await deleteTaskMutation.mutateAsync(taskToDelete);
       setIsDeleteModalOpen(false);
       setTaskToDelete(null);
     } catch (error) {
       console.error('Failed to delete task:', error);
-      alert('Failed to delete task. Please try again.');
+      alert(getApiErrorMessage(error, 'Failed to delete task. Please try again.'));
     }
   };
 
   const filteredTasks = useMemo(() => {
     return visibleTasks.filter((task) => {
-      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = (task.title || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = selectedStatus.includes(task.status);
       const taskProjectId = task.projectId?._id || task.projectId || null;
       const matchesProject = selectedProjectId === ALL_PROJECT_FILTER
@@ -337,7 +339,7 @@ const TodoPage = () => {
     return [allCard, ...projectItems, standaloneCard];
   }, [projects, showCompletedProjects, tasks, visibleTasks, overallSummary]);
 
-  if (isInitialLoad && isLoading) {
+  if (isLoading) {
     return (
       <>
         <MainLayout>
@@ -352,249 +354,247 @@ const TodoPage = () => {
 
   return (
     <>
-    <AddTaskButton
-      isOpen={isModalOpen}
-      onClose={() => {
-        setIsModalOpen(false);
-        setInitialTaskProjectId('');
-      }}
-      onTaskCreated={fetchTasksAndProjects}
-      onProjectCreated={fetchTasksAndProjects}
-      initialProjectId={initialTaskProjectId}
-    />
+      <AddTaskButton
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setInitialTaskProjectId('');
+        }}
+        initialProjectId={initialTaskProjectId}
+      />
 
-    <TaskDetailButton
-      isOpen={isEditModalOpen}
-      task={selectedTask}
-      onClose={() => {
-        setIsEditModalOpen(false);
-        setSelectedTask(null);
-      }}
-      onTaskUpdated={fetchTasksAndProjects}
-      onProjectCreated={fetchTasksAndProjects}
-    />
+      <TaskDetailButton
+        isOpen={isEditModalOpen}
+        task={selectedTask}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedTask(null);
+        }}
+      />
 
-    <ChatBubble />
+      <ChatBubble />
 
-    <MainLayout>
-      <div className="ui-page-shell">
-        <header className="ui-page-header">
-          <p className="ui-page-kicker">Workspace</p>
-          <h1 className="ui-page-title">Todos</h1>
-          <div className="flex flex-wrap gap-2 text-sm">
-            <span className="ui-chip ui-tabular">{visibleSummary.completed} completed</span>
-            <span className="ui-chip ui-tabular">{visibleSummary.total} visible tasks</span>
-            {selectedProject && (
-              <span className="ui-chip ui-chip--accent">{selectedProject.name}</span>
-            )}
+      <MainLayout>
+        <div className="ui-page-shell">
+          <header className="ui-page-header">
+            <p className="ui-page-kicker">Workspace</p>
+            <h1 className="ui-page-title">Todos</h1>
+            <div className="flex flex-wrap gap-2 text-sm">
+              <span className="ui-chip ui-tabular">{visibleSummary.completed} completed</span>
+              <span className="ui-chip ui-tabular">{visibleSummary.total} visible tasks</span>
+              {selectedProject && (
+                <span className="ui-chip ui-chip--accent">{selectedProject.name}</span>
+              )}
+            </div>
+          </header>
+
+          {errorMessage ? (
+            <section className="ui-section-card ui-card-padding">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-[var(--color-warning)]">Unable to refresh the latest todo data</p>
+                  <p className="mt-1 text-sm text-[var(--color-text-muted)]">{errorMessage}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    tasksQuery.refetch();
+                    projectsQuery.refetch();
+                  }}
+                  className="ui-btn-secondary"
+                >
+                  Retry
+                </button>
+              </div>
+            </section>
+          ) : null}
+
+          <ActionButtons
+            onAddTask={() => openAddTask()}
+            onAddCategory={() => setIsAddCategoryModalOpen(true)}
+            onAddProject={() => setIsAddProjectModalOpen(true)}
+          />
+
+          <ProjectOverviewGrid
+            items={projectCards}
+            selectedProjectId={selectedProjectId}
+            onSelectProject={setSelectedProjectId}
+            onCreateProject={() => setIsAddProjectModalOpen(true)}
+            onAddTaskToProject={openAddTask}
+            showCompletedProjects={showCompletedProjects}
+            onShowCompletedProjectsChange={setShowCompletedProjects}
+            onCompleteProject={handleCompleteProject}
+            onRestoreProject={handleRestoreProject}
+          />
+
+          <div className="flex flex-col gap-5">
+            <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+            <TaskSelector
+              selectedStatus={selectedStatus}
+              onStatusChange={setSelectedStatus}
+            />
           </div>
-        </header>
 
-        {errorMessage ? (
-          <section className="ui-section-card ui-card-padding">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <TaskList
+            tasks={filteredTasks}
+            isLoading={isFetching && !isLoading}
+            emptyState={taskListEmptyState}
+            onToggleComplete={handleToggleComplete}
+            onEdit={handleEdit}
+            onStart={handleStart}
+            onGiveUp={handleGiveUp}
+            onDelete={handleDelete}
+          />
+
+          <ProgressBar
+            title={selectedProject ? `${selectedProject.name}` : 'Overall progress'}
+            completed={visibleSummary.completed}
+            total={visibleSummary.total}
+            emptyLabel={selectedProject ? 'No tasks in this project yet' : 'No tasks yet'}
+          />
+        </div>
+      </MainLayout>
+
+      {/* Give Up Dialog */}
+      {isGiveUpModalOpen && (
+        <div
+          className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
+          onClick={() => { setIsGiveUpModalOpen(false); setTaskToGiveUp(null); }}
+          role="presentation"
+        >
+          <div
+            className="ui-modal-shell w-full max-w-md animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="giveup-dialog-title"
+          >
+            <div className="ui-modal-header">
+              <h2 id="giveup-dialog-title" className="text-xl font-semibold text-[var(--color-text)]">Give Up Task</h2>
+            </div>
+            <div className="ui-modal-body">
+              <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
+                Are you sure you want to give up this task? You are choosing not to continue working on it.
+              </p>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => { setIsGiveUpModalOpen(false); setTaskToGiveUp(null); }} className="ui-btn-secondary flex-1">Cancel</button>
+                <button type="button" onClick={confirmGiveUp} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-white transition-[background-color,border-color] duration-150 hover:opacity-90">Give Up</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Dialog */}
+      {isDeleteModalOpen && (
+        <div
+          className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
+          onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }}
+          role="presentation"
+        >
+          <div
+            className="ui-modal-shell w-full max-w-md animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+          >
+            <div className="ui-modal-header">
+              <h2 id="delete-dialog-title" className="text-xl font-semibold text-[var(--color-text)]">Delete Task</h2>
+            </div>
+            <div className="ui-modal-body">
+              <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
+                Are you sure you want to delete this task? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }} className="ui-btn-secondary flex-1">Cancel</button>
+                <button type="button" onClick={confirmDelete} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-white transition-[background-color,border-color] duration-150 hover:opacity-90">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Category Modal */}
+      {isAddCategoryModalOpen && (
+        <div
+          className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsAddCategoryModalOpen(false)}
+          role="presentation"
+        >
+          <div
+            className="ui-modal-shell w-full max-w-lg animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-cat-title"
+          >
+            <div className="ui-modal-header flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-[var(--color-warning)]">Unable to refresh the latest todo data</p>
-                <p className="mt-1 text-sm text-[var(--color-text-muted)]">{errorMessage}</p>
+                <p className="ui-page-kicker">Create</p>
+                <h2 id="add-cat-title" className="text-xl font-semibold text-[var(--color-text)]">Add Category</h2>
               </div>
               <button
                 type="button"
-                onClick={fetchTasksAndProjects}
-                className="ui-btn-secondary"
+                onClick={() => setIsAddCategoryModalOpen(false)}
+                className="ui-modal-close-button"
+                aria-label="Close add category dialog"
               >
-                Retry
+                <X className="h-4 w-4" />
               </button>
             </div>
-          </section>
-        ) : null}
-
-        <ActionButtons 
-          onAddTask={() => openAddTask()} 
-          onAddCategory={() => setIsAddCategoryModalOpen(true)}
-          onAddProject={() => setIsAddProjectModalOpen(true)}
-        />
-
-        <ProjectOverviewGrid
-          items={projectCards}
-          selectedProjectId={selectedProjectId}
-          onSelectProject={setSelectedProjectId}
-          onCreateProject={() => setIsAddProjectModalOpen(true)}
-          onAddTaskToProject={openAddTask}
-          showCompletedProjects={showCompletedProjects}
-          onShowCompletedProjectsChange={setShowCompletedProjects}
-          onCompleteProject={handleCompleteProject}
-          onRestoreProject={handleRestoreProject}
-        />
-
-        <div className="flex flex-col gap-5">
-          <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-          <TaskSelector 
-            selectedStatus={selectedStatus}
-            onStatusChange={setSelectedStatus}
-          />
-        </div>
-
-        <TaskList
-          tasks={filteredTasks}
-          isLoading={isLoading && !isInitialLoad}
-          emptyState={taskListEmptyState}
-          onToggleComplete={handleToggleComplete}
-          onEdit={handleEdit}
-          onStart={handleStart}
-          onGiveUp={handleGiveUp}
-          onDelete={handleDelete}
-        />
-
-        <ProgressBar
-          title={selectedProject ? `${selectedProject.name}` : 'Overall progress'}
-          completed={visibleSummary.completed}
-          total={visibleSummary.total}
-          emptyLabel={selectedProject ? 'No tasks in this project yet' : 'No tasks yet'}
-        />
-      </div>
-    </MainLayout>
-    
-    {/* Give Up Dialog */}
-    {isGiveUpModalOpen && (
-      <div
-        className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
-        onClick={() => { setIsGiveUpModalOpen(false); setTaskToGiveUp(null); }}
-        role="presentation"
-      >
-        <div
-          className="ui-modal-shell w-full max-w-md animate-fadeIn"
-          onClick={(e) => e.stopPropagation()}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="giveup-dialog-title"
-        >
-          <div className="ui-modal-header">
-            <h2 id="giveup-dialog-title" className="text-xl font-semibold text-[var(--color-text)]">Give Up Task</h2>
-          </div>
-          <div className="ui-modal-body">
-            <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-              Are you sure you want to give up this task? You are choosing not to continue working on it.
-            </p>
-            <div className="flex gap-3">
-              <button type="button" onClick={() => { setIsGiveUpModalOpen(false); setTaskToGiveUp(null); }} className="ui-btn-secondary flex-1">Cancel</button>
-              <button type="button" onClick={confirmGiveUp} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-white transition-[background-color,border-color] duration-150 hover:opacity-90">Give Up</button>
+            <div className="ui-modal-body">
+              <AddCategoryForm
+                onClose={() => setIsAddCategoryModalOpen(false)}
+                onCategoryCreated={() => {
+                  setIsAddCategoryModalOpen(false);
+                }}
+              />
             </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
-    {/* Delete Dialog */}
-    {isDeleteModalOpen && (
-      <div
-        className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
-        onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }}
-        role="presentation"
-      >
+      {isAddProjectModalOpen && (
         <div
-          className="ui-modal-shell w-full max-w-md animate-fadeIn"
-          onClick={(e) => e.stopPropagation()}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-dialog-title"
+          className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsAddProjectModalOpen(false)}
+          role="presentation"
         >
-          <div className="ui-modal-header">
-            <h2 id="delete-dialog-title" className="text-xl font-semibold text-[var(--color-text)]">Delete Task</h2>
-          </div>
-          <div className="ui-modal-body">
-            <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-              Are you sure you want to delete this task? This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button type="button" onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }} className="ui-btn-secondary flex-1">Cancel</button>
-              <button type="button" onClick={confirmDelete} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-white transition-[background-color,border-color] duration-150 hover:opacity-90">Delete</button>
+          <div
+            className="ui-modal-shell w-full max-w-lg animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-proj-title"
+          >
+            <div className="ui-modal-header flex items-start justify-between gap-4">
+              <div>
+                <p className="ui-page-kicker">Create</p>
+                <h2 id="add-proj-title" className="text-xl font-semibold text-[var(--color-text)]">Add Project</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddProjectModalOpen(false)}
+                className="ui-modal-close-button"
+                aria-label="Close add project dialog"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="ui-modal-body">
+              <AddProjectForm
+                onClose={() => setIsAddProjectModalOpen(false)}
+                onProjectCreated={(project) => {
+                  setIsAddProjectModalOpen(false);
+                  setSelectedProjectId(project?._id || ALL_PROJECT_FILTER);
+                }}
+              />
             </div>
           </div>
         </div>
-      </div>
-    )}
-
-    {/* Add Category Modal */}
-    {isAddCategoryModalOpen && (
-      <div
-        className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-        onClick={() => setIsAddCategoryModalOpen(false)}
-        role="presentation"
-      >
-        <div
-          className="ui-modal-shell w-full max-w-lg animate-fadeIn"
-          onClick={(e) => e.stopPropagation()}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-cat-title"
-        >
-          <div className="ui-modal-header flex items-start justify-between gap-4">
-            <div>
-              <p className="ui-page-kicker">Create</p>
-              <h2 id="add-cat-title" className="text-xl font-semibold text-[var(--color-text)]">Add Category</h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsAddCategoryModalOpen(false)}
-              className="ui-modal-close-button"
-              aria-label="Close add category dialog"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="ui-modal-body">
-            <AddCategoryForm
-              onClose={() => setIsAddCategoryModalOpen(false)}
-              onCategoryCreated={() => {
-                setIsAddCategoryModalOpen(false);
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    )}
-
-    {isAddProjectModalOpen && (
-      <div
-        className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-        onClick={() => setIsAddProjectModalOpen(false)}
-        role="presentation"
-      >
-        <div
-          className="ui-modal-shell w-full max-w-lg animate-fadeIn"
-          onClick={(e) => e.stopPropagation()}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-proj-title"
-        >
-          <div className="ui-modal-header flex items-start justify-between gap-4">
-            <div>
-              <p className="ui-page-kicker">Create</p>
-              <h2 id="add-proj-title" className="text-xl font-semibold text-[var(--color-text)]">Add Project</h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsAddProjectModalOpen(false)}
-              className="ui-modal-close-button"
-              aria-label="Close add project dialog"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="ui-modal-body">
-            <AddProjectForm
-              onClose={() => setIsAddProjectModalOpen(false)}
-              onProjectCreated={(project) => {
-                setIsAddProjectModalOpen(false);
-                setSelectedProjectId(project?._id || ALL_PROJECT_FILTER);
-                fetchTasksAndProjects();
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    )}
-  </>
+      )}
+    </>
   );
 };
 

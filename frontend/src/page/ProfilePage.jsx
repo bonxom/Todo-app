@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import MainLayout from '../layout/MainLayout';
 import ProfileHeader from '../feature/Profile/ProfileHeader';
 import ProfileInfo from '../feature/Profile/ProfileInfo';
@@ -7,57 +7,43 @@ import ProfileActions from '../feature/Profile/ProfileActions';
 import EditProfileModal from '../feature/Profile/EditProfileModal';
 import ChangePasswordModal from '../feature/Profile/ChangePasswordModal';
 import ChatBubble from '../component/ChatBuble';
-import { authService, taskService, categoryService } from '../api/apiService';
-import { useAuth } from '../context/useAuth';
+import { useCurrentUserQuery } from '../features/profile/api/userQueries';
+import { useTasksQuery } from '../features/tasks/api/taskQueries';
+import { useCategoriesQuery } from '../features/categories/api/categoryQueries';
+import {
+  useChangePasswordMutation,
+  useUpdateProfileMutation,
+} from '../features/profile/api/userMutations';
+import { getApiErrorMessage } from '../shared/services/apiError';
 
 const ProfilePage = () => {
-  const { syncUser } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const [stats, setStats] = useState({
-    totalTasks: 0,
-    completedTasks: 0,
-    inProgressTasks: 0,
-    totalCategories: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      
-      // Fetch user info
-      const userData = await authService.getMe();
-      setUser(userData);
-      syncUser(userData);
-      
-      // Fetch tasks and categories for stats
-      const [tasks, categories] = await Promise.all([
-        taskService.getAllTasks(),
-        categoryService.getAllCategories()
-      ]);
-      
-      // Calculate stats
-      const completedTasks = tasks.filter(task => task.status === 'completed').length;
-      const inProgressTasks = tasks.filter(task => task.status === 'in-progress').length;
-      
-      setStats({
-        totalTasks: tasks.length,
-        completedTasks,
-        inProgressTasks,
-        totalCategories: categories.length,
-      });
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [syncUser]);
+  const userQuery = useCurrentUserQuery();
+  const tasksQuery = useTasksQuery();
+  const categoriesQuery = useCategoriesQuery();
 
-  useEffect(() => {
-    fetchUserData();
-  }, [fetchUserData]);
+  const updateProfileMutation = useUpdateProfileMutation();
+  const changePasswordMutation = useChangePasswordMutation();
+
+  const user = userQuery.data || null;
+
+  const stats = useMemo(() => {
+    const tasks = tasksQuery.data || [];
+    const categories = categoriesQuery.data || [];
+    const completedTasks = tasks.filter((task) => task.status === 'completed').length;
+    const inProgressTasks = tasks.filter((task) => task.status === 'in-progress').length;
+
+    return {
+      totalTasks: tasks.length,
+      completedTasks,
+      inProgressTasks,
+      totalCategories: categories.length,
+    };
+  }, [tasksQuery.data, categoriesQuery.data]);
+
+  const isLoading = userQuery.isLoading;
 
   const handleEditProfile = () => {
     setIsEditModalOpen(true);
@@ -65,14 +51,11 @@ const ProfilePage = () => {
 
   const handleSaveProfile = async (formData) => {
     try {
-      await authService.updateInfo(formData);
-      
-      // Refresh user data
-      await fetchUserData();
+      await updateProfileMutation.mutateAsync(formData);
       setIsEditModalOpen(false);
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      alert(getApiErrorMessage(error, 'Failed to update profile. Please try again.'));
     }
   };
 
@@ -82,12 +65,12 @@ const ProfilePage = () => {
 
   const handleSavePassword = async (passwordData) => {
     try {
-      await authService.changePassword(passwordData);
+      await changePasswordMutation.mutateAsync(passwordData);
       setIsPasswordModalOpen(false);
       alert('Password changed successfully!');
     } catch (error) {
       console.error('Error changing password:', error);
-      alert(error.message || 'Failed to change password. Please try again.');
+      alert(getApiErrorMessage(error, 'Failed to change password. Please try again.'));
     }
   };
 
@@ -145,7 +128,12 @@ const ProfilePage = () => {
             </p>
           </header>
 
-          <ProfileHeader user={user} onAvatarUpdate={fetchUserData} />
+          <ProfileHeader
+            user={user}
+            onAvatarUpdate={() => {
+              userQuery.refetch();
+            }}
+          />
 
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.95fr)] xl:items-start">
             <div className="space-y-6">

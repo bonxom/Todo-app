@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import AddCategoryForm from './AddCategoryForm';
 import AddProjectForm from './AddProjectForm';
-import { taskService, categoryService, projectService } from '../../../api/apiService';
+import { useCreateTaskMutation } from '../../../features/tasks/api/taskMutations';
+import { useCategoriesQuery } from '../../../features/categories/api/categoryQueries';
+import { useProjectsQuery } from '../../../features/tasks/api/projectQueries';
 import { toMidnightDateTimeLocalValue, toISOStringLocal } from '../../../utils/dateTime';
 import DateTimeInput from '../../../component/DateTimeInput';
 import { isActiveProject } from '../../../utils/projectStatus';
+import { getApiErrorMessage } from '../../../shared/services/apiError';
 
 const AddTaskForm = ({
   onClose,
@@ -22,60 +25,19 @@ const AddTaskForm = ({
   const [description, setDescription] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [projects, setProjects] = useState([]);
+
+  const categoriesQuery = useCategoriesQuery();
+  const projectsQuery = useProjectsQuery();
+  const createTaskMutation = useCreateTaskMutation();
+
+  const categories = useMemo(() => categoriesQuery.data || [], [categoriesQuery.data]);
+  const projects = useMemo(() => projectsQuery.data || [], [projectsQuery.data]);
   const activeProjects = useMemo(() => projects.filter(isActiveProject), [projects]);
-
-  const fetchCategories = useCallback(async (selectCategoryId) => {
-    try {
-      const response = await categoryService.getAllCategories();
-      const categoriesData = Array.isArray(response) ? response : response.categories;
-      if (categoriesData && categoriesData.length > 0) {
-        setCategories(categoriesData);
-        setCategoryId((currentCategoryId) => (
-          selectCategoryId || currentCategoryId || categoriesData[0]?._id || ''
-        ));
-      }
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
-    }
-  }, []);
-
-  const fetchProjects = useCallback(async (selectProjectId) => {
-    try {
-      const projectsData = await projectService.getAllProjects();
-      setProjects(projectsData);
-
-      if (selectProjectId) {
-        const canSelectProject = projectsData.some((project) => (
-          isActiveProject(project) && project._id === selectProjectId
-        ));
-        setProjectId(canSelectProject ? selectProjectId : '');
-      }
-    } catch (error) {
-      console.error('Failed to fetch projects:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCategories();
-    fetchProjects();
-  }, [fetchCategories, fetchProjects]);
-
-  useEffect(() => {
-    if (!initialProjectId) {
-      setProjectId('');
-      return;
-    }
-
-    const canSelectProject = activeProjects.some((project) => project._id === initialProjectId);
-    setProjectId(canSelectProject ? initialProjectId : '');
-  }, [activeProjects, initialProjectId]);
+  const isSubmitting = createTaskMutation.isPending;
 
   const handleReset = () => {
     setTitle('');
-    setCategoryId(categories[0]?._id || '');
+    setCategoryId('');
     setProjectId(initialProjectId);
     setPriority('Medium');
     setDueDate(toMidnightDateTimeLocalValue());
@@ -86,11 +48,9 @@ const AddTaskForm = ({
     e.preventDefault();
     
     try {
-      setIsSubmitting(true);
-      
       const newTask = {
         title,
-        categoryId,
+        categoryId: categoryId || categories[0]?._id || undefined,
         projectId: projectId || undefined,
         priority,
         status: 'in-progress',
@@ -98,7 +58,7 @@ const AddTaskForm = ({
         description,
       };
       
-      await taskService.createTask(newTask);
+      await createTaskMutation.mutateAsync(newTask);
       
       if (onTaskCreated) {
         onTaskCreated();
@@ -108,9 +68,7 @@ const AddTaskForm = ({
       onClose();
     } catch (error) {
       console.error('Failed to create task:', error);
-      alert('Failed to create task. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      alert(getApiErrorMessage(error, 'Failed to create task. Please try again.'));
     }
   };
 
@@ -140,7 +98,7 @@ const AddTaskForm = ({
             </label>
             <select
               id="category"
-              value={categoryId}
+              value={categoryId || categories[0]?._id || ''}
               onChange={(e) => {
                 if (e.target.value === '__add_more__') {
                   setShowAddCategory(true);
@@ -269,7 +227,7 @@ const AddTaskForm = ({
               <AddCategoryForm 
                 onClose={() => setShowAddCategory(false)} 
                 onCategoryCreated={(newCategory) => {
-                  fetchCategories(newCategory?._id || newCategory?.category?._id);
+                  setCategoryId(newCategory?._id || newCategory?.category?._id || '');
                 }}
               />
             </div>
@@ -300,7 +258,7 @@ const AddTaskForm = ({
               <AddProjectForm
                 onClose={() => setShowAddProject(false)}
                 onProjectCreated={(newProject) => {
-                  fetchProjects(newProject?._id);
+                  setProjectId(newProject?._id || '');
                   onProjectCreated?.(newProject);
                 }}
               />

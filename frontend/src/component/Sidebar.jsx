@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
-import { authService } from '../api/apiService';
-import { useAuth } from '../context/useAuth';
+import { useLogoutMutation } from '../features/auth/api/authMutations';
 
 export const DESKTOP_BREAKPOINT = 1024;
 export const drawerWidthExpanded = 272;
@@ -76,7 +75,7 @@ const Sidebar = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { clearSession } = useAuth();
+  const logoutMutation = useLogoutMutation();
   const previousPathnameRef = useRef(location.pathname);
   const showLabels = !isDesktop || isExpanded;
   const currentDrawerWidth = isDesktop
@@ -121,9 +120,8 @@ const Sidebar = ({
 
   const handleLogout = async () => {
     try {
-      await authService.logout();
+      await logoutMutation.mutateAsync();
     } finally {
-      clearSession();
       navigate('/');
     }
   };
