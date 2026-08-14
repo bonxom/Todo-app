@@ -1,18 +1,20 @@
-import { useContext, useMemo } from 'react';
-import TaskFilterContext from './TaskFilterContext';
+import { useMemo } from 'react';
+import { useTaskFilterStore, filterTasks } from '../stores/useTaskFilterStore';
 
 export const useTaskFilter = () => {
-  const context = useContext(TaskFilterContext);
+  const onlyInProgress = useTaskFilterStore((state) => state.onlyInProgress);
+  const setOnlyInProgress = useTaskFilterStore((state) => state.setOnlyInProgress);
+  const toggleOnlyInProgress = useTaskFilterStore((state) => state.toggleOnlyInProgress);
 
-  if (!context) {
-    throw new Error('useTaskFilter must be used within TaskFilterProvider');
-  }
-
-  return context;
+  return {
+    onlyInProgress,
+    setOnlyInProgress,
+    toggleOnlyInProgress,
+    filterTasks: (tasks) => filterTasks(tasks, onlyInProgress),
+  };
 };
 
 export const useVisibleTasks = (tasks) => {
-  const { filterTasks } = useTaskFilter();
-
-  return useMemo(() => filterTasks(tasks), [filterTasks, tasks]);
+  const onlyInProgress = useTaskFilterStore((state) => state.onlyInProgress);
+  return useMemo(() => filterTasks(tasks, onlyInProgress), [tasks, onlyInProgress]);
 };

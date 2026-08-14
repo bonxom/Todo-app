@@ -3,14 +3,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../feature/Auth/AuthLayout';
 import LoginForm from '../feature/Auth/LoginForm';
 import RegisterForm from '../feature/Auth/RegisterForm';
-import { authService } from '../api/apiService';
-import { useAuth } from '../context/useAuth';
+import { useLoginMutation, useRegisterMutation } from '../features/auth/api/authMutations';
 import '../styles/auth.css';
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setSession } = useAuth();
+  const loginMutation = useLoginMutation();
+  const registerMutation = useRegisterMutation();
   
   const initialMode = location.pathname === '/register' ? 'register' : 'login';
   const [mode, setMode] = useState(initialMode);
@@ -25,10 +25,7 @@ const AuthPage = () => {
   const handleLoginSubmit = async (credentials, setErrors) => {
     try {
       setIsLoading(true);
-      
-      const response = await authService.login(credentials);
-      setSession(response);
-      
+      await loginMutation.mutateAsync(credentials);
       navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Login error:', error);
@@ -42,16 +39,12 @@ const AuthPage = () => {
   const handleRegisterSubmit = async (credentials, setErrors) => {
     try {
       setIsLoading(true);
-      
-      // Register new user (auto login with token)
-      const response = await authService.register({
+      await registerMutation.mutateAsync({
         email: credentials.email,
         password: credentials.password,
         name: credentials.name,
-        dob: credentials.dob
+        dob: credentials.dob,
       });
-
-      setSession(response);
       navigate('/dashboard', { replace: true });
     } catch (error) {
       const errorMessage = error?.message || 'Registration failed. Please try again.';
