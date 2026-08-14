@@ -1,10 +1,10 @@
 import AppRouter from './route/AppRouter';
 import { AuthProvider } from './context/AuthContext';
 import { TaskRefreshProvider } from './context/TaskRefreshContext';
-import ErrorBoundary from './component/ErrorBoundary';
+import ErrorBoundary from './shared/components/ErrorBoundary';
 import QueryProvider from './app/QueryProvider';
 import AuthCacheBoundary from './app/AuthCacheBoundary';
-import './App.css';
+import './styles/app.css';
 
 function App() {
   return (

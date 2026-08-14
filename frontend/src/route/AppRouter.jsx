@@ -1,13 +1,13 @@
 import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
-import TodoPage from '../page/TodoPage';
-import ProfilePage from '../page/ProfilePage';
-import CategoryPage from '../page/CategoryPage';
-import CalendarPage from '../page/CalendarPage';
-import AuthPage from '../page/AuthPage';
-import LandingPage from '../page/LandingPage';
-import StatisticsPage from '../page/StatisticsPage';
-import ErrorPage from '../page/ErrorPage';
+import TodoPage from '../features/tasks';
+import ProfilePage from '../features/profile';
+import CategoryPage from '../features/categories';
+import CalendarPage from '../features/calendar';
+import AuthPage from '../features/auth';
+import LandingPage from '../features/landing';
+import StatisticsPage from '../features/statistics';
+import ErrorPage from '../features/errors';
 
 const MAIN_APP_ROUTE = '/dashboard';
 
