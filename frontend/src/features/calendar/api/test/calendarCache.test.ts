@@ -7,10 +7,10 @@ import {
   replaceProjectInList,
   restoreSnapshot,
   upsertTaskInCollections,
-} from "./calendarCache";
-import { taskKeys } from "../../tasks/api/taskKeys";
-import { projectKeys } from "../../tasks/api/projectKeys";
-import type { ProjectWithSummary, Task } from "../../../shared/types/domain";
+} from "../calendarCache";
+import { taskKeys } from "@/features/tasks/api/taskKeys";
+import { projectKeys } from "@/features/tasks/api/projectKeys";
+import type { ProjectWithSummary, Task } from "@/shared/types/domain";
 
 const makeTask = (id: string, dueDate = "2026-08-14T09:00:00.000Z"): Task => ({
   _id: id,

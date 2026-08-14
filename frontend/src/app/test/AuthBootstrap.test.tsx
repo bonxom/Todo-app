@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, waitFor, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthBootstrap } from './AuthBootstrap';
-import { useAuthStore } from '../stores/useAuthStore';
-import { authService } from '../shared/services/authService';
-import { ApiError } from '../shared/services/apiError';
+import { AuthBootstrap } from '../AuthBootstrap';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { authService } from '@/shared/services/authService';
+import { ApiError } from '@/shared/services/apiError';
 
-vi.mock('../shared/services/authService', () => ({
+vi.mock('@/shared/services/authService', () => ({
   authService: {
     getMe: vi.fn(),
   },

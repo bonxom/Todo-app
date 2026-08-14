@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { useAuthStore } from "./useAuthStore";
-import type { User } from "../shared/types/domain";
+import { useAuthStore } from "../useAuthStore";
+import type { User } from "@/shared/types/domain";
 
 describe("useAuthStore", () => {
   beforeEach(() => {

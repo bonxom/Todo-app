@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { taskKeys } from "./taskKeys";
-import { projectKeys } from "./projectKeys";
-import { categoryKeys } from "../../categories/api/categoryKeys";
-import { statKeys } from "../../statistics/api/statKeys";
-import { userKeys } from "../../profile/api/userKeys";
+import { taskKeys } from "../taskKeys";
+import { projectKeys } from "../projectKeys";
+import { categoryKeys } from "@/features/categories/api/categoryKeys";
+import { statKeys } from "@/features/statistics/api/statKeys";
+import { userKeys } from "@/features/profile/api/userKeys";
 
 describe("query keys", () => {
   describe("taskKeys", () => {

@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useChangePasswordMutation, useUpdateProfileMutation } from "./userMutations";
-import { authService } from "../../../shared/services/authService";
-import { useAuthStore } from "../../../stores/useAuthStore";
-import { userKeys } from "./userKeys";
+import { useChangePasswordMutation, useUpdateProfileMutation } from "../userMutations";
+import { authService } from "@/shared/services/authService";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { userKeys } from "../userKeys";
 
 describe("userMutations", () => {
   let queryClient: QueryClient;

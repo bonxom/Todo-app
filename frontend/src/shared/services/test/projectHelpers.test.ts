@@ -6,7 +6,7 @@ import {
   normalizeProject,
   normalizeProjects,
   normalizeProjectTasks,
-} from "./projectHelpers";
+} from "../projectHelpers";
 
 describe("projectHelpers", () => {
   describe("normalizeEntityResponse", () => {

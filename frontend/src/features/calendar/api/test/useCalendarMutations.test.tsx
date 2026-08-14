@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useCalendarMutations } from "./useCalendarMutations";
-import { taskService } from "../../../shared/services/taskService";
-import { projectService } from "../../../shared/services/projectService";
-import { taskKeys } from "../../tasks/api/taskKeys";
-import { projectKeys } from "../../tasks/api/projectKeys";
-import type { ProjectWithSummary, Task } from "../../../shared/types/domain";
+import { useCalendarMutations } from "../useCalendarMutations";
+import { taskService } from "@/shared/services/taskService";
+import { projectService } from "@/shared/services/projectService";
+import { taskKeys } from "@/features/tasks/api/taskKeys";
+import { projectKeys } from "@/features/tasks/api/projectKeys";
+import type { ProjectWithSummary, Task } from "@/shared/types/domain";
 
 const makeTask = (id: string, dueDate = "2026-08-14T09:00:00.000Z"): Task => ({
   _id: id,

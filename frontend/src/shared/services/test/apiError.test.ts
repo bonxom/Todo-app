@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, getApiErrorMessage } from "./apiError";
+import { ApiError, getApiErrorMessage } from "../apiError";
 
 describe("ApiError", () => {
   it("creates an ApiError instance with properties", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { registerUserCacheReset, resetUserCache } from "./sessionCache";
+import { registerUserCacheReset, resetUserCache } from "../sessionCache";
 
 describe("sessionCache", () => {
   it("calls registered reset handler when resetUserCache is invoked", async () => {

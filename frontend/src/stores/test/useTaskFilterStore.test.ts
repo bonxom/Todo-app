@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { filterTasks, useTaskFilterStore } from "./useTaskFilterStore";
-import type { Task } from "../shared/types/domain";
+import { filterTasks, useTaskFilterStore } from "../useTaskFilterStore";
+import type { Task } from "@/shared/types/domain";
 
 describe("useTaskFilterStore", () => {
   beforeEach(() => {
