@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useActivityQuery } from '../api/statQueries';
 import { createHeatmapModel, formatDateKeyLabel } from './statsUtils';
-import { useTaskFilter, useVisibleTasks } from '@/context/useTaskFilter';
+import { useTaskFilter, useVisibleTasks } from '@/stores/useTaskFilterStore';
 import { getApiErrorMessage } from '@/shared/services/apiError';
 
 const CELL_LEVEL_STYLES = [

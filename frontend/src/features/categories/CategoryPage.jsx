@@ -1,16 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FolderOpen, LayoutGrid, Plus, X } from 'lucide-react';
-import MainLayout from '@/shared/layouts/MainLayout';
 import CategoryGrid from './components/CategoryGrid';
 import CategoryStats from './components/CategoryStats';
 import ProjectGrid from '@/features/tasks/components/project/ProjectGrid';
-import ChatBubble from '@/features/tasks/components/chat';
 import AddCategoryForm from '@/features/tasks/components/Form/AddCategoryForm';
 import AddProjectForm from '@/features/tasks/components/Form/AddProjectForm';
 import { useCategoriesQuery } from './api/categoryQueries';
 import { useProjectsQuery } from '@/features/tasks/api/projectQueries';
 import { useTasksQuery } from '@/features/tasks/api/taskQueries';
-import { useVisibleTasks } from '@/context/useTaskFilter';
+import { useVisibleTasks } from '@/stores/useTaskFilterStore';
 import { filterProjectsByVisibility } from '@/shared/utils/projectStatus';
 import { getApiErrorMessage } from '@/shared/services/apiError';
 
@@ -176,27 +174,18 @@ const CategoryPage = () => {
 
   if (isLoading) {
     return (
-      <>
-        <MainLayout>
-          <div className="ui-main-content">
-            <div className="ui-page-shell">
-              <section className="ui-section-card ui-card-padding flex min-h-[18rem] items-center justify-center">
-                <p className="text-sm text-[color:var(--color-text-muted)]">{activeConfig.loadingLabel}</p>
-              </section>
-            </div>
-          </div>
-        </MainLayout>
-        <ChatBubble key="chat-bubble-stable" />
-      </>
+      <div className="ui-page-shell">
+        <section className="ui-section-card ui-card-padding flex min-h-[18rem] items-center justify-center">
+          <p className="text-sm text-[color:var(--color-text-muted)]">{activeConfig.loadingLabel}</p>
+        </section>
+      </div>
     );
   }
 
   return (
     <>
-      <MainLayout>
-        <div className="ui-main-content">
-          <div className="ui-page-shell">
-            <header className="ui-page-header">
+      <div className="ui-page-shell">
+        <header className="ui-page-header">
               <p className="ui-page-kicker">Workspace</p>
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div className="min-w-0">
@@ -340,8 +329,6 @@ const CategoryPage = () => {
               />
             )}
           </div>
-        </div>
-      </MainLayout>
 
       {isAddCategoryModalOpen && (
         <div
@@ -420,8 +407,6 @@ const CategoryPage = () => {
           </div>
         </div>
       )}
-
-      <ChatBubble key="chat-bubble-stable" />
     </>
   );
 };

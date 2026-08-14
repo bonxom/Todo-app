@@ -1,12 +1,10 @@
 import { useState, useMemo } from 'react';
-import MainLayout from '@/shared/layouts/MainLayout';
 import ProfileHeader from './components/ProfileHeader';
 import ProfileInfo from './components/ProfileInfo';
 import ProfileStats from './components/ProfileStats';
 import ProfileActions from './components/ProfileActions';
 import EditProfileModal from './components/EditProfileModal';
 import ChangePasswordModal from './components/ChangePasswordModal';
-import ChatBubble from '@/features/tasks/components/chat';
 import { useCurrentUserQuery } from './api/userQueries';
 import { useTasksQuery } from '@/features/tasks/api/taskQueries';
 import { useCategoriesQuery } from '@/features/categories/api/categoryQueries';
@@ -76,27 +74,23 @@ const ProfilePage = () => {
 
   if (isLoading) {
     return (
-      <MainLayout>
-        <div className="ui-page-shell">
-          <section className="ui-section-card ui-card-padding" aria-live="polite">
-            <p className="m-0 text-sm text-[var(--color-text-muted)]">Loading profile…</p>
-          </section>
-        </div>
-      </MainLayout>
+      <div className="ui-page-shell">
+        <section className="ui-section-card ui-card-padding" aria-live="polite">
+          <p className="m-0 text-sm text-[var(--color-text-muted)]">Loading profile…</p>
+        </section>
+      </div>
     );
   }
 
   if (!user) {
     return (
-      <MainLayout>
-        <div className="ui-page-shell">
-          <section className="ui-section-card ui-card-padding">
-            <p className="m-0 text-sm font-medium text-[var(--color-danger)]">
-              Failed to load profile details.
-            </p>
-          </section>
-        </div>
-      </MainLayout>
+      <div className="ui-page-shell">
+        <section className="ui-section-card ui-card-padding">
+          <p className="m-0 text-sm font-medium text-[var(--color-danger)]">
+            Failed to load profile details.
+          </p>
+        </section>
+      </div>
     );
   }
 
@@ -117,41 +111,37 @@ const ProfilePage = () => {
         onSave={handleSavePassword}
       />
 
-      <MainLayout>
-        <div className="ui-page-shell">
-          <header className="ui-page-header">
-            <p className="ui-page-kicker">Account</p>
-            <h1 className="ui-page-title">Account Settings</h1>
-            <p className="ui-page-description">
-              Review your profile details, keep account information current, and manage
-              the credentials you use to sign in.
-            </p>
-          </header>
+      <div className="ui-page-shell">
+        <header className="ui-page-header">
+          <p className="ui-page-kicker">Account</p>
+          <h1 className="ui-page-title">Account Settings</h1>
+          <p className="ui-page-description">
+            Review your profile details, keep account information current, and manage
+            the credentials you use to sign in.
+          </p>
+        </header>
 
-          <ProfileHeader
-            user={user}
-            onAvatarUpdate={() => {
-              userQuery.refetch();
-            }}
-          />
+        <ProfileHeader
+          user={user}
+          onAvatarUpdate={() => {
+            userQuery.refetch();
+          }}
+        />
 
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.95fr)] xl:items-start">
-            <div className="space-y-6">
-              <ProfileActions
-                onEditProfile={handleEditProfile}
-                onChangePassword={handleChangePassword}
-              />
-              <ProfileInfo user={user} />
-            </div>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.95fr)] xl:items-start">
+          <div className="space-y-6">
+            <ProfileActions
+              onEditProfile={handleEditProfile}
+              onChangePassword={handleChangePassword}
+            />
+            <ProfileInfo user={user} />
+          </div>
 
-            <div className="space-y-6">
-              <ProfileStats stats={stats} />
-            </div>
+          <div className="space-y-6">
+            <ProfileStats stats={stats} />
           </div>
         </div>
-      </MainLayout>
-
-      <ChatBubble />
+      </div>
     </>
   );
 };

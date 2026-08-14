@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import MainLayout from '@/shared/layouts/MainLayout';
 import ActionButtons from './components/GenTaskButton';
 import AddTaskButton from './components/AddTaskButton';
 import TaskDetailButton from './components/TaskDetailButton';
@@ -8,7 +7,6 @@ import TaskSelector from './components/TaskSelector';
 import TaskList from './components/TaskList';
 import ProgressBar from './components/ProgressBar';
 import ProjectOverviewGrid from './components/ProjectOverviewGrid';
-import ChatBubble from './components/chat';
 import AddCategoryForm from './components/Form/AddCategoryForm';
 import AddProjectForm from './components/Form/AddProjectForm';
 import { useTasksQuery } from './api/taskQueries';
@@ -20,7 +18,7 @@ import {
   useUpdateTaskMutation,
 } from './api/taskMutations';
 import { useUpdateProjectMutation } from './api/projectMutations';
-import { useTaskFilter, useVisibleTasks } from '@/context/useTaskFilter';
+import { useTaskFilter, useVisibleTasks } from '@/stores/useTaskFilterStore';
 import { getNextCompletionStatus } from './utils/taskCompletion';
 import { PROJECT_STATUS, canCompleteProject, filterProjectsByVisibility } from '@/shared/utils/projectStatus';
 import { getApiErrorMessage } from '@/shared/services/apiError';
@@ -341,14 +339,9 @@ const TodoPage = () => {
 
   if (isLoading) {
     return (
-      <>
-        <MainLayout>
-          <div className="ui-page-shell flex min-h-full items-center justify-center">
-            <div className="text-sm text-[var(--color-text-muted)]">Loading tasks…</div>
-          </div>
-        </MainLayout>
-        <ChatBubble key="chat-bubble-stable" />
-      </>
+      <div className="ui-page-shell flex min-h-full items-center justify-center">
+        <div className="text-sm text-[var(--color-text-muted)]">Loading tasks…</div>
+      </div>
     );
   }
 
@@ -372,10 +365,7 @@ const TodoPage = () => {
         }}
       />
 
-      <ChatBubble />
-
-      <MainLayout>
-        <div className="ui-page-shell">
+      <div className="ui-page-shell">
           <header className="ui-page-header">
             <p className="ui-page-kicker">Workspace</p>
             <h1 className="ui-page-title">Todos</h1>
@@ -453,7 +443,6 @@ const TodoPage = () => {
             emptyLabel={selectedProject ? 'No tasks in this project yet' : 'No tasks yet'}
           />
         </div>
-      </MainLayout>
 
       {/* Give Up Dialog */}
       {isGiveUpModalOpen && (

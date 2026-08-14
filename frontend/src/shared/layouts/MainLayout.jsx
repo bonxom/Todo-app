@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
 import Sidebar, {
   DESKTOP_BREAKPOINT,
   drawerWidthCollapsed,
@@ -8,7 +9,10 @@ import Topbar from "../components/Topbar";
 
 const TOPBAR_HEIGHT = 64;
 
-const MainLayout = ({ children }) => {
+/**
+ * @param {{ children?: import('react').ReactNode, assistant?: import('react').ReactNode }} props
+ */
+const MainLayout = ({ children = null, assistant = null }) => {
   const [isDesktop, setIsDesktop] = useState(() => {
     if (typeof window === "undefined") {
       return true;
@@ -68,8 +72,11 @@ const MainLayout = ({ children }) => {
           paddingTop: `${TOPBAR_HEIGHT}px`,
         }}
       >
-        <div className="ui-main-content">{children}</div>
+        <div className="ui-main-content">
+          {children || <Outlet />}
+        </div>
       </main>
+      {assistant}
     </div>
   );
 };

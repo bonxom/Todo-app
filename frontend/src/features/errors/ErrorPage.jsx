@@ -50,7 +50,7 @@ const ERROR_CONFIGS = {
   },
 };
 
-const ErrorPage = ({ code = '404', title, description, onRetry }) => {
+const ErrorPage = ({ code = '404', title = '', description = '', onRetry = null }) => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
   const [isMuted, setIsMuted] = useState(true);

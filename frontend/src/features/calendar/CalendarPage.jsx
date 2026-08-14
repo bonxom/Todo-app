@@ -1,11 +1,9 @@
 import { useMemo, useState } from 'react';
-import MainLayout from '@/shared/layouts/MainLayout';
 import CalendarView from './components/CalendarView';
-import ChatBubble from '@/features/tasks/components/chat';
 import { useCalendarTasksQuery } from '@/features/tasks/api/taskQueries';
 import { useProjectsQuery } from '@/features/tasks/api/projectQueries';
 import { useCalendarMutations } from './api/useCalendarMutations';
-import { useVisibleTasks } from '@/context/useTaskFilter';
+import { useVisibleTasks } from '@/stores/useTaskFilterStore';
 import {
   getBufferedCalendarRange,
   getVisibleCalendarRange,
@@ -102,71 +100,60 @@ const CalendarPage = () => {
 
   if (isLoading) {
     return (
-      <>
-        <MainLayout>
-          <div className="ui-page-shell flex min-h-full items-center justify-center">
-            <div className="text-sm text-[var(--color-text-muted)]">Loading calendar…</div>
-          </div>
-        </MainLayout>
-        <ChatBubble key="chat-bubble-stable" />
-      </>
+      <div className="ui-page-shell flex min-h-full items-center justify-center">
+        <div className="text-sm text-[var(--color-text-muted)]">Loading calendar…</div>
+      </div>
     );
   }
 
   return (
-    <>
-      <MainLayout>
-        <div className="ui-page-shell calendar-page-shell">
-          <header className="ui-page-header">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="ui-page-kicker">Planning View</p>
-                <h1 className="ui-page-title">Calendar</h1>
-              </div>
-            </div>
-          </header>
+    <div className="ui-page-shell calendar-page-shell">
+      <header className="ui-page-header">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="ui-page-kicker">Planning View</p>
+            <h1 className="ui-page-title">Calendar</h1>
+          </div>
+        </div>
+      </header>
 
-          {errorMessage ? (
-            <div className="ui-section-card ui-card-padding text-center">
-              <p className="text-lg font-semibold text-[var(--color-danger)]">Unable to load the calendar</p>
-              <p className="mt-2 text-sm text-[var(--color-text-muted)]">{errorMessage}</p>
-              <div className="mt-6 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    tasksQuery.refetch();
-                    projectsQuery.refetch();
-                  }}
-                  className="ui-btn-secondary ui-focus-ring"
-                >
-                  Try Again
-                </button>
-              </div>
-            </div>
-          ) : (
-            <CalendarView
-              tasks={renderedTasks}
-              projects={projects}
-              currentDate={currentDate}
-              viewMode={viewMode}
-              onCurrentDateChange={setCurrentDate}
-              onViewModeChange={setViewMode}
-              onTaskUpdated={() => {
+      {errorMessage ? (
+        <div className="ui-section-card ui-card-padding text-center">
+          <p className="text-lg font-semibold text-[var(--color-danger)]">Unable to load the calendar</p>
+          <p className="mt-2 text-sm text-[var(--color-text-muted)]">{errorMessage}</p>
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={() => {
                 tasksQuery.refetch();
                 projectsQuery.refetch();
               }}
-              onTaskStatusChange={handleTaskStatusChange}
-              onTaskDelete={handleTaskDelete}
-              onTaskDueDateChange={handleTaskDueDateChange}
-              onTaskCopy={handleTaskCopy}
-              onProjectStatusChange={handleProjectStatusChange}
-            />
-          )}
+              className="ui-btn-secondary ui-focus-ring"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
-      </MainLayout>
-
-      <ChatBubble key="chat-bubble-stable" />
-    </>
+      ) : (
+        <CalendarView
+          tasks={renderedTasks}
+          projects={projects}
+          currentDate={currentDate}
+          viewMode={viewMode}
+          onCurrentDateChange={setCurrentDate}
+          onViewModeChange={setViewMode}
+          onTaskUpdated={() => {
+            tasksQuery.refetch();
+            projectsQuery.refetch();
+          }}
+          onTaskStatusChange={handleTaskStatusChange}
+          onTaskDelete={handleTaskDelete}
+          onTaskDueDateChange={handleTaskDueDateChange}
+          onTaskCopy={handleTaskCopy}
+          onProjectStatusChange={handleProjectStatusChange}
+        />
+      )}
+    </div>
   );
 };
 

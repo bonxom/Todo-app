@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ListFilter, Menu, User } from 'lucide-react';
-import { useAuth } from '@/context/useAuth';
-import { useTaskFilter } from '@/context/useTaskFilter';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useTaskFilterStore } from '@/stores/useTaskFilterStore';
 
 const getAvatarUrl = (user) => {
   const avatarFields = [
@@ -61,8 +61,9 @@ const getTopbarContext = (pathname) => {
 const Topbar = ({ isDesktop, onOpenSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
-  const { onlyInProgress, toggleOnlyInProgress } = useTaskFilter();
+  const user = useAuthStore((state) => state.user);
+  const onlyInProgress = useTaskFilterStore((state) => state.onlyInProgress);
+  const toggleOnlyInProgress = useTaskFilterStore((state) => state.toggleOnlyInProgress);
   const avatarUrl = getAvatarUrl(user);
   const [brokenAvatarUrl, setBrokenAvatarUrl] = useState('');
   const showAvatar = Boolean(avatarUrl) && brokenAvatarUrl !== avatarUrl;
