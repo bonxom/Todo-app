@@ -38,7 +38,7 @@ export const useTodayDeadlinesQuery = (
   options?: Omit<UseQueryOptions<Task[], Error>, "queryKey" | "queryFn">
 ) => {
   return useQuery({
-    queryKey: [...taskKeys.all, "today-deadlines"] as const,
+    queryKey: taskKeys.todayDeadlines(),
     queryFn: ({ signal }) => taskService.getTodayDeadlines({ signal }),
     ...options,
   });

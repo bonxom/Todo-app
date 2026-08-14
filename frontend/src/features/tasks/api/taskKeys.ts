@@ -43,4 +43,5 @@ export const taskKeys = {
         endDate: range.endDate,
       },
     ] as const,
+  todayDeadlines: () => [...taskKeys.all, "today-deadlines"] as const,
 };
