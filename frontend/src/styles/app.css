@@ -518,10 +518,29 @@ textarea.ui-input {
   font-weight: 700;
 }
 
-.brand-mark-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.ui-shell-brand-mark .orbit-mark {
+  width: 2rem;
+  height: 2rem;
+}
+
+.orbit-mark {
+  display: block;
+  overflow: visible;
+}
+
+.orbit-mark__ring {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2.1;
+}
+
+.orbit-mark__ring--two {
+  stroke: color-mix(in srgb, var(--color-accent) 62%, #8b5cf6);
+}
+
+.orbit-mark__core {
+  fill: #22c5db;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, #22c5db 62%, transparent));
 }
 
 .ui-shell-brand-copy {

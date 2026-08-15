@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import OrbitMark from '@/shared/components/OrbitMark';
 
 const AuthLayout = ({ children, mode = 'login' }) => {
   const isRegister = mode === 'register';
@@ -9,7 +10,7 @@ const AuthLayout = ({ children, mode = 'login' }) => {
       <div className="auth-page-container">
         <Link to="/" className="auth-home-link">
           <span className="ui-shell-brand-mark" aria-hidden="true">
-            <img src="/ech.jpeg" alt="" className="brand-mark-image" />
+            <OrbitMark />
           </span>
           <span>TodoApp</span>
         </Link>

@@ -1,37 +1,20 @@
 import { Link } from 'react-router-dom';
+import OrbitMark from '@/shared/components/OrbitMark';
 
 const Footer = () => {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="footer">
-      <div className="footer-container">
-        <div className="footer-content">
-          <div className="footer-section">
-            <h3 className="footer-brand">TodoApp</h3>
-            <p className="footer-description">
-              A focused task workspace for lists, projects, calendars, and progress.
-            </p>
-          </div>
-          <div className="footer-section">
-            <h4 className="footer-heading">Product</h4>
-            <ul className="footer-links">
-              <li><a href="#features">Features</a></li>
-              <li><a href="#how-it-works">How It Works</a></li>
-            </ul>
-          </div>
-          <div className="footer-section">
-            <h4 className="footer-heading">Account</h4>
-            <ul className="footer-links">
-              <li><Link to="/login">Sign In</Link></li>
-              <li><Link to="/register">Create Workspace</Link></li>
-            </ul>
-          </div>
+    <footer className="landing-footer">
+      <div className="landing-footer__inner">
+        <div className="landing-footer__brand">
+          <div><OrbitMark /><strong>TodoApp</strong></div>
+          <p>A focused task workspace for lists, projects, calendars, and steady progress.</p>
         </div>
-        <div className="footer-bottom">
-          <p>&copy; {year} TodoApp. All rights reserved.</p>
-        </div>
+        <div className="landing-footer__section"><h3>Orbit</h3><a href="#capture">Capture</a><a href="#organize">Organize</a><a href="#focus">Focus</a></div>
+        <div className="landing-footer__section"><h3>Account</h3><Link to="/login">Sign in</Link><Link to="/register">Create workspace</Link></div>
       </div>
+      <p className="landing-footer__bottom">© {year} TodoApp. All rights reserved.</p>
     </footer>
   );
 };

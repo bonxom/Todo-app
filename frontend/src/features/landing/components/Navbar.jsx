@@ -1,26 +1,22 @@
 import { Link } from 'react-router-dom';
+import OrbitMark from '@/shared/components/OrbitMark';
 
-const Navbar = () => {
+const Navbar = ({ heroPassed = false }) => {
   return (
-    <nav className="landing-navbar" aria-label="Landing navigation">
-      <div className="navbar-container">
+    <nav className="landing-navbar" aria-label="Landing navigation" data-scrolled={heroPassed}>
+      <div className="landing-navbar__inner">
         <Link to="/" className="landing-brand" aria-label="TodoApp home">
-          <span className="landing-brand-mark" aria-hidden="true">
-            <img src="/ech.jpeg" alt="" className="brand-mark-image" />
-          </span>
+          <OrbitMark />
           <span>TodoApp</span>
         </Link>
-        <div className="navbar-menu">
-          <a href="#features" className="navbar-link">Features</a>
-          <a href="#how-it-works" className="navbar-link">How It Works</a>
+        <div className="landing-navbar__links">
+          <a href="#capture">Capture</a>
+          <a href="#organize">Organize</a>
+          <a href="#focus">Focus</a>
         </div>
-        <div className="navbar-actions">
-          <Link className="ui-btn-tertiary landing-nav-action" to="/login">
-            Sign In
-          </Link>
-          <Link className="ui-btn-primary landing-nav-action" to="/register">
-            Get Started
-          </Link>
+        <div className="landing-navbar__actions">
+          <Link to="/login">Sign in</Link>
+          <Link className="landing-navbar__start" to="/register">Start free</Link>
         </div>
       </div>
     </nav>
