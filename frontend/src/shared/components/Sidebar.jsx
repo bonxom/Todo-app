@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { useLogoutMutation } from '@/features/auth/api/authMutations';
+import OrbitMark from './OrbitMark';
 
 export const DESKTOP_BREAKPOINT = 1024;
 export const drawerWidthExpanded = 272;
@@ -181,7 +182,7 @@ const Sidebar = ({
 
         <div className={`ui-shell-brand ${showLabels ? '' : 'justify-center'}`}>
           <div className="ui-shell-brand-mark" aria-hidden="true">
-            <img src="/ech.jpeg" alt="" className="brand-mark-image" />
+            <OrbitMark />
           </div>
           {showLabels && (
             <div className="ui-shell-brand-copy">
