@@ -34,6 +34,7 @@ The new page will move from the shared light canvas to a landing-scoped dark pre
 - **Surfaces:** midnight glass panels with low-opacity borders, controlled blur, diffuse shadow, and indigo edge light.
 - **Accent:** electric indigo and blue-violet are primary action and orbital-light colors. A cool cyan accent appears sparingly for status, progress, and directional detail.
 - **Typography:** retain the existing system typography stack for performance and consistency. Increase display scale, tracking, and line-height contrast in headlines rather than introducing a font dependency.
+- **Brand mark:** replace the current image mark with a landing-local CSS/SVG Orbit Control mark: indigo orbital rings surrounding a restrained cyan core. It uses no image asset.
 - **Depth:** use CSS `perspective`, 3D transforms, layered z-index planes, shadow, and lighting gradients to create dimensionality. No decorative element may obscure a text block or action.
 
 ### Narrative
