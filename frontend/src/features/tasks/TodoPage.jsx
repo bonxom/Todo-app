@@ -14,7 +14,6 @@ import {
   useGiveUpTaskMutation,
   useRestoreTaskMutation,
   useStartTaskMutation,
-  useUpdateTaskMutation,
 } from './api/taskMutations';
 import { useUpdateProjectMutation } from './api/projectMutations';
 import { useTaskFilter } from '@/stores/useTaskFilterStore';
@@ -52,7 +51,6 @@ const TodoPage = () => {
   const tasksQuery = useTasksQuery();
   const projectsQuery = useProjectsQuery();
 
-  const updateTaskMutation = useUpdateTaskMutation();
   const startTaskMutation = useStartTaskMutation();
   const finishTaskMutation = useFinishTaskMutation();
   const giveUpTaskMutation = useGiveUpTaskMutation();
@@ -64,7 +62,6 @@ const TodoPage = () => {
   const projects = useMemo(() => projectsQuery.data || [], [projectsQuery.data]);
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading;
-  const isFetching = tasksQuery.isFetching || projectsQuery.isFetching;
   const errorMessage = tasksQuery.isError
     ? getApiErrorMessage(tasksQuery.error, 'Failed to load tasks.')
     : projectsQuery.isError
