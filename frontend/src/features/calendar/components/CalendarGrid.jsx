@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LoaderCircle } from 'lucide-react';
 import DayCell from './DayCell';
 import {
   buildMonthDays,
@@ -22,6 +22,7 @@ const CalendarGrid = ({
   onTaskUpdated,
   onTaskDueDateChange,
   onTaskCopy,
+  isRangeLoading = false,
   viewMode = 'month',
   showViewModeToggle = false,
   onViewModeChange,
@@ -40,9 +41,20 @@ const CalendarGrid = ({
     <div className="ui-section-card ui-card-padding">
       <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-sm font-medium text-[var(--color-accent)]">
-            {viewMode === 'week' ? 'Week view' : 'Month view'}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-[var(--color-accent)]">
+              {viewMode === 'week' ? 'Week view' : 'Month view'}
+            </p>
+            {isRangeLoading ? (
+              <span
+                role="status"
+                aria-label="Loading calendar range"
+                className="inline-flex text-[var(--color-text-muted)]"
+              >
+                <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+              </span>
+            ) : null}
+          </div>
           <h2 className="mt-1 text-2xl font-semibold text-[var(--color-text)]">{heading}</h2>
         </div>
 
