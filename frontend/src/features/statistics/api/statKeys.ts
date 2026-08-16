@@ -8,8 +8,9 @@ export interface ActivityFilters {
 export const statKeys = {
   all: ["stats"] as const,
   summary: () => [...statKeys.all, "summary"] as const,
-  activity: (filters?: ActivityFilters) => {
-    const normalized = normalizeFilters(filters as Record<string, unknown>);
+  activity: (filters?: ActivityFilters | string) => {
+    const filterObj = typeof filters === "string" ? { date: filters } : filters;
+    const normalized = normalizeFilters(filterObj as Record<string, unknown>);
     return normalized !== undefined
       ? ([...statKeys.all, "activity", normalized] as const)
       : ([...statKeys.all, "activity"] as const);

@@ -19,7 +19,7 @@ const ProfilePage = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   const userQuery = useCurrentUserQuery();
-  const tasksQuery = useTasksQuery();
+  const tasksQuery = useTasksQuery({ pageSize: 100 });
   const categoriesQuery = useCategoriesQuery();
 
   const updateProfileMutation = useUpdateProfileMutation();
@@ -28,7 +28,7 @@ const ProfilePage = () => {
   const user = userQuery.data || null;
 
   const stats = useMemo(() => {
-    const tasks = tasksQuery.data || [];
+    const tasks = (Array.isArray(tasksQuery.data) ? tasksQuery.data : tasksQuery.data?.data) || [];
     const categories = categoriesQuery.data || [];
     const completedTasks = tasks.filter((task) => task.status === 'completed').length;
     const inProgressTasks = tasks.filter((task) => task.status === 'in-progress').length;

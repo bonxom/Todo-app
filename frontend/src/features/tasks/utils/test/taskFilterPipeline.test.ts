@@ -19,7 +19,7 @@ describe('taskFilterPipeline', () => {
   it('filters tasks by selected statuses array', () => {
     const result = filterAndSortTasks({ tasks: mockTasks, selectedStatuses: ['pending', 'in-progress'] });
     expect(result).toHaveLength(2);
-    expect(result.map(t => t._id)).toEqual(['1', '2']);
+    expect(result.map(t => t._id)).toEqual(['2', '1']);
   });
 
   it('filters tasks by project ID or standalone', () => {

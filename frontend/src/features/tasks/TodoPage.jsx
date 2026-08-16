@@ -6,6 +6,7 @@ import TaskList from './components/TaskList';
 import ProjectFocusRail from './components/ProjectFocusRail';
 import AddCategoryForm from './components/Form/AddCategoryForm';
 import AddProjectForm from './components/Form/AddProjectForm';
+import Pagination from '@/shared/components/Pagination';
 import { useTasksQuery } from './api/taskQueries';
 import { useProjectsQuery } from './api/projectQueries';
 import {
@@ -17,7 +18,7 @@ import {
 } from './api/taskMutations';
 import { useUpdateProjectMutation } from './api/projectMutations';
 import { useTaskFilter } from '@/stores/useTaskFilterStore';
-import { filterAndSortTasks } from './utils/taskFilterPipeline';
+import { usePagination } from '@/shared/hooks/usePagination';
 import { PROJECT_STATUS } from '@/shared/utils/projectStatus';
 import { getApiErrorMessage } from '@/shared/services/apiError';
 import { X } from 'lucide-react';
@@ -47,8 +48,37 @@ const TodoPage = () => {
   const [sortBy, setSortBy] = useState('dueDate');
   const [showCompletedProjects, setShowCompletedProjects] = useState(false);
 
-  // Queries & Mutations
-  const tasksQuery = useTasksQuery();
+  // Pagination — auto-resets to page 1 when search/filter/sort changes
+  const {
+    pageNo, pageSize, setPageNo, setPageSize,
+    syncPageInfo, totalCount, totalPage,
+  } = usePagination({
+    resetDeps: [searchTerm, selectedStatuses, sortBy, selectedProjectId],
+  });
+
+  // Build sort string for server
+  const sortParam = useMemo(() => {
+    const SORT_MAP = {
+      dueDate: 'dueDate:asc_createdAt:desc',
+      priority: 'priority:desc_dueDate:asc',
+      title: 'title:asc',
+    };
+    return SORT_MAP[sortBy] || SORT_MAP.dueDate;
+  }, [sortBy]);
+
+  // Queries & Mutations — server-side filtering + pagination
+  const tasksQuery = useTasksQuery({
+    pageNo,
+    pageSize,
+    sort: sortParam,
+    search: searchTerm.trim() || undefined,
+    status: selectedStatuses[0] || undefined,
+    projectId: selectedProjectId === ALL_PROJECT_FILTER
+      ? undefined
+      : selectedProjectId === STANDALONE_PROJECT_FILTER
+      ? 'standalone'
+      : selectedProjectId,
+  });
   const projectsQuery = useProjectsQuery();
 
   const startTaskMutation = useStartTaskMutation();
@@ -58,8 +88,15 @@ const TodoPage = () => {
   const deleteTaskMutation = useDeleteTaskMutation();
   const updateProjectMutation = useUpdateProjectMutation();
 
-  const rawTasks = useMemo(() => tasksQuery.data || [], [tasksQuery.data]);
+  // Extract paginated data
+  const rawTasks = useMemo(() => tasksQuery.data?.data || [], [tasksQuery.data]);
+  const pageInfo = tasksQuery.data?.pageInfo;
   const projects = useMemo(() => projectsQuery.data || [], [projectsQuery.data]);
+
+  // Sync server pageInfo into usePagination state
+  useEffect(() => {
+    if (pageInfo) syncPageInfo(pageInfo);
+  }, [pageInfo, syncPageInfo]);
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading;
   const errorMessage = tasksQuery.isError
@@ -77,18 +114,7 @@ const TodoPage = () => {
     };
   }, [isGiveUpModalOpen, isDeleteModalOpen, isAddCategoryModalOpen, isAddProjectModalOpen]);
 
-  // Pure filtering & sorting pipeline
-  const filteredTasks = useMemo(() => {
-    return filterAndSortTasks({
-      tasks: rawTasks,
-      searchTerm,
-      selectedStatuses,
-      selectedProjectId,
-      sortBy,
-    });
-  }, [rawTasks, searchTerm, selectedStatuses, selectedProjectId, sortBy]);
-
-  // Overall workspace counters (pure and stable)
+  // Counters from server-side totalCount (current page tasks for per-status counts)
   const remainingCount = useMemo(() => {
     return rawTasks.filter((t) => t.status === 'in-progress' || t.status === 'pending').length;
   }, [rawTasks]);
@@ -199,6 +225,7 @@ const TodoPage = () => {
   };
 
   const isFiltered = Boolean(searchTerm.trim()) || selectedStatuses.length > 0 || selectedProjectId !== ALL_PROJECT_FILTER;
+  const filteredTasks = rawTasks; // Filtering now happens server-side
 
   const emptyStateInfo = useMemo(() => {
     if (isFiltered) {
@@ -324,6 +351,19 @@ const TodoPage = () => {
                 setSelectedProjectId(ALL_PROJECT_FILTER);
               }}
             />
+
+            {/* Pagination */}
+            {totalPage > 0 && (
+              <Pagination
+                pageNo={pageNo}
+                pageSize={pageSize}
+                totalCount={totalCount}
+                totalPage={totalPage}
+                onPageChange={setPageNo}
+                onPageSizeChange={setPageSize}
+                className="mt-4"
+              />
+            )}
           </main>
 
           {/* Right Column: Sticky Project Focus Rail (~30–35%, min 320px) */}

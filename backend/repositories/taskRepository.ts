@@ -64,6 +64,21 @@ export const taskRepository = {
     return Task.findByIdAndDelete(id);
   },
 
+  async findPaginated(
+    query: Record<string, unknown>,
+    paging: { skip: number; limit: number; sort: Record<string, 1 | -1> }
+  ): Promise<{ data: ITaskDocument[]; totalCount: number }> {
+    const [data, totalCount] = await Promise.all([
+      Task.find(query)
+        .sort(paging.sort)
+        .skip(paging.skip)
+        .limit(paging.limit)
+        .populate(TASK_POPULATE),
+      Task.countDocuments(query),
+    ]);
+    return { data, totalCount };
+  },
+
   aggregate(pipeline: mongoose.PipelineStage[]): Promise<Array<Record<string, unknown>>> {
     return Task.aggregate(pipeline);
   },

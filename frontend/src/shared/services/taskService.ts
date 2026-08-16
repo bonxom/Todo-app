@@ -1,6 +1,6 @@
 import axiosInstance, { type RequestOptions } from "./httpClient";
 import { buildTaskMutationPayload } from "./projectHelpers";
-import type { Task, TaskMutationPayload } from "../types/domain";
+import type { PaginatedResponse, Task, TaskListParams, TaskMutationPayload } from "../types/domain";
 
 export const taskService = {
   // Create new task
@@ -9,9 +9,12 @@ export const taskService = {
     return response.data;
   },
 
-  // Get all tasks
-  getAllTasks: async (options?: RequestOptions): Promise<Task[]> => {
-    const response = await axiosInstance.get<Task[]>("/api/tasks", options);
+  // Get all tasks (paginated)
+  getAllTasks: async (params?: TaskListParams, options?: RequestOptions): Promise<PaginatedResponse<Task>> => {
+    const response = await axiosInstance.get<PaginatedResponse<Task>>("/api/tasks", {
+      ...options,
+      params: { ...options?.params, ...params },
+    });
     return response.data;
   },
 
@@ -23,11 +26,14 @@ export const taskService = {
 
   // Get tasks by date range
   getTasksByDateRange: async (startDate: string, endDate: string, options?: RequestOptions): Promise<Task[]> => {
-    const response = await axiosInstance.get<Task[]>("/api/tasks", {
+    const response = await axiosInstance.get<PaginatedResponse<Task> | Task[]>("/api/tasks", {
       ...options,
-      params: { ...options?.params, startDate, endDate },
+      params: { ...options?.params, startDate, endDate, pageSize: 100 },
     });
-    return response.data;
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return response.data?.data || [];
   },
 
   // Get tasks by status
