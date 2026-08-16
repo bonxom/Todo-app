@@ -1,35 +1,37 @@
 import { useMemo } from "react";
 import { create } from "zustand";
-import type { Task } from "../shared/types/domain";
+import type { Task, TaskStatus } from "../shared/types/domain";
 
 export interface TaskFilterState {
-  onlyInProgress: boolean;
-  setOnlyInProgress: (onlyInProgress: boolean) => void;
-  toggleOnlyInProgress: () => void;
+  selectedStatuses: TaskStatus[];
+  setSelectedStatuses: (selectedStatuses: TaskStatus[]) => void;
 }
 
-export const filterTasks = (tasks: Task[] | null | undefined, onlyInProgress: boolean): Task[] => {
+export const filterTasks = (
+  tasks: Task[] | null | undefined,
+  selectedStatuses: TaskStatus[]
+): Task[] => {
   const taskList = Array.isArray(tasks) ? tasks : [];
-  if (!onlyInProgress) {
+
+  if (selectedStatuses.length === 0) {
     return taskList;
   }
-  return taskList.filter((task) => task?.status === "in-progress");
+
+  return taskList.filter((task) => selectedStatuses.includes(task.status));
 };
 
 export const useTaskFilterStore = create<TaskFilterState>((set) => ({
-  onlyInProgress: false,
-  setOnlyInProgress: (onlyInProgress) => set({ onlyInProgress }),
-  toggleOnlyInProgress: () => set((state) => ({ onlyInProgress: !state.onlyInProgress })),
+  selectedStatuses: [],
+  setSelectedStatuses: (selectedStatuses) => set({ selectedStatuses }),
 }));
 
 export const useVisibleTasks = <T extends Task>(tasks: T[] | null | undefined): T[] => {
-  const onlyInProgress = useTaskFilterStore((state) => state.onlyInProgress);
-  return useMemo(() => filterTasks(tasks, onlyInProgress) as T[], [tasks, onlyInProgress]);
+  const selectedStatuses = useTaskFilterStore((state) => state.selectedStatuses);
+  return useMemo(() => filterTasks(tasks, selectedStatuses) as T[], [tasks, selectedStatuses]);
 };
 
 export const useTaskFilter = () => {
-  const onlyInProgress = useTaskFilterStore((state) => state.onlyInProgress);
-  const setOnlyInProgress = useTaskFilterStore((state) => state.setOnlyInProgress);
-  const toggleOnlyInProgress = useTaskFilterStore((state) => state.toggleOnlyInProgress);
-  return { onlyInProgress, setOnlyInProgress, toggleOnlyInProgress };
+  const selectedStatuses = useTaskFilterStore((state) => state.selectedStatuses);
+  const setSelectedStatuses = useTaskFilterStore((state) => state.setSelectedStatuses);
+  return { selectedStatuses, setSelectedStatuses };
 };

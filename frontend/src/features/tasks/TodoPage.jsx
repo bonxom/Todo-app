@@ -3,7 +3,6 @@ import ActionButtons from './components/GenTaskButton';
 import AddTaskButton from './components/AddTaskButton';
 import TaskDetailButton from './components/TaskDetailButton';
 import SearchBar from './components/SearchBar';
-import TaskSelector from './components/TaskSelector';
 import TaskList from './components/TaskList';
 import ProgressBar from './components/ProgressBar';
 import ProjectOverviewGrid from './components/ProjectOverviewGrid';
@@ -18,7 +17,7 @@ import {
   useUpdateTaskMutation,
 } from './api/taskMutations';
 import { useUpdateProjectMutation } from './api/projectMutations';
-import { useTaskFilter, useVisibleTasks } from '@/stores/useTaskFilterStore';
+import { useVisibleTasks } from '@/stores/useTaskFilterStore';
 import { getNextCompletionStatus } from './utils/taskCompletion';
 import { PROJECT_STATUS, canCompleteProject, filterProjectsByVisibility } from '@/shared/utils/projectStatus';
 import { getApiErrorMessage } from '@/shared/services/apiError';
@@ -26,8 +25,6 @@ import { X } from 'lucide-react';
 
 const ALL_PROJECT_FILTER = 'all-projects';
 const STANDALONE_PROJECT_FILTER = 'standalone-projects';
-const DEFAULT_STATUS_FILTERS = ['pending', 'in-progress', 'completed', 'given-up'];
-
 const sortTasksByDueDate = (taskList) => {
   return [...taskList].sort((a, b) => {
     if (!a.dueDate) return 1;
@@ -37,7 +34,6 @@ const sortTasksByDueDate = (taskList) => {
 };
 
 const TodoPage = () => {
-  const { onlyInProgress } = useTaskFilter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -47,7 +43,6 @@ const TodoPage = () => {
   const [taskToGiveUp, setTaskToGiveUp] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState(DEFAULT_STATUS_FILTERS);
   const [selectedProjectId, setSelectedProjectId] = useState(ALL_PROJECT_FILTER);
   const [showCompletedProjects, setShowCompletedProjects] = useState(false);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
@@ -198,7 +193,6 @@ const TodoPage = () => {
   const filteredTasks = useMemo(() => {
     return visibleTasks.filter((task) => {
       const matchesSearch = (task.title || '').toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = selectedStatus.includes(task.status);
       const taskProjectId = task.projectId?._id || task.projectId || null;
       const matchesProject = selectedProjectId === ALL_PROJECT_FILTER
         ? true
@@ -206,9 +200,9 @@ const TodoPage = () => {
           ? !taskProjectId
           : taskProjectId === selectedProjectId;
 
-      return matchesSearch && matchesStatus && matchesProject;
+      return matchesSearch && matchesProject;
     });
-  }, [visibleTasks, searchTerm, selectedStatus, selectedProjectId]);
+  }, [visibleTasks, searchTerm, selectedProjectId]);
 
   const overallSummary = useMemo(() => {
     const completed = visibleTasks.filter((task) => task.status === 'completed').length;
@@ -258,25 +252,11 @@ const TodoPage = () => {
       };
     }
 
-    if (selectedStatus.length !== DEFAULT_STATUS_FILTERS.length) {
-      return {
-        title: 'No tasks match these statuses',
-        description: 'Adjust the status filter to bring other tasks back into view.',
-      };
-    }
-
-    if (onlyInProgress) {
-      return {
-        title: 'No in-progress tasks visible',
-        description: 'Turn off the global in-progress filter to see completed, pending, and given-up tasks.',
-      };
-    }
-
     return {
       title: 'No tasks yet',
       description: 'Add your first task to start building a daily list and project progress.',
     };
-  }, [onlyInProgress, searchTerm, selectedProject, selectedProjectId, selectedStatus.length]);
+  }, [searchTerm, selectedProject, selectedProjectId]);
 
   const projectCards = useMemo(() => {
     const buildSummary = (projectId) => {
@@ -419,10 +399,6 @@ const TodoPage = () => {
 
           <div className="flex flex-col gap-5">
             <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
-            <TaskSelector
-              selectedStatus={selectedStatus}
-              onStatusChange={setSelectedStatus}
-            />
           </div>
 
           <TaskList

@@ -31,19 +31,10 @@ const VIEW_CONFIG = {
   },
 };
 
-const STATUS_OPTIONS = [
-  { id: 'all', label: 'All Tasks' },
-  { id: 'pending', label: 'Pending' },
-  { id: 'in-progress', label: 'In Progress' },
-  { id: 'completed', label: 'Completed' },
-  { id: 'given-up', label: 'Given Up' },
-];
-
 const getRelationId = (value) => value?._id || value || null;
 
 const CategoryPage = () => {
   const [showCompletedProjects, setShowCompletedProjects] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedView, setSelectedView] = useState('categories');
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
@@ -85,11 +76,7 @@ const CategoryPage = () => {
 
   const globallyVisibleTasks = useVisibleTasks(tasks);
 
-  const filteredTasks = useMemo(() => {
-    return selectedStatus === 'all'
-      ? globallyVisibleTasks
-      : globallyVisibleTasks.filter((task) => task.status === selectedStatus);
-  }, [globallyVisibleTasks, selectedStatus]);
+  const filteredTasks = globallyVisibleTasks;
 
   const categoryItems = useMemo(() => {
     const groupedTasks = new Map();
@@ -112,10 +99,8 @@ const CategoryPage = () => {
       tasks: groupedTasks.get(category._id) || [],
     }));
 
-    return selectedStatus === 'all'
-      ? items
-      : items.filter((item) => item.tasks.length > 0);
-  }, [categories, filteredTasks, selectedStatus]);
+    return items;
+  }, [categories, filteredTasks]);
 
   const projectItems = useMemo(() => {
     const groupedTasks = new Map();
@@ -150,10 +135,8 @@ const CategoryPage = () => {
       completionTasks: groupedCompletionTasks.get(project._id) || [],
     }));
 
-    return selectedStatus === 'all'
-      ? items
-      : items.filter((item) => item.tasks.length > 0);
-  }, [projects, filteredTasks, selectedStatus, showCompletedProjects, tasks]);
+    return items;
+  }, [projects, filteredTasks, showCompletedProjects, tasks]);
 
   const activeItems = selectedView === 'categories' ? categoryItems : projectItems;
   const activeConfig = VIEW_CONFIG[selectedView];
@@ -169,8 +152,6 @@ const CategoryPage = () => {
       pendingTasks: visibleTaskItems.filter((task) => task.status === 'pending').length,
     };
   }, [activeItems]);
-
-  const activeStatusLabel = STATUS_OPTIONS.find((option) => option.id === selectedStatus)?.label || 'All Tasks';
 
   if (isLoading) {
     return (
@@ -232,7 +213,6 @@ const CategoryPage = () => {
                     </span>
                     <span className="ui-chip ui-tabular">{activeItems.length} groups</span>
                     <span className="ui-chip ui-tabular">{stats.totalTasks} visible tasks</span>
-                    <span className="ui-chip">{activeStatusLabel}</span>
                     {isLoading ? <span className="ui-chip">Refreshing…</span> : null}
                   </div>
                 </div>
@@ -265,29 +245,6 @@ const CategoryPage = () => {
                   </button>
                 </div>
               </div>
-
-              <div className="mt-5 border-t border-[color:var(--color-line)] pt-5">
-                <div className="flex flex-wrap gap-2">
-                  {STATUS_OPTIONS.map((option) => {
-                    const isSelected = selectedStatus === option.id;
-
-                    return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => setSelectedStatus(option.id)}
-                        className={`inline-flex items-center rounded-full border px-3.5 py-2 text-sm font-medium transition-[background-color,border-color,color] duration-150 ${
-                          isSelected
-                            ? 'border-transparent bg-[var(--color-accent-soft)] text-[color:var(--color-accent)]'
-                            : 'border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </section>
 
             <CategoryStats
@@ -306,13 +263,6 @@ const CategoryPage = () => {
                 >
                   Try Again
                 </button>
-              </section>
-            ) : !isLoading && activeItems.length === 0 && selectedStatus !== 'all' ? (
-              <section className="ui-section-card border-dashed px-6 py-12 text-center">
-                <p className="text-lg font-semibold text-[color:var(--color-text)]">No matches for this status filter</p>
-                <p className="mx-auto mt-2 max-w-xl text-sm text-[color:var(--color-text-muted)]">
-                  Switch the task filter to see the rest of your {selectedView}.
-                </p>
               </section>
             ) : selectedView === 'categories' ? (
               <CategoryGrid
