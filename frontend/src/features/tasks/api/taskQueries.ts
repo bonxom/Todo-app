@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { taskService } from "../../../shared/services/taskService";
 import type { EntityId, Task } from "../../../shared/types/domain";
 import { taskKeys, type CalendarRangeParams, type TaskListFilters } from "./taskKeys";
@@ -53,6 +53,7 @@ export const useCalendarTasksQuery = (
     queryFn: ({ signal }) =>
       taskService.getTasksByDateRange(range.startDate, range.endDate, { signal }),
     enabled: Boolean(range?.startDate && range?.endDate) && (options?.enabled ?? true),
+    placeholderData: keepPreviousData,
     ...options,
   });
 };

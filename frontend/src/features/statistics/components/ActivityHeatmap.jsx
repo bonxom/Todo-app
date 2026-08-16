@@ -149,7 +149,7 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
     return [];
   }, [activityQuery.data]);
 
-  const { onlyInProgress } = useTaskFilter();
+  const { selectedStatuses } = useTaskFilter();
   const visibleCompletedTasks = useVisibleTasks(completedTasks);
   const heatmap = useMemo(() => createHeatmapModel(dailyStats, 365), [dailyStats]);
 
@@ -391,8 +391,8 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
 
             {selectedDateKey && !isTaskListLoading && !taskListError && visibleCompletedTasks.length === 0 ? (
               <p className="rounded-[12px] border border-[color:var(--color-line)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[color:var(--color-text-muted)]">
-                {onlyInProgress
-                  ? 'No in-progress tasks match the global filter for this completed-task list.'
+                {selectedStatuses.length > 0
+                  ? 'No completed tasks match the selected status filters for this day.'
                   : 'No tasks were completed on this day.'}
               </p>
             ) : null}

@@ -18,6 +18,7 @@ const CalendarView = ({
   onTaskUpdated,
   currentDate,
   viewMode,
+  isRangeLoading,
   onCurrentDateChange,
   onViewModeChange,
   onTaskStatusChange,
@@ -163,6 +164,7 @@ const CalendarView = ({
             onTaskDueDateChange={onTaskDueDateChange}
             onTaskCopy={onTaskCopy}
             viewMode={viewMode}
+            isRangeLoading={isRangeLoading}
             showViewModeToggle
             onViewModeChange={handleViewModeChange}
             actions={(

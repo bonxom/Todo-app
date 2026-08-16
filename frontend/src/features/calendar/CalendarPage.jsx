@@ -140,6 +140,7 @@ const CalendarPage = () => {
           projects={projects}
           currentDate={currentDate}
           viewMode={viewMode}
+          isRangeLoading={tasksQuery.isFetching}
           onCurrentDateChange={setCurrentDate}
           onViewModeChange={setViewMode}
           onTaskUpdated={() => {
