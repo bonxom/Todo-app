@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { Priority, PRIORITIES } from '../constants/priority.js';
 import { TASK_STATUSES } from '../constants/taskStatus.js';
 import { objectIdSchema } from './commonValidation.js';
+import { pagingQuerySchema } from './pagingValidation.js';
 
 export const createTaskSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
@@ -24,9 +25,12 @@ export const updateTaskSchema = z.object({
   dueDate: z.string().optional().nullable(),
 });
 
-export const taskQuerySchema = z.object({
+export const taskQuerySchema = pagingQuerySchema.extend({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  search: z.string().max(200).optional(),
+  status: z.enum(TASK_STATUSES as unknown as [string, ...string[]]).optional(),
+  projectId: z.string().optional(),
 }).superRefine((value, context) => {
   if ((value.startDate === undefined) !== (value.endDate === undefined)) {
     context.addIssue({

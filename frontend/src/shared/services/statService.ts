@@ -10,10 +10,13 @@ export const statService = {
 
   // Get completed tasks for a heatmap day
   getCompletedTasksByDate: async (date: string, options?: RequestOptions): Promise<Task[]> => {
-    const response = await axiosInstance.get<Task[]>("/api/stats/completed-tasks", {
+    const response = await axiosInstance.get<{ date: string; tasks: Task[] } | Task[]>("/api/stats/completed-tasks", {
       ...options,
       params: { ...options?.params, date },
     });
-    return response.data;
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return (response.data as { tasks: Task[] })?.tasks || [];
   },
 };

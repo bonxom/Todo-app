@@ -4,6 +4,10 @@ export interface TaskListFilters {
   status?: TaskStatus | string;
   projectId?: EntityId | null;
   categoryId?: EntityId | null;
+  pageNo?: number;
+  pageSize?: number;
+  sort?: string;
+  search?: string;
   [key: string]: unknown;
 }
 

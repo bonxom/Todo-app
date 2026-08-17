@@ -14,10 +14,10 @@ export const useStatsQuery = (
 };
 
 export const useActivityQuery = (
-  filters?: ActivityFilters,
+  filters?: ActivityFilters | string,
   options?: Omit<UseQueryOptions<Task[], Error>, "queryKey" | "queryFn">
 ) => {
-  const date = filters?.date;
+  const date = typeof filters === "string" ? filters : filters?.date;
   return useQuery({
     queryKey: statKeys.activity(filters),
     queryFn: ({ signal }) => {

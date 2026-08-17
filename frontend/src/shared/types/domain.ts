@@ -135,6 +135,35 @@ export interface GenerateTasksPayload {
 export interface ChatPayload {
   userInput: string;
 }
+
+// --- Pagination Types ---
+export interface PageInfo {
+  pageNo: number;
+  pageSize: number;
+  totalCount: number;
+  totalPage: number;
+}
+
+export interface PaginatedResponse<T> {
+  pageInfo: PageInfo;
+  data: T[];
+}
+
+export interface PagingParams {
+  pageNo?: number;
+  pageSize?: number;
+  sort?: string;
+}
+
+export interface TaskListParams extends PagingParams {
+  search?: string;
+  status?: TaskStatus;
+  projectId?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+// --- API Envelope Types ---
 export interface ApiEnvelope<T> {
   success: boolean;
   message: string;

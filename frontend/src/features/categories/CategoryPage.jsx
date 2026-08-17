@@ -41,11 +41,11 @@ const CategoryPage = () => {
 
   const categoriesQuery = useCategoriesQuery();
   const projectsQuery = useProjectsQuery();
-  const tasksQuery = useTasksQuery();
+  const tasksQuery = useTasksQuery({ pageSize: 100 });
 
   const categories = useMemo(() => categoriesQuery.data || [], [categoriesQuery.data]);
   const projects = useMemo(() => projectsQuery.data || [], [projectsQuery.data]);
-  const tasks = useMemo(() => tasksQuery.data || [], [tasksQuery.data]);
+  const tasks = useMemo(() => (Array.isArray(tasksQuery.data) ? tasksQuery.data : tasksQuery.data?.data) || [], [tasksQuery.data]);
 
   const isLoading = categoriesQuery.isLoading || projectsQuery.isLoading || tasksQuery.isLoading;
   const errorMessage = categoriesQuery.isError

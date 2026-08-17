@@ -11,6 +11,9 @@ import { TASK_ERROR } from '../error/definitions/taskErrors.js';
 import { TASK_STATUSES } from '../constants/taskStatus.js';
 import { ITaskDocument } from '../types/ITask.js';
 import { IUserDocument } from '../types/IUser.js';
+import { DEFAULT_PAGE_NO, DEFAULT_PAGE_SIZE } from '../types/PagingParameter.js';
+import type { ResponsePage } from '../types/ResponsePage.js';
+import { parseSortString, calculateSkip, buildResponsePage } from '../utils/pagingUtils.js';
 
 interface ResolveResult<T> {
   shouldUpdate: boolean;
@@ -200,15 +203,44 @@ export const taskService = {
   async getAll(
     user: IUserDocument,
     queryParams: Record<string, unknown>
-  ): Promise<ITaskDocument[]> {
-    const query = await buildTaskAccessQuery(user);
+  ): Promise<ResponsePage<ITaskDocument>> {
+    const query: Record<string, unknown> = await buildTaskAccessQuery(user);
     const dateRange = parseDateRangeQuery(queryParams);
     if (dateRange.error) throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
+    if (dateRange.filter) Object.assign(query, dateRange.filter);
 
-    return taskRepository.findPopulated({
-      ...query,
-      ...(dateRange.filter || {}),
-    });
+    // Server-side search (title + description)
+    if (queryParams.search && typeof queryParams.search === 'string' && queryParams.search.trim()) {
+      const escaped = queryParams.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escaped, 'i');
+      query.$or = [{ title: searchRegex }, { description: searchRegex }];
+    }
+
+    // Server-side status filter
+    if (queryParams.status && typeof queryParams.status === 'string') {
+      query.status = queryParams.status;
+    }
+
+    // Server-side project filter
+    if (queryParams.projectId && typeof queryParams.projectId === 'string') {
+      query.projectId = queryParams.projectId === 'standalone' ? null : queryParams.projectId;
+    }
+
+    // Pagination
+    const pageNo = Number(queryParams.pageNo) || DEFAULT_PAGE_NO;
+    const pageSize = Number(queryParams.pageSize) || DEFAULT_PAGE_SIZE;
+    const sort = parseSortString(
+      queryParams.sort as string | undefined,
+      { dueDate: 1, createdAt: -1 }
+    );
+    const skip = calculateSkip(pageNo, pageSize);
+
+    const { data, totalCount } = await taskRepository.findPaginated(
+      query,
+      { skip, limit: pageSize, sort }
+    );
+
+    return buildResponsePage(data, totalCount, pageNo, pageSize);
   },
 
   async getById(

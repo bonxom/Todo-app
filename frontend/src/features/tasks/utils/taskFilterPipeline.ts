@@ -44,7 +44,7 @@ export function filterAndSortTasks({
     }
 
     // 3. Project filter
-    const taskProjectId = task.projectId?._id || task.projectId || null;
+    const taskProjectId = (typeof task.projectId === 'object' && task.projectId !== null) ? task.projectId._id : task.projectId || null;
     if (selectedProjectId === 'standalone-projects') {
       if (taskProjectId !== null) return false;
     } else if (selectedProjectId !== 'all-projects') {
@@ -77,7 +77,7 @@ export function calculateProjectMetrics(
   if (!Array.isArray(tasks)) return { total: 0, completed: 0, progress: 0 };
 
   const projectTasks = tasks.filter((task) => {
-    const taskProjectId = task.projectId?._id || task.projectId || null;
+    const taskProjectId = (typeof task.projectId === 'object' && task.projectId !== null) ? task.projectId._id : task.projectId || null;
     if (projectId === null || projectId === 'standalone-projects') {
       return !taskProjectId;
     }
