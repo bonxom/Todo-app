@@ -50,7 +50,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["**/*.{jsx,tsx}"],
+    files: ["**/*.{js,jsx,ts,tsx}"],
     plugins: {
       "react-hooks": reactHooks,
     },
