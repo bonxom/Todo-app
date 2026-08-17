@@ -4,6 +4,7 @@ import { AppError } from '../../error/AppError.js';
 import { TASK_ERROR } from '../../error/definitions/taskErrors.js';
 import { taskRepository } from '../../repositories/taskRepository.js';
 import { categoryRepository } from '../../repositories/categoryRepository.js';
+import { projectRepository } from '../../repositories/projectRepository.js';
 import { statService } from '../statService.js';
 import { taskService } from '../taskService.js';
 import type { IUserDocument } from '../../types/IUser.js';
@@ -102,7 +103,8 @@ describe('taskService paginated queries', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
-    vi.spyOn(categoryRepository, 'find').mockResolvedValue([{ _id: new mongoose.Types.ObjectId() }] as never);
+    vi.spyOn(categoryRepository, 'findByUser').mockResolvedValue([{ _id: new mongoose.Types.ObjectId() }] as never);
+    vi.spyOn(projectRepository, 'findByUser').mockResolvedValue([] as never);
   });
 
   afterEach(() => {
