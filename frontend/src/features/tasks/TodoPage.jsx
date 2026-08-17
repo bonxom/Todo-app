@@ -53,6 +53,7 @@ const TodoPage = () => {
     pageNo, pageSize, setPageNo, setPageSize,
     syncPageInfo, totalCount, totalPage,
   } = usePagination({
+    initialPageSize: 10,
     resetDeps: [searchTerm, selectedStatuses, sortBy, selectedProjectId],
   });
 

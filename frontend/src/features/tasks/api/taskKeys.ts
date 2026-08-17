@@ -1,4 +1,4 @@
-import type { EntityId, TaskStatus } from "../../../shared/types/domain";
+import type { EntityId, PagingParams, TaskStatus } from "../../../shared/types/domain";
 
 export interface TaskListFilters {
   status?: TaskStatus | string;
@@ -47,5 +47,25 @@ export const taskKeys = {
         endDate: range.endDate,
       },
     ] as const,
-  todayDeadlines: () => [...taskKeys.all, "today-deadlines"] as const,
+  todayDeadlinesRoot: () => [...taskKeys.all, "today-deadlines"] as const,
+  todayDeadlines: (params?: PagingParams) => {
+    const normalized = normalizeFilters(params as Record<string, unknown>);
+    return normalized !== undefined
+      ? ([...taskKeys.todayDeadlinesRoot(), normalized] as const)
+      : taskKeys.todayDeadlinesRoot();
+  },
+  byStatusRoot: () => [...taskKeys.all, "by-status"] as const,
+  byStatus: (status: string, params?: PagingParams) => {
+    const normalized = normalizeFilters(params as Record<string, unknown>);
+    return normalized !== undefined
+      ? ([...taskKeys.byStatusRoot(), status, normalized] as const)
+      : ([...taskKeys.byStatusRoot(), status] as const);
+  },
+  byCategoryRoot: () => [...taskKeys.all, "by-category"] as const,
+  byCategory: (categoryId: EntityId, params?: PagingParams) => {
+    const normalized = normalizeFilters(params as Record<string, unknown>);
+    return normalized !== undefined
+      ? ([...taskKeys.byCategoryRoot(), categoryId, normalized] as const)
+      : ([...taskKeys.byCategoryRoot(), categoryId] as const);
+  },
 };

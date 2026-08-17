@@ -335,7 +335,7 @@ export const taskService = {
     if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
 
-    if (task.status === 'completed') throw new AppError(TASK_ERROR.ALREADY_COMPLETED);
+    if (task.status !== 'in-progress') throw new AppError(TASK_ERROR.CANNOT_FINISH);
 
     const currentDate = new Date();
     task.status = 'completed';
@@ -412,7 +412,10 @@ export const taskService = {
     await taskRepository.deleteById(id);
   },
 
-  async getTodayDeadlines(user: IUserDocument): Promise<ITaskDocument[]> {
+  async getTodayDeadlines(
+    user: IUserDocument,
+    queryParams: Record<string, unknown> = {}
+  ): Promise<ResponsePage<ITaskDocument>> {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -422,26 +425,75 @@ export const taskService = {
 
     const baseQuery = await buildTaskAccessQuery(user);
 
-    return taskRepository.findPopulated({
+    const pageNo = Number(queryParams.pageNo) || DEFAULT_PAGE_NO;
+    const pageSize = Number(queryParams.pageSize) || DEFAULT_PAGE_SIZE;
+    const sort = parseSortString(
+      queryParams.sort as string | undefined,
+      { dueDate: 1, createdAt: -1 }
+    );
+    const skip = calculateSkip(pageNo, pageSize);
+
+    const query = {
       ...baseQuery,
       dueDate: { $gte: startOfDay, $lt: endOfDay },
       status: { $nin: ['completed', 'given-up'] },
-    });
+    };
+
+    const { data, totalCount } = await taskRepository.findPaginated(
+      query,
+      { skip, limit: pageSize, sort }
+    );
+
+    return buildResponsePage(data, totalCount, pageNo, pageSize);
   },
 
   async getByStatus(
     user: IUserDocument,
-    status: string
-  ): Promise<ITaskDocument[]> {
+    status: string,
+    queryParams: Record<string, unknown> = {}
+  ): Promise<ResponsePage<ITaskDocument>> {
     const baseQuery = await buildTaskAccessQuery(user);
-    return taskRepository.findPopulated({ ...baseQuery, status });
+
+    const pageNo = Number(queryParams.pageNo) || DEFAULT_PAGE_NO;
+    const pageSize = Number(queryParams.pageSize) || DEFAULT_PAGE_SIZE;
+    const sort = parseSortString(
+      queryParams.sort as string | undefined,
+      { dueDate: 1, createdAt: -1 }
+    );
+    const skip = calculateSkip(pageNo, pageSize);
+
+    const query = { ...baseQuery, status };
+
+    const { data, totalCount } = await taskRepository.findPaginated(
+      query,
+      { skip, limit: pageSize, sort }
+    );
+
+    return buildResponsePage(data, totalCount, pageNo, pageSize);
   },
 
   async getByCategory(
     user: IUserDocument,
-    categoryId: string
-  ): Promise<ITaskDocument[]> {
+    categoryId: string,
+    queryParams: Record<string, unknown> = {}
+  ): Promise<ResponsePage<ITaskDocument>> {
     const baseQuery = await buildTaskAccessQuery(user);
-    return taskRepository.findPopulated({ ...baseQuery, categoryId });
+
+    const pageNo = Number(queryParams.pageNo) || DEFAULT_PAGE_NO;
+    const pageSize = Number(queryParams.pageSize) || DEFAULT_PAGE_SIZE;
+    const sort = parseSortString(
+      queryParams.sort as string | undefined,
+      { dueDate: 1, createdAt: -1 }
+    );
+    const skip = calculateSkip(pageNo, pageSize);
+
+    const query = { ...baseQuery, categoryId };
+
+    const { data, totalCount } = await taskRepository.findPaginated(
+      query,
+      { skip, limit: pageSize, sort }
+    );
+
+    return buildResponsePage(data, totalCount, pageNo, pageSize);
   },
 };

@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import TaskDetailButton from '@/features/tasks/components/TaskDetailButton';
 import DeleteDialog from '@/features/tasks/components/dialogs/DeleteDialog';
 import CalendarTaskDetailCard from './CalendarTaskDetailCard';
+import Pagination from '@/shared/components/Pagination';
+import { usePagination } from '@/shared/hooks/usePagination';
 import { formatDateTime } from '@/shared/utils/dateTime';
 import { sortTasksByDueTime } from './calendarUtils';
 
@@ -11,7 +13,7 @@ const TaskListDetailModal = ({
   isOpen,
   onClose,
   selectedDate,
-  tasks,
+  tasks = [],
   onTaskUpdated,
   onTaskStatusChange,
   onTaskDelete,
@@ -22,6 +24,36 @@ const TaskListDetailModal = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [deletingTaskId, setDeletingTaskId] = useState(null);
+
+  const sortedTasks = useMemo(() => sortTasksByDueTime(tasks), [tasks]);
+
+  const {
+    pageNo,
+    pageSize,
+    setPageNo,
+    setPageSize,
+    syncPageInfo,
+  } = usePagination({
+    initialPageSize: 5,
+    resetDeps: [selectedDate, tasks.length, isOpen],
+  });
+
+  const totalTasksCount = sortedTasks.length;
+  const totalPages = Math.ceil(totalTasksCount / pageSize) || 1;
+
+  useEffect(() => {
+    syncPageInfo({
+      pageNo,
+      pageSize,
+      totalCount: totalTasksCount,
+      totalPage: totalPages,
+    });
+  }, [totalTasksCount, totalPages, pageNo, pageSize, syncPageInfo]);
+
+  const displayTasks = useMemo(() => {
+    const start = (pageNo - 1) * pageSize;
+    return sortedTasks.slice(start, start + pageSize);
+  }, [sortedTasks, pageNo, pageSize]);
 
   const handleEdit = (task) => {
     setSelectedTask(task);
@@ -37,9 +69,9 @@ const TaskListDetailModal = ({
     try {
       setDeletingTaskId(taskToDelete);
       setIsDeleteModalOpen(false);
-      
+
       await onTaskDelete?.(taskToDelete);
-      
+
       setTimeout(() => {
         setDeletingTaskId(null);
         setTaskToDelete(null);
@@ -66,7 +98,6 @@ const TaskListDetailModal = ({
   if (!isOpen) return null;
 
   const isToday = selectedDate && selectedDate.toDateString() === new Date().toDateString();
-  const sortedTasks = sortTasksByDueTime(tasks);
   const completedTasks = sortedTasks.filter(task => task.status === 'completed').length;
   const totalTasks = tasks.length;
 
@@ -136,9 +167,9 @@ const TaskListDetailModal = ({
           </div>
 
           <div className="flex-1 overflow-y-auto overscroll-contain p-6">
-            {sortedTasks.length > 0 ? (
+            {displayTasks.length > 0 ? (
               <div className="space-y-3">
-                {sortedTasks.map((task) => (
+                {displayTasks.map((task) => (
                   <div
                     key={task._id || task.id}
                     className={`transition-[opacity,transform] duration-300 ${
@@ -158,6 +189,19 @@ const TaskListDetailModal = ({
                     />
                   </div>
                 ))}
+
+                {totalPages > 1 && (
+                  <Pagination
+                    pageNo={pageNo}
+                    pageSize={pageSize}
+                    totalCount={totalTasksCount}
+                    totalPage={totalPages}
+                    onPageChange={setPageNo}
+                    onPageSizeChange={setPageSize}
+                    pageSizeOptions={[5, 10, 20]}
+                    className="mt-6 border-t border-[var(--color-line)] pt-4"
+                  />
+                )}
               </div>
             ) : (
               <div className="py-12 text-center text-[var(--color-text-muted)]">

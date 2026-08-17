@@ -5,10 +5,13 @@ import TaskCard from '@/features/tasks/components/category/TaskCard';
 import TaskDetailButton from '@/features/tasks/components/TaskDetailButton';
 import GiveUpDialog from '@/features/tasks/components/dialogs/GiveUpDialog';
 import DeleteDialog from '@/features/tasks/components/dialogs/DeleteDialog';
+import Pagination from '@/shared/components/Pagination';
+import { useTasksByCategoryQuery } from '@/features/tasks/api/taskQueries';
 import { useDeleteTaskMutation, useGiveUpTaskMutation } from '@/features/tasks/api/taskMutations';
+import { usePagination } from '@/shared/hooks/usePagination';
 import { getApiErrorMessage } from '@/shared/services/apiError';
 
-const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, onTaskUpdated }) => {
+const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks = [], categoryId, onTaskUpdated }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -16,6 +19,38 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
   const [isGiveUpModalOpen, setIsGiveUpModalOpen] = useState(false);
   const [taskToGiveUp, setTaskToGiveUp] = useState(null);
   const [deletingTaskId, setDeletingTaskId] = useState(null);
+
+  const {
+    pageNo,
+    pageSize,
+    setPageNo,
+    setPageSize,
+    syncPageInfo,
+    totalCount,
+    totalPage,
+  } = usePagination({
+    initialPageSize: 10,
+    resetDeps: [categoryId, isOpen],
+  });
+
+  const categoryTasksQuery = useTasksByCategoryQuery(
+    categoryId,
+    { pageNo, pageSize },
+    { enabled: Boolean(isOpen && categoryId) }
+  );
+
+  const paginatedTasks = categoryTasksQuery.data?.data;
+  const pageInfo = categoryTasksQuery.data?.pageInfo;
+
+  useEffect(() => {
+    if (pageInfo) {
+      syncPageInfo(pageInfo);
+    }
+  }, [pageInfo, syncPageInfo]);
+
+  const displayTasks = paginatedTasks || (tasks ? tasks.slice((pageNo - 1) * pageSize, pageNo * pageSize) : []);
+  const effectiveTotalCount = pageInfo ? totalCount : tasks.length;
+  const effectiveTotalPage = pageInfo ? totalPage : Math.ceil(tasks.length / pageSize);
 
   const giveUpTaskMutation = useGiveUpTaskMutation();
   const deleteTaskMutation = useDeleteTaskMutation();
@@ -35,8 +70,13 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
   if (!isOpen) return null;
 
   const completedTasks = tasks.filter((task) => task.status === 'completed').length;
-  const totalTasks = tasks.length;
+  const totalTasks = effectiveTotalCount;
   const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  const handleTaskUpdated = () => {
+    categoryTasksQuery.refetch();
+    onTaskUpdated?.();
+  };
 
   const handleEdit = (task) => {
     setSelectedTask(task);
@@ -51,7 +91,7 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
   const confirmGiveUp = async () => {
     try {
       await giveUpTaskMutation.mutateAsync(taskToGiveUp);
-      onTaskUpdated?.();
+      handleTaskUpdated();
       setIsGiveUpModalOpen(false);
       setTaskToGiveUp(null);
     } catch (error) {
@@ -75,7 +115,7 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
       setTimeout(() => {
         setDeletingTaskId(null);
         setTaskToDelete(null);
-        onTaskUpdated?.();
+        handleTaskUpdated();
       }, 300);
     } catch (error) {
       console.error('Failed to delete task:', error);
@@ -94,8 +134,8 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
           setIsEditModalOpen(false);
           setSelectedTask(null);
         }}
-        onTaskUpdated={onTaskUpdated}
-        onProjectCreated={onTaskUpdated}
+        onTaskUpdated={handleTaskUpdated}
+        onProjectCreated={handleTaskUpdated}
       />
 
       <GiveUpDialog
@@ -165,9 +205,9 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 py-6">
-            {tasks.length > 0 ? (
+            {displayTasks.length > 0 ? (
               <div className="space-y-3">
-                {tasks.map((task) => (
+                {displayTasks.map((task) => (
                   <div
                     key={task._id || task.id}
                     className={`transition-[opacity,transform] duration-300 ${
@@ -182,10 +222,23 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks, on
                       onEdit={handleEdit}
                       onGiveUp={handleGiveUp}
                       onDelete={handleDelete}
-                      onTaskUpdated={onTaskUpdated}
+                      onTaskUpdated={handleTaskUpdated}
                     />
                   </div>
                 ))}
+
+                {effectiveTotalPage > 1 && (
+                  <Pagination
+                    pageNo={pageNo}
+                    pageSize={pageSize}
+                    totalCount={effectiveTotalCount}
+                    totalPage={effectiveTotalPage}
+                    onPageChange={setPageNo}
+                    onPageSizeChange={setPageSize}
+                    pageSizeOptions={[10, 20, 50]}
+                    className="mt-6 border-t border-[color:var(--color-line)] pt-4"
+                  />
+                )}
               </div>
             ) : (
               <div className="rounded-[14px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-6 py-14 text-center">

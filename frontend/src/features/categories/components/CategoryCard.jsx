@@ -111,6 +111,7 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
         category={category}
         description={description}
         tasks={tasks}
+        categoryId={categoryId}
         onTaskUpdated={onTaskUpdated}
       />
 
