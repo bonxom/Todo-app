@@ -1,13 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, CheckCircle2 } from 'lucide-react';
 import TaskDetailButton from '@/features/tasks/components/TaskDetailButton';
 import CalendarTaskDetailCard from './CalendarTaskDetailCard';
+import Pagination from '@/shared/components/Pagination';
+import { usePagination } from '@/shared/hooks/usePagination';
 import { formatDateTime } from '@/shared/utils/dateTime';
 import { sortTasksByDueTime } from './calendarUtils';
 
 const ProjectFocusWeekAgenda = ({
   selectedDate,
-  tasks,
+  tasks = [],
   selectedProjectCount = 0,
   onTaskUpdated,
   onTaskStatusChange,
@@ -26,7 +28,36 @@ const ProjectFocusWeekAgenda = ({
       completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
     };
   }, [tasks]);
+
   const sortedTasks = useMemo(() => sortTasksByDueTime(tasks), [tasks]);
+
+  const {
+    pageNo,
+    pageSize,
+    setPageNo,
+    setPageSize,
+    syncPageInfo,
+  } = usePagination({
+    initialPageSize: 5,
+    resetDeps: [selectedDate, tasks.length],
+  });
+
+  const totalTasksCount = sortedTasks.length;
+  const totalPages = Math.ceil(totalTasksCount / pageSize) || 1;
+
+  useEffect(() => {
+    syncPageInfo({
+      pageNo,
+      pageSize,
+      totalCount: totalTasksCount,
+      totalPage: totalPages,
+    });
+  }, [totalTasksCount, totalPages, pageNo, pageSize, syncPageInfo]);
+
+  const displayTasks = useMemo(() => {
+    const start = (pageNo - 1) * pageSize;
+    return sortedTasks.slice(start, start + pageSize);
+  }, [sortedTasks, pageNo, pageSize]);
 
   return (
     <section className="ui-section-card overflow-hidden">
@@ -72,21 +103,36 @@ const ProjectFocusWeekAgenda = ({
       </div>
 
       <div className="space-y-3 px-4 py-4">
-        {sortedTasks.length > 0 ? (
-          sortedTasks.map((task) => (
-            <CalendarTaskDetailCard
-              key={task._id || task.id}
-              task={task}
-              mode="panel"
-              onClick={(clickedTask) => {
-                setSelectedTask(clickedTask);
-                setIsEditModalOpen(true);
-              }}
-              onTaskUpdated={onTaskUpdated}
-              onTaskStatusChange={onTaskStatusChange}
-              onTaskDelete={onTaskDelete}
-            />
-          ))
+        {displayTasks.length > 0 ? (
+          <>
+            {displayTasks.map((task) => (
+              <CalendarTaskDetailCard
+                key={task._id || task.id}
+                task={task}
+                mode="panel"
+                onClick={(clickedTask) => {
+                  setSelectedTask(clickedTask);
+                  setIsEditModalOpen(true);
+                }}
+                onTaskUpdated={onTaskUpdated}
+                onTaskStatusChange={onTaskStatusChange}
+                onTaskDelete={onTaskDelete}
+              />
+            ))}
+
+            {totalPages > 1 && (
+              <Pagination
+                pageNo={pageNo}
+                pageSize={pageSize}
+                totalCount={totalTasksCount}
+                totalPage={totalPages}
+                onPageChange={setPageNo}
+                onPageSizeChange={setPageSize}
+                pageSizeOptions={[5, 10, 20]}
+                className="mt-4 border-t border-[var(--color-line)] pt-4"
+              />
+            )}
+          </>
         ) : (
           <div className="rounded-[16px] border border-dashed border-[var(--color-line)] bg-[var(--color-surface-muted)] px-5 py-10 text-center">
             <CheckCircle2 className="mx-auto h-10 w-10 text-[var(--color-text-muted)]" aria-hidden="true" />

@@ -103,25 +103,6 @@ const ProjectFocusRail = ({
 
       {/* Scrollable Project Cards Container */}
       <div className="space-y-2.5 max-h-[calc(100dvh-18rem)] overflow-y-auto pr-1">
-        {/* All Tasks Card */}
-        <article
-          onClick={() => onSelectProject(ALL_PROJECT_FILTER)}
-          className={`ui-section-card relative cursor-pointer p-3.5 transition-all duration-150 ${
-            selectedProjectId === ALL_PROJECT_FILTER
-              ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-xs'
-              : 'hover:border-[var(--color-accent)]'
-          }`}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-[var(--color-text)]">All Tasks</h3>
-              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Every task in your workspace</p>
-            </div>
-            <span className="ui-chip ui-tabular !text-[11px] !min-h-[1.5rem]">
-              {overallMetrics.completed}/{overallMetrics.total}
-            </span>
-          </div>
-        </article>
 
         {/* Standalone (No Project) Card */}
         <article

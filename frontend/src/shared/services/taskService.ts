@@ -1,6 +1,6 @@
 import axiosInstance, { type RequestOptions } from "./httpClient";
 import { buildTaskMutationPayload } from "./projectHelpers";
-import type { PaginatedResponse, Task, TaskListParams, TaskMutationPayload } from "../types/domain";
+import type { PaginatedResponse, PagingParams, Task, TaskListParams, TaskMutationPayload } from "../types/domain";
 
 export const taskService = {
   // Create new task
@@ -18,9 +18,12 @@ export const taskService = {
     return response.data;
   },
 
-  // Get today's deadlines
-  getTodayDeadlines: async (options?: RequestOptions): Promise<Task[]> => {
-    const response = await axiosInstance.get<Task[]>("/api/tasks/today-deadlines", options);
+  // Get today's deadlines (paginated)
+  getTodayDeadlines: async (params?: PagingParams, options?: RequestOptions): Promise<PaginatedResponse<Task>> => {
+    const response = await axiosInstance.get<PaginatedResponse<Task>>("/api/tasks/today-deadlines", {
+      ...options,
+      params: { ...options?.params, ...params },
+    });
     return response.data;
   },
 
@@ -36,15 +39,21 @@ export const taskService = {
     return response.data?.data || [];
   },
 
-  // Get tasks by status
-  getTaskByStatus: async (status: string, options?: RequestOptions): Promise<Task[]> => {
-    const response = await axiosInstance.get<Task[]>(`/api/tasks/status/${status}`, options);
+  // Get tasks by status (paginated)
+  getTaskByStatus: async (status: string, params?: PagingParams, options?: RequestOptions): Promise<PaginatedResponse<Task>> => {
+    const response = await axiosInstance.get<PaginatedResponse<Task>>(`/api/tasks/status/${status}`, {
+      ...options,
+      params: { ...options?.params, ...params },
+    });
     return response.data;
   },
 
-  // Get tasks by category
-  getTaskByCategory: async (categoryId: string, options?: RequestOptions): Promise<Task[]> => {
-    const response = await axiosInstance.get<Task[]>(`/api/tasks/category/${categoryId}`, options);
+  // Get tasks by category (paginated)
+  getTaskByCategory: async (categoryId: string, params?: PagingParams, options?: RequestOptions): Promise<PaginatedResponse<Task>> => {
+    const response = await axiosInstance.get<PaginatedResponse<Task>>(`/api/tasks/category/${categoryId}`, {
+      ...options,
+      params: { ...options?.params, ...params },
+    });
     return response.data;
   },
 

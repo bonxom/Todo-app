@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { taskService } from "../../../shared/services/taskService";
-import type { EntityId, PaginatedResponse, Task, TaskStatus } from "../../../shared/types/domain";
+import type { EntityId, PaginatedResponse, PagingParams, Task, TaskStatus } from "../../../shared/types/domain";
 import { taskKeys, type CalendarRangeParams, type TaskListFilters } from "./taskKeys";
 
 export const useTasksQuery = (
@@ -40,11 +40,41 @@ export const useTaskQuery = (
 };
 
 export const useTodayDeadlinesQuery = (
-  options?: Omit<UseQueryOptions<Task[], Error>, "queryKey" | "queryFn">
+  params?: PagingParams,
+  options?: Omit<UseQueryOptions<PaginatedResponse<Task>, Error>, "queryKey" | "queryFn">
 ) => {
   return useQuery({
-    queryKey: taskKeys.todayDeadlines(),
-    queryFn: ({ signal }) => taskService.getTodayDeadlines({ signal }),
+    queryKey: taskKeys.todayDeadlines(params),
+    queryFn: ({ signal }) => taskService.getTodayDeadlines(params, { signal }),
+    placeholderData: keepPreviousData,
+    ...options,
+  });
+};
+
+export const useTasksByStatusQuery = (
+  status: string,
+  params?: PagingParams,
+  options?: Omit<UseQueryOptions<PaginatedResponse<Task>, Error>, "queryKey" | "queryFn">
+) => {
+  return useQuery({
+    queryKey: taskKeys.byStatus(status, params),
+    queryFn: ({ signal }) => taskService.getTaskByStatus(status, params, { signal }),
+    enabled: Boolean(status) && (options?.enabled ?? true),
+    placeholderData: keepPreviousData,
+    ...options,
+  });
+};
+
+export const useTasksByCategoryQuery = (
+  categoryId: EntityId,
+  params?: PagingParams,
+  options?: Omit<UseQueryOptions<PaginatedResponse<Task>, Error>, "queryKey" | "queryFn">
+) => {
+  return useQuery({
+    queryKey: taskKeys.byCategory(categoryId, params),
+    queryFn: ({ signal }) => taskService.getTaskByCategory(categoryId, params, { signal }),
+    enabled: Boolean(categoryId) && (options?.enabled ?? true),
+    placeholderData: keepPreviousData,
     ...options,
   });
 };

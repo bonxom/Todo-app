@@ -79,28 +79,30 @@ export const getTodayDeadlines = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const tasks = await taskService.getTodayDeadlines(req.user!);
-  res.status(200).json(tasks);
+  const result = await taskService.getTodayDeadlines(req.user!, req.validatedQuery);
+  res.status(200).json(result);
 };
 
 export const getTaskByStatus = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const tasks = await taskService.getByStatus(
+  const result = await taskService.getByStatus(
     req.user!,
-    req.validatedParams!.status
+    req.validatedParams!.status,
+    req.validatedQuery
   );
-  res.status(200).json(tasks);
+  res.status(200).json(result);
 };
 
 export const getTaskByCategory = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const tasks = await taskService.getByCategory(
+  const result = await taskService.getByCategory(
     req.user!,
-    req.validatedParams!.categoryId
+    req.validatedParams!.categoryId,
+    req.validatedQuery
   );
-  res.status(200).json(tasks);
+  res.status(200).json(result);
 };

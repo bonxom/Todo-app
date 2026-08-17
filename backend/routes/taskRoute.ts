@@ -4,14 +4,15 @@ import { protect } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import { createTaskSchema, taskCategoryParamSchema, taskQuerySchema, taskStatusParamSchema, updateTaskSchema } from '../validations/taskValidation.js';
 import { idParamSchema } from '../validations/commonValidation.js';
+import { pagingQuerySchema } from '../validations/pagingValidation.js';
 
 const router = express.Router();
 
 router.post('/', protect, validate({ body: createTaskSchema }), createTask);
 router.get('/', protect, validate({ query: taskQuerySchema }), getAllTasks);
-router.get('/today-deadlines', protect, getTodayDeadlines);
-router.get('/status/:status', protect, validate({ params: taskStatusParamSchema }), getTaskByStatus);
-router.get('/category/:categoryId', protect, validate({ params: taskCategoryParamSchema }), getTaskByCategory);
+router.get('/today-deadlines', protect, validate({ query: pagingQuerySchema }), getTodayDeadlines);
+router.get('/status/:status', protect, validate({ params: taskStatusParamSchema, query: pagingQuerySchema }), getTaskByStatus);
+router.get('/category/:categoryId', protect, validate({ params: taskCategoryParamSchema, query: pagingQuerySchema }), getTaskByCategory);
 router.get('/:id', protect, validate({ params: idParamSchema }), getTaskById);
 router.put('/:id', protect, validate({ params: idParamSchema, body: updateTaskSchema }), updateTask);
 router.put('/:id/start', protect, validate({ params: idParamSchema }), startTask);
