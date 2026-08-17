@@ -109,7 +109,8 @@ describe("useCalendarMutations", () => {
     expect(queryClient.getQueryData<Task[]>(calendarKey)).toEqual([task]);
   });
 
-  it("copies task with temporary ID and replaces with server task", async () => {
+  it("copies task with temporary ID and replaces with server task even when crypto.randomUUID is undefined", async () => {
+    vi.stubGlobal("crypto", {});
     const wrapper = createWrapper();
     queryClient.setQueryData(calendarKey, []);
 

@@ -14,6 +14,7 @@ import {
   upsertTaskInCollections,
   type CalendarSnapshot,
 } from "./calendarCache";
+import { generateOptimisticId } from "../../../shared/utils/id";
 import type { EntityId, Project, ProjectStatus, Task, TaskMutationPayload, TaskStatus } from "../../../shared/types/domain";
 
 export const useCalendarMutations = () => {
@@ -152,7 +153,7 @@ export const useCalendarMutations = () => {
       ]);
       const snapshot = createCalendarSnapshot(queryClient);
 
-      const temporaryId = `optimistic-${crypto.randomUUID()}`;
+      const temporaryId = generateOptimisticId("optimistic");
       const optimisticTask: Task = {
         _id: temporaryId,
         title: taskCopyPayload.title || "",

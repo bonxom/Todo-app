@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 import {
   createCalendarSnapshot,
@@ -54,8 +54,7 @@ describe("calendarCache", () => {
 
   it("replaces a collision-safe temporary copy with the server task", () => {
     queryClient.setQueryData(calendarKey, []);
-    vi.stubGlobal("crypto", { randomUUID: () => "temp-uuid" });
-    const temporaryId = `optimistic-${crypto.randomUUID()}`;
+    const temporaryId = "optimistic-temp-uuid";
     const optimisticTask = { ...makeTask(temporaryId), dueDate: "2026-08-15T09:00:00.000Z" };
     const serverTask = { ...optimisticTask, _id: "server-task" };
 
