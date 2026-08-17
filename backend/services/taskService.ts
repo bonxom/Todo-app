@@ -335,7 +335,7 @@ export const taskService = {
     if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
 
-    if (task.status === 'completed') throw new AppError(TASK_ERROR.ALREADY_COMPLETED);
+    if (task.status !== 'in-progress') throw new AppError(TASK_ERROR.CANNOT_FINISH);
 
     const currentDate = new Date();
     task.status = 'completed';

@@ -10,5 +10,6 @@ export const TASK_ERROR = {
   PROJECT_COMPLETED: { code: 'TASK_0007', message: 'Completed projects cannot be assigned to tasks', statusCode: 422 },
   CANNOT_START: { code: 'TASK_0008', message: 'Only pending tasks can be started', statusCode: 422 },
   CANNOT_GIVE_UP: { code: 'TASK_0009', message: 'Only in-progress tasks can be given up', statusCode: 422 },
-  NO_FIELDS_TO_UPDATE: { code: 'TASK_0010', message: 'No fields to update', statusCode: 422 },
+  CANNOT_FINISH: { code: 'TASK_0010', message: 'Only in-progress tasks can be finished', statusCode: 422 },
+  NO_FIELDS_TO_UPDATE: { code: 'TASK_0011', message: 'No fields to update', statusCode: 422 },
 } as const satisfies Record<string, ErrorDefinition>;
