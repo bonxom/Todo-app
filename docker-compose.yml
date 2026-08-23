@@ -3,7 +3,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: orbit-backend
+    container_name: todoapp-backend
     restart: unless-stopped
     env_file:
       - ./backend/.env
@@ -20,7 +20,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: orbit-frontend
+    container_name: todoapp-frontend
     restart: unless-stopped
     ports:
       - "3636:80"
