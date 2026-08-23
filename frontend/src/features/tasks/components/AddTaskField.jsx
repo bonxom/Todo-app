@@ -38,7 +38,7 @@ const AddTaskForm = ({ onAddTask }) => {
           />
           <button
             type="submit"
-            className="ui-btn-primary"
+            className="ui-btn-primary ui-btn-opposite-corners"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             <span>Add</span>

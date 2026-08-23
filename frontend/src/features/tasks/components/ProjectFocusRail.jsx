@@ -7,6 +7,7 @@ import { canCompleteProject, filterProjectsByVisibility, isCompletedProject } fr
 
 const ALL_PROJECT_FILTER = 'all-projects';
 const STANDALONE_PROJECT_FILTER = 'standalone-projects';
+const PROJECT_LIST_MIN_HEIGHT = 400;
 
 const ProjectFocusRail = ({
   projects = [],
@@ -21,6 +22,7 @@ const ProjectFocusRail = ({
   onCompleteProject,
   onRestoreProject,
   isLoading = false,
+  projectListMaxHeight,
 }) => {
   // 1. Overall Workspace Metrics (Independent of any filter)
   const overallMetrics = useMemo(() => {
@@ -61,7 +63,7 @@ const ProjectFocusRail = ({
           <button
             type="button"
             onClick={onCreateCategory}
-            className="ui-btn-secondary !min-h-[2rem] !px-2.5 !text-xs cursor-pointer"
+            className="ui-btn-secondary ui-btn-opposite-corners !min-h-[2rem] !px-2.5 !text-xs cursor-pointer"
             title="Add Category"
           >
             <Layers className="h-3.5 w-3.5" />
@@ -70,7 +72,7 @@ const ProjectFocusRail = ({
           <button
             type="button"
             onClick={onCreateProject}
-            className="ui-btn-primary !min-h-[2rem] !px-2.5 !text-xs cursor-pointer"
+            className="ui-btn-primary ui-btn-opposite-corners !min-h-[2rem] !px-2.5 !text-xs cursor-pointer"
             title="Add Project"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -102,7 +104,15 @@ const ProjectFocusRail = ({
       </div>
 
       {/* Scrollable Project Cards Container */}
-      <div className="space-y-2.5 max-h-[calc(100dvh-18rem)] overflow-y-auto pr-1">
+      <div
+        className="space-y-2.5 overflow-y-auto pr-1"
+        style={{
+          minHeight: `${PROJECT_LIST_MIN_HEIGHT}px`,
+          ...(projectListMaxHeight
+            ? { maxHeight: `${Math.max(projectListMaxHeight, PROJECT_LIST_MIN_HEIGHT)}px` }
+            : {}),
+        }}
+      >
 
         {/* Standalone (No Project) Card */}
         <article
@@ -207,7 +217,7 @@ const ProjectFocusRail = ({
                 <button
                   type="button"
                   onClick={() => onAddTaskToProject?.(project._id)}
-                  className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--color-accent)] bg-[var(--color-accent-soft)] px-2 text-[11px] font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-colors cursor-pointer"
+                  className="ui-btn-opposite-corners inline-flex h-7 items-center gap-1 border border-[var(--color-accent)] bg-[var(--color-accent-soft)] px-2 text-[11px] font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-colors cursor-pointer"
                 >
                   <Plus className="h-3 w-3" />
                   <span>Add Task</span>

@@ -5,7 +5,7 @@ const OrbitScene = () => {
   const tilt = usePointerTilt();
 
   return (
-    <div className="orbit-scene" aria-label="TodoApp command deck preview">
+    <div className="orbit-scene" aria-label="Orbit command deck preview">
       <div className="orbit-scene__glow" aria-hidden="true" />
       <svg className="orbit-scene__tracks" viewBox="0 0 600 500" aria-hidden="true" focusable="false">
         <ellipse cx="300" cy="250" rx="264" ry="128" />

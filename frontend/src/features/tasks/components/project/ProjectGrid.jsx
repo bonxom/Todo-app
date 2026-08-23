@@ -11,7 +11,7 @@ const ProjectGrid = ({ items, onTaskUpdated, onProjectUpdated, onCreateProject }
         <button
           type="button"
           onClick={onCreateProject}
-          className="ui-btn-primary mt-6"
+          className="ui-btn-primary ui-btn-opposite-corners mt-6"
         >
           Add Project
         </button>

@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "todo-app-api-collection",
-		"name": "TodoApp API",
-		"description": "API Collection for Todo App Backend",
+		"_postman_id": "orbit-api-collection",
+		"name": "Orbit API",
+		"description": "API Collection for the Orbit backend",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -321,7 +321,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"title\": \"Complete project\",\n  \"description\": \"Finish the todo app project\",\n  \"status\": \"pending\",\n  \"priority\": \"high\",\n  \"categoryId\": \"CATEGORY_ID_HERE\",\n  \"startDate\": \"2024-01-01T00:00:00.000Z\",\n  \"dueDate\": \"2024-12-31T23:59:59.000Z\"\n}"
+							"raw": "{\n  \"title\": \"Complete project\",\n  \"description\": \"Finish the Orbit project\",\n  \"status\": \"pending\",\n  \"priority\": \"high\",\n  \"categoryId\": \"CATEGORY_ID_HERE\",\n  \"startDate\": \"2024-01-01T00:00:00.000Z\",\n  \"dueDate\": \"2024-12-31T23:59:59.000Z\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/tasks",
@@ -558,4 +558,3 @@
 		}
 	]
 }
-

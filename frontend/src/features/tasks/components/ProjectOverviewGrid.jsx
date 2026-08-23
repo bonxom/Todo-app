@@ -39,7 +39,7 @@ const ProjectOverviewGrid = ({
           <button
             type="button"
             onClick={onCreateProject}
-            className="ui-btn-secondary"
+            className="ui-btn-secondary ui-btn-opposite-corners"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             <span>Add Project</span>
@@ -124,7 +124,7 @@ const ProjectOverviewGrid = ({
                   <button
                     type="button"
                     onClick={() => onAddTaskToProject?.(item.id)}
-                    className="ui-btn-primary flex-1"
+                    className="ui-btn-primary ui-btn-opposite-corners flex-1"
                     aria-label={`Add task to ${item.name}`}
                   >
                     <Plus className="h-4 w-4" aria-hidden="true" />

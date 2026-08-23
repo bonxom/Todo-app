@@ -14,6 +14,7 @@ const ProjectFocusWeekAgenda = ({
   onTaskUpdated,
   onTaskStatusChange,
   onTaskDelete,
+  compact = false,
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -73,7 +74,7 @@ const ProjectFocusWeekAgenda = ({
       />
 
       <div className="border-b border-[var(--color-line)] px-5 py-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className={`flex flex-col gap-4 ${compact ? '' : 'lg:flex-row lg:items-start lg:justify-between'}`}>
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
               <CalendarDays className="h-5 w-5" aria-hidden="true" />
@@ -88,16 +89,14 @@ const ProjectFocusWeekAgenda = ({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 lg:items-end">
-            <div className="flex flex-wrap gap-2">
-              <span className="ui-chip ui-tabular">{summary.completed}/{summary.total} complete</span>
-              <span className="ui-chip ui-tabular">{summary.completionRate}% completion</span>
-              {selectedProjectCount > 0 ? (
-                <span className="ui-chip ui-tabular">
-                  {selectedProjectCount} filtered project{selectedProjectCount > 1 ? 's' : ''}
-                </span>
-              ) : null}
-            </div>
+          <div className={`flex flex-wrap gap-2 ${compact ? '' : 'lg:justify-end'}`}>
+            <span className="ui-chip ui-tabular">{summary.completed}/{summary.total} complete</span>
+            <span className="ui-chip ui-tabular">{summary.completionRate}% completion</span>
+            {selectedProjectCount > 0 ? (
+              <span className="ui-chip ui-tabular">
+                {selectedProjectCount} filtered project{selectedProjectCount > 1 ? 's' : ''}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
@@ -110,6 +109,7 @@ const ProjectFocusWeekAgenda = ({
                 key={task._id || task.id}
                 task={task}
                 mode="panel"
+                compact={compact}
                 onClick={(clickedTask) => {
                   setSelectedTask(clickedTask);
                   setIsEditModalOpen(true);
@@ -129,6 +129,7 @@ const ProjectFocusWeekAgenda = ({
                 onPageChange={setPageNo}
                 onPageSizeChange={setPageSize}
                 pageSizeOptions={[5, 10, 20]}
+                compact={compact}
                 className="mt-4 border-t border-[var(--color-line)] pt-4"
               />
             )}

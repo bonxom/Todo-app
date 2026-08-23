@@ -1,9 +1,9 @@
-name: todoapp
+name: orbit
 
 services:
   backend:
-    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME}/todoapp-backend:${IMAGE_TAG:-latest}
-    container_name: todoapp-backend
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME}/orbit-backend:${IMAGE_TAG:-latest}
+    container_name: orbit-backend
     restart: unless-stopped
     env_file:
       - ./backend/.env
@@ -27,8 +27,8 @@ services:
       start_period: 20s
 
   frontend:
-    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME}/todoapp-frontend:${IMAGE_TAG:-latest}
-    container_name: todoapp-frontend
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME}/orbit-frontend:${IMAGE_TAG:-latest}
+    container_name: orbit-frontend
     restart: unless-stopped
     depends_on:
       backend:

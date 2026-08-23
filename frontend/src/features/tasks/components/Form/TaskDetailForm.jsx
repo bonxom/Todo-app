@@ -10,20 +10,6 @@ import DateTimeInput from '@/shared/components/DateTimeInput';
 import { isActiveProject, isCompletedProject } from '@/shared/utils/projectStatus';
 import { getApiErrorMessage } from '@/shared/services/apiError';
 
-const STATUS_STYLES = {
-  pending: 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] border-[var(--color-line)]',
-  'in-progress': 'bg-[var(--color-accent-soft)] text-[var(--color-accent)] border-[var(--color-accent-soft)]',
-  completed: 'bg-[var(--color-success-soft)] text-[var(--color-success)] border-[var(--color-success-soft)]',
-  'given-up': 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] border-[var(--color-line)]',
-};
-
-const STATUS_LABELS = {
-  pending: 'Pending',
-  'in-progress': 'In Progress',
-  completed: 'Completed',
-  'given-up': 'Given Up',
-};
-
 const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
   const [title, setTitle] = useState(task?.title || '');
   const [categoryId, setCategoryId] = useState(task?.categoryId?._id || task?.categoryId || '');
@@ -96,17 +82,6 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
           required
           autoFocus
         />
-      </div>
-
-      <div>
-        <label htmlFor="edit-status" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
-          Status
-        </label>
-        <div
-          className={`flex h-11 items-center rounded-[var(--radius-md)] border px-4 text-sm font-medium ${STATUS_STYLES[task?.status] || STATUS_STYLES.pending}`}
-        >
-          {STATUS_LABELS[task?.status] || task?.status}
-        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

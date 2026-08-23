@@ -87,6 +87,6 @@ jobs:
           file: ./${{ matrix.service }}/Dockerfile
           platforms: ${{ vars.DOCKER_PLATFORM || 'linux/amd64' }}
           push: false
-          tags: todoapp-${{ matrix.service }}:pr-${{ github.event.pull_request.number }}
+          tags: orbit-${{ matrix.service }}:pr-${{ github.event.pull_request.number }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}

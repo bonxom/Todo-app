@@ -2,9 +2,9 @@
 
 ## Context
 
-`TodoApp/frontend` is a React 19 and Vite 7 application whose current source is organized across generic `page`, `feature`, `component`, `context`, `api`, `layout`, and `utils` directories. The application works, but ownership boundaries are unclear: pages fetch server data directly, one API module contains every domain service, route configuration imports every page eagerly, and manual refresh counters coordinate server-state updates.
+`Orbit/frontend` is a React 19 and Vite 7 application whose current source is organized across generic `page`, `feature`, `component`, `context`, `api`, `layout`, and `utils` directories. The application works, but ownership boundaries are unclear: pages fetch server data directly, one API module contains every domain service, route configuration imports every page eagerly, and manual refresh counters coordinate server-state updates.
 
-`merchant-cms` demonstrates a clearer model built around feature-owned modules, a small shared layer, centralized application composition, lazy route objects, explicit environment configuration, and dedicated state-management tools. TodoApp will adopt those structural principles without copying merchant-specific UI libraries or business behavior.
+`merchant-cms` demonstrates a clearer model built around feature-owned modules, a small shared layer, centralized application composition, lazy route objects, explicit environment configuration, and dedicated state-management tools. Orbit will adopt those structural principles without copying merchant-specific UI libraries or business behavior.
 
 ## Goals
 

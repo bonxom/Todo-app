@@ -20,7 +20,7 @@ describe('application error integration', () => {
     const response = await request(app).get('/');
 
     expect(response.status).toBe(200);
-    expect(response.text).toBe('This is backend of Todo App');
+    expect(response.text).toBe('This is the Orbit backend');
   });
 
   it('keeps the health success response unchanged', async () => {

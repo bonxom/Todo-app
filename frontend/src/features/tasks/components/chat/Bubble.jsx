@@ -42,10 +42,6 @@ const Bubble = ({ onClick, hasUnread = false }) => {
         <BotMessageSquare className="h-5 w-5" />
         {hasUnread && <span className="ui-assistant-bubble__dot" />}
       </span>
-      <span className="ui-assistant-bubble__copy">
-        <span className="ui-assistant-bubble__label">Assistant</span>
-        <span className="ui-assistant-bubble__meta">Chat or generate tasks</span>
-      </span>
     </button>
   );
 };

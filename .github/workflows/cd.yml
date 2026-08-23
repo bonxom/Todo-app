@@ -42,8 +42,8 @@ jobs:
           platforms: ${{ vars.DOCKER_PLATFORM || 'linux/amd64' }}
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/todoapp-${{ matrix.service }}:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/todoapp-${{ matrix.service }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/orbit-${{ matrix.service }}:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/orbit-${{ matrix.service }}:latest
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
@@ -80,17 +80,17 @@ jobs:
             fi
           done
 
-          install -d -m 700 "${RUNNER_TEMP}/todoapp-ssh"
-          printf '%s\n' "${DEPLOY_SSH_KEY}" > "${RUNNER_TEMP}/todoapp-ssh/id_deploy"
-          printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" > "${RUNNER_TEMP}/todoapp-ssh/known_hosts"
-          chmod 600 "${RUNNER_TEMP}/todoapp-ssh/id_deploy" "${RUNNER_TEMP}/todoapp-ssh/known_hosts"
+          install -d -m 700 "${RUNNER_TEMP}/orbit-ssh"
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > "${RUNNER_TEMP}/orbit-ssh/id_deploy"
+          printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" > "${RUNNER_TEMP}/orbit-ssh/known_hosts"
+          chmod 600 "${RUNNER_TEMP}/orbit-ssh/id_deploy" "${RUNNER_TEMP}/orbit-ssh/known_hosts"
 
       - name: Upload production Compose file
         shell: bash
         run: |
           set -euo pipefail
-          SSH_KEY="${RUNNER_TEMP}/todoapp-ssh/id_deploy"
-          KNOWN_HOSTS="${RUNNER_TEMP}/todoapp-ssh/known_hosts"
+          SSH_KEY="${RUNNER_TEMP}/orbit-ssh/id_deploy"
+          KNOWN_HOSTS="${RUNNER_TEMP}/orbit-ssh/known_hosts"
           SSH_TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
 
           ssh -i "${SSH_KEY}" -p "${DEPLOY_PORT}" \
@@ -108,8 +108,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SSH_KEY="${RUNNER_TEMP}/todoapp-ssh/id_deploy"
-          KNOWN_HOSTS="${RUNNER_TEMP}/todoapp-ssh/known_hosts"
+          SSH_KEY="${RUNNER_TEMP}/orbit-ssh/id_deploy"
+          KNOWN_HOSTS="${RUNNER_TEMP}/orbit-ssh/known_hosts"
           SSH_TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
 
           printf '%s' "${DOCKERHUB_TOKEN}" | ssh -i "${SSH_KEY}" -p "${DEPLOY_PORT}" \

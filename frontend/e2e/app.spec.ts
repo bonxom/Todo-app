@@ -157,7 +157,7 @@ const setupAuthenticatedSession = async (page: Page) => {
   });
 };
 
-test.describe('TodoApp Frontend Architecture E2E', () => {
+test.describe('Orbit Frontend Architecture E2E', () => {
   test.beforeEach(async ({ page }) => {
     page.on('pageerror', (err) => {
       throw new Error(`Uncaught page error: ${err.message}`);

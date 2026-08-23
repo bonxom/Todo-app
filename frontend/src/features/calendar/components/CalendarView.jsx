@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Sparkles } from 'lucide-react';
 import CalendarGrid from './CalendarGrid';
 import ProjectFocusPanel from './ProjectFocusPanel';
 import ProjectFocusWeekAgenda from './ProjectFocusWeekAgenda';
@@ -34,6 +34,7 @@ const CalendarView = ({
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
+  const [isProjectFiltersOpen, setIsProjectFiltersOpen] = useState(true);
 
   const visibleProjects = useMemo(
     () => filterProjectsByVisibility(projects, showCompletedProjects),
@@ -152,7 +153,7 @@ const CalendarView = ({
   return (
     <section className="space-y-6">
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2.05fr)_minmax(300px,0.78fr)]">
-        <div className="space-y-6">
+        <div className="min-w-0 xl:col-start-1 xl:row-start-1">
           <CalendarGrid
             currentDate={currentDate}
             selectedDate={selectedDate}
@@ -172,7 +173,7 @@ const CalendarView = ({
                 <button
                   type="button"
                   onClick={openAddTask}
-                  className="ui-btn-primary ui-focus-ring"
+                  className="ui-btn-primary ui-btn-opposite-corners ui-focus-ring"
                 >
                   <Plus className="h-4 w-4" aria-hidden="true" />
                   Add Task
@@ -180,7 +181,7 @@ const CalendarView = ({
                 <button
                   type="button"
                   onClick={openGenerateTasks}
-                  className="ui-btn-secondary ui-focus-ring"
+                  className="ui-btn-secondary ui-btn-opposite-corners ui-focus-ring"
                 >
                   <Sparkles className="h-4 w-4" aria-hidden="true" />
                   Generate
@@ -188,7 +189,62 @@ const CalendarView = ({
               </>
             )}
           />
+        </div>
 
+        <div
+          className={`calendar-project-filters-rail relative min-w-0 xl:col-start-2 xl:row-start-1 ${
+            isProjectFiltersOpen ? 'xl:row-span-2 xl:h-full' : ''
+          }`}
+          data-open={isProjectFiltersOpen}
+          style={{ maxHeight: 'calc(100vh - 150px)' }}
+        >
+          <button
+            type="button"
+            onClick={() => setIsProjectFiltersOpen((isOpen) => !isOpen)}
+            className="ui-icon-button ui-focus-ring calendar-project-filters-toggle !h-9 !w-9"
+            aria-label={isProjectFiltersOpen ? 'Hide project filters' : 'Show project filters'}
+            aria-controls="calendar-project-filters"
+            aria-expanded={isProjectFiltersOpen}
+            title={isProjectFiltersOpen ? 'Hide project filters' : 'Show project filters'}
+          >
+            {isProjectFiltersOpen ? (
+              <ChevronDown className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <ChevronUp className="h-4 w-4" aria-hidden="true" />
+            )}
+          </button>
+
+          <div
+            className="calendar-project-filters-reveal"
+            data-open={isProjectFiltersOpen}
+            data-project-filters-reveal
+            aria-hidden={!isProjectFiltersOpen}
+            inert={!isProjectFiltersOpen}
+          >
+            <div className="calendar-project-filters-reveal__content">
+              <ProjectFocusPanel
+                projects={projectSidebarItems}
+                selectedProjectIds={validSelectedProjectIds}
+                onToggleProject={handleProjectToggle}
+                onClearProjects={() => setSelectedProjectIds([])}
+                onAddProject={openAddProject}
+                onProjectUpdated={onTaskUpdated}
+                showCompletedProjects={showCompletedProjects}
+                onShowCompletedProjectsChange={setShowCompletedProjects}
+                onCompleteProject={handleCompleteProject}
+                onRestoreProject={handleRestoreProject}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={`min-w-0 ${
+            isProjectFiltersOpen
+              ? 'xl:col-start-1 xl:row-start-2'
+              : 'xl:col-start-2 xl:row-start-1'
+          }`}
+        >
           <ProjectFocusWeekAgenda
             selectedDate={selectedDate}
             tasks={selectedTasks}
@@ -196,21 +252,7 @@ const CalendarView = ({
             onTaskUpdated={onTaskUpdated}
             onTaskStatusChange={onTaskStatusChange}
             onTaskDelete={onTaskDelete}
-          />
-        </div>
-
-        <div className="h-full" style={{ maxHeight: 'calc(100vh - 150px)' }}>
-          <ProjectFocusPanel
-            projects={projectSidebarItems}
-            selectedProjectIds={validSelectedProjectIds}
-            onToggleProject={handleProjectToggle}
-            onClearProjects={() => setSelectedProjectIds([])}
-            onAddProject={openAddProject}
-            onProjectUpdated={onTaskUpdated}
-            showCompletedProjects={showCompletedProjects}
-            onShowCompletedProjectsChange={setShowCompletedProjects}
-            onCompleteProject={handleCompleteProject}
-            onRestoreProject={handleRestoreProject}
+            compact={!isProjectFiltersOpen}
           />
         </div>
       </div>

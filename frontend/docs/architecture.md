@@ -1,6 +1,6 @@
 # Frontend Architecture Guide
 
-This document outlines the architectural standards, directory structure, state management principles, data-fetching patterns, and development workflows for the TodoApp frontend.
+This document outlines the architectural standards, directory structure, state management principles, data-fetching patterns, and development workflows for the Orbit frontend.
 
 ---
 

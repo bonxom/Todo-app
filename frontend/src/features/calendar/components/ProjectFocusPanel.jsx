@@ -38,7 +38,10 @@ const ProjectFocusPanel = ({
   }, [normalizedSearchQuery, projects]);
 
   return (
-    <aside className="ui-section-card flex h-full flex-col overflow-hidden">
+    <aside
+      id="calendar-project-filters"
+      className="ui-section-card flex h-full flex-col overflow-hidden"
+    >
       {editingProject ? (
         <div
           className="ui-modal-overlay fixed inset-0 z-[80] flex items-center justify-center p-4"
@@ -87,13 +90,13 @@ const ProjectFocusPanel = ({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <FolderKanban className="h-4 w-4 text-[var(--color-accent)]" aria-hidden="true" />
-              <p className="text-sm font-semibold text-[var(--color-text)]">Project filters</p>
+              <p className="truncate text-sm font-semibold text-[var(--color-text)]">Project filters</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onAddProject}
-            className="ui-btn-tertiary ui-focus-ring shrink-0 px-3"
+            className="ui-btn-tertiary ui-btn-opposite-corners ui-focus-ring shrink-0 px-3"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             Add Project

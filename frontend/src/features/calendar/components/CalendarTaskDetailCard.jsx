@@ -56,13 +56,17 @@ const getStatusStyle = (status) => {
   return chipStyles.neutral;
 };
 
-const Badge = ({ icon: Icon, children, style }) => (
+const Badge = ({ icon: Icon, children, style, compact = false, className = '', truncate = false }) => (
   <span
-    className="inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-transform duration-150 hover:scale-[1.04]"
+    className={`inline-flex items-center rounded-full border font-semibold transition-transform duration-150 hover:scale-[1.04] ${
+      compact
+        ? 'min-h-6 gap-1 px-2 py-0.5 text-[11px]'
+        : 'min-h-7 gap-1.5 px-2.5 py-1 text-xs'
+    } ${className}`}
     style={style}
   >
-    {Icon ? <Icon className="h-3.5 w-3.5" aria-hidden="true" /> : null}
-    {children}
+    {Icon ? <Icon className={`${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} shrink-0`} aria-hidden="true" /> : null}
+    <span className={truncate ? 'truncate' : undefined}>{children}</span>
   </span>
 );
 
@@ -104,6 +108,7 @@ const CalendarTaskDetailCard = ({
   onDelete,
   onTaskStatusChange,
   onTaskDelete,
+  compact = false,
 }) => {
   const [isCompletionUpdating, setIsCompletionUpdating] = useState(false);
   const [isGiveUpUpdating, setIsGiveUpUpdating] = useState(false);
@@ -239,43 +244,95 @@ const CalendarTaskDetailCard = ({
 
   const details = (
     <>
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
+      <div className={`flex flex-col ${compact ? 'gap-2' : 'gap-3 lg:flex-row lg:items-start lg:justify-between'}`}>
+        <div className={`min-w-0 ${compact ? 'pr-4' : ''}`}>
           <h3
-            className={`min-w-0 break-words text-sm font-semibold transition-colors duration-300 ${
+            className={`min-w-0 text-sm font-semibold transition-colors duration-300 ${
+              compact ? 'truncate' : 'break-words'
+            } ${
               isMutedStatus ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text)]'
             }`}
+            title={compact ? task.title : undefined}
           >
             {task.title}
           </h3>
           {task.description ? (
-            <p className="mt-1 text-xs text-[var(--color-text-muted)] break-words">
+            <p
+              className={`mt-1 text-xs text-[var(--color-text-muted)] ${compact ? 'truncate' : 'break-words'}`}
+              title={compact ? task.description : undefined}
+            >
               {task.description}
             </p>
           ) : null}
         </div>
 
-        <div className="flex flex-wrap gap-2 lg:justify-end">
-          <Badge style={priorityStyle}>{task.priority || 'Medium'}</Badge>
-          <Badge icon={CircleDot} style={statusStyle}>{formatLabel(task.status)}</Badge>
-        </div>
+        {!compact ? (
+          <div className="flex flex-wrap gap-2 lg:justify-end">
+            <Badge style={priorityStyle}>{task.priority || 'Medium'}</Badge>
+            <Badge icon={CircleDot} style={statusStyle}>{formatLabel(task.status)}</Badge>
+          </div>
+        ) : null}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge icon={CalendarClock} style={chipStyles.neutral}>
-            {formatDateTime(task.dueDate, 'No due date')}
-          </Badge>
-          <Badge icon={FolderKanban} style={chipStyles.accent}>
-            {projectName}
-          </Badge>
-          <Badge icon={Tag} style={chipStyles.neutral}>
-            {categoryName}
-          </Badge>
-        </div>
+      <div className={`${compact ? 'mt-2 gap-1.5' : 'mt-3 gap-2'} flex flex-wrap items-center`}>
+        {compact ? (
+          <div
+            className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,7rem)] items-center gap-x-2 gap-y-1.5"
+            data-compact-metadata-grid
+          >
+            <Badge
+              compact
+              truncate
+              icon={CircleDot}
+              style={statusStyle}
+              className="min-w-0 max-w-full justify-self-start"
+            >
+              {formatLabel(task.status)}
+            </Badge>
+            <Badge
+              compact
+              truncate
+              icon={FolderKanban}
+              style={chipStyles.accent}
+              className="min-w-0 max-w-full justify-self-end"
+            >
+              {projectName}
+            </Badge>
+            <Badge
+              compact
+              truncate
+              icon={CalendarClock}
+              style={chipStyles.neutral}
+              className="min-w-0 max-w-full justify-self-start"
+            >
+              {formatDateTime(task.dueDate, 'No due date')}
+            </Badge>
+            <Badge
+              compact
+              truncate
+              icon={Tag}
+              style={chipStyles.neutral}
+              className="min-w-0 max-w-full justify-self-end"
+            >
+              {categoryName}
+            </Badge>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge icon={CalendarClock} style={chipStyles.neutral}>
+              {formatDateTime(task.dueDate, 'No due date')}
+            </Badge>
+            <Badge icon={FolderKanban} style={chipStyles.accent}>
+              {projectName}
+            </Badge>
+            <Badge icon={Tag} style={chipStyles.neutral}>
+              {categoryName}
+            </Badge>
+          </div>
+        )}
 
         {isPending ? (
-          <div className="ml-auto flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
+          <div className={`${compact ? 'w-full justify-end' : 'ml-auto'} flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100`}>
             <button
               type="button"
               onClick={handleToggleCompletion}
@@ -314,7 +371,9 @@ const CalendarTaskDetailCard = ({
     <article
       draggable={Boolean(taskId) && !isFlushing}
       onDragStart={handleDragStart}
-      className={`group cursor-grab rounded-[16px] border p-4 active:cursor-grabbing transition-all duration-350 ease-in-out ${
+      className={`group relative cursor-grab rounded-[16px] border active:cursor-grabbing transition-all duration-350 ease-in-out ${
+        compact ? 'p-3' : 'p-4'
+      } ${
         isMutedStatus ? 'opacity-85' : ''
       } ${
         isFlushing
@@ -323,7 +382,15 @@ const CalendarTaskDetailCard = ({
       }`}
       style={cardStyle}
     >
-      <div className="flex items-start gap-3">
+      {compact ? (
+        <span
+          className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full ring-2 ring-[var(--color-surface)]"
+          style={{ background: priorityStyle.color }}
+          aria-label={`Task level: ${priorityStyle}`}
+          title={`Task level: ${priorityStyle}`}
+        />
+      ) : null}
+      <div className={`flex items-start ${compact ? 'gap-2' : 'gap-3'}`}>
         {!isPending ? (
           <div className="mt-0.5 flex w-6 shrink-0 flex-col items-center gap-1.5">
             <div className="relative">

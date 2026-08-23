@@ -54,7 +54,7 @@ app.use(async (_req: Request, _res: Response, next: NextFunction) => {
 });
 
 app.get('/', (_req: Request, res: Response) => {
-  res.send('This is backend of Todo App');
+  res.send('This is the Orbit backend');
 });
 
 app.use('/api/auth', authRouter);
