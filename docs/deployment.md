@@ -13,12 +13,12 @@ Configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as repository secrets becau
 
 | Secret | Purpose |
 | --- | --- |
-| `DOCKERHUB_USERNAME` | Docker Hub account or organization that owns `orbit-backend` and `orbit-frontend` |
+| `DOCKERHUB_USERNAME` | Docker Hub account or organization that owns `todoapp-backend` and `todoapp-frontend` |
 | `DOCKERHUB_TOKEN` | Docker Hub access token with push access; the server also uses it to pull private images |
 | `DEPLOY_HOST` | Production server hostname or IP address |
 | `DEPLOY_USER` | SSH user with Docker access |
 | `DEPLOY_PORT` | SSH port; optional, defaults to `22` |
-| `DEPLOY_PATH` | Absolute deployment directory on the server, for example `/home/deployer/orbit` |
+| `DEPLOY_PATH` | Absolute deployment directory on the server, for example `/home/deployer/todoapp` |
 | `DEPLOY_SSH_KEY` | Private key matching a public key in the server user's `authorized_keys` |
 | `DEPLOY_KNOWN_HOSTS` | Trusted known-hosts entry for the server |
 
@@ -44,7 +44,7 @@ Populate it with the variables documented in `backend/.env.example`, including M
 
 Create the two Docker Hub repositories before the first deployment if the account does not create repositories automatically:
 
-- `orbit-backend`
-- `orbit-frontend`
+- `todoapp-backend`
+- `todoapp-frontend`
 
 For safer production releases, configure a protected GitHub environment named `production` and require approval before deployment.
