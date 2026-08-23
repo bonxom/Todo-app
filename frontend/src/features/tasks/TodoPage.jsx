@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import AddTaskButton from './components/AddTaskButton';
 import TaskDetailButton from './components/TaskDetailButton';
 import TodoTaskToolbar from './components/TodoTaskToolbar';
@@ -38,6 +38,8 @@ const TodoPage = () => {
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [initialTaskProjectId, setInitialTaskProjectId] = useState('');
+  const [taskListHeight, setTaskListHeight] = useState(null);
+  const taskListRef = useRef(null);
 
   // Global status filter from Topbar
   const { selectedStatuses, setSelectedStatuses } = useTaskFilter();
@@ -105,6 +107,29 @@ const TodoPage = () => {
     : projectsQuery.isError
     ? getApiErrorMessage(projectsQuery.error, 'Failed to load projects.')
     : '';
+
+  useLayoutEffect(() => {
+    const taskListElement = taskListRef.current;
+    if (!taskListElement) return undefined;
+
+    const syncTaskListHeight = () => {
+      const nextHeight = Math.ceil(taskListElement.getBoundingClientRect().height);
+      setTaskListHeight((currentHeight) => (
+        currentHeight === nextHeight ? currentHeight : nextHeight
+      ));
+    };
+
+    syncTaskListHeight();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', syncTaskListHeight);
+      return () => window.removeEventListener('resize', syncTaskListHeight);
+    }
+
+    const resizeObserver = new ResizeObserver(syncTaskListHeight);
+    resizeObserver.observe(taskListElement);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Lock body scroll on modals
   useEffect(() => {
@@ -289,7 +314,7 @@ const TodoPage = () => {
               <button
                 type="button"
                 onClick={() => openAddTask()}
-                className="ui-btn-primary cursor-pointer"
+                className="ui-btn-primary ui-btn-opposite-corners cursor-pointer"
               >
                 + Add Task
               </button>
@@ -332,26 +357,28 @@ const TodoPage = () => {
               onClearProjectFilter={() => setSelectedProjectId(ALL_PROJECT_FILTER)}
             />
 
-            <TaskList
-              tasks={filteredTasks}
-              isLoading={isLoading}
-              emptyState={emptyStateInfo}
-              onAccept={handleAcceptTask}
-              onDeny={handleDenyTask}
-              onComplete={handleCompleteTask}
-              onGiveUp={handleGiveUpClick}
-              onRestore={handleRestoreTask}
-              onEdit={(task) => {
-                setSelectedTask(task);
-                setIsEditModalOpen(true);
-              }}
-              onDelete={handleDeleteClick}
-              onClearFilters={() => {
-                setSearchTerm('');
-                setSelectedStatuses([]);
-                setSelectedProjectId(ALL_PROJECT_FILTER);
-              }}
-            />
+            <div ref={taskListRef}>
+              <TaskList
+                tasks={filteredTasks}
+                isLoading={isLoading}
+                emptyState={emptyStateInfo}
+                onAccept={handleAcceptTask}
+                onDeny={handleDenyTask}
+                onComplete={handleCompleteTask}
+                onGiveUp={handleGiveUpClick}
+                onRestore={handleRestoreTask}
+                onEdit={(task) => {
+                  setSelectedTask(task);
+                  setIsEditModalOpen(true);
+                }}
+                onDelete={handleDeleteClick}
+                onClearFilters={() => {
+                  setSearchTerm('');
+                  setSelectedStatuses([]);
+                  setSelectedProjectId(ALL_PROJECT_FILTER);
+                }}
+              />
+            </div>
 
             {/* Pagination */}
             {totalPage > 0 && (
@@ -382,6 +409,7 @@ const TodoPage = () => {
               onCompleteProject={handleCompleteProject}
               onRestoreProject={handleRestoreProject}
               isLoading={isLoading}
+              projectListMaxHeight={taskListHeight - 98}
             />
           </div>
         </div>

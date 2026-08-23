@@ -12,11 +12,11 @@ const AuthLayout = ({ children, mode = 'login' }) => {
           <span className="ui-shell-brand-mark" aria-hidden="true">
             <OrbitMark />
           </span>
-          <span>TodoApp</span>
+          <span>Orbit</span>
         </Link>
 
         <section className="auth-shell ui-section-card">
-          <aside className="auth-aside" aria-label="TodoApp workspace summary">
+          <aside className="auth-aside" aria-label="Orbit workspace summary">
             <h1>{isRegister ? 'Build your task workspace.' : 'Welcome back to your workspace.'}</h1>
             <video
               className="auth-aside-video"

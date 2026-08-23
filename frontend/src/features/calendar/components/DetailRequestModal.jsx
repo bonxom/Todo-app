@@ -160,7 +160,7 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
             </button>
             <button
               type="submit"
-              className="ui-btn-primary ui-focus-ring flex-1 disabled:cursor-not-allowed disabled:border-[var(--color-line)] disabled:bg-[var(--color-surface-muted)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
+              className="ui-btn-primary ui-btn-opposite-corners ui-focus-ring flex-1 disabled:cursor-not-allowed disabled:border-[var(--color-line)] disabled:bg-[var(--color-surface-muted)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
               disabled={isLoading}
             >
               Generate Tasks

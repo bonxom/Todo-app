@@ -5,9 +5,9 @@ const Navbar = ({ heroPassed = false }) => {
   return (
     <nav className="landing-navbar" aria-label="Landing navigation" data-scrolled={heroPassed}>
       <div className="landing-navbar__inner">
-        <Link to="/" className="landing-brand" aria-label="TodoApp home">
+        <Link to="/" className="landing-brand" aria-label="Orbit home">
           <OrbitMark />
-          <span>TodoApp</span>
+          <span>Orbit</span>
         </Link>
         <div className="landing-navbar__links">
           <a href="#capture">Capture</a>

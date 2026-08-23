@@ -610,7 +610,7 @@ export const ensureAppReady = async () => { /* ... same as current ... */ };
 app.get('/healthz', async (req, res, next) => { /* ... */ });
 app.use(async (req, res, next) => { /* ensureAppReady wrapper ... */ });
 
-app.get('/', (req, res) => { res.send('This is backend of Todo App'); });
+app.get('/', (req, res) => { res.send('This is the Orbit backend'); });
 
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);

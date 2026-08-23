@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary & Goals
 
-This specification addresses the key findings from [ui-ux-review-todo-app(1).md](../../../docs/ui-ux-review-todo-app(1).md) and user feedback across 3 phases of improvements:
+This specification addresses the key findings from [ui-ux-review-orbit.md](../../../docs/ui-ux-review-orbit.md) and user feedback across 3 phases of improvements:
 
 1. **Information Hierarchy & Proportional 2-Column Layout:**
    - Desktop layout split: Main Task Workspace (~65–70%) and Project Focus Rail (~30–35%, min-width: ~320px).

@@ -19,6 +19,7 @@ interface PaginationProps {
   onPageSizeChange?: (size: number) => void;
   pageSizeOptions?: number[];
   className?: string;
+  compact?: boolean;
 }
 
 /**
@@ -60,6 +61,7 @@ export default function Pagination({
   onPageSizeChange,
   pageSizeOptions = [10, 20, 50],
   className = '',
+  compact = false,
 }: PaginationProps) {
   const pageNumbers = useMemo(
     () => buildPageNumbers(pageNo, totalPage),
@@ -75,7 +77,9 @@ export default function Pagination({
 
   return (
     <div
-      className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${className}`}
+      className={`flex flex-col gap-3 ${
+        compact ? '' : 'sm:flex-row sm:items-center sm:justify-between'
+      } ${className}`}
       role="navigation"
       aria-label="Pagination"
     >
@@ -90,7 +94,7 @@ export default function Pagination({
         {' '}results
       </p>
 
-      <div className="flex items-center gap-3">
+      <div className={`flex gap-3 ${compact ? 'flex-col items-stretch' : 'items-center'}`}>
         {/* Page size selector */}
         {onPageSizeChange && (
           <div className="flex items-center gap-1.5">
@@ -116,7 +120,7 @@ export default function Pagination({
         )}
 
         {/* Page buttons */}
-        <div className="flex items-center gap-1">
+        <div className={`flex items-center gap-1 ${compact ? 'justify-end overflow-x-auto pb-0.5' : ''}`}>
           {/* Previous */}
           <button
             type="button"

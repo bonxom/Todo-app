@@ -1,6 +1,6 @@
-# TodoApp Frontend
+# Orbit Frontend
 
-The modern, performant, and type-safe frontend for TodoApp, built with **React 19**, **Vite**, **TypeScript**, **React Router v7**, **TanStack Query v5**, **Zustand**, and **TailwindCSS**.
+The modern, performant, and type-safe frontend for Orbit, built with **React 19**, **Vite**, **TypeScript**, **React Router v7**, **TanStack Query v5**, **Zustand**, and **TailwindCSS**.
 
 For detailed architectural guidelines and design principles, see [docs/architecture.md](./docs/architecture.md).
 

@@ -143,92 +143,92 @@ const Sidebar = ({
         data-desktop={isDesktop}
         data-open={isOpen}
         aria-hidden={!isDesktop && !isOpen}
-        style={{
-          width: currentDrawerWidth,
-          padding: showLabels ? '1rem' : '1rem 0.75rem',
-        }}
+        style={{ width: currentDrawerWidth }}
       >
-        <div className={`flex ${showLabels ? 'justify-end' : 'justify-center'}`}>
-          <button
-            type="button"
-            onClick={isDesktop ? onToggleExpand : onClose}
-            className="ui-icon-button ui-focus-ring"
-            aria-label={
-              isDesktop
-                ? isExpanded
-                  ? 'Collapse navigation'
-                  : 'Expand navigation'
-                : 'Close navigation'
-            }
-            title={
-              isDesktop
-                ? isExpanded
-                  ? 'Collapse navigation'
-                  : 'Expand navigation'
-                : 'Close navigation'
-            }
-          >
-            {isDesktop ? (
-              isExpanded ? (
-                <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
-              )
+        <button
+          type="button"
+          onClick={isDesktop ? onToggleExpand : onClose}
+          className="ui-icon-button ui-focus-ring ui-shell-sidebar__toggle"
+          aria-label={
+            isDesktop
+              ? isExpanded
+                ? 'Collapse navigation'
+                : 'Expand navigation'
+              : 'Close navigation'
+          }
+          title={
+            isDesktop
+              ? isExpanded
+                ? 'Collapse navigation'
+                : 'Expand navigation'
+              : 'Close navigation'
+          }
+        >
+          {isDesktop ? (
+            isExpanded ? (
+              <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
             ) : (
-              <X className="h-4 w-4" aria-hidden="true" />
-            )}
-          </button>
-        </div>
-
-        <div className={`ui-shell-brand ${showLabels ? '' : 'justify-center'}`}>
-          <div className="ui-shell-brand-mark" aria-hidden="true">
-            <OrbitMark />
-          </div>
-          {showLabels && (
-            <div className="ui-shell-brand-copy">
-              <p className="text-sm font-semibold text-[var(--color-text)]">TodoApp</p>
-              <p className="ui-tabular text-xs text-[var(--color-text-muted)]">{todayLabel}</p>
-            </div>
+              <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
+            )
+          ) : (
+            <X className="h-4 w-4" aria-hidden="true" />
           )}
-        </div>
+        </button>
 
-        {showLabels && (
-          <p className="ui-shell-section-label px-1">Workspace</p>
-        )}
+        <div
+          className="ui-shell-sidebar__content"
+          style={{ padding: showLabels ? '1rem' : '1rem 0.75rem' }}
+        >
+          <div className={`ui-shell-brand ${showLabels ? '' : 'justify-center'}`}>
+            <div className="ui-shell-brand-mark" aria-hidden="true">
+              <OrbitMark />
+            </div>
+            {showLabels && (
+              <div className="ui-shell-brand-copy">
+                <p className="text-sm font-semibold text-[var(--color-text)]">Orbit</p>
+                <p className="ui-tabular text-xs text-[var(--color-text-muted)]">{todayLabel}</p>
+              </div>
+            )}
+          </div>
 
-        <nav className="ui-shell-nav" aria-label="Primary navigation">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
+          {showLabels && (
+            <p className="ui-shell-section-label px-1">Workspace</p>
+          )}
 
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`ui-shell-nav-link ui-focus-ring ${showLabels ? '' : 'justify-center'}`}
-                data-active={isActive}
-                aria-current={isActive ? 'page' : undefined}
-                onClick={!isDesktop ? onClose : undefined}
-                title={!showLabels ? item.label : undefined}
-              >
-                <span className="flex-shrink-0" aria-hidden="true">
-                  {item.icon}
-                </span>
-                {showLabels && <span className="ui-shell-nav-label">{item.label}</span>}
-              </Link>
-            );
-          })}
-        </nav>
+          <nav className="ui-shell-nav" aria-label="Primary navigation">
+            {menuItems.map((item) => {
+              const isActive = location.pathname === item.path;
 
-        <div className="border-t border-[var(--color-line)] pt-3">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className={`ui-shell-nav-link ui-focus-ring w-full ${showLabels ? '' : 'justify-center'}`}
-            title={!showLabels ? 'Logout' : undefined}
-          >
-            <LogOut className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
-            {showLabels && <span className="ui-shell-nav-label">Logout</span>}
-          </button>
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`ui-shell-nav-link ui-focus-ring ${showLabels ? '' : 'justify-center'}`}
+                  data-active={isActive}
+                  aria-current={isActive ? 'page' : undefined}
+                  onClick={!isDesktop ? onClose : undefined}
+                  title={!showLabels ? item.label : undefined}
+                >
+                  <span className="flex-shrink-0" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                  {showLabels && <span className="ui-shell-nav-label">{item.label}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="border-t border-[var(--color-line)] pt-3">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={`ui-shell-nav-link ui-focus-ring w-full ${showLabels ? '' : 'justify-center'}`}
+              title={!showLabels ? 'Logout' : undefined}
+            >
+              <LogOut className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+              {showLabels && <span className="ui-shell-nav-label">Logout</span>}
+            </button>
+          </div>
         </div>
       </aside>
     </>

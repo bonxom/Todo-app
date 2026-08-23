@@ -72,7 +72,7 @@ const TaskListPanel = ({
             <button
               type="button"
               onClick={() => setIsAddTaskModalOpen(true)}
-              className="ui-btn-primary !min-h-[2.25rem] !px-3 !text-sm"
+              className="ui-btn-primary ui-btn-opposite-corners !min-h-[2.25rem] !px-3 !text-sm"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               Add
@@ -80,7 +80,7 @@ const TaskListPanel = ({
             <button
               type="button"
               onClick={() => setIsGenerateModalOpen(true)}
-              className="ui-btn-secondary !min-h-[2.25rem] !px-3 !text-sm"
+              className="ui-btn-secondary ui-btn-opposite-corners !min-h-[2.25rem] !px-3 !text-sm"
             >
               <Sparkles className="h-4 w-4" aria-hidden="true" />
               Generate

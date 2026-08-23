@@ -218,7 +218,7 @@ it('renders normal account links alongside the orbital scene', () => {
   expect(screen.getByRole('heading', { name: /control the day/i })).toBeVisible();
   expect(screen.getByRole('link', { name: /start your orbit/i })).toHaveAttribute('href', '/register');
   expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/login');
-  expect(screen.getByLabelText(/todoapp command deck preview/i)).toBeVisible();
+  expect(screen.getByLabelText(/orbit command deck preview/i)).toBeVisible();
 });
 ```
 
@@ -246,13 +246,13 @@ Add CSS for `stroke`, cyan core glow, and a fixed size; never reference `/ech.jp
 
 - [ ] **Step 4: Create `OrbitScene` as a decorative-but-labelled product preview**
 
-Use a semantic `<div className="orbit-scene" aria-label="TodoApp command deck preview">` for the preview as a whole. Inside it, render all track SVG/background mesh layers with `aria-hidden="true"`, then render a static command-deck panel with DOM text for representative "Focus queue", "68%", task rows, and a small search/AI module. Attach `onPointerMove` and `onPointerLeave` from `usePointerTilt()` to the deck wrapper, not to a link/button. Set the CSS variables’ default values inline only through CSS:
+Use a semantic `<div className="orbit-scene" aria-label="Orbit command deck preview">` for the preview as a whole. Inside it, render all track SVG/background mesh layers with `aria-hidden="true"`, then render a static command-deck panel with DOM text for representative "Focus queue", "68%", task rows, and a small search/AI module. Attach `onPointerMove` and `onPointerLeave` from `usePointerTilt()` to the deck wrapper, not to a link/button. Set the CSS variables’ default values inline only through CSS:
 
 ```jsx
 const tilt = usePointerTilt();
 
 return (
-  <div className="orbit-scene" aria-label="TodoApp command deck preview">
+  <div className="orbit-scene" aria-label="Orbit command deck preview">
     <svg className="orbit-scene__tracks" viewBox="0 0 600 500" aria-hidden="true" focusable="false">...</svg>
     <div className="orbit-scene__deck-wrap" {...tilt}>
       <div className="orbit-scene__deck">...</div>

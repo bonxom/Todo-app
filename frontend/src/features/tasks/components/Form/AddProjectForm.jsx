@@ -158,7 +158,7 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
         <button
           type="submit"
           disabled={isSubmitting}
-          className="ui-btn-primary flex-1 disabled:cursor-not-allowed disabled:opacity-60"
+          className="ui-btn-primary ui-btn-opposite-corners flex-1 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? (projectId ? 'Saving…' : 'Adding…') : (projectId ? 'Save Project' : 'Add Project')}
         </button>

@@ -1,4 +1,4 @@
-# 📝 TodoApp - AI-Powered Task Management System
+# 🪐 Orbit - AI-Powered Task Management System
 
 A modern, full-stack task management application with AI-powered task generation, comprehensive analytics, and an intuitive user interface. Built with the MERN stack and enhanced with Google's Gemini AI.
 
@@ -6,7 +6,7 @@ A modern, full-stack task management application with AI-powered task generation
 
 ## 🌟 Introduction
 
-TodoApp is a feature-rich personal task management system designed to help users organize their tasks efficiently. The application combines traditional task management features with cutting-edge AI capabilities, allowing users to generate tasks based on natural language requirements. With a clean, responsive interface built with React and Tailwind CSS, users can manage tasks across multiple categories, track progress with detailed statistics, and visualize deadlines through an interactive calendar view.
+Orbit is a feature-rich personal task management system designed to help users organize their tasks efficiently. The application combines traditional task management features with cutting-edge AI capabilities, allowing users to generate tasks based on natural language requirements. With a clean, responsive interface built with React and Tailwind CSS, users can manage tasks across multiple categories, track progress with detailed statistics, and visualize deadlines through an interactive calendar view.
 
 ---
 
@@ -104,7 +104,7 @@ TodoApp is a feature-rich personal task management system designed to help users
 ## 📁 Project Structure
 
 ```
-TodoApp/
+Orbit/
 ├── backend/
 │   ├── config/          # Database and initialization config
 │   ├── controller/      # Route controllers (auth, task, AI, stats)
@@ -182,7 +182,7 @@ docker compose down
 1. **Clone the repository**
 ```bash
 git clone <repository-url>
-cd TodoApp
+cd Orbit
 ```
 
 2. **Backend Setup**

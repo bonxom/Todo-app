@@ -2201,7 +2201,7 @@ Create 3 practical, actionable tasks with:
   async chatResponse(userInput) {
     const ai = getAiClient();
 
-    const sysInstruction = `You are a helpful assistant for a TodoApp your name is Đạt.
+    const sysInstruction = `You are a helpful assistant for Orbit; your name is Đạt.
 Help users manage tasks, provide productivity tips,
 and answer questions about task organization, categories, priorities, and time management.
 If user want to auto generate tasks, advise them to use the task generation mode.
@@ -2910,7 +2910,7 @@ app.use(async (req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('This is backend of Todo App');
+  res.send('This is the Orbit backend');
 });
 
 app.use('/api/auth', authRouter);

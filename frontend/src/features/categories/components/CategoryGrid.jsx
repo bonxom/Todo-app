@@ -11,7 +11,7 @@ const CategoryGrid = ({ items, onTaskUpdated, onCreateCategory }) => {
         <button
           type="button"
           onClick={onCreateCategory}
-          className="ui-btn-primary mt-6"
+          className="ui-btn-primary ui-btn-opposite-corners mt-6"
         >
           Add Category
         </button>
