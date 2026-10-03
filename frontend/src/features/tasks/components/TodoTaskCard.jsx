@@ -13,7 +13,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import { formatDateTime } from '@/shared/utils/dateTime';
-import { getProjectColor } from '@/shared/utils/projectColor';
 
 const STATUS_CONFIG = {
   pending: {
@@ -70,7 +69,6 @@ const TodoTaskCard = ({
   const isInProgress = task.status === 'in-progress';
   const isMuted = isCompleted || isGivenUp;
 
-  const projectColor = task.projectId ? getProjectColor(task.projectId) : null;
   const statusCfg = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
   const priorityClass = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.Medium;
   const daysLeft = getDaysLeft(task.dueDate);
@@ -87,15 +85,10 @@ const TodoTaskCard = ({
 
   return (
     <article
-      className={`ui-section-card relative px-3.5 py-2.5 transition-all duration-200 hover:shadow-xs ${
+      className={`ui-section-card ui-task-card relative px-3.5 py-3 transition-colors duration-150 ${
         isMuted ? 'opacity-80 bg-[var(--color-surface-muted)]' : 'bg-[var(--color-surface)]'
       }`}
-      style={{
-        borderLeftColor: projectColor || 'var(--color-line)',
-        borderLeftWidth: '4px',
-        borderStyle: isPending ? 'dashed' : 'solid',
-        borderColor: isPending ? 'var(--color-line)' : undefined,
-      }}
+
     >
       <div className="flex items-start gap-2.5">
         {/* Left Action Button (Status Specific) */}
@@ -106,7 +99,7 @@ const TodoTaskCard = ({
                 type="button"
                 onClick={() => handleAction(onAccept)}
                 disabled={isActionPending}
-                className="inline-flex h-7 items-center gap-1 rounded-full border border-[var(--color-success)] bg-[var(--color-success-soft)] px-2 text-xs font-semibold text-[var(--color-success)] transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
+                className="inline-flex h-7 items-center gap-1 rounded-full border border-[var(--color-success)] bg-[var(--color-success-soft)] px-2 text-xs font-semibold text-[var(--color-success)] transition-colors disabled:opacity-50 cursor-pointer"
                 aria-label={`Accept ${task.title}`}
                 title="Accept task to in-progress"
               >
@@ -117,7 +110,7 @@ const TodoTaskCard = ({
                 type="button"
                 onClick={() => handleAction(onDeny)}
                 disabled={isActionPending}
-                className="inline-flex h-7 items-center gap-1 rounded-full border border-[var(--color-danger)] bg-[var(--color-danger-soft)] px-2 text-xs font-semibold text-[var(--color-danger)] transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
+                className="inline-flex h-7 items-center gap-1 rounded-full border border-[var(--color-danger)] bg-[var(--color-danger-soft)] px-2 text-xs font-semibold text-[var(--color-danger)] transition-colors disabled:opacity-50 cursor-pointer"
                 aria-label={`Deny and delete ${task.title}`}
                 title="Deny and delete task"
               >
@@ -132,7 +125,7 @@ const TodoTaskCard = ({
               type="button"
               onClick={() => handleAction(onComplete)}
               disabled={isActionPending}
-              className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] text-transparent hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)] transition-all hover:scale-110 active:scale-90 cursor-pointer"
+              className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] text-transparent hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)] transition-colors cursor-pointer"
               aria-label={`Mark ${task.title} as completed`}
               title="Mark as completed"
             >
@@ -145,7 +138,7 @@ const TodoTaskCard = ({
               type="button"
               onClick={() => handleAction(onRestore)}
               disabled={isActionPending}
-              className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md border border-[var(--color-success)] bg-[var(--color-success)] text-white hover:opacity-90 transition-all cursor-pointer"
+              className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md border border-[var(--color-success)] bg-[var(--color-success)] text-[var(--color-on-status,#fff)] hover:opacity-90 transition-all cursor-pointer"
               aria-label={`Restore ${task.title} to in-progress`}
               title="Click to restore to in-progress"
             >
@@ -158,7 +151,7 @@ const TodoTaskCard = ({
               type="button"
               onClick={() => handleAction(onRestore)}
               disabled={isActionPending}
-              className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md border border-[var(--color-danger)] bg-[var(--color-danger)] text-white hover:opacity-90 transition-all cursor-pointer"
+              className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md border border-[var(--color-danger)] bg-[var(--color-danger)] text-[var(--color-on-status,#fff)] hover:opacity-90 transition-all cursor-pointer"
               aria-label={`Restore ${task.title} to in-progress`}
               title="Click to restore to in-progress"
             >
@@ -184,7 +177,7 @@ const TodoTaskCard = ({
           )}
 
           {/* Badges row */}
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <div className="ui-task-metadata mt-1.5 flex flex-wrap items-center gap-2">
             {/* Status chip */}
             <span className={`ui-chip ui-tabular !py-0.5 !text-[11px] ${statusCfg.badgeClass}`}>
               <CircleDot className="h-2 w-3" />

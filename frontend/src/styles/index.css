@@ -24,9 +24,9 @@
 
   --radius-sm: 8px;
   --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -43,6 +43,35 @@
   --ring-focus-shadow: 0 0 0 3px rgba(69, 107, 140, 0.16);
 }
 
+:root[data-theme="dark"] {
+  --theme-color-scheme: dark;
+  --color-canvas: #111827;
+  --color-surface: #172131;
+  --color-surface-muted: #1e2c40;
+  --color-line: #344459;
+  --color-text: #eef2f6;
+  --color-text-muted: #a7b8cd;
+  --color-accent: #80b4d4;
+  --color-accent-strong: #99c8e3;
+  --color-accent-soft: #22354b;
+  --color-primary: #22c5db;
+  --color-primary-hover: #63d9e9;
+  --color-primary-text: #111827;
+  --color-on-status: #111827;
+  --color-success: #8ad3ac;
+  --color-success-soft: #1b3a30;
+  --color-warning: #e6bb81;
+  --color-warning-soft: #3b3023;
+  --color-danger: #f0a99e;
+  --color-danger-soft: #412c30;
+  --color-overlay: rgba(5, 11, 22, 0.72);
+  --shadow-xs: none;
+  --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.4);
+  --ring-focus-outline: #22c5db;
+  --ring-focus-shadow: 0 0 0 3px rgba(34, 197, 219, 0.2);
+}
+
 *,
 *::before,
 *::after {
@@ -50,7 +79,7 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: var(--theme-color-scheme, light);
   background-color: var(--color-canvas);
 }
 
@@ -92,7 +121,7 @@ a {
 }
 
 :where(input, select, textarea) {
-  color-scheme: light;
+  color-scheme: var(--theme-color-scheme, light);
 }
 
 :where(input::placeholder, textarea::placeholder) {

@@ -18,15 +18,15 @@ describe('LandingPage', () => {
 
     expect(screen.getByRole('link', { name: /skip to main content/i })).toHaveAttribute('href', '#landing-main');
     expect(screen.getByRole('main')).toHaveAttribute('id', 'landing-main');
-    expect(screen.getByRole('heading', { name: /control the day/i })).toBeVisible();
-    expect(screen.getByRole('heading', { name: /bring work into orbit/i })).toBeVisible();
-    expect(screen.getByRole('heading', { name: /shape the workspace/i })).toBeVisible();
-    expect(screen.getByRole('heading', { name: /turn progress into momentum/i })).toBeVisible();
-    expect(screen.getByRole('heading', { name: /start with a clear orbit/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /know what needs doing/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /add tasks while they’re fresh/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /keep related work together/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /see what’s done and what’s next/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /start with your first task/i })).toBeVisible();
     expect(screen.getAllByText('68%')[0]).toBeVisible();
-    expect(screen.getByRole('link', { name: /start your orbit/i })).toHaveAttribute('href', '/register');
+    expect(screen.getByRole('link', { name: /create your workspace/i })).toHaveAttribute('href', '/register');
     expect(screen.getAllByRole('link', { name: /^sign in$/i }).every((link) => link.getAttribute('href') === '/login')).toBe(true);
-    expect(screen.getByRole('link', { name: /launch your workspace/i })).toHaveAttribute('href', '/register');
+    expect(screen.getByRole('link', { name: /create an account/i })).toHaveAttribute('href', '/register');
   });
 
   it('defaults an observed element to visible when IntersectionObserver is unavailable', () => {

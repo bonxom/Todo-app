@@ -14,6 +14,10 @@ import { errorRoutes } from '../features/errors/routes';
 
 export const routes: RouteObject[] = [
   {
+    path: '/ui-demo',
+    lazy: async () => ({ Component: (await import('../features/ui-demo/OrbitDemo')).default }),
+  },
+  {
     element: <RootGuard />,
     errorElement: <ErrorPage code="500" />,
     children: [...landingRoutes],

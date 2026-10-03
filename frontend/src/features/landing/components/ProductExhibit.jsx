@@ -9,14 +9,14 @@ const ProductExhibit = () => {
       <div ref={ref} className="product-exhibit__inner" data-visible={isVisible}>
         <header className="product-exhibit__copy">
           <p className="orbit-kicker">03 / Focus</p>
-          <h2>Turn progress into momentum.</h2>
+          <h2>See what’s done and what’s next.</h2>
           <p>
-            Keep the next decisions visible, measure the work already moving, and finish with a calmer view of what matters now.
+            Review completed tasks, check upcoming deadlines, and plan your next session.
           </p>
         </header>
         <div className="product-exhibit__panel" aria-label="Orbit launch focus dashboard preview">
           <div className="product-exhibit__panel-top">
-            <div><span>PROJECT / ORBIT LAUNCH</span><strong>Execution window</strong></div>
+            <div><span>PROJECT / ORBIT LAUNCH</span><strong>Launch checklist</strong></div>
             <span className="product-exhibit__live"><i />On track</span>
           </div>
           <div className="product-exhibit__metrics">

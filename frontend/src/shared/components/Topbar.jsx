@@ -1,3 +1,4 @@
+import ThemeToggle from './ThemeToggle';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, ChevronDown, ListFilter, Menu, User } from 'lucide-react';
@@ -26,14 +27,14 @@ const getAvatarUrl = (user) => {
 const getTopbarContext = (pathname) => {
   if (pathname.startsWith('/dashboard')) {
     return {
-      title: 'Today',
+      title: 'Todos',
       subtitle: 'Tasks and focus for the day',
     };
   }
 
   if (pathname.startsWith('/categories')) {
     return {
-      title: 'Projects',
+      title: 'Categories',
       subtitle: 'Categories and work streams',
     };
   }
@@ -163,12 +164,13 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
         <div className="ui-topbar-meta">
           <p className="ui-topbar-title">{pageContext.title}</p>
           <p className="ui-topbar-subtitle">
-            {pageContext.subtitle} · <span className="ui-tabular">{todayLabel}</span>
+            <span className="ui-tabular">{todayLabel}</span>
           </p>
         </div>
       </div>
 
       <div className="ui-topbar-actions">
+        <ThemeToggle />
         <div className="ui-global-task-filter" ref={statusMenuRef} data-open={isStatusMenuOpen ? 'true' : 'false'}>
           <button
             type="button"

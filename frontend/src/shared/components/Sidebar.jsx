@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { LogOut, X } from 'lucide-react';
 import { useLogoutMutation } from '@/features/auth/api/authMutations';
 import OrbitMark from './OrbitMark';
 
@@ -72,7 +72,8 @@ const Sidebar = ({
   isExpanded,
   isOpen,
   onClose,
-  onToggleExpand,
+  onHoverChange,
+  onFocusChange,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -142,38 +143,33 @@ const Sidebar = ({
         className="ui-shell-sidebar"
         data-desktop={isDesktop}
         data-open={isOpen}
+        data-expanded={isExpanded}
+        onPointerEnter={(event) => {
+          if (isDesktop && event.pointerType !== 'touch') onHoverChange?.(true);
+        }}
+        onPointerLeave={() => {
+          if (isDesktop) onHoverChange?.(false);
+        }}
+        onFocusCapture={(event) => {
+          if (isDesktop && event.target.matches(':focus-visible')) onFocusChange?.(true);
+        }}
+        onBlurCapture={(event) => {
+          if (isDesktop && !event.currentTarget.contains(event.relatedTarget)) onFocusChange?.(false);
+        }}
         aria-hidden={!isDesktop && !isOpen}
         style={{ width: currentDrawerWidth }}
       >
-        <button
-          type="button"
-          onClick={isDesktop ? onToggleExpand : onClose}
-          className="ui-icon-button ui-focus-ring ui-shell-sidebar__toggle"
-          aria-label={
-            isDesktop
-              ? isExpanded
-                ? 'Collapse navigation'
-                : 'Expand navigation'
-              : 'Close navigation'
-          }
-          title={
-            isDesktop
-              ? isExpanded
-                ? 'Collapse navigation'
-                : 'Expand navigation'
-              : 'Close navigation'
-          }
-        >
-          {isDesktop ? (
-            isExpanded ? (
-              <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
-            ) : (
-              <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
-            )
-          ) : (
+        {!isDesktop && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="ui-icon-button ui-focus-ring ui-shell-sidebar__toggle"
+            aria-label="Close navigation"
+            title="Close navigation"
+          >
             <X className="h-4 w-4" aria-hidden="true" />
-          )}
-        </button>
+          </button>
+        )}
 
         <div
           className="ui-shell-sidebar__content"
@@ -207,6 +203,7 @@ const Sidebar = ({
                   data-active={isActive}
                   aria-current={isActive ? 'page' : undefined}
                   onClick={!isDesktop ? onClose : undefined}
+                  aria-label={item.label}
                   title={!showLabels ? item.label : undefined}
                 >
                   <span className="flex-shrink-0" aria-hidden="true">

@@ -94,7 +94,7 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
         </div>
 
         {isLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90">
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-surface)] opacity-95">
             <div className="flex flex-col items-center gap-3">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--color-accent-soft)] border-t-[var(--color-accent)]" />
               <p className="font-medium text-[var(--color-text-muted)]">Generating tasks…</p>
@@ -124,7 +124,7 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
                   onClick={() => toggleTopic(topic)}
                   className={`rounded-full border px-4 py-2 text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ${
                     selectedTopics.includes(topic)
-                      ? 'border-transparent bg-[var(--color-accent)] text-white shadow-[var(--shadow-xs)]'
+                      ? 'border-transparent bg-[var(--color-accent)] text-[var(--color-on-status,#fff)] shadow-[var(--shadow-xs)]'
                       : 'border-[var(--color-line)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]'
                   }`}
                 >

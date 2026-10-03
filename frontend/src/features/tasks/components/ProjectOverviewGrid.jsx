@@ -102,7 +102,7 @@ const ProjectOverviewGrid = ({
                   <button
                     type="button"
                     onClick={() => onCompleteProject?.(item.id)}
-                    className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-success)] bg-[var(--color-success-soft)] px-4 text-sm font-semibold text-[var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-white"
+                    className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-success)] bg-[var(--color-success-soft)] px-4 text-sm font-semibold text-[var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-[var(--color-on-status,#fff)]"
                     aria-label={`Complete and hide ${item.name}`}
                   >
                     <Check className="h-4 w-4" aria-hidden="true" />

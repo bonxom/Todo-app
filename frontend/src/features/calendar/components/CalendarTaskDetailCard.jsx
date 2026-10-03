@@ -137,6 +137,7 @@ const CalendarTaskDetailCard = ({
   const isGiveUpAvailable = task.status === 'in-progress' || isGivenUp || isPending;
   const isMutedStatus = isCompleted || isGivenUp;
   const priorityStyle = getPriorityStyle(task.priority);
+  const taskLevel = { High: 'Hard', Medium: 'Moderate', Low: 'Easy' }[task.priority] || 'Moderate';
   const statusStyle = getStatusStyle(task.status);
   const projectColor = task.projectId ? getTaskProjectColor(task) : null;
   const AcceptOrCompleteIcon = isPending ? ThumbsUp : Check;
@@ -386,8 +387,8 @@ const CalendarTaskDetailCard = ({
         <span
           className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full ring-2 ring-[var(--color-surface)]"
           style={{ background: priorityStyle.color }}
-          aria-label={`Task level: ${priorityStyle}`}
-          title={`Task level: ${priorityStyle}`}
+          aria-label={`Task level: ${taskLevel}`}
+          title={`Task level: ${taskLevel}`}
         />
       ) : null}
       <div className={`flex items-start ${compact ? 'gap-2' : 'gap-3'}`}>
@@ -420,7 +421,7 @@ const CalendarTaskDetailCard = ({
                   justCompleted ? 'scale-125' : 'scale-100'
                 } ${
                   isCompleted
-                    ? 'border-[var(--color-success)] bg-[var(--color-success)] text-white shadow-sm'
+                    ? 'border-[var(--color-success)] bg-[var(--color-success)] text-[var(--color-on-status,#fff)] shadow-sm'
                     : 'border-[var(--color-line)] bg-[var(--color-surface)] text-transparent hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)] hover:shadow-sm'
                 }`}
               >
@@ -449,7 +450,7 @@ const CalendarTaskDetailCard = ({
               }
               className={`ui-focus-ring inline-flex h-6 w-6 items-center justify-center rounded-lg border transition-all duration-200 ease-out hover:scale-110 active:scale-90 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100 ${
                 isGivenUp
-                  ? 'border-[var(--color-danger)] bg-[var(--color-danger)] text-white shadow-sm'
+                  ? 'border-[var(--color-danger)] bg-[var(--color-danger)] text-[var(--color-on-status,#fff)] shadow-sm'
                   : 'border-[var(--color-danger-soft)] bg-[var(--color-surface)] text-[var(--color-danger)] hover:border-[var(--color-danger)] hover:bg-[var(--color-danger-soft)] hover:shadow-sm'
               }`}
             >

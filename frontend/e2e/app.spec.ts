@@ -104,7 +104,7 @@ const setupApiMocks = async (page: Page) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(MOCK_TASKS),
+      body: JSON.stringify({ data: MOCK_TASKS, pageInfo: { pageNo: 1, pageSize: 10, totalCount: MOCK_TASKS.length, totalPage: 1 } }),
     });
   });
 
@@ -124,7 +124,7 @@ const setupApiMocks = async (page: Page) => {
     });
   });
 
-  await page.route('**/api/statistics**', async (route) => {
+  await page.route('**/api/stats/**', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',

@@ -1,23 +1,33 @@
-import { Link } from 'react-router-dom';
-import OrbitMark from '@/shared/components/OrbitMark';
+import ThemeToggle from "@/shared/components/ThemeToggle";
+import { Link } from "react-router-dom";
+import OrbitMark from "@/shared/components/OrbitMark";
 
-const AuthLayout = ({ children, mode = 'login' }) => {
-  const isRegister = mode === 'register';
+const AuthLayout = ({ children, mode = "login" }) => {
+  const isRegister = mode === "register";
 
   return (
     <main className="auth-page-shell">
-      <a className="skip-link" href="#auth-form">Skip to account form</a>
+      <a className="skip-link" href="#auth-form">
+        Skip to account form
+      </a>
       <div className="auth-page-container">
-        <Link to="/" className="auth-home-link">
-          <span className="ui-shell-brand-mark" aria-hidden="true">
-            <OrbitMark />
-          </span>
-          <span>Orbit</span>
-        </Link>
+        <div className="auth-page-header">
+          <Link to="/" className="auth-home-link">
+            <span className="ui-shell-brand-mark" aria-hidden="true">
+              <OrbitMark />
+            </span>
+            <span>Orbit</span>
+          </Link>
+          <ThemeToggle />
+        </div>
 
         <section className="auth-shell ui-section-card">
           <aside className="auth-aside" aria-label="Orbit workspace summary">
-            <h1>{isRegister ? 'Build your task workspace.' : 'Welcome back to your workspace.'}</h1>
+            <h1>
+              {isRegister
+                ? "Build your task workspace."
+                : "Welcome back to your workspace."}
+            </h1>
             <video
               className="auth-aside-video"
               autoPlay

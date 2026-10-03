@@ -6,14 +6,14 @@ const Hero = () => {
   return (
     <section className="orbit-hero">
       <div className="orbit-hero__content">
-        <p className="orbit-kicker">Orbit Control / Daily planning</p>
-        <h1 className="orbit-hero__title">Control the day. Keep work in orbit.</h1>
+        <p className="orbit-kicker">Tasks, projects & calendar</p>
+        <h1 className="orbit-hero__title">Know what needs doing.</h1>
         <p className="orbit-hero__description">
-          Capture the next action, shape a working system, and turn steady progress into momentum.
+          Keep your tasks, project deadlines, and schedule in one place.
         </p>
         <div className="orbit-hero__actions">
           <Link className="orbit-button orbit-button--primary" to="/register">
-            Start your orbit
+            Create your workspace
             <ArrowRight size={17} aria-hidden="true" />
           </Link>
           <Link className="orbit-button orbit-button--secondary" to="/login">Sign in</Link>
@@ -21,7 +21,7 @@ const Hero = () => {
         <div className="orbit-hero__proof" aria-label="Product highlights">
           <span><Sparkles size={15} aria-hidden="true" />AI task assist</span>
           <span><CalendarDays size={15} aria-hidden="true" />Calendar planning</span>
-          <span>Progress clarity</span>
+          <span>Completion tracking</span>
         </div>
       </div>
       <OrbitScene />

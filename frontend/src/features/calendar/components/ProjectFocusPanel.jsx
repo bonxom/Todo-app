@@ -204,7 +204,7 @@ const ProjectFocusPanel = ({
                       <button
                         type="button"
                         onClick={() => onCompleteProject?.(project._id)}
-                        className="ui-focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-[var(--color-success)] bg-[var(--color-success-soft)] text-[var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-white"
+                        className="ui-focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-[var(--color-success)] bg-[var(--color-success-soft)] text-[var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-[var(--color-on-status,#fff)]"
                         aria-label={`Complete and hide ${project.name}`}
                       >
                         <Check className="h-3.5 w-3.5" aria-hidden="true" />
@@ -233,7 +233,7 @@ const ProjectFocusPanel = ({
                       style={{
                         borderColor: isSelected ? 'var(--color-accent)' : 'var(--color-line)',
                         background: isSelected ? 'var(--color-accent)' : 'var(--color-surface)',
-                        color: isSelected ? '#ffffff' : 'transparent',
+                        color: isSelected ? 'var(--color-on-status, #fff)' : 'transparent',
                       }}
                       aria-hidden="true"
                     >

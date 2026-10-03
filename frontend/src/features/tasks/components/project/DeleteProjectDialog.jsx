@@ -37,7 +37,7 @@ const DeleteProjectDialog = ({ isOpen, onClose, onConfirm, projectName }) => {
             <button
               type="button"
               onClick={onConfirm}
-              className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[10px] border border-[color:var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-white transition-[background-color,border-color] duration-150 hover:bg-[var(--color-danger)]"
+              className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[10px] border border-[color:var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] transition-[background-color,border-color] duration-150 hover:bg-[var(--color-danger)]"
             >
               Delete
             </button>
