@@ -293,13 +293,12 @@ const TodoPage = () => {
         <header className="ui-page-header">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="ui-page-kicker">Workspace</p>
-              <h1 className="ui-page-title">Today</h1>
+              <h1 className="ui-page-title">Todos</h1>
               <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
-                <span className="ui-chip ui-chip--accent ui-tabular font-semibold">
+                <span className="ui-task-summary ui-tabular">
                   {remainingCount} remaining
                 </span>
-                <span className="ui-chip ui-tabular">
+                <span className="ui-task-summary ui-tabular">
                   {completedCount} completed
                 </span>
                 {selectedProject && (
@@ -345,7 +344,7 @@ const TodoPage = () => {
         )}
 
         {/* 2-Column Responsive Layout: Task Workspace (65-70%) vs Project Rail (30-35%, min 320px) */}
-        <div className="flex flex-col-reverse lg:flex-row items-start gap-6">
+        <div className="flex flex-col lg:flex-row items-start gap-6">
           {/* Left Column: Main Task Workspace (~65–70%) */}
           <main className="w-full flex-1 min-w-0 space-y-4">
             <TodoTaskToolbar
@@ -438,7 +437,7 @@ const TodoPage = () => {
               </p>
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setIsGiveUpModalOpen(false); setTaskToGiveUp(null); }} className="ui-btn-secondary flex-1 cursor-pointer">Cancel</button>
-                <button type="button" onClick={confirmGiveUp} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-white hover:opacity-90 cursor-pointer">Give Up</button>
+                <button type="button" onClick={confirmGiveUp} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] hover:opacity-90 cursor-pointer">Give Up</button>
               </div>
             </div>
           </div>
@@ -468,7 +467,7 @@ const TodoPage = () => {
               </p>
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }} className="ui-btn-secondary flex-1 cursor-pointer">Cancel</button>
-                <button type="button" onClick={confirmDelete} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-white hover:opacity-90 cursor-pointer">Delete</button>
+                <button type="button" onClick={confirmDelete} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] hover:opacity-90 cursor-pointer">Delete</button>
               </div>
             </div>
           </div>

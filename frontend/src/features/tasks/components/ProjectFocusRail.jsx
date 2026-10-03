@@ -198,7 +198,7 @@ const ProjectFocusRail = ({
                   <button
                     type="button"
                     onClick={() => onCompleteProject?.(project._id)}
-                    className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--color-success)] bg-[var(--color-success-soft)] px-2 text-[11px] font-semibold text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-white transition-colors cursor-pointer"
+                    className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--color-success)] bg-[var(--color-success-soft)] px-2 text-[11px] font-semibold text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-[var(--color-on-status,#fff)] transition-colors cursor-pointer"
                   >
                     <Check className="h-3 w-3" />
                     <span>Complete</span>
@@ -217,7 +217,7 @@ const ProjectFocusRail = ({
                 <button
                   type="button"
                   onClick={() => onAddTaskToProject?.(project._id)}
-                  className="ui-btn-opposite-corners inline-flex h-7 items-center gap-1 border border-[var(--color-accent)] bg-[var(--color-accent-soft)] px-2 text-[11px] font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-colors cursor-pointer"
+                  className="ui-btn-opposite-corners inline-flex h-7 items-center gap-1 border border-[var(--color-accent)] bg-[var(--color-accent-soft)] px-2 text-[11px] font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-[var(--color-on-status,#fff)] transition-colors cursor-pointer"
                 >
                   <Plus className="h-3 w-3" />
                   <span>Add Task</span>

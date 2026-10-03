@@ -1,8 +1,6 @@
 .auth-page-shell {
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(234, 241, 246, 0.75) 0%, rgba(246, 247, 249, 0) 22rem),
-    var(--color-canvas);
+  background: var(--color-canvas);
   color: var(--color-text);
   padding: clamp(1rem, 3vw, 2rem);
 }
@@ -54,14 +52,15 @@
 }
 
 .auth-aside h1 {
-  max-width: 11ch;
+  max-width: 16ch;
   color: var(--color-text);
-  font-size: clamp(2rem, 4.5vw, 3.75rem);
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
   font-weight: 720;
   letter-spacing: -0.04em;
   line-height: 0.98;
   text-wrap: balance;
 }
+
 
 .auth-aside-video {
   display: block;
@@ -75,9 +74,7 @@
   min-width: 0;
   align-items: center;
   justify-content: center;
-  background:
-    linear-gradient(135deg, rgba(234, 241, 246, 0.82), rgba(255, 255, 255, 0.52)),
-    var(--color-surface-muted);
+  background: var(--color-surface);
   padding: clamp(1.25rem, 4vw, 2.5rem);
 }
 
@@ -188,7 +185,11 @@
 
 .auth-input--error {
   border-color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger-soft) 46%, var(--color-surface));
+  background: color-mix(
+    in srgb,
+    var(--color-danger-soft) 46%,
+    var(--color-surface)
+  );
 }
 
 .auth-input--error:focus-visible {
@@ -296,13 +297,13 @@
 .auth-button--danger {
   background: var(--color-danger);
   border: 1px solid var(--color-danger);
-  color: #fff;
+  color: var(--color-on-status, #fff);
 }
 
 .auth-button--success {
   background: var(--color-success);
   border: 1px solid var(--color-success);
-  color: #fff;
+  color: var(--color-on-status, #fff);
 }
 
 .auth-button:disabled {
@@ -312,6 +313,11 @@
 }
 
 @media (max-width: 900px) {
+  .auth-aside-video {
+    width: min(100%, 18rem);
+    max-height: 14rem;
+  }
+
   .auth-shell {
     grid-template-columns: 1fr;
   }
@@ -325,10 +331,7 @@
     max-width: 16ch;
   }
 
-  .auth-aside-video {
-    width: min(100%, 18rem);
-    max-height: 14rem;
-  }
+
 }
 
 @media (max-width: 640px) {
@@ -343,4 +346,11 @@
   .auth-form-panel {
     padding: 1rem;
   }
+}
+
+.auth-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }

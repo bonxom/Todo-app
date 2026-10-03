@@ -79,12 +79,12 @@ const DonutChartCard = ({
               />
             ))}
 
-            <circle cx="50" cy="50" r={INNER_RADIUS} fill="white" />
+            <circle cx="50" cy="50" r={INNER_RADIUS} fill="var(--color-surface)" />
 
-            <text x="50" y="47" textAnchor="middle" className="fill-slate-500 text-[7px] font-medium">
+            <text x="50" y="47" textAnchor="middle" className="fill-[var(--color-text-muted)] text-[7px] font-medium">
               {totalLabel}
             </text>
-            <text x="50" y="56" textAnchor="middle" className="fill-slate-900 text-[10px] font-semibold">
+            <text x="50" y="56" textAnchor="middle" className="fill-[var(--color-text)] text-[10px] font-semibold">
               {NUMBER_FORMATTER.format(total)}
             </text>
           </svg>

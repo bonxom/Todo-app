@@ -80,7 +80,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
 }
 
 .ui-section-card--muted {
@@ -186,22 +186,19 @@
 }
 
 .ui-btn-primary {
-  background: var(--color-accent);
-  border: 1px solid var(--color-accent);
-  box-shadow: var(--shadow-xs);
-  color: #fff;
+  background: var(--color-primary, var(--color-accent));
+  border: 1px solid var(--color-primary, var(--color-accent));
+  color: var(--color-primary-text, #fff);
 }
 
 .ui-btn-primary:hover {
-  background: var(--color-accent-strong);
-  border-color: var(--color-accent-strong);
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-1px);
+  background: var(--color-primary-hover, var(--color-accent-strong));
+  border-color: var(--color-primary-hover, var(--color-accent-strong));
 }
 
-/* Creation and generation CTAs: round one pair of opposite corners. */
+/* Kept as an alias for existing creation buttons. */
 .ui-btn-opposite-corners {
-  border-radius: var(--radius-lg) 0 var(--radius-lg) 0;
+  border-radius: var(--radius-md);
 }
 
 .ui-btn-secondary {
@@ -279,7 +276,7 @@
   background: var(--color-surface);
   color: var(--color-text);
   padding: 0.75rem 0.875rem;
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
   transition:
     background-color 160ms ease,
     border-color 160ms ease,
@@ -304,8 +301,7 @@ textarea.ui-input {
 
 .ui-modal-overlay {
   background: var(--color-overlay);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+
 }
 
 .ui-modal-shell {
@@ -356,7 +352,7 @@ textarea.ui-input {
   border-color: color-mix(in srgb, var(--color-line) 72%, var(--color-text-muted));
   background: var(--color-surface-muted);
   color: var(--color-text);
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
   transform: translateY(-1px);
 }
 
@@ -370,7 +366,7 @@ textarea.ui-input {
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
   text-align: left;
   transition:
     background-color 160ms ease,
@@ -540,7 +536,7 @@ textarea.ui-input {
   overflow: visible;
   border-right: 1px solid var(--color-line);
   background: color-mix(in srgb, var(--color-surface) 96%, var(--color-canvas));
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
   transition:
     transform 220ms ease,
     width 220ms ease;
@@ -559,7 +555,7 @@ textarea.ui-input {
 
 .ui-shell-sidebar__toggle {
   position: absolute;
-  top: 5rem;
+  top: 1rem;
   right: 1rem;
   z-index: 1;
   border-radius: 999px;
@@ -602,39 +598,16 @@ textarea.ui-input {
   height: 2.5rem;
   place-items: center;
   flex-shrink: 0;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 18%, var(--color-line));
-  border-radius: var(--radius-lg);
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-  box-shadow: var(--shadow-xs);
-  font-size: 0.95rem;
-  font-weight: 700;
 }
 
 .ui-shell-brand-mark .orbit-mark {
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .orbit-mark {
   display: block;
   overflow: visible;
-}
-
-.orbit-mark__ring {
-  fill: none;
-  stroke: var(--color-accent);
-  stroke-width: 2.1;
-}
-
-.orbit-mark__ring--two {
-  stroke: color-mix(in srgb, var(--color-accent) 62%, #8b5cf6);
-}
-
-.orbit-mark__core {
-  fill: #22c5db;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, #22c5db 62%, transparent));
 }
 
 .ui-shell-brand-copy {
@@ -686,7 +659,7 @@ textarea.ui-input {
   border-color: color-mix(in srgb, var(--color-accent) 18%, var(--color-line));
   background: var(--color-accent-soft);
   color: var(--color-accent);
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
 }
 
 .ui-shell-nav-label {
@@ -761,7 +734,7 @@ textarea.ui-input {
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
   background: var(--color-surface);
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
   color: var(--color-text-muted);
   font-size: 0.75rem;
   font-weight: 650;
@@ -899,7 +872,7 @@ textarea.ui-input {
   flex-shrink: 0;
   border: 1px solid var(--color-line);
   background: var(--color-surface);
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
   color: var(--color-text-muted);
   transition:
     background-color 160ms ease,
@@ -1084,7 +1057,7 @@ textarea.ui-input {
 .ui-assistant-toggle-button[data-active="true"] {
   border-color: color-mix(in srgb, var(--color-accent) 16%, var(--color-line));
   background: var(--color-surface);
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
   color: var(--color-accent);
 }
 
@@ -1205,3 +1178,24 @@ textarea.ui-input {
     transition: none;
   }
 }
+
+/* Quiet task metadata keeps the title and next action in the foreground. */
+.ui-task-metadata .ui-chip {
+  min-height: 1.25rem;
+  padding-inline: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-weight: 400;
+}
+.ui-task-metadata .ui-chip + .ui-chip::before {
+  content: "·";
+  color: var(--color-text-muted);
+  margin-right: 0.25rem;
+}
+.ui-task-card { box-shadow: none; }
+.ui-task-card:hover { border-color: var(--color-accent); }
+.ui-task-summary { color: var(--color-text-muted); }
+.ui-theme-toggle { background: transparent; box-shadow: none; }
+:root[data-theme="dark"] .ui-shell-sidebar { background: #0d1421; }
+:root[data-theme="dark"] .ui-global-task-filter__check { color: var(--color-primary-text, #fff); }

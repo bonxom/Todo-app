@@ -108,7 +108,7 @@ export default function Pagination({
               id="pagination-page-size"
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="h-8 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 text-xs text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-accent)] cursor-pointer"
+              className="h-8 rounded-[var(--radius-sm)] border border-[var(--color-line)] bg-[var(--color-surface)] px-2 text-xs text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-accent)] cursor-pointer"
             >
               {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>
@@ -127,7 +127,7 @@ export default function Pagination({
             onClick={() => onPageChange(pageNo - 1)}
             disabled={isFirstPage}
             aria-label="Previous page"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-muted)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -152,8 +152,8 @@ export default function Pagination({
                 aria-current={page === pageNo ? 'page' : undefined}
                 className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-[var(--radius-sm)] border px-1.5 text-xs font-medium tabular-nums transition-colors cursor-pointer ${
                   page === pageNo
-                    ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-white'
-                    : 'border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]'
+                    ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--color-on-status,#fff)]'
+                    : 'border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
                 }`}
               >
                 {page}
@@ -167,7 +167,7 @@ export default function Pagination({
             onClick={() => onPageChange(pageNo + 1)}
             disabled={isLastPage}
             aria-label="Next page"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-muted)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

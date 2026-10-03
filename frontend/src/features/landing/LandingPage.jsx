@@ -22,16 +22,16 @@ const LandingPage = () => {
           id="capture"
           chapter="01"
           kicker="Capture"
-          title="Bring work into orbit."
-          description="Turn passing ideas into clear next actions before they scatter across the day."
+          title="Add tasks while they’re fresh."
+          description="Write down the next step, set a due date, and come back when you’re ready."
           visual={<CaptureScene />}
         />
         <NarrativeSection
           id="organize"
           chapter="02"
           kicker="Organize"
-          title="Shape the workspace."
-          description="Layer categories, projects, due dates, and priority into a system that stays easy to scan."
+          title="Keep related work together."
+          description="Group tasks by project and category. Use priority and due dates to decide what comes next."
           visual={<OrganizeScene />}
           reverse
         />

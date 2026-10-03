@@ -32,7 +32,7 @@ const DeleteDialog = ({ isOpen, onClose, onConfirm }) => {
             <button
               type="button"
               onClick={onConfirm}
-              className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-white transition-[background-color,border-color] duration-150 hover:opacity-90"
+              className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] transition-[background-color,border-color] duration-150 hover:opacity-90"
             >
               Delete
             </button>

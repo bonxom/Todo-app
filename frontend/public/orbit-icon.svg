@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="35 15 320 290">
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2f6d9f"/><stop offset="1" stop-color="#245d8c"/></linearGradient>
+    <linearGradient id="orbit" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#5153c7"/><stop offset="1" stop-color="#4e5cc8"/></linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#27c9de"/><stop offset="1" stop-color="#17b9d1"/></linearGradient>
+  </defs>
+  <path d="M244 83 A90 90 0 1 0 286 128" fill="none" stroke="url(#ring)" stroke-width="23"/>
+  <path d="M293 112 C329 110 345 115 340 133 C333 159 283 190 218 215 C151 241 87 252 61 244 C43 238 48 219 86 197" fill="none" stroke="url(#orbit)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="267" cy="103" r="21" fill="url(#cyan)"/>
+  <path d="M160 171 L181 192 L224 151" fill="none" stroke="url(#cyan)" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

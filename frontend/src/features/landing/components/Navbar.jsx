@@ -1,3 +1,4 @@
+import ThemeToggle from '@/shared/components/ThemeToggle';
 import { Link } from 'react-router-dom';
 import OrbitMark from '@/shared/components/OrbitMark';
 
@@ -15,6 +16,7 @@ const Navbar = ({ heroPassed = false }) => {
           <a href="#focus">Focus</a>
         </div>
         <div className="landing-navbar__actions">
+          <ThemeToggle />
           <Link to="/login">Sign in</Link>
           <Link className="landing-navbar__start" to="/register">Start free</Link>
         </div>

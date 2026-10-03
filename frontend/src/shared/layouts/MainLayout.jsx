@@ -20,7 +20,9 @@ const MainLayout = ({ children = null, assistant = null }) => {
 
     return window.innerWidth >= DESKTOP_BREAKPOINT;
   });
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const [isSidebarFocused, setIsSidebarFocused] = useState(false);
+  const isSidebarExpanded = isDesktop && (isSidebarHovered || isSidebarFocused);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -31,6 +33,8 @@ const MainLayout = ({ children = null, assistant = null }) => {
     const mediaQuery = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`);
     const syncViewport = (event) => {
       setIsDesktop(event.matches);
+      setIsSidebarHovered(false);
+      setIsSidebarFocused(false);
       if (event.matches) {
         setIsSidebarOpen(false);
       }
@@ -57,7 +61,8 @@ const MainLayout = ({ children = null, assistant = null }) => {
         isExpanded={isSidebarExpanded}
         isOpen={isDesktop || isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onToggleExpand={() => setIsSidebarExpanded((current) => !current)}
+        onHoverChange={setIsSidebarHovered}
+        onFocusChange={setIsSidebarFocused}
       />
 
       <Topbar

@@ -15,12 +15,12 @@ test.describe('Orbit Control landing', () => {
     const assertNoConsoleErrors = collectConsoleErrors(page);
 
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /control the day/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /start your orbit/i })).toHaveAttribute('href', '/register');
+    await expect(page.getByRole('heading', { name: /know what needs doing/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /create your workspace/i })).toHaveAttribute('href', '/register');
     await page.locator('#focus').scrollIntoViewIfNeeded();
-    await expect(page.getByRole('heading', { name: /turn progress into momentum/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /see what’s done and what’s next/i })).toBeVisible();
     await page.locator('.launch-cta').scrollIntoViewIfNeeded();
-    await expect(page.getByRole('link', { name: /launch your workspace/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /create an account/i })).toBeVisible();
 
     assertNoConsoleErrors();
   });
@@ -29,8 +29,8 @@ test.describe('Orbit Control landing', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: /control the day/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /start your orbit/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /know what needs doing/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /create your workspace/i })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 
@@ -38,10 +38,10 @@ test.describe('Orbit Control landing', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: /bring work into orbit/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /shape the workspace/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /turn progress into momentum/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /start with a clear orbit/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /add tasks while they’re fresh/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /keep related work together/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /see what’s done and what’s next/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /start with your first task/i })).toBeVisible();
     await expect(page.getByText('68%').first()).toBeVisible();
   });
 });

@@ -227,7 +227,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
                 <button
                   type="button"
                   onClick={handleCompleteProject}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--color-success)] bg-[var(--color-success-soft)] text-[color:var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-white"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--color-success)] bg-[var(--color-success-soft)] text-[color:var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-[var(--color-on-status,#fff)]"
                   aria-label={`Complete and hide ${project.name}`}
                 >
                   <Check className="h-4 w-4" aria-hidden="true" />

@@ -169,7 +169,7 @@ const ErrorPage = ({ code = '404', title = '', description = '', onRetry = null 
               <button
                 onClick={onRetry}
                 type="button"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)] bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-strong)] font-medium text-sm transition-colors shadow-xs"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)] bg-[var(--color-accent)] text-[var(--color-on-status,#fff)] hover:bg-[var(--color-accent-strong)] font-medium text-sm transition-colors shadow-xs"
               >
                 <RefreshCw className="w-4 h-4" />
                 Thử lại
@@ -177,7 +177,7 @@ const ErrorPage = ({ code = '404', title = '', description = '', onRetry = null 
             ) : (
               <Link
                 to="/"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)] bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-strong)] font-medium text-sm transition-colors shadow-xs"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)] bg-[var(--color-accent)] text-[var(--color-on-status,#fff)] hover:bg-[var(--color-accent-strong)] font-medium text-sm transition-colors shadow-xs"
               >
                 <Home className="w-4 h-4" />
                 Về Trang Chủ

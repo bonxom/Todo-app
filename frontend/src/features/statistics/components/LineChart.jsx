@@ -1,3 +1,4 @@
+import { useTheme } from '@/shared/theme/theme';
 import { useMemo, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
@@ -30,8 +31,6 @@ ChartJS.register(
 );
 
 const QUICK_RANGES = [7, 14, 30, 90];
-const AXIS_TEXT = '#667085';
-const GRID_COLOR = 'rgba(31, 35, 40, 0.08)';
 const COMPLETED_COLOR = '#2F7D5A';
 const COMPLETED_FILL = 'rgba(47, 125, 90, 0.12)';
 const GIVEN_UP_COLOR = '#B25547';
@@ -57,6 +56,9 @@ const isQuickRangeActive = (days, startDate, endDate, todayKey) => {
 };
 
 const LineChart = ({ dailyStats }) => {
+  const { theme } = useTheme();
+  const axisText = theme === 'dark' ? '#a7b8cd' : '#667085';
+  const gridColor = theme === 'dark' ? '#344459' : 'rgba(31, 35, 40, 0.08)';
   const todayKey = getUtcTodayKey();
   const [startDate, setStartDate] = useState(() => shiftUtcDateKey(todayKey, -29));
   const [endDate, setEndDate] = useState(todayKey);
@@ -140,7 +142,7 @@ const LineChart = ({ dailyStats }) => {
           boxWidth: 8,
           boxHeight: 8,
           padding: 18,
-          color: AXIS_TEXT,
+          color: axisText,
           font: {
             size: 12,
             weight: '600',
@@ -176,11 +178,11 @@ const LineChart = ({ dailyStats }) => {
     scales: {
       x: {
         grid: {
-          color: GRID_COLOR,
+          color: gridColor,
           drawBorder: false,
         },
         ticks: {
-          color: AXIS_TEXT,
+          color: axisText,
           font: {
             size: 11,
           },
@@ -191,11 +193,11 @@ const LineChart = ({ dailyStats }) => {
       y: {
         beginAtZero: true,
         grid: {
-          color: GRID_COLOR,
+          color: gridColor,
           drawBorder: false,
         },
         ticks: {
-          color: AXIS_TEXT,
+          color: axisText,
           font: {
             size: 11,
           },
@@ -208,7 +210,7 @@ const LineChart = ({ dailyStats }) => {
       axis: 'x',
       intersect: false,
     },
-  }), [chartData.dateKeys]);
+  }), [chartData.dateKeys, axisText, gridColor]);
 
   const setQuickRange = (days) => {
     const nextEndDate = getUtcTodayKey();
