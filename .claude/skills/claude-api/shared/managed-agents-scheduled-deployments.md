@@ -66,7 +66,11 @@ The response is a deployment object (`depl_` ID prefix). Check `schedule.upcomin
     "expression": "0 20 * * 5",
     "timezone": "America/New_York",
     "last_run_at": null,
-    "upcoming_runs_at": ["2026-05-09T00:00:00Z", "2026-05-16T00:00:00Z", "2026-05-23T00:00:00Z"]
+    "upcoming_runs_at": [
+      "2026-05-09T00:00:00Z",
+      "2026-05-16T00:00:00Z",
+      "2026-05-23T00:00:00Z"
+    ]
   }
 }
 ```
@@ -113,9 +117,15 @@ A failed run looks like:
   "type": "deployment_run",
   "id": "drun_01abc124",
   "deployment_id": "depl_01xyz",
-  "trigger_context": { "type": "schedule", "scheduled_at": "2026-05-09T00:00:00Z" },
+  "trigger_context": {
+    "type": "schedule",
+    "scheduled_at": "2026-05-09T00:00:00Z"
+  },
   "session_id": null,
-  "error": { "type": "environment_archived", "message": "environment `env_01abc` is archived" },
+  "error": {
+    "type": "environment_archived",
+    "message": "environment `env_01abc` is archived"
+  },
   "agent": { "type": "agent", "id": "agent_01ghi789", "version": 3 },
   "created_at": "2026-05-09T00:00:01Z"
 }
@@ -127,17 +137,17 @@ The outcome of each **scheduled** run (started/succeeded/failed) and each deploy
 
 ## Lifecycle: pause / unpause / archive
 
-| Operation | SDK | Effect |
-|---|---|---|
-| Pause | `client.beta.deployments.pause(id)` | Suppresses scheduled triggers go-forward. Sessions already running continue. **Manual runs are still permitted while paused.** Sets `paused_reason: {"type": "manual"}`. |
-| Unpause | `client.beta.deployments.unpause(id)` | Resumes from the next scheduled occurrence. **Missed triggers are not backfilled.** Clears `paused_reason`. |
-| Archive | `client.beta.deployments.archive(id)` | **Terminal** — the schedule stops and the deployment can no longer be modified. Use pause for anything reversible. |
+| Operation | SDK                                   | Effect                                                                                                                                                                   |
+| --------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Pause     | `client.beta.deployments.pause(id)`   | Suppresses scheduled triggers go-forward. Sessions already running continue. **Manual runs are still permitted while paused.** Sets `paused_reason: {"type": "manual"}`. |
+| Unpause   | `client.beta.deployments.unpause(id)` | Resumes from the next scheduled occurrence. **Missed triggers are not backfilled.** Clears `paused_reason`.                                                              |
+| Archive   | `client.beta.deployments.archive(id)` | **Terminal** — the schedule stops and the deployment can no longer be modified. Use pause for anything reversible.                                                       |
 
 Raw HTTP: `POST /v1/deployments/{deployment_id}/pause` (likewise `/unpause`, `/archive`).
 
 ### Failure behavior
 
-- **Rate-limited:** recorded immediately as a `session_rate_limited` run, **no retry** — the schedule simply tries again at the next occurrence. (Rate limits on API calls *inside* a session are handled by the session itself.)
+- **Rate-limited:** recorded immediately as a `session_rate_limited` run, **no retry** — the schedule simply tries again at the next occurrence. (Rate limits on API calls _inside_ a session are handled by the session itself.)
 - **Other failed runs** (e.g. `environment_archived`, `vault_not_found`, `service_unavailable`): the run records the `error.type` — monitor runs and fix the referenced resource, or pause the deployment.
 - **Agent archived:** the deployment is automatically **archived** (terminal) in the same operation. **Agent deleted:** the next scheduled trigger detects the missing agent and archives the deployment then. Either way no deployment run is recorded, and no further sessions are created.
 

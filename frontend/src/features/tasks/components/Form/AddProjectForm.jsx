@@ -1,20 +1,54 @@
-import { useState } from 'react';
-import { useCreateProjectMutation, useUpdateProjectMutation } from '../../api/projectMutations';
-import { DEFAULT_PROJECT_COLOR, getProjectColor } from '@/shared/utils/projectColor';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+import { useState } from "react";
+import {
+  useCreateProjectMutation,
+  useUpdateProjectMutation,
+} from "../../api/projectMutations";
+import {
+  DEFAULT_PROJECT_COLOR,
+  getProjectColor,
+} from "@/shared/utils/projectColor";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const PROJECT_COLOR_SWATCHES = [
-  '#FFFFFF', '#FECACA', '#FED7AA', '#FEF3C7', '#D9F99D', '#BBF7D0',
-  '#A7F3D0', '#A5F3FC', '#BAE6FD', '#BFDBFE', '#C7D2FE', '#DDD6FE',
-  '#F5D0FE', '#FBCFE8', '#E5E7EB', '#FCA5A5', '#FB923C', '#FACC15',
-  '#84CC16', '#22C55E', '#14B8A6', '#06B6D4', '#3B82F6', '#6366F1',
-  '#8B5CF6', '#D946EF', '#EC4899', '#64748B',
+  "#FFFFFF",
+  "#FECACA",
+  "#FED7AA",
+  "#FEF3C7",
+  "#D9F99D",
+  "#BBF7D0",
+  "#A7F3D0",
+  "#A5F3FC",
+  "#BAE6FD",
+  "#BFDBFE",
+  "#C7D2FE",
+  "#DDD6FE",
+  "#F5D0FE",
+  "#FBCFE8",
+  "#E5E7EB",
+  "#FCA5A5",
+  "#FB923C",
+  "#FACC15",
+  "#84CC16",
+  "#22C55E",
+  "#14B8A6",
+  "#06B6D4",
+  "#3B82F6",
+  "#6366F1",
+  "#8B5CF6",
+  "#D946EF",
+  "#EC4899",
+  "#64748B",
 ];
 
-const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = null }) => {
+const AddProjectForm = ({
+  onClose,
+  onProjectCreated,
+  onProjectSaved,
+  project = null,
+}) => {
   const projectId = project?._id;
-  const projectName = project?.name || '';
-  const projectDescription = project?.description || '';
+  const projectName = project?.name || "";
+  const projectDescription = project?.description || "";
   const projectColor = getProjectColor(project);
   const [name, setName] = useState(projectName);
   const [description, setDescription] = useState(projectDescription);
@@ -22,7 +56,8 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
 
   const createProjectMutation = useCreateProjectMutation();
   const updateProjectMutation = useUpdateProjectMutation();
-  const isSubmitting = createProjectMutation.isPending || updateProjectMutation.isPending;
+  const isSubmitting =
+    createProjectMutation.isPending || updateProjectMutation.isPending;
 
   const handleReset = () => {
     setName(projectName);
@@ -50,16 +85,22 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
       handleReset();
       onClose();
     } catch (error) {
-      console.error('Failed to create project:', error);
-      alert(getApiErrorMessage(error, 'Failed to save project. Please try again.'));
+      console.error("Failed to create project:", error);
+      alert(
+        getApiErrorMessage(error, "Failed to save project. Please try again."),
+      );
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="project-name" className="mb-2 block text-sm font-medium text-[color:var(--color-text)]">
-          Project Name <span className="text-[color:var(--color-danger)]">*</span>
+        <label
+          htmlFor="project-name"
+          className="mb-2 block text-sm font-medium text-[color:var(--color-text)]"
+        >
+          Project Name{" "}
+          <span className="text-[color:var(--color-danger)]">*</span>
         </label>
         <input
           id="project-name"
@@ -86,7 +127,10 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
         >
           {PROJECT_COLOR_SWATCHES.map((swatch) => {
             const isSelected = color === swatch;
-            const isLight = swatch === '#FFFFFF' || swatch === '#FEF3C7' || swatch === '#E5E7EB';
+            const isLight =
+              swatch === "#FFFFFF" ||
+              swatch === "#FEF3C7" ||
+              swatch === "#E5E7EB";
 
             return (
               <button
@@ -99,20 +143,25 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
                 className="ui-focus-ring flex h-7 w-7 items-center justify-center rounded-full transition-[transform,box-shadow] duration-150 hover:scale-110"
                 style={{
                   backgroundColor: swatch,
-                  border: isLight ? '1px solid var(--color-line)' : '1px solid transparent',
+                  border: isLight
+                    ? "1px solid var(--color-line)"
+                    : "1px solid transparent",
                   boxShadow: isSelected
-                    ? '0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent)'
-                    : 'none',
+                    ? "0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent)"
+                    : "none",
                 }}
               >
-                <span className="sr-only">{isSelected ? 'Selected' : ''}</span>
+                <span className="sr-only">{isSelected ? "Selected" : ""}</span>
               </button>
             );
           })}
         </div>
 
         <div className="mt-3 flex items-center gap-3">
-          <label htmlFor="project-custom-color" className="text-sm font-medium text-[color:var(--color-text)]">
+          <label
+            htmlFor="project-custom-color"
+            className="text-sm font-medium text-[color:var(--color-text)]"
+          >
             Custom
           </label>
           <input
@@ -129,7 +178,10 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
       </fieldset>
 
       <div>
-        <label htmlFor="project-description" className="mb-2 block text-sm font-medium text-[color:var(--color-text)]">
+        <label
+          htmlFor="project-description"
+          className="mb-2 block text-sm font-medium text-[color:var(--color-text)]"
+        >
           Description
         </label>
         <textarea
@@ -160,7 +212,13 @@ const AddProjectForm = ({ onClose, onProjectCreated, onProjectSaved, project = n
           disabled={isSubmitting}
           className="ui-btn-primary ui-btn-opposite-corners flex-1 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? (projectId ? 'Saving…' : 'Adding…') : (projectId ? 'Save Project' : 'Add Project')}
+          {isSubmitting
+            ? projectId
+              ? "Saving…"
+              : "Adding…"
+            : projectId
+              ? "Save Project"
+              : "Add Project"}
         </button>
       </div>
     </form>

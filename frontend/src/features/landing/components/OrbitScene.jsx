@@ -1,4 +1,4 @@
-import { Check, CircleDot, Search } from 'lucide-react';
+import { Check, CircleDot, Search } from "lucide-react";
 
 const OrbitScene = () => {
   return (
@@ -6,7 +6,11 @@ const OrbitScene = () => {
       <div className="orbit-scene__deck-wrap">
         <div className="orbit-scene__deck">
           <div className="orbit-scene__topbar">
-            <span className="orbit-scene__window-dots" aria-hidden="true"><i /><i /><i /></span>
+            <span className="orbit-scene__window-dots" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
             <span>Orbit · Workspace</span>
             <Search size={14} aria-hidden="true" />
           </div>
@@ -30,19 +34,31 @@ const OrbitScene = () => {
                   <span>Project completion</span>
                   <strong>68%</strong>
                 </div>
-                <div className="orbit-scene__progress-track" aria-hidden="true"><span /></div>
+                <div className="orbit-scene__progress-track" aria-hidden="true">
+                  <span />
+                </div>
               </div>
               <div className="orbit-scene__tasks">
-                <div><Check size={14} aria-hidden="true" /><span>Review category plan</span><small>Done</small></div>
-                <div><CircleDot size={14} aria-hidden="true" /><span>Prepare launch checklist</span><small>Now</small></div>
-                <div><CircleDot size={14} aria-hidden="true" /><span>Schedule weekly review</span><small>Next</small></div>
+                <div>
+                  <Check size={14} aria-hidden="true" />
+                  <span>Review category plan</span>
+                  <small>Done</small>
+                </div>
+                <div>
+                  <CircleDot size={14} aria-hidden="true" />
+                  <span>Prepare launch checklist</span>
+                  <small>Now</small>
+                </div>
+                <div>
+                  <CircleDot size={14} aria-hidden="true" />
+                  <span>Schedule weekly review</span>
+                  <small>Next</small>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-
     </div>
   );
 };

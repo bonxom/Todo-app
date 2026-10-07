@@ -1,5 +1,5 @@
-import { ChevronLeft, ChevronRight, LoaderCircle } from 'lucide-react';
-import DayCell from './DayCell';
+import { ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
+import DayCell from "./DayCell";
 import {
   buildMonthDays,
   buildWeekDays,
@@ -8,9 +8,9 @@ import {
   getDateKey,
   isSameDay,
   startOfDay,
-} from './calendarUtils';
+} from "./calendarUtils";
 
-const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const CalendarGrid = ({
   currentDate,
@@ -23,19 +23,21 @@ const CalendarGrid = ({
   onTaskDueDateChange,
   onTaskCopy,
   isRangeLoading = false,
-  viewMode = 'month',
+  viewMode = "month",
   showViewModeToggle = false,
   onViewModeChange,
   actions,
 }) => {
-  const calendarDays = viewMode === 'week'
-    ? buildWeekDays(currentDate)
-    : buildMonthDays(currentDate);
+  const calendarDays =
+    viewMode === "week"
+      ? buildWeekDays(currentDate)
+      : buildMonthDays(currentDate);
 
   const today = startOfDay(new Date());
-  const heading = viewMode === 'week'
-    ? formatWeekLabel(currentDate)
-    : formatMonthLabel(currentDate);
+  const heading =
+    viewMode === "week"
+      ? formatWeekLabel(currentDate)
+      : formatMonthLabel(currentDate);
 
   return (
     <div className="ui-section-card ui-card-padding">
@@ -43,7 +45,7 @@ const CalendarGrid = ({
         <div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-[var(--color-accent)]">
-              {viewMode === 'week' ? 'Week view' : 'Month view'}
+              {viewMode === "week" ? "Week view" : "Month view"}
             </p>
             {isRangeLoading ? (
               <span
@@ -51,11 +53,16 @@ const CalendarGrid = ({
                 aria-label="Loading calendar range"
                 className="inline-flex text-[var(--color-text-muted)]"
               >
-                <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+                <LoaderCircle
+                  className="h-4 w-4 animate-spin"
+                  aria-hidden="true"
+                />
               </span>
             ) : null}
           </div>
-          <h2 className="mt-1 text-2xl font-semibold text-[var(--color-text)]">{heading}</h2>
+          <h2 className="mt-1 text-2xl font-semibold text-[var(--color-text)]">
+            {heading}
+          </h2>
         </div>
 
         <div className="flex flex-col gap-3 sm:items-end">
@@ -64,22 +71,22 @@ const CalendarGrid = ({
               <div className="inline-flex rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] p-1">
                 <button
                   type="button"
-                  onClick={() => onViewModeChange?.('month')}
+                  onClick={() => onViewModeChange?.("month")}
                   className={`ui-focus-ring rounded-[calc(var(--radius-md)-2px)] px-4 py-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ${
-                    viewMode === 'month'
-                      ? 'bg-[var(--color-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]'
-                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                    viewMode === "month"
+                      ? "bg-[var(--color-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
                   }`}
                 >
                   Month
                 </button>
                 <button
                   type="button"
-                  onClick={() => onViewModeChange?.('week')}
+                  onClick={() => onViewModeChange?.("week")}
                   className={`ui-focus-ring rounded-[calc(var(--radius-md)-2px)] px-4 py-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ${
-                    viewMode === 'week'
-                      ? 'bg-[var(--color-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]'
-                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                    viewMode === "week"
+                      ? "bg-[var(--color-surface)] text-[var(--color-accent)] shadow-[var(--shadow-xs)]"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
                   }`}
                 >
                   Week
@@ -92,7 +99,9 @@ const CalendarGrid = ({
                 type="button"
                 onClick={() => onNavigate(-1)}
                 className="ui-icon-button ui-focus-ring"
-                aria-label={viewMode === 'week' ? 'Previous week' : 'Previous month'}
+                aria-label={
+                  viewMode === "week" ? "Previous week" : "Previous month"
+                }
               >
                 <ChevronLeft className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -107,7 +116,7 @@ const CalendarGrid = ({
                 type="button"
                 onClick={() => onNavigate(1)}
                 className="ui-icon-button ui-focus-ring"
-                aria-label={viewMode === 'week' ? 'Next week' : 'Next month'}
+                aria-label={viewMode === "week" ? "Next week" : "Next month"}
               >
                 <ChevronRight className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -115,9 +124,7 @@ const CalendarGrid = ({
           </div>
 
           {actions ? (
-            <div className="flex flex-wrap gap-2 sm:justify-end">
-              {actions}
-            </div>
+            <div className="flex flex-wrap gap-2 sm:justify-end">{actions}</div>
           ) : null}
         </div>
       </div>

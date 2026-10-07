@@ -1,17 +1,28 @@
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Folder, X } from 'lucide-react';
-import TaskCard from '@/features/tasks/components/category/TaskCard';
-import TaskDetailButton from '@/features/tasks/components/TaskDetailButton';
-import GiveUpDialog from '@/features/tasks/components/dialogs/GiveUpDialog';
-import DeleteDialog from '@/features/tasks/components/dialogs/DeleteDialog';
-import Pagination from '@/shared/components/Pagination';
-import { useTasksByCategoryQuery } from '@/features/tasks/api/taskQueries';
-import { useDeleteTaskMutation, useGiveUpTaskMutation } from '@/features/tasks/api/taskMutations';
-import { usePagination } from '@/shared/hooks/usePagination';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Folder, X } from "lucide-react";
+import TaskCard from "@/features/tasks/components/category/TaskCard";
+import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
+import GiveUpDialog from "@/features/tasks/components/dialogs/GiveUpDialog";
+import DeleteDialog from "@/features/tasks/components/dialogs/DeleteDialog";
+import Pagination from "@/shared/components/Pagination";
+import { useTasksByCategoryQuery } from "@/features/tasks/api/taskQueries";
+import {
+  useDeleteTaskMutation,
+  useGiveUpTaskMutation,
+} from "@/features/tasks/api/taskMutations";
+import { usePagination } from "@/shared/hooks/usePagination";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
-const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks = [], categoryId, onTaskUpdated }) => {
+const CategoryDetailModal = ({
+  isOpen,
+  onClose,
+  category,
+  description,
+  tasks = [],
+  categoryId,
+  onTaskUpdated,
+}) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -36,7 +47,7 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks = [
   const categoryTasksQuery = useTasksByCategoryQuery(
     categoryId,
     { pageNo, pageSize },
-    { enabled: Boolean(isOpen && categoryId) }
+    { enabled: Boolean(isOpen && categoryId) },
   );
 
   const paginatedTasks = categoryTasksQuery.data?.data;
@@ -48,30 +59,37 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks = [
     }
   }, [pageInfo, syncPageInfo]);
 
-  const displayTasks = paginatedTasks || (tasks ? tasks.slice((pageNo - 1) * pageSize, pageNo * pageSize) : []);
+  const displayTasks =
+    paginatedTasks ||
+    (tasks ? tasks.slice((pageNo - 1) * pageSize, pageNo * pageSize) : []);
   const effectiveTotalCount = pageInfo ? totalCount : tasks.length;
-  const effectiveTotalPage = pageInfo ? totalPage : Math.ceil(tasks.length / pageSize);
+  const effectiveTotalPage = pageInfo
+    ? totalPage
+    : Math.ceil(tasks.length / pageSize);
 
   const giveUpTaskMutation = useGiveUpTaskMutation();
   const deleteTaskMutation = useDeleteTaskMutation();
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const completedTasks = tasks.filter((task) => task.status === 'completed').length;
+  const completedTasks = tasks.filter(
+    (task) => task.status === "completed",
+  ).length;
   const totalTasks = effectiveTotalCount;
-  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const progress =
+    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const handleTaskUpdated = () => {
     categoryTasksQuery.refetch();
@@ -95,8 +113,8 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks = [
       setIsGiveUpModalOpen(false);
       setTaskToGiveUp(null);
     } catch (error) {
-      console.error('Failed to give up task:', error);
-      alert(getApiErrorMessage(error, 'Failed to give up task.'));
+      console.error("Failed to give up task:", error);
+      alert(getApiErrorMessage(error, "Failed to give up task."));
     }
   };
 
@@ -118,8 +136,8 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks = [
         handleTaskUpdated();
       }, 300);
     } catch (error) {
-      console.error('Failed to delete task:', error);
-      alert(getApiErrorMessage(error, 'Failed to delete task.'));
+      console.error("Failed to delete task:", error);
+      alert(getApiErrorMessage(error, "Failed to delete task."));
       setDeletingTaskId(null);
       setTaskToDelete(null);
     }
@@ -177,13 +195,17 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks = [
                   </div>
                   <div className="min-w-0">
                     <p className="ui-page-kicker">Category</p>
-                    <h2 id="category-detail-title" className="truncate text-2xl font-semibold text-[color:var(--color-text)]">
+                    <h2
+                      id="category-detail-title"
+                      className="truncate text-2xl font-semibold text-[color:var(--color-text)]"
+                    >
                       {category}
                     </h2>
                   </div>
                 </div>
                 <p className="mt-3 max-w-3xl break-words text-sm leading-6 text-[color:var(--color-text-muted)]">
-                  {description || 'Tasks grouped under this category appear here.'}
+                  {description ||
+                    "Tasks grouped under this category appear here."}
                 </p>
               </div>
 
@@ -199,7 +221,9 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks = [
 
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="ui-chip ui-tabular">{totalTasks} tasks</span>
-              <span className="ui-chip ui-chip--success ui-tabular">{completedTasks} completed</span>
+              <span className="ui-chip ui-chip--success ui-tabular">
+                {completedTasks} completed
+              </span>
               <span className="ui-chip ui-tabular">{progress}% complete</span>
             </div>
           </div>
@@ -212,8 +236,8 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks = [
                     key={task._id || task.id}
                     className={`transition-[opacity,transform] duration-300 ${
                       deletingTaskId === (task._id || task.id)
-                        ? 'pointer-events-none scale-[0.98] opacity-0'
-                        : 'scale-100 opacity-100'
+                        ? "pointer-events-none scale-[0.98] opacity-0"
+                        : "scale-100 opacity-100"
                     }`}
                   >
                     <TaskCard
@@ -242,10 +266,16 @@ const CategoryDetailModal = ({ isOpen, onClose, category, description, tasks = [
               </div>
             ) : (
               <div className="rounded-[14px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-6 py-14 text-center">
-                <Folder className="mx-auto h-12 w-12 text-[color:var(--color-text-muted)]" aria-hidden="true" />
-                <p className="mt-4 text-lg font-semibold text-[color:var(--color-text)]">No tasks in this category</p>
+                <Folder
+                  className="mx-auto h-12 w-12 text-[color:var(--color-text-muted)]"
+                  aria-hidden="true"
+                />
+                <p className="mt-4 text-lg font-semibold text-[color:var(--color-text)]">
+                  No tasks in this category
+                </p>
                 <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
-                  Create a task or move one into this category to start tracking it here.
+                  Create a task or move one into this category to start tracking
+                  it here.
                 </p>
               </div>
             )}

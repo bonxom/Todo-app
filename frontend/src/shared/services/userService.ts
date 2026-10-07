@@ -14,14 +14,26 @@ export const userService = {
   },
 
   // Get user by ID (Admin only)
-  getUserById: async (userId: string, options?: RequestOptions): Promise<User> => {
-    const response = await axiosInstance.get<User>(`/api/users/${userId}`, options);
+  getUserById: async (
+    userId: string,
+    options?: RequestOptions,
+  ): Promise<User> => {
+    const response = await axiosInstance.get<User>(
+      `/api/users/${userId}`,
+      options,
+    );
     return response.data;
   },
 
   // Update user (Admin only)
-  updateUser: async (userId: string, userData: UpdateProfilePayload): Promise<User> => {
-    const response = await axiosInstance.put<User>(`/api/users/${userId}`, userData);
+  updateUser: async (
+    userId: string,
+    userData: UpdateProfilePayload,
+  ): Promise<User> => {
+    const response = await axiosInstance.put<User>(
+      `/api/users/${userId}`,
+      userData,
+    );
     return response.data;
   },
 

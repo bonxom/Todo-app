@@ -1,7 +1,13 @@
-import { X } from 'lucide-react';
-import AddTaskForm from '../Form/AddTaskForm';
+import { X } from "lucide-react";
+import AddTaskForm from "../Form/AddTaskForm";
 
-const AddTaskModal = ({ isOpen, onClose, onTaskCreated, initialDueDate, initialProjectId = '' }) => {
+const AddTaskModal = ({
+  isOpen,
+  onClose,
+  onTaskCreated,
+  initialDueDate,
+  initialProjectId = "",
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -18,7 +24,12 @@ const AddTaskModal = ({ isOpen, onClose, onTaskCreated, initialDueDate, initialP
         aria-labelledby="add-task-modal-title"
       >
         <div className="ui-modal-header flex items-start justify-between gap-4">
-          <h2 id="add-task-modal-title" className="text-xl font-semibold text-[var(--color-text)]">Add Task</h2>
+          <h2
+            id="add-task-modal-title"
+            className="text-xl font-semibold text-[var(--color-text)]"
+          >
+            Add Task
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -29,7 +40,7 @@ const AddTaskModal = ({ isOpen, onClose, onTaskCreated, initialDueDate, initialP
           </button>
         </div>
         <div className="ui-modal-body">
-          <AddTaskForm 
+          <AddTaskForm
             onClose={onClose}
             onTaskCreated={onTaskCreated}
             initialDueDate={initialDueDate}

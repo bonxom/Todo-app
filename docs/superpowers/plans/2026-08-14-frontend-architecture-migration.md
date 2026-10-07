@@ -84,6 +84,7 @@ Each route-owning feature also receives `routes.tsx`. Query and mutation modules
 ### Task 1: TypeScript, aliases, environment, and test harness
 
 **Files:**
+
 - Modify: `frontend/package.json`
 - Modify: `frontend/tsconfig.node.json`
 - Modify: `frontend/pnpm-lock.yaml`
@@ -99,6 +100,7 @@ Each route-owning feature also receives `routes.tsx`. Query and mutation modules
 - Test: `frontend/src/config/env.test.ts`
 
 **Interfaces:**
+
 - Produces: `env.serverUrl: string | undefined`, `env.apiDebug: boolean`, `parseEnv(source: ImportMetaEnv): AppEnv`, and the `@/* -> src/*` alias.
 - Produces: `pnpm test`, `pnpm typecheck`, and a `pnpm build` command that type-checks before bundling.
 
@@ -161,7 +163,12 @@ import { parseEnv } from "./env";
 
 describe("parseEnv", () => {
   it("normalizes optional URL and debug values", () => {
-    expect(parseEnv({ VITE_SERVER_URL: " https://api.example.com ", VITE_API_DEBUG: "true" })).toEqual({
+    expect(
+      parseEnv({
+        VITE_SERVER_URL: " https://api.example.com ",
+        VITE_API_DEBUG: "true",
+      }),
+    ).toEqual({
       serverUrl: "https://api.example.com",
       apiDebug: true,
     });
@@ -223,6 +230,7 @@ git commit -m "build(frontend): add typed application foundation"
 ### Task 2: Domain contracts, authentication store, and split services
 
 **Files:**
+
 - Create: `frontend/src/shared/types/domain.ts`
 - Create: `frontend/src/shared/services/authStorage.ts`
 - Create: `frontend/src/shared/services/httpClient.ts`
@@ -253,6 +261,7 @@ git commit -m "build(frontend): add typed application foundation"
 - Test: `frontend/src/context/AuthContext.test.jsx`
 
 **Interfaces:**
+
 - Produces: `User`, `Task`, `Project`, `Category`, `Stat`, `AuthSession`, mutation payload, and API error types.
 - Produces: `useAuthStore.getState()` with `setSession`, `updateTokens`, `clearSession`, `syncUser`, and `setAuthReady`.
 - Produces: one typed service object per backend domain and a stable `@/shared/services` barrel.
@@ -281,7 +290,11 @@ export interface User {
   updatedAt?: string;
 }
 
-export interface Category { _id: EntityId; name: string; description?: string; }
+export interface Category {
+  _id: EntityId;
+  name: string;
+  description?: string;
+}
 export interface ProjectSummary {
   totalTasks: number;
   finishedTasks: number;
@@ -293,8 +306,17 @@ export interface ProjectSummary {
   canComplete: boolean;
   completionRate: number;
 }
-export interface Project { _id: EntityId; name: string; description: string; color: string; status: ProjectStatus; summary?: ProjectSummary; }
-export interface ProjectWithSummary extends Project { summary: ProjectSummary; }
+export interface Project {
+  _id: EntityId;
+  name: string;
+  description: string;
+  color: string;
+  status: ProjectStatus;
+  summary?: ProjectSummary;
+}
+export interface ProjectWithSummary extends Project {
+  summary: ProjectSummary;
+}
 export interface Task {
   _id: EntityId;
   id?: EntityId;
@@ -312,9 +334,22 @@ export interface Task {
   updatedAt?: string;
 }
 
-export interface AuthSession { token?: string; accessToken?: string; refreshToken?: string; user?: User; }
-export interface AuthSnapshot { token: string | null; refreshToken: string | null; user: User | null; }
-export interface DailyCategoryStat { categoryId: EntityId; categoryName: string; count: number; }
+export interface AuthSession {
+  token?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: User;
+}
+export interface AuthSnapshot {
+  token: string | null;
+  refreshToken: string | null;
+  user: User | null;
+}
+export interface DailyCategoryStat {
+  categoryId: EntityId;
+  categoryName: string;
+  count: number;
+}
 export interface DailyStat {
   date: string;
   completedTasks: number;
@@ -342,15 +377,39 @@ export type TaskMutationPayload = Partial<{
   startDate: string;
   dueDate: string | null;
 }>;
-export type ProjectMutationPayload = Partial<Pick<Project, "name" | "description" | "color" | "status">>;
-export type CategoryMutationPayload = Partial<Pick<Category, "name" | "description">>;
-export interface LoginPayload { email: string; password: string; }
-export interface RegisterPayload extends LoginPayload { name: string; dob: string; nationality?: string; }
-export type UpdateProfilePayload = Partial<Pick<User, "email" | "name" | "dob" | "nationality" | "avatarUrl">>;
-export interface ChangePasswordPayload { currentPassword: string; newPassword: string; }
-export interface GenerateTasksPayload { userRequirement: string; }
-export interface ChatPayload { userInput: string; }
-export interface ApiEnvelope<T> { success: boolean; message: string; data: T; }
+export type ProjectMutationPayload = Partial<
+  Pick<Project, "name" | "description" | "color" | "status">
+>;
+export type CategoryMutationPayload = Partial<
+  Pick<Category, "name" | "description">
+>;
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+export interface RegisterPayload extends LoginPayload {
+  name: string;
+  dob: string;
+  nationality?: string;
+}
+export type UpdateProfilePayload = Partial<
+  Pick<User, "email" | "name" | "dob" | "nationality" | "avatarUrl">
+>;
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+export interface GenerateTasksPayload {
+  userRequirement: string;
+}
+export interface ChatPayload {
+  userInput: string;
+}
+export interface ApiEnvelope<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
 export type GenerateTasksResponse = ApiEnvelope<Task[]>;
 export type ChatResponse = ApiEnvelope<string>;
 ```
@@ -364,10 +423,18 @@ Cover legacy hydration, token rotation without replacing the user, full session 
 ```ts
 it("rotates tokens in memory and in legacy storage without replacing the user", () => {
   const user = { email: "a@example.com", name: "A", role: "USER" as const };
-  useAuthStore.getState().setSession({ accessToken: "old", refreshToken: "refresh-1", user });
-  useAuthStore.getState().updateTokens({ accessToken: "new", refreshToken: "refresh-2" });
+  useAuthStore
+    .getState()
+    .setSession({ accessToken: "old", refreshToken: "refresh-1", user });
+  useAuthStore
+    .getState()
+    .updateTokens({ accessToken: "new", refreshToken: "refresh-2" });
 
-  expect(useAuthStore.getState()).toMatchObject({ token: "new", refreshToken: "refresh-2", user });
+  expect(useAuthStore.getState()).toMatchObject({
+    token: "new",
+    refreshToken: "refresh-2",
+    user,
+  });
   expect(localStorage.getItem("token")).toBe("new");
   expect(localStorage.getItem("refreshToken")).toBe("refresh-2");
   expect(JSON.parse(localStorage.getItem("user")!)).toEqual(user);
@@ -393,16 +460,30 @@ export const useAuthStore = create<AuthState>((set) => ({
   sessionRevision: 0,
   setSession: (session) => {
     const snapshot = persistAuthSession(session);
-    set((state) => ({ ...snapshot, isAuthReady: true, sessionRevision: state.sessionRevision + 1 }));
+    set((state) => ({
+      ...snapshot,
+      isAuthReady: true,
+      sessionRevision: state.sessionRevision + 1,
+    }));
   },
   updateTokens: (tokens) => {
     const snapshot = updateStoredTokens(tokens);
-    set((state) => ({ token: snapshot.token, refreshToken: snapshot.refreshToken, user: state.user }));
+    set((state) => ({
+      token: snapshot.token,
+      refreshToken: snapshot.refreshToken,
+      user: state.user,
+    }));
     // sessionRevision is NOT incremented: token rotation is not a session change.
   },
   clearSession: () => {
     clearStoredAuth();
-    set((state) => ({ token: null, refreshToken: null, user: null, isAuthReady: true, sessionRevision: state.sessionRevision + 1 }));
+    set((state) => ({
+      token: null,
+      refreshToken: null,
+      user: null,
+      isAuthReady: true,
+      sessionRevision: state.sessionRevision + 1,
+    }));
   },
   syncUser: (user) => {
     updateStoredUser(user);
@@ -444,11 +525,11 @@ Pass `options` as the Axios request config. Keep positional calendar dates becau
 Replace old files with re-exports:
 
 ```js
-export * from '../shared/services/index';
+export * from "../shared/services/index";
 ```
 
 ```js
-export { default } from '../shared/services/httpClient';
+export { default } from "../shared/services/httpClient";
 ```
 
 Use equivalent re-exports for `authStorage.js` and `projectHelpers.js`.
@@ -531,6 +612,7 @@ git commit -m "refactor(frontend): centralize session and API services"
 ### Task 3: Query client, filter store, typed keys, queries, and invalidation mutations
 
 **Files:**
+
 - Create: `frontend/src/app/queryClient.ts`
 - Create: `frontend/src/app/QueryProvider.tsx`
 - Create: `frontend/src/app/AuthCacheBoundary.tsx`
@@ -566,6 +648,7 @@ git commit -m "refactor(frontend): centralize session and API services"
 - Test: `frontend/src/app/AuthCacheBoundary.test.tsx`
 
 **Interfaces:**
+
 - Produces: a singleton `queryClient` with stable defaults and `QueryProvider`.
 - Produces: exact key factories required by the spec and normalized filter objects.
 - Produces: typed read hooks and invalidation-only mutation hooks for all current non-calendar interactions.
@@ -579,13 +662,19 @@ Assert toggle/filter behavior and exact stable key shapes:
 
 ```ts
 expect(taskKeys.list({ status: undefined, projectId: "p1" })).toEqual([
-  "tasks", "list", { projectId: "p1" },
+  "tasks",
+  "list",
+  { projectId: "p1" },
 ]);
-expect(taskKeys.calendar({
-  startDate: "2026-08-01T00:00:00.000Z",
-  endDate: "2026-08-31T23:59:59.999Z",
-})).toEqual([
-  "tasks", "calendar", {
+expect(
+  taskKeys.calendar({
+    startDate: "2026-08-01T00:00:00.000Z",
+    endDate: "2026-08-31T23:59:59.999Z",
+  }),
+).toEqual([
+  "tasks",
+  "calendar",
+  {
     startDate: "2026-08-01T00:00:00.000Z",
     endDate: "2026-08-31T23:59:59.999Z",
   },
@@ -632,25 +721,25 @@ The `useTaskRefresh` compatibility hook will be replaced with a React Query inva
 Use one helper that removes `undefined` and empty-string optional filters, then sorts remaining object keys before returning the object. **Do not strip `null`** — `null` carries business meaning (e.g., `{ projectId: null }` means "tasks without a project", which is distinct from `{}` meaning "no project filter"). Define these public members exactly:
 
 ```ts
-taskKeys.all
-taskKeys.lists()
-taskKeys.list(filters)
-taskKeys.detail(taskId)
-taskKeys.calendarRoot()
-taskKeys.calendar({ startDate, endDate })
-projectKeys.all
-projectKeys.list()
-projectKeys.detail(projectId)
-projectKeys.tasks(projectId)
-categoryKeys.all
-categoryKeys.list()
-categoryKeys.detail(categoryId)
-categoryKeys.tasks(categoryId)
-statKeys.all
-statKeys.summary()
-statKeys.activity(filters)
-userKeys.all
-userKeys.me()
+taskKeys.all;
+taskKeys.lists();
+taskKeys.list(filters);
+taskKeys.detail(taskId);
+taskKeys.calendarRoot();
+taskKeys.calendar({ startDate, endDate });
+projectKeys.all;
+projectKeys.list();
+projectKeys.detail(projectId);
+projectKeys.tasks(projectId);
+categoryKeys.all;
+categoryKeys.list();
+categoryKeys.detail(categoryId);
+categoryKeys.tasks(categoryId);
+statKeys.all;
+statKeys.summary();
+statKeys.activity(filters);
+userKeys.all;
+userKeys.me();
 ```
 
 - [ ] **Step 5: Add domain read hooks**
@@ -716,15 +805,15 @@ Add create/update/delete/start/finish/give-up/restore task hooks; create/update/
 
 Define and test the invalidation matrix rather than allowing hook-local choices:
 
-| Mutation | Invalidated roots |
-| --- | --- |
-| task create/update/status/delete | task, project, category, stat |
-| project create | project, task, stat |
-| project update/delete | task, project, category, stat |
-| category create | category, task, stat |
-| category update/delete | task, project, category, stat |
-| AI task generation | task, project, category, stat |
-| profile update | `userKeys.me()` via direct cache replacement |
+| Mutation                         | Invalidated roots                            |
+| -------------------------------- | -------------------------------------------- |
+| task create/update/status/delete | task, project, category, stat                |
+| project create                   | project, task, stat                          |
+| project update/delete            | task, project, category, stat                |
+| category create                  | category, task, stat                         |
+| category update/delete           | task, project, category, stat                |
+| AI task generation               | task, project, category, stat                |
+| profile update                   | `userKeys.me()` via direct cache replacement |
 
 Export `invalidateWorkspaceQueries(client)` for task/project/category/stat roots and use it from AI task generation and the temporary refresh compatibility hook.
 
@@ -756,6 +845,7 @@ git commit -m "feat(frontend): add query state and domain hooks"
 ### Task 4: Preserve calendar optimism and migrate server-state consumers
 
 **Files:**
+
 - Create: `frontend/src/features/calendar/api/calendarRanges.ts`
 - Create: `frontend/src/features/calendar/api/calendarCache.ts`
 - Create: `frontend/src/features/calendar/api/useCalendarMutations.ts`
@@ -771,6 +861,7 @@ git commit -m "feat(frontend): add query state and domain hooks"
 - Modify: `frontend/src/context/useTaskRefresh.js`
 
 **Interfaces:**
+
 - Produces: `getBufferedCalendarRange`, `getVisibleCalendarRange`, normalized `CalendarRangeParams`, and cache update/snapshot helpers.
 - Produces: `useCalendarMutations()` with optimistic `changeTaskStatus`, `deleteTask`, `changeTaskDueDate`, `copyTask`, and `changeProjectStatus` mutations.
 - Removes: page-owned copies of task/project/category/stat server data and numeric refresh dependencies.
@@ -794,11 +885,18 @@ it("restores a calendar task snapshot after a rejected due-date move", () => {
   client.setQueryData(key, [task]);
 
   const snapshot = snapshotTaskCollections(client);
-  upsertTaskInCollections(client, { ...task, dueDate: "2026-08-15T09:00:00.000Z" });
-  expect(client.getQueryData<Task[]>(key)?.[0].dueDate).toBe("2026-08-15T09:00:00.000Z");
+  upsertTaskInCollections(client, {
+    ...task,
+    dueDate: "2026-08-15T09:00:00.000Z",
+  });
+  expect(client.getQueryData<Task[]>(key)?.[0].dueDate).toBe(
+    "2026-08-15T09:00:00.000Z",
+  );
 
   restoreSnapshot(client, snapshot);
-  expect(client.getQueryData<Task[]>(key)?.[0].dueDate).toBe("2026-08-14T09:00:00.000Z");
+  expect(client.getQueryData<Task[]>(key)?.[0].dueDate).toBe(
+    "2026-08-14T09:00:00.000Z",
+  );
 });
 
 it("replaces a collision-safe temporary copy with the server task", () => {
@@ -810,13 +908,20 @@ it("replaces a collision-safe temporary copy with the server task", () => {
   client.setQueryData(key, []);
   vi.stubGlobal("crypto", { randomUUID: () => "temp-uuid" });
   const temporaryId = `optimistic-${crypto.randomUUID()}`;
-  const optimisticTask = { ...makeTask(temporaryId), dueDate: "2026-08-15T09:00:00.000Z" };
+  const optimisticTask = {
+    ...makeTask(temporaryId),
+    dueDate: "2026-08-15T09:00:00.000Z",
+  };
   const serverTask = { ...optimisticTask, _id: "server-task" };
 
   upsertTaskInCollections(client, optimisticTask);
-  expect(client.getQueryData<Task[]>(key)?.map((task) => task._id)).toEqual([temporaryId]);
+  expect(client.getQueryData<Task[]>(key)?.map((task) => task._id)).toEqual([
+    temporaryId,
+  ]);
   upsertTaskInCollections(client, serverTask, temporaryId);
-  expect(client.getQueryData<Task[]>(key)?.map((task) => task._id)).toEqual(["server-task"]);
+  expect(client.getQueryData<Task[]>(key)?.map((task) => task._id)).toEqual([
+    "server-task",
+  ]);
 });
 ```
 
@@ -827,7 +932,9 @@ Then use `renderHook` with a `QueryClientProvider`, deferred service promises, a
 Snapshot all matching task collections and the project list before writing:
 
 ```ts
-interface CacheSnapshot<T> { entries: Array<[QueryKey, T | undefined]>; }
+interface CacheSnapshot<T> {
+  entries: Array<[QueryKey, T | undefined]>;
+}
 
 const snapshotTaskCollections = (client: QueryClient) => ({
   entries: client.getQueriesData<Task[]>({ queryKey: taskKeys.calendarRoot() }),
@@ -872,7 +979,8 @@ All query hooks must pass the React Query `signal` through to the Axios service 
 ```ts
 useQuery({
   queryKey: taskKeys.calendar(range),
-  queryFn: ({ signal }) => taskService.getTasksByDateRange(range.startDate, range.endDate, { signal }),
+  queryFn: ({ signal }) =>
+    taskService.getTasksByDateRange(range.startDate, range.endDate, { signal }),
 });
 ```
 
@@ -932,6 +1040,7 @@ git commit -m "refactor(frontend): migrate server state to React Query"
 ### Task 5: Move source into feature and shared ownership boundaries
 
 **Files:**
+
 - Move: files listed in **Target File Map**
 - Create: `frontend/src/features/*/index.ts`
 - Modify: all moved-file imports
@@ -939,6 +1048,7 @@ git commit -m "refactor(frontend): migrate server state to React Query"
 - Delete after compatibility expires: `frontend/src/api/*`
 
 **Interfaces:**
+
 - Produces: imports through `@/features`, `@/shared`, `@/stores`, and same-feature relative paths.
 - Preserves: all default component exports so the later lazy routes resolve without UI changes.
 
@@ -989,6 +1099,7 @@ git commit -m "refactor(frontend): organize source by feature ownership"
 ### Task 6: Data router, auth bootstrap, shared outlet layout, and provider cleanup
 
 **Files:**
+
 - Create: `frontend/src/app/App.tsx`
 - Create: `frontend/src/app/AuthBootstrap.tsx`
 - Modify: `frontend/src/app/AuthCacheBoundary.tsx`
@@ -1013,6 +1124,7 @@ git commit -m "refactor(frontend): organize source by feature ownership"
 - Modify: `frontend/src/app/AuthCacheBoundary.test.tsx`
 
 **Interfaces:**
+
 - Produces: `browserRouter`, `ProtectedGuard`, `PublicOnlyGuard`, `RootGuard`, `AuthBootstrap`, and `AuthCacheBoundary`.
 - Produces: one lazy route array per feature and a single protected `MainLayout` outlet.
 - Removes: all Context providers, manual refresh context, and nested per-page layout shells.
@@ -1024,22 +1136,36 @@ Export pure decision helpers used by the guard components and test every state b
 ```ts
 describe("route guard decisions", () => {
   it("waits until authentication bootstrap completes", () => {
-    expect(getProtectedDecision({ isAuthReady: false, token: null })).toBe("loading");
-    expect(getPublicOnlyDecision({ isAuthReady: false, token: "token" })).toBe("loading");
+    expect(getProtectedDecision({ isAuthReady: false, token: null })).toBe(
+      "loading",
+    );
+    expect(getPublicOnlyDecision({ isAuthReady: false, token: "token" })).toBe(
+      "loading",
+    );
   });
 
   it("redirects protected guests and admits authenticated users", () => {
-    expect(getProtectedDecision({ isAuthReady: true, token: null })).toBe("/login");
-    expect(getProtectedDecision({ isAuthReady: true, token: "token" })).toBe("outlet");
+    expect(getProtectedDecision({ isAuthReady: true, token: null })).toBe(
+      "/login",
+    );
+    expect(getProtectedDecision({ isAuthReady: true, token: "token" })).toBe(
+      "outlet",
+    );
   });
 
   it("redirects authenticated users away from public-only routes", () => {
-    expect(getPublicOnlyDecision({ isAuthReady: true, token: "token" })).toBe("/dashboard");
-    expect(getPublicOnlyDecision({ isAuthReady: true, token: null })).toBe("outlet");
+    expect(getPublicOnlyDecision({ isAuthReady: true, token: "token" })).toBe(
+      "/dashboard",
+    );
+    expect(getPublicOnlyDecision({ isAuthReady: true, token: null })).toBe(
+      "outlet",
+    );
   });
 
   it("selects the root destination", () => {
-    expect(getRootDecision({ isAuthReady: true, token: "token" })).toBe("/dashboard");
+    expect(getRootDecision({ isAuthReady: true, token: "token" })).toBe(
+      "/dashboard",
+    );
     expect(getRootDecision({ isAuthReady: true, token: null })).toBe("landing");
   });
 });
@@ -1064,7 +1190,9 @@ The bootstrap query must not retry terminal 401 responses:
 
 ```ts
 retry: (failureCount, error) =>
-  error instanceof ApiError && ![401, 403].includes(error.status ?? 0) && failureCount < 1
+  error instanceof ApiError &&
+  ![401, 403].includes(error.status ?? 0) &&
+  failureCount < 1;
 ```
 
 - [ ] **Step 4: Implement AuthBootstrap and confirm session cache isolation**
@@ -1076,6 +1204,7 @@ Retain the Task 3 render-blocking `AuthCacheBoundary` unchanged unless bootstrap
 Use `removeQueries()` instead of `clear()` because the requirement is to clear user-scoped query data, not mutation state.
 
 Add tests that:
+
 - cache user A data, call `setSession` with user B credentials, and assert query cache is empty;
 - cache data, call `clearSession`, and assert query cache is empty;
 - cache data, call `updateTokens` (token rotation), and assert query cache is **preserved**;
@@ -1091,13 +1220,18 @@ const routes: RouteObject[] = [
   { element: <PublicOnlyGuard />, children: [...authRoutes] },
   {
     element: <ProtectedGuard />,
-    children: [{ element: <MainLayout assistant={<ChatBubble />} />, children: [
-      ...taskRoutes,
-      ...categoryRoutes,
-      ...calendarRoutes,
-      ...statisticsRoutes,
-      ...profileRoutes,
-    ] }],
+    children: [
+      {
+        element: <MainLayout assistant={<ChatBubble />} />,
+        children: [
+          ...taskRoutes,
+          ...categoryRoutes,
+          ...calendarRoutes,
+          ...statisticsRoutes,
+          ...profileRoutes,
+        ],
+      },
+    ],
   },
   ...errorRoutes,
 ];
@@ -1165,6 +1299,7 @@ git commit -m "refactor(frontend): compose lazy feature routes"
 ### Task 7: Feature generator, architecture guide, and end-to-end verification
 
 **Files:**
+
 - Modify: `frontend/package.json`
 - Modify: `frontend/README.md`
 - Create: `frontend/scripts/create-feature.mjs`
@@ -1174,6 +1309,7 @@ git commit -m "refactor(frontend): compose lazy feature routes"
 - Modify if verification finds issues: affected `frontend/src/**/*`
 
 **Interfaces:**
+
 - Produces: `pnpm create-feature <kebab-name>` generating a page, `routes.tsx`, `index.ts`, `components/`, and `api/` under `src/features/<name>`.
 - Documents: ownership rules, import direction, state ownership, query-key rules, optimistic mutation lifecycle, commands, and staged TypeScript policy.
 

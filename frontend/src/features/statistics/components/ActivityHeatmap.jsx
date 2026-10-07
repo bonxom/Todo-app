@@ -1,31 +1,31 @@
-import { useMemo, useState } from 'react';
-import { useActivityQuery } from '../api/statQueries';
-import { createHeatmapModel, formatDateKeyLabel } from './statsUtils';
-import { useTaskFilter, useVisibleTasks } from '@/stores/useTaskFilterStore';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+import { useMemo, useState } from "react";
+import { useActivityQuery } from "../api/statQueries";
+import { createHeatmapModel, formatDateKeyLabel } from "./statsUtils";
+import { useTaskFilter, useVisibleTasks } from "@/stores/useTaskFilterStore";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const CELL_LEVEL_STYLES = [
-  'bg-[var(--color-surface-muted)] border-[color:var(--color-line)]',
-  'bg-[#edf3ef] border-[#d7e5dd]',
-  'bg-[#d6e7dc] border-[#b8d2c1]',
-  'bg-[#a7c4b3] border-[#87aa96]',
-  'bg-[#5e8f72] border-[#507a62]',
+  "bg-[var(--color-surface-muted)] border-[color:var(--color-line)]",
+  "bg-[#edf3ef] border-[#d7e5dd]",
+  "bg-[#d6e7dc] border-[#b8d2c1]",
+  "bg-[#a7c4b3] border-[#87aa96]",
+  "bg-[#5e8f72] border-[#507a62]",
 ];
 
 const WEEKDAY_LABELS = [
-  { label: '', ariaLabel: 'Sunday' },
-  { label: 'Mon', ariaLabel: 'Monday' },
-  { label: '', ariaLabel: 'Tuesday' },
-  { label: 'Wed', ariaLabel: 'Wednesday' },
-  { label: '', ariaLabel: 'Thursday' },
-  { label: 'Fri', ariaLabel: 'Friday' },
-  { label: '', ariaLabel: 'Saturday' },
+  { label: "", ariaLabel: "Sunday" },
+  { label: "Mon", ariaLabel: "Monday" },
+  { label: "", ariaLabel: "Tuesday" },
+  { label: "Wed", ariaLabel: "Wednesday" },
+  { label: "", ariaLabel: "Thursday" },
+  { label: "Fri", ariaLabel: "Friday" },
+  { label: "", ariaLabel: "Saturday" },
 ];
 
 const NUMBER_FORMATTER = new Intl.NumberFormat();
 
 const formatCompletionLabel = (dateKey, count) => {
-  const taskLabel = count === 1 ? 'task completed' : 'tasks completed';
+  const taskLabel = count === 1 ? "task completed" : "tasks completed";
   return `${formatDateKeyLabel(dateKey)}: ${NUMBER_FORMATTER.format(count)} ${taskLabel}`;
 };
 
@@ -41,11 +41,11 @@ const formatDateTimeLabel = (value) => {
   }
 
   return new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(parsedDate);
 };
 
@@ -61,40 +61,45 @@ const formatTimeLabel = (value) => {
   }
 
   return new Intl.DateTimeFormat(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(parsedDate);
 };
 
-const getTaskProjectName = (task) => task?.project?.name || task?.projectId?.name || 'Standalone';
-const getTaskCategoryName = (task) => task?.category?.name || task?.categoryId?.name || 'Uncategorized';
+const getTaskProjectName = (task) =>
+  task?.project?.name || task?.projectId?.name || "Standalone";
+const getTaskCategoryName = (task) =>
+  task?.category?.name || task?.categoryId?.name || "Uncategorized";
 
-const MetadataBadge = ({ children, tone = 'neutral' }) => {
-  const toneClassName = {
-    success: 'ui-badge ui-badge--success',
-    warning: 'ui-badge ui-badge--warning',
-    danger: 'ui-badge ui-badge--danger',
-    accent: 'ui-badge ui-badge--accent',
-    neutral: 'ui-badge',
-  }[tone] || 'ui-badge';
+const MetadataBadge = ({ children, tone = "neutral" }) => {
+  const toneClassName =
+    {
+      success: "ui-badge ui-badge--success",
+      warning: "ui-badge ui-badge--warning",
+      danger: "ui-badge ui-badge--danger",
+      accent: "ui-badge ui-badge--accent",
+      neutral: "ui-badge",
+    }[tone] || "ui-badge";
 
   return <span className={toneClassName}>{children}</span>;
 };
 
 const getPriorityTone = (priority) => {
-  if (priority === 'High') {
-    return 'danger';
+  if (priority === "High") {
+    return "danger";
   }
 
-  if (priority === 'Medium') {
-    return 'warning';
+  if (priority === "Medium") {
+    return "warning";
   }
 
-  return 'accent';
+  return "accent";
 };
 
 const CompletedTaskCard = ({ task }) => {
-  const completedLabel = formatTimeLabel(task.completedAt || task.completionDate);
+  const completedLabel = formatTimeLabel(
+    task.completedAt || task.completionDate,
+  );
   const dueLabel = formatDateTimeLabel(task.dueDate);
 
   return (
@@ -102,7 +107,7 @@ const CompletedTaskCard = ({ task }) => {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold text-[color:var(--color-text)]">
-            {task.title || 'Untitled task'}
+            {task.title || "Untitled task"}
           </h3>
           {task.description ? (
             <p className="mt-1 break-words text-xs leading-5 text-[color:var(--color-text-muted)]">
@@ -113,9 +118,15 @@ const CompletedTaskCard = ({ task }) => {
 
         <div className="flex flex-wrap gap-2 lg:justify-end">
           {task.priority ? (
-            <MetadataBadge tone={getPriorityTone(task.priority)}>{task.priority}</MetadataBadge>
+            <MetadataBadge tone={getPriorityTone(task.priority)}>
+              {task.priority}
+            </MetadataBadge>
           ) : null}
-          {completedLabel ? <MetadataBadge tone="success">Completed {completedLabel}</MetadataBadge> : null}
+          {completedLabel ? (
+            <MetadataBadge tone="success">
+              Completed {completedLabel}
+            </MetadataBadge>
+          ) : null}
           {dueLabel ? <MetadataBadge>Due {dueLabel}</MetadataBadge> : null}
           <MetadataBadge>{getTaskProjectName(task)}</MetadataBadge>
           <MetadataBadge>{getTaskCategoryName(task)}</MetadataBadge>
@@ -127,20 +138,31 @@ const CompletedTaskCard = ({ task }) => {
 
 const SummaryCard = ({ label, value }) => (
   <div className="ui-section-card p-4">
-    <p className="text-xs font-medium text-[color:var(--color-text-muted)]">{label}</p>
-    <p className="ui-tabular mt-2 text-xl font-semibold text-[color:var(--color-text)]">{value}</p>
+    <p className="text-xs font-medium text-[color:var(--color-text-muted)]">
+      {label}
+    </p>
+    <p className="ui-tabular mt-2 text-xl font-semibold text-[color:var(--color-text)]">
+      {value}
+    </p>
   </div>
 );
 
-const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = '' }) => {
+const ActivityHeatmap = ({
+  dailyStats = [],
+  isLoading = false,
+  errorMessage = "",
+}) => {
   const [activeDateKey, setActiveDateKey] = useState(null);
   const [selectedDateKey, setSelectedDateKey] = useState(null);
 
   const activityQuery = useActivityQuery(selectedDateKey || undefined);
   const isTaskListLoading = activityQuery.isLoading && Boolean(selectedDateKey);
   const taskListError = activityQuery.isError
-    ? getApiErrorMessage(activityQuery.error, 'Unable to load completed tasks for this day.')
-    : '';
+    ? getApiErrorMessage(
+        activityQuery.error,
+        "Unable to load completed tasks for this day.",
+      )
+    : "";
   const completedTasks = useMemo(() => {
     const data = activityQuery.data;
     if (!data) return [];
@@ -151,7 +173,10 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
 
   const { selectedStatuses } = useTaskFilter();
   const visibleCompletedTasks = useVisibleTasks(completedTasks);
-  const heatmap = useMemo(() => createHeatmapModel(dailyStats, 365), [dailyStats]);
+  const heatmap = useMemo(
+    () => createHeatmapModel(dailyStats, 365),
+    [dailyStats],
+  );
 
   const monthLabelByColumn = useMemo(() => {
     const labels = new Map();
@@ -175,7 +200,10 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
     }
 
     const inRangeCells = [...lastWeek].reverse();
-    return inRangeCells.find((cell) => cell.isInRange) || lastWeek[lastWeek.length - 1];
+    return (
+      inRangeCells.find((cell) => cell.isInRange) ||
+      lastWeek[lastWeek.length - 1]
+    );
   }, [heatmap.bestDay, heatmap.weeks]);
 
   const activeCell = useMemo(() => {
@@ -183,7 +211,10 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
       return fallbackCell;
     }
 
-    return heatmap.weeks.flat().find((cell) => cell.dateKey === activeDateKey) || fallbackCell;
+    return (
+      heatmap.weeks.flat().find((cell) => cell.dateKey === activeDateKey) ||
+      fallbackCell
+    );
   }, [activeDateKey, fallbackCell, heatmap.weeks]);
 
   const selectedCell = useMemo(() => {
@@ -191,7 +222,10 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
       return null;
     }
 
-    return heatmap.weeks.flat().find((cell) => cell.dateKey === selectedDateKey) || null;
+    return (
+      heatmap.weeks.flat().find((cell) => cell.dateKey === selectedDateKey) ||
+      null
+    );
   }, [heatmap.weeks, selectedDateKey]);
 
   const handleCellSelect = (cell) => {
@@ -207,7 +241,9 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
       <section className="ui-section-card ui-card-padding">
         <div className="max-w-3xl">
           <p className="ui-page-kicker">Completion Rhythm</p>
-          <h2 className="mt-3 text-2xl font-semibold text-[color:var(--color-text)]">Daily Activity Heatmap</h2>
+          <h2 className="mt-3 text-2xl font-semibold text-[color:var(--color-text)]">
+            Daily Activity Heatmap
+          </h2>
           <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
             Building the last 365 days of completed task activity…
           </p>
@@ -215,7 +251,10 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
         <div className="mt-6 space-y-4" aria-live="polite">
           <div className="grid gap-3 sm:grid-cols-3">
             {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-20 animate-pulse rounded-[12px] bg-[var(--color-surface-muted)]" />
+              <div
+                key={index}
+                className="h-20 animate-pulse rounded-[12px] bg-[var(--color-surface-muted)]"
+              />
             ))}
           </div>
           <div className="h-56 animate-pulse rounded-[12px] bg-[var(--color-surface-muted)]" />
@@ -228,15 +267,19 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
     return (
       <section className="ui-section-card ui-card-padding">
         <p className="ui-page-kicker">Completion Rhythm</p>
-        <h2 className="mt-3 text-2xl font-semibold text-[color:var(--color-text)]">Daily Activity Heatmap</h2>
-        <p className="mt-4 max-w-2xl text-sm text-[color:var(--color-text-muted)]">{errorMessage}</p>
+        <h2 className="mt-3 text-2xl font-semibold text-[color:var(--color-text)]">
+          Daily Activity Heatmap
+        </h2>
+        <p className="mt-4 max-w-2xl text-sm text-[color:var(--color-text-muted)]">
+          {errorMessage}
+        </p>
       </section>
     );
   }
 
   const bestDayLabel = heatmap.bestDay?.count
     ? `${NUMBER_FORMATTER.format(heatmap.bestDay.count)} on ${formatDateKeyLabel(heatmap.bestDay.dateKey)}`
-    : 'No activity yet';
+    : "No activity yet";
   const hasNoCompletedTasks = heatmap.totalCompleted === 0;
 
   return (
@@ -245,12 +288,20 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
             <p className="ui-page-kicker">Completion Rhythm</p>
-            <h2 className="mt-3 text-2xl font-semibold text-[color:var(--color-text)]">Daily Activity Heatmap</h2>
+            <h2 className="mt-3 text-2xl font-semibold text-[color:var(--color-text)]">
+              Daily Activity Heatmap
+            </h2>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <SummaryCard label="Completed" value={NUMBER_FORMATTER.format(heatmap.totalCompleted)} />
-            <SummaryCard label="Active Days" value={NUMBER_FORMATTER.format(heatmap.activeDays)} />
+            <SummaryCard
+              label="Completed"
+              value={NUMBER_FORMATTER.format(heatmap.totalCompleted)}
+            />
+            <SummaryCard
+              label="Active Days"
+              value={NUMBER_FORMATTER.format(heatmap.activeDays)}
+            />
             <SummaryCard label="Best Day" value={bestDayLabel} />
           </div>
         </div>
@@ -259,15 +310,20 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
       <div className="space-y-5 px-6 py-6">
         {hasNoCompletedTasks ? (
           <p className="rounded-[12px] border border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-3 text-sm text-[color:var(--color-text-muted)]">
-            No completed tasks in this range yet. Finish a task to start building your activity history.
+            No completed tasks in this range yet. Finish a task to start
+            building your activity history.
           </p>
         ) : null}
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="ui-section-card max-w-xl p-4">
-            <p className="text-xs font-medium text-[color:var(--color-text-muted)]">Hover Detail</p>
+            <p className="text-xs font-medium text-[color:var(--color-text-muted)]">
+              Hover Detail
+            </p>
             <p className="mt-2 text-sm font-medium text-[color:var(--color-text)]">
-              {activeCell ? formatCompletionLabel(activeCell.dateKey, activeCell.count) : 'No day selected'}
+              {activeCell
+                ? formatCompletionLabel(activeCell.dateKey, activeCell.count)
+                : "No day selected"}
             </p>
           </div>
 
@@ -307,16 +363,22 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
                     key={`month-${columnIndex}`}
                     className="w-4 text-[10px] font-medium text-[color:var(--color-text-muted)]"
                   >
-                    {monthLabelByColumn.get(columnIndex) || ''}
+                    {monthLabelByColumn.get(columnIndex) || ""}
                   </div>
                 ))}
               </div>
 
               <div className="flex gap-1">
                 {heatmap.weeks.map((week, weekIndex) => (
-                  <div key={`week-${weekIndex}`} className="flex flex-col gap-1">
+                  <div
+                    key={`week-${weekIndex}`}
+                    className="flex flex-col gap-1"
+                  >
                     {week.map((cell) => {
-                      const tooltipLabel = formatCompletionLabel(cell.dateKey, cell.count);
+                      const tooltipLabel = formatCompletionLabel(
+                        cell.dateKey,
+                        cell.count,
+                      );
                       const isActive = activeCell?.dateKey === cell.dateKey;
                       const isSelected = selectedDateKey === cell.dateKey;
 
@@ -333,14 +395,20 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
                           onMouseLeave={() => setActiveDateKey(null)}
                           onBlur={() => setActiveDateKey(null)}
                           className={[
-                            'h-4 w-4 rounded-[4px] border transition-[transform,box-shadow,border-color] duration-150',
-                            cell.isInRange ? CELL_LEVEL_STYLES[cell.level] : 'border-transparent bg-transparent',
+                            "h-4 w-4 rounded-[4px] border transition-[transform,box-shadow,border-color] duration-150",
                             cell.isInRange
-                              ? 'hover:-translate-y-px focus-visible:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring-focus-outline)] focus-visible:ring-offset-2'
-                              : '',
-                            isActive && cell.isInRange && !isSelected ? 'ring-2 ring-slate-900/15 ring-offset-1' : '',
-                            isSelected && cell.isInRange ? 'ring-2 ring-[var(--color-accent)] ring-offset-2' : '',
-                          ].join(' ')}
+                              ? CELL_LEVEL_STYLES[cell.level]
+                              : "border-transparent bg-transparent",
+                            cell.isInRange
+                              ? "hover:-translate-y-px focus-visible:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring-focus-outline)] focus-visible:ring-offset-2"
+                              : "",
+                            isActive && cell.isInRange && !isSelected
+                              ? "ring-2 ring-slate-900/15 ring-offset-1"
+                              : "",
+                            isSelected && cell.isInRange
+                              ? "ring-2 ring-[var(--color-accent)] ring-offset-2"
+                              : "",
+                          ].join(" ")}
                           disabled={!cell.isInRange}
                         />
                       );
@@ -355,15 +423,22 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
         <div className="rounded-[14px] border border-[color:var(--color-line)] bg-[var(--color-surface-muted)] p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-medium text-[color:var(--color-text-muted)]">Completed Tasks</p>
+              <p className="text-xs font-medium text-[color:var(--color-text-muted)]">
+                Completed Tasks
+              </p>
               <h3 className="mt-1 text-lg font-semibold text-[color:var(--color-text)]">
-                {selectedDateKey ? formatDateKeyLabel(selectedDateKey) : 'Select a heatmap day'}
+                {selectedDateKey
+                  ? formatDateKeyLabel(selectedDateKey)
+                  : "Select a heatmap day"}
               </h3>
             </div>
 
             {selectedCell ? (
               <span className="ui-chip ui-tabular">
-                {formatCompletionLabel(selectedCell.dateKey, selectedCell.count)}
+                {formatCompletionLabel(
+                  selectedCell.dateKey,
+                  selectedCell.count,
+                )}
               </span>
             ) : null}
           </div>
@@ -378,7 +453,10 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
             {selectedDateKey && isTaskListLoading ? (
               <div className="space-y-3" aria-live="polite">
                 {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="h-20 animate-pulse rounded-[12px] bg-[var(--color-surface)]" />
+                  <div
+                    key={index}
+                    className="h-20 animate-pulse rounded-[12px] bg-[var(--color-surface)]"
+                  />
                 ))}
               </div>
             ) : null}
@@ -389,15 +467,21 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
               </p>
             ) : null}
 
-            {selectedDateKey && !isTaskListLoading && !taskListError && visibleCompletedTasks.length === 0 ? (
+            {selectedDateKey &&
+            !isTaskListLoading &&
+            !taskListError &&
+            visibleCompletedTasks.length === 0 ? (
               <p className="rounded-[12px] border border-[color:var(--color-line)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[color:var(--color-text-muted)]">
                 {selectedStatuses.length > 0
-                  ? 'No completed tasks match the selected status filters for this day.'
-                  : 'No tasks were completed on this day.'}
+                  ? "No completed tasks match the selected status filters for this day."
+                  : "No tasks were completed on this day."}
               </p>
             ) : null}
 
-            {selectedDateKey && !isTaskListLoading && !taskListError && visibleCompletedTasks.length > 0 ? (
+            {selectedDateKey &&
+            !isTaskListLoading &&
+            !taskListError &&
+            visibleCompletedTasks.length > 0 ? (
               <div className="space-y-3">
                 {visibleCompletedTasks.map((task) => (
                   <CompletedTaskCard key={task._id} task={task} />
@@ -408,7 +492,8 @@ const ActivityHeatmap = ({ dailyStats = [], isLoading = false, errorMessage = ''
         </div>
 
         <p className="text-xs text-[color:var(--color-text-muted)]">
-          Range: {formatDateKeyLabel(heatmap.rangeStartKey)} to {formatDateKeyLabel(heatmap.rangeEndKey)}
+          Range: {formatDateKeyLabel(heatmap.rangeStartKey)} to{" "}
+          {formatDateKeyLabel(heatmap.rangeEndKey)}
         </p>
       </div>
     </section>

@@ -1,234 +1,228 @@
-import { useMemo } from 'react';
-import { Check, Layers, Plus, RotateCcw } from 'lucide-react';
-import ProgressBar from './ProgressBar';
-import { calculateProjectMetrics } from '../utils/taskFilterPipeline';
-import { getProjectColor } from '@/shared/utils/projectColor';
-import { canCompleteProject, filterProjectsByVisibility, isCompletedProject } from '@/shared/utils/projectStatus';
-
-const ALL_PROJECT_FILTER = 'all-projects';
-const STANDALONE_PROJECT_FILTER = 'standalone-projects';
-const PROJECT_LIST_MIN_HEIGHT = 400;
+import {
+  ArrowUpRight,
+  Check,
+  Folder,
+  Layers,
+  Plus,
+  RotateCcw,
+} from "lucide-react";
+import { getProjectColor } from "@/shared/utils/projectColor";
+import {
+  filterProjectsByVisibility,
+  isCompletedProject,
+} from "@/shared/utils/projectStatus";
 
 const ProjectFocusRail = ({
   projects = [],
-  rawTasks = [],
-  selectedProjectId = ALL_PROJECT_FILTER,
+  selectedProjectId,
   onSelectProject,
-  showCompletedProjects = false,
+  showCompletedProjects,
   onShowCompletedProjectsChange,
   onCreateProject,
   onCreateCategory,
   onAddTaskToProject,
   onCompleteProject,
   onRestoreProject,
-  isLoading = false,
-  projectListMaxHeight,
+  isLoading,
+  completion,
+  completedCount,
+  totalCount,
 }) => {
-  // 1. Overall Workspace Metrics (Independent of any filter)
-  const overallMetrics = useMemo(() => {
-    const total = rawTasks.length;
-    const completed = rawTasks.filter((t) => t.status === 'completed').length;
-    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, progress };
-  }, [rawTasks]);
-
-  // 2. Standalone Metrics
-  const standaloneMetrics = useMemo(() => {
-    return calculateProjectMetrics(rawTasks, null);
-  }, [rawTasks]);
-
-  // 3. Visible Projects list
-  const visibleProjects = useMemo(() => {
-    return filterProjectsByVisibility(projects, showCompletedProjects);
-  }, [projects, showCompletedProjects]);
-
-  if (isLoading) {
-    return (
-      <aside className="ui-project-focus-rail space-y-4">
-        <div className="h-24 animate-pulse ui-section-card rounded-[14px]" />
-        <div className="h-64 animate-pulse ui-section-card rounded-[14px]" />
-      </aside>
-    );
-  }
-
+  const visibleProjects = filterProjectsByVisibility(
+    projects,
+    showCompletedProjects,
+  );
   return (
-    <aside className="ui-project-focus-rail space-y-4" aria-label="Project focus rail">
-      {/* Top Header Row */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="ui-page-kicker !text-[11px]">Workstreams</p>
-          <h2 className="text-base font-semibold text-[var(--color-text)]">Project Focus</h2>
+    <aside className="todo-project-rail" aria-label="Projects and progress">
+      <section className="todo-progress-card">
+        <div className="todo-progress-heading">
+          <span className="todo-eyebrow">THE BIG PICTURE</span>
+          <ArrowUpRight size={17} />
         </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={onCreateCategory}
-            className="ui-btn-secondary ui-btn-opposite-corners !min-h-[2rem] !px-2.5 !text-xs cursor-pointer"
-            title="Add Category"
+        <div className="todo-progress-body">
+          <div
+            className="todo-progress-ring"
+            style={{ "--progress": `${completion ?? 0}%` }}
           >
-            <Layers className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Category</span>
-          </button>
+            <span>{completion === null ? "—" : `${completion}%`}</span>
+          </div>
+          <div>
+            <h2>
+              {completion === 100
+                ? "Look at you go."
+                : "You’re moving forward."}
+            </h2>
+            <p>
+              {completion === null ? (
+                "Your progress will appear here."
+              ) : (
+                <>
+                  <strong>
+                    {completedCount} of {totalCount}
+                  </strong>{" "}
+                  tasks complete.
+                  <br />
+                  Every small win counts.
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+      </section>
+      <section className="todo-projects">
+        <div className="todo-panel-heading">
+          <div>
+            <h2>
+              Projects{" "}
+              <span className="todo-count">{visibleProjects.length}</span>
+            </h2>
+            <span>A home for the bigger picture.</span>
+          </div>
           <button
             type="button"
+            className="todo-icon-button"
             onClick={onCreateProject}
-            className="ui-btn-primary ui-btn-opposite-corners !min-h-[2rem] !px-2.5 !text-xs cursor-pointer"
-            title="Add Project"
+            aria-label="Add project"
           >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Project</span>
+            <Plus size={18} />
           </button>
         </div>
-      </div>
-
-      {/* Overall Progress Widget */}
-      <ProgressBar
-        title="Workspace Progress"
-        completed={overallMetrics.completed}
-        total={overallMetrics.total}
-        compact
-      />
-
-      {/* Filter Options (Completed project toggle) */}
-      <div className="flex items-center justify-between text-xs text-[var(--color-text-muted)] px-1">
-        <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+        <div className="todo-project-shortcuts">
+          <button
+            type="button"
+            aria-pressed={selectedProjectId === "all-projects"}
+            onClick={() => onSelectProject("all-projects")}
+          >
+            <Layers size={15} />
+            All projects
+          </button>
+          <button
+            type="button"
+            aria-pressed={selectedProjectId === "standalone-projects"}
+            onClick={() => onSelectProject("standalone-projects")}
+          >
+            <Folder size={15} />
+            Standalone
+          </button>
+        </div>
+        <div className="todo-project-list">
+          {isLoading ? (
+            <p className="todo-project-empty" role="status">
+              Loading your projects…
+            </p>
+          ) : visibleProjects.length === 0 ? (
+            <div className="todo-project-empty">
+              <Folder size={25} />
+              <h3>Big ideas start here.</h3>
+              <p>
+                Group related tasks into a project and give your plans a little
+                direction.
+              </p>
+            </div>
+          ) : (
+            visibleProjects.map((project) => {
+              const summary = project.summary;
+              const progress = summary?.totalTasks
+                ? Math.round(
+                    (summary.completedTasks / summary.totalTasks) * 100,
+                  )
+                : 0;
+              const done = isCompletedProject(project);
+              return (
+                <article
+                  key={project._id}
+                  className="todo-project"
+                  data-selected={selectedProjectId === project._id}
+                  style={{ "--project-color": getProjectColor(project) }}
+                >
+                  <button
+                    type="button"
+                    className="todo-project-select"
+                    onClick={() => onSelectProject(project._id)}
+                    aria-pressed={selectedProjectId === project._id}
+                    aria-label={`Filter by ${project.name}`}
+                  >
+                    <span className="todo-project-name">
+                      <span className="todo-project-icon">
+                        <Folder size={17} />
+                      </span>
+                      <strong>{project.name}</strong>
+                      <ArrowUpRight size={15} />
+                    </span>
+                    {project.description && (
+                      <span className="todo-project-description">
+                        {project.description}
+                      </span>
+                    )}
+                    {summary && (
+                      <>
+                        <span className="todo-project-meter">
+                          <span style={{ width: `${progress}%` }} />
+                        </span>
+                        <span className="todo-project-metrics">
+                          <span>
+                            {summary.completedTasks} / {summary.totalTasks}{" "}
+                            tasks
+                          </span>
+                          <span>{progress}%</span>
+                        </span>
+                      </>
+                    )}
+                  </button>
+                  <div className="todo-project-actions">
+                    {summary?.canComplete && !done && (
+                      <button
+                        type="button"
+                        onClick={() => onCompleteProject(project._id)}
+                      >
+                        <Check size={13} />
+                        Complete project
+                      </button>
+                    )}
+                    {done ? (
+                      <button
+                        type="button"
+                        onClick={() => onRestoreProject(project._id)}
+                      >
+                        <RotateCcw size={13} />
+                        Restore project
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        aria-label={`Add task to ${project.name}`}
+                        onClick={() => onAddTaskToProject(project._id)}
+                      >
+                        <Plus size={13} />
+                        Add task
+                      </button>
+                    )}
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </div>
+        <label className="todo-completed-toggle">
           <input
             type="checkbox"
             checked={showCompletedProjects}
-            onChange={(e) => onShowCompletedProjectsChange?.(e.target.checked)}
-            className="h-3.5 w-3.5 rounded border-[var(--color-line)] accent-[var(--color-accent)]"
+            onChange={(e) => onShowCompletedProjectsChange(e.target.checked)}
           />
-          <span>Show Completed Projects</span>
+          Show completed projects
         </label>
-        <span>{visibleProjects.length} projects</span>
-      </div>
-
-      {/* Scrollable Project Cards Container */}
-      <div
-        className="space-y-2.5 overflow-y-auto pr-1"
-        style={{
-          minHeight: `${PROJECT_LIST_MIN_HEIGHT}px`,
-          ...(projectListMaxHeight
-            ? { maxHeight: `${Math.max(projectListMaxHeight, PROJECT_LIST_MIN_HEIGHT)}px` }
-            : {}),
-        }}
+      </section>
+      <button
+        type="button"
+        className="todo-category-link"
+        onClick={onCreateCategory}
       >
-
-        {/* Standalone (No Project) Card */}
-        <article
-          onClick={() => onSelectProject(STANDALONE_PROJECT_FILTER)}
-          className={`ui-section-card relative cursor-pointer p-3.5 transition-all duration-150 ${
-            selectedProjectId === STANDALONE_PROJECT_FILTER
-              ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-xs'
-              : 'hover:border-[var(--color-accent)]'
-          }`}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-[var(--color-text)]">No Project</h3>
-              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Standalone daily tasks</p>
-            </div>
-            <span className="ui-chip ui-tabular !text-[11px] !min-h-[1.5rem]">
-              {standaloneMetrics.completed}/{standaloneMetrics.total}
-            </span>
-          </div>
-        </article>
-
-        {/* Concrete Projects */}
-        {visibleProjects.map((project) => {
-          const isSelected = selectedProjectId === project._id;
-          const isCompleted = isCompletedProject(project);
-          const projectColor = getProjectColor(project);
-          const metrics = calculateProjectMetrics(rawTasks, project._id);
-
-          const projectTasks = rawTasks.filter((t) => {
-            const pid = t.projectId?._id || t.projectId;
-            return pid === project._id;
-          });
-          const canComplete = canCompleteProject(projectTasks);
-
-          return (
-            <article
-              key={project._id}
-              onClick={() => onSelectProject(project._id)}
-              className={`ui-section-card relative cursor-pointer p-3.5 transition-all duration-150 ${
-                isSelected
-                  ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-xs'
-                  : 'hover:border-[var(--color-accent)]'
-              } ${isCompleted ? 'opacity-75' : ''}`}
-              style={{ borderLeftColor: projectColor, borderLeftWidth: '5px' }}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="truncate text-sm font-semibold text-[var(--color-text)]">
-                    {project.name}
-                  </h3>
-                  {project.description && (
-                    <p className="mt-0.5 truncate text-xs text-[var(--color-text-muted)]">
-                      {project.description}
-                    </p>
-                  )}
-                </div>
-
-                <span className="ui-chip ui-tabular !text-[11px] !min-h-[1.5rem] shrink-0">
-                  {metrics.completed}/{metrics.total}
-                </span>
-              </div>
-
-              {/* Progress bar inside card */}
-              <div className="mt-3">
-                <div className="flex items-center justify-between text-[11px] text-[var(--color-text-muted)] mb-1">
-                  <span>Progress</span>
-                  <span className="ui-tabular font-medium">{metrics.progress}%</span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-muted)]">
-                  <div
-                    className="h-full rounded-full bg-[var(--color-accent)] transition-all duration-200"
-                    style={{ width: `${metrics.progress}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Project Action Row */}
-              <div
-                className="mt-3 flex items-center justify-end gap-1.5 border-t border-[var(--color-line)] pt-2"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {canComplete && !isCompleted && (
-                  <button
-                    type="button"
-                    onClick={() => onCompleteProject?.(project._id)}
-                    className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--color-success)] bg-[var(--color-success-soft)] px-2 text-[11px] font-semibold text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-[var(--color-on-status,#fff)] transition-colors cursor-pointer"
-                  >
-                    <Check className="h-3 w-3" />
-                    <span>Complete</span>
-                  </button>
-                )}
-                {isCompleted && (
-                  <button
-                    type="button"
-                    onClick={() => onRestoreProject?.(project._id)}
-                    className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] px-2 text-[11px] font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    <span>Restore</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => onAddTaskToProject?.(project._id)}
-                  className="ui-btn-opposite-corners inline-flex h-7 items-center gap-1 border border-[var(--color-accent)] bg-[var(--color-accent-soft)] px-2 text-[11px] font-semibold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-[var(--color-on-status,#fff)] transition-colors cursor-pointer"
-                >
-                  <Plus className="h-3 w-3" />
-                  <span>Add Task</span>
-                </button>
-              </div>
-            </article>
-          );
-        })}
-      </div>
+        <Layers size={16} />
+        <span>Organize with categories</span>
+        <Plus size={15} />
+      </button>
+      <p className="todo-rail-note">Less noise. More headspace.</p>
     </aside>
   );
 };
-
 export default ProjectFocusRail;

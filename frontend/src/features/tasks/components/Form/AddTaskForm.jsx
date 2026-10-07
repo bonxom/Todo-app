@@ -1,28 +1,33 @@
-import { useMemo, useState } from 'react';
-import { X } from 'lucide-react';
-import AddCategoryForm from './AddCategoryForm';
-import AddProjectForm from './AddProjectForm';
-import { useCreateTaskMutation } from '../../api/taskMutations';
-import { useCategoriesQuery } from '@/features/categories/api/categoryQueries';
-import { useProjectsQuery } from '../../api/projectQueries';
-import { toMidnightDateTimeLocalValue, toISOStringLocal } from '@/shared/utils/dateTime';
-import DateTimeInput from '@/shared/components/DateTimeInput';
-import { isActiveProject } from '@/shared/utils/projectStatus';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+import { useMemo, useState } from "react";
+import { X } from "lucide-react";
+import AddCategoryForm from "./AddCategoryForm";
+import AddProjectForm from "./AddProjectForm";
+import { useCreateTaskMutation } from "../../api/taskMutations";
+import { useCategoriesQuery } from "@/features/categories/api/categoryQueries";
+import { useProjectsQuery } from "../../api/projectQueries";
+import {
+  toMidnightDateTimeLocalValue,
+  toISOStringLocal,
+} from "@/shared/utils/dateTime";
+import DateTimeInput from "@/shared/components/DateTimeInput";
+import { isActiveProject } from "@/shared/utils/projectStatus";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const AddTaskForm = ({
   onClose,
   onTaskCreated,
   onProjectCreated,
-  initialDueDate = '',
-  initialProjectId = '',
+  initialDueDate = "",
+  initialProjectId = "",
 }) => {
-  const [title, setTitle] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [title, setTitle] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [projectId, setProjectId] = useState(initialProjectId);
-  const [priority, setPriority] = useState('Medium');
-  const [dueDate, setDueDate] = useState(initialDueDate || toMidnightDateTimeLocalValue());
-  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState("Medium");
+  const [dueDate, setDueDate] = useState(
+    initialDueDate || toMidnightDateTimeLocalValue(),
+  );
+  const [description, setDescription] = useState("");
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
 
@@ -30,45 +35,56 @@ const AddTaskForm = ({
   const projectsQuery = useProjectsQuery();
   const createTaskMutation = useCreateTaskMutation();
 
-  const categories = useMemo(() => categoriesQuery.data || [], [categoriesQuery.data]);
-  const projects = useMemo(() => projectsQuery.data || [], [projectsQuery.data]);
-  const activeProjects = useMemo(() => projects.filter(isActiveProject), [projects]);
+  const categories = useMemo(
+    () => categoriesQuery.data || [],
+    [categoriesQuery.data],
+  );
+  const projects = useMemo(
+    () => projectsQuery.data || [],
+    [projectsQuery.data],
+  );
+  const activeProjects = useMemo(
+    () => projects.filter(isActiveProject),
+    [projects],
+  );
   const isSubmitting = createTaskMutation.isPending;
 
   const handleReset = () => {
-    setTitle('');
-    setCategoryId('');
+    setTitle("");
+    setCategoryId("");
     setProjectId(initialProjectId);
-    setPriority('Medium');
+    setPriority("Medium");
     setDueDate(toMidnightDateTimeLocalValue());
-    setDescription('');
+    setDescription("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const newTask = {
         title,
         categoryId: categoryId || categories[0]?._id || undefined,
         projectId: projectId || undefined,
         priority,
-        status: 'in-progress',
+        status: "in-progress",
         dueDate: toISOStringLocal(dueDate),
         description,
       };
-      
+
       await createTaskMutation.mutateAsync(newTask);
-      
+
       if (onTaskCreated) {
         onTaskCreated();
       }
-      
+
       handleReset();
       onClose();
     } catch (error) {
-      console.error('Failed to create task:', error);
-      alert(getApiErrorMessage(error, 'Failed to create task. Please try again.'));
+      console.error("Failed to create task:", error);
+      alert(
+        getApiErrorMessage(error, "Failed to create task. Please try again."),
+      );
     }
   };
 
@@ -76,7 +92,10 @@ const AddTaskForm = ({
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="title" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+          <label
+            htmlFor="title"
+            className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+          >
             Task Title <span className="text-[var(--color-danger)]">*</span>
           </label>
           <input
@@ -87,20 +106,22 @@ const AddTaskForm = ({
             placeholder="Enter task title…"
             className="ui-input"
             required
-            autoFocus
           />
-      </div>
+        </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="category" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+            <label
+              htmlFor="category"
+              className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+            >
               Category
             </label>
             <select
               id="category"
-              value={categoryId || categories[0]?._id || ''}
+              value={categoryId || categories[0]?._id || ""}
               onChange={(e) => {
-                if (e.target.value === '__add_more__') {
+                if (e.target.value === "__add_more__") {
                   setShowAddCategory(true);
                 } else {
                   setCategoryId(e.target.value);
@@ -109,21 +130,26 @@ const AddTaskForm = ({
               className="ui-input"
             >
               {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>{cat.name}</option>
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
               ))}
               <option value="__add_more__">+ Add more</option>
             </select>
           </div>
 
           <div>
-            <label htmlFor="project" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+            <label
+              htmlFor="project"
+              className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+            >
               Project
             </label>
             <select
               id="project"
               value={projectId}
               onChange={(e) => {
-                if (e.target.value === '__add_project__') {
+                if (e.target.value === "__add_project__") {
                   setShowAddProject(true);
                 } else {
                   setProjectId(e.target.value);
@@ -133,14 +159,19 @@ const AddTaskForm = ({
             >
               <option value="">No project</option>
               {activeProjects.map((project) => (
-                <option key={project._id} value={project._id}>{project.name}</option>
+                <option key={project._id} value={project._id}>
+                  {project.name}
+                </option>
               ))}
               <option value="__add_project__">+ Add project</option>
             </select>
           </div>
 
           <div>
-            <label htmlFor="priority" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+            <label
+              htmlFor="priority"
+              className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+            >
               Priority
             </label>
             <select
@@ -157,7 +188,10 @@ const AddTaskForm = ({
         </div>
 
         <div>
-          <label htmlFor="dueDate" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+          <label
+            htmlFor="dueDate"
+            className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+          >
             Due Date <span className="text-[var(--color-danger)]">*</span>
           </label>
           <DateTimeInput
@@ -170,7 +204,10 @@ const AddTaskForm = ({
         </div>
 
         <div>
-          <label htmlFor="description" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+          <label
+            htmlFor="description"
+            className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+          >
             Description
           </label>
           <textarea
@@ -199,7 +236,7 @@ const AddTaskForm = ({
             disabled={isSubmitting}
             className="ui-btn-primary ui-btn-opposite-corners flex-1 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? 'Adding…' : 'Add Task'}
+            {isSubmitting ? "Adding…" : "Add Task"}
           </button>
         </div>
       </form>
@@ -218,16 +255,28 @@ const AddTaskForm = ({
             aria-labelledby="inline-add-category-title"
           >
             <div className="ui-modal-header flex items-start justify-between gap-4">
-              <h2 id="inline-add-category-title" className="text-xl font-semibold text-[var(--color-text)]">Add Category</h2>
-              <button type="button" onClick={() => setShowAddCategory(false)} className="ui-modal-close-button" aria-label="Close">
+              <h2
+                id="inline-add-category-title"
+                className="text-xl font-semibold text-[var(--color-text)]"
+              >
+                Add Category
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowAddCategory(false)}
+                className="ui-modal-close-button"
+                aria-label="Close"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="ui-modal-body">
-              <AddCategoryForm 
-                onClose={() => setShowAddCategory(false)} 
+              <AddCategoryForm
+                onClose={() => setShowAddCategory(false)}
                 onCategoryCreated={(newCategory) => {
-                  setCategoryId(newCategory?._id || newCategory?.category?._id || '');
+                  setCategoryId(
+                    newCategory?._id || newCategory?.category?._id || "",
+                  );
                 }}
               />
             </div>
@@ -249,8 +298,18 @@ const AddTaskForm = ({
             aria-labelledby="inline-add-project-title"
           >
             <div className="ui-modal-header flex items-start justify-between gap-4">
-              <h2 id="inline-add-project-title" className="text-xl font-semibold text-[var(--color-text)]">Add Project</h2>
-              <button type="button" onClick={() => setShowAddProject(false)} className="ui-modal-close-button" aria-label="Close">
+              <h2
+                id="inline-add-project-title"
+                className="text-xl font-semibold text-[var(--color-text)]"
+              >
+                Add Project
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowAddProject(false)}
+                className="ui-modal-close-button"
+                aria-label="Close"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -258,7 +317,7 @@ const AddTaskForm = ({
               <AddProjectForm
                 onClose={() => setShowAddProject(false)}
                 onProjectCreated={(newProject) => {
-                  setProjectId(newProject?._id || '');
+                  setProjectId(newProject?._id || "");
                   onProjectCreated?.(newProject);
                 }}
               />

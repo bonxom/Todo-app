@@ -15,14 +15,20 @@ const DeleteCategoryDialog = ({ isOpen, onClose, onConfirm, categoryName }) => {
         aria-labelledby="delete-category-title"
       >
         <div className="ui-modal-header">
-          <h2 id="delete-category-title" className="text-xl font-semibold text-[color:var(--color-text)]">
+          <h2
+            id="delete-category-title"
+            className="text-xl font-semibold text-[color:var(--color-text)]"
+          >
             Delete Category
           </h2>
         </div>
         <div className="ui-modal-body">
           <p className="mb-6 text-sm leading-6 text-[color:var(--color-text-muted)]">
-            Delete <span className="font-semibold text-[color:var(--color-text)]">“{categoryName}”</span>? This
-            action cannot be undone.
+            Delete{" "}
+            <span className="font-semibold text-[color:var(--color-text)]">
+              “{categoryName}”
+            </span>
+            ? This action cannot be undone.
           </p>
           <div className="flex gap-3">
             <button

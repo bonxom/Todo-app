@@ -1,46 +1,55 @@
-import { useState } from 'react';
-import { useCreateCategoryMutation } from '@/features/categories/api/categoryMutations';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+import { useState } from "react";
+import { useCreateCategoryMutation } from "@/features/categories/api/categoryMutations";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const createCategoryMutation = useCreateCategoryMutation();
   const isSubmitting = createCategoryMutation.isPending;
 
   const handleReset = () => {
-    setName('');
-    setDescription('');
+    setName("");
+    setDescription("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const newCategory = {
         name,
         description,
       };
-      
+
       const response = await createCategoryMutation.mutateAsync(newCategory);
-      
+
       if (onCategoryCreated) {
         onCategoryCreated(response);
       }
-      
+
       handleReset();
       onClose();
     } catch (error) {
-      console.error('Failed to create category:', error);
-      alert(getApiErrorMessage(error, 'Failed to create category. Please try again.'));
+      console.error("Failed to create category:", error);
+      alert(
+        getApiErrorMessage(
+          error,
+          "Failed to create category. Please try again.",
+        ),
+      );
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="category-name" className="mb-2 block text-sm font-medium text-[color:var(--color-text)]">
-          Category Name <span className="text-[color:var(--color-danger)]">*</span>
+        <label
+          htmlFor="category-name"
+          className="mb-2 block text-sm font-medium text-[color:var(--color-text)]"
+        >
+          Category Name{" "}
+          <span className="text-[color:var(--color-danger)]">*</span>
         </label>
         <input
           id="category-name"
@@ -58,7 +67,10 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
       </div>
 
       <div>
-        <label htmlFor="category-description" className="mb-2 block text-sm font-medium text-[color:var(--color-text)]">
+        <label
+          htmlFor="category-description"
+          className="mb-2 block text-sm font-medium text-[color:var(--color-text)]"
+        >
           Description
         </label>
         <textarea
@@ -89,7 +101,7 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
           disabled={isSubmitting}
           className="ui-btn-primary ui-btn-opposite-corners flex-1 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? 'Adding…' : 'Add Category'}
+          {isSubmitting ? "Adding…" : "Add Category"}
         </button>
       </div>
     </form>

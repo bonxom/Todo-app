@@ -1,25 +1,25 @@
-import { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
-import MarkdownText from './MarkdownText';
-import { formatDateTime } from '@/shared/utils/dateTime';
+import { useState, useRef, useEffect } from "react";
+import { Send } from "lucide-react";
+import MarkdownText from "./MarkdownText";
+import { formatDateTime } from "@/shared/utils/dateTime";
 
 const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef(null);
   const userMessageStyle = {
-    borderColor: 'var(--color-accent)',
-    background: 'var(--color-accent)',
-    boxShadow: 'var(--shadow-xs)',
+    borderColor: "var(--color-accent)",
+    background: "var(--color-accent)",
+    boxShadow: "var(--shadow-xs)",
   };
   const botMessageStyle = {
-    borderColor: 'var(--color-line)',
-    background: 'var(--color-surface)',
-    color: 'var(--color-text)',
-    boxShadow: 'var(--shadow-xs)',
+    borderColor: "var(--color-line)",
+    background: "var(--color-surface)",
+    color: "var(--color-text)",
+    boxShadow: "var(--shadow-xs)",
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -30,12 +30,12 @@ const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
     e.preventDefault();
     if (inputValue.trim()) {
       onSendMessage(inputValue.trim());
-      setInputValue('');
+      setInputValue("");
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
@@ -52,18 +52,20 @@ const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                  message.sender === 'user'
-                    ? 'rounded-br-sm border text-white'
-                    : 'rounded-bl-sm border'
+                  message.sender === "user"
+                    ? "rounded-br-sm border text-white"
+                    : "rounded-bl-sm border"
                 }`}
-                style={message.sender === 'user' ? userMessageStyle : botMessageStyle}
+                style={
+                  message.sender === "user" ? userMessageStyle : botMessageStyle
+                }
               >
                 <p className="text-sm whitespace-pre-wrap break-words">
-                  {message.sender === 'bot' ? (
+                  {message.sender === "bot" ? (
                     <MarkdownText text={message.text} />
                   ) : (
                     message.text
@@ -84,9 +86,18 @@ const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
               style={botMessageStyle}
             >
               <div className="flex space-x-1">
-                <div className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]" style={{ animationDelay: '0ms' }} />
-                <div className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]" style={{ animationDelay: '150ms' }} />
-                <div className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]" style={{ animationDelay: '300ms' }} />
+                <div
+                  className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]"
+                  style={{ animationDelay: "0ms" }}
+                />
+                <div
+                  className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <div
+                  className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]"
+                  style={{ animationDelay: "300ms" }}
+                />
               </div>
             </div>
           </div>

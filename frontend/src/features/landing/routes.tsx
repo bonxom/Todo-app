@@ -1,10 +1,10 @@
-import type { RouteObject } from 'react-router-dom';
+import type { RouteObject } from "react-router-dom";
 
 export const landingRoutes: RouteObject[] = [
   {
-    path: '',
+    path: "",
     lazy: async () => {
-      const Component = (await import('./LandingPage')).default;
+      const Component = (await import("./LandingPage")).default;
       return { Component };
     },
   },

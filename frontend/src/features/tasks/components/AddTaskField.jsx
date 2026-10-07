@@ -1,26 +1,29 @@
-import { useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
-import { useCategoriesQuery } from '@/features/categories/api/categoryQueries';
+import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
+import { useCategoriesQuery } from "@/features/categories/api/categoryQueries";
 
 const AddTaskForm = ({ onAddTask }) => {
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('');
-  const [priority, setPriority] = useState('Medium');
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [priority, setPriority] = useState("Medium");
 
   const categoriesQuery = useCategoriesQuery();
-  const categories = useMemo(() => categoriesQuery.data || [], [categoriesQuery.data]);
+  const categories = useMemo(
+    () => categoriesQuery.data || [],
+    [categoriesQuery.data],
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (title.trim()) {
       onAddTask({
         title: title.trim(),
-        category: category || categories[0]?.name || '',
+        category: category || categories[0]?.name || "",
         priority,
       });
-      setTitle('');
-      setCategory('');
-      setPriority('Medium');
+      setTitle("");
+      setCategory("");
+      setPriority("Medium");
     }
   };
 
@@ -44,19 +47,21 @@ const AddTaskForm = ({ onAddTask }) => {
             <span>Add</span>
           </button>
         </div>
-        
+
         <div className="flex gap-3">
           <select
-            value={category || categories[0]?.name || ''}
+            value={category || categories[0]?.name || ""}
             onChange={(e) => setCategory(e.target.value)}
             className="ui-input"
             aria-label="Category"
           >
             {categories.map((cat) => (
-              <option key={cat._id} value={cat.name}>{cat.name}</option>
+              <option key={cat._id} value={cat.name}>
+                {cat.name}
+              </option>
             ))}
           </select>
-          
+
           <select
             value={priority}
             onChange={(e) => setPriority(e.target.value)}

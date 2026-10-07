@@ -45,24 +45,38 @@ describe("calendarCache", () => {
     queryClient.setQueryData(calendarKey, [task]);
 
     const snapshot = createCalendarSnapshot(queryClient);
-    upsertTaskInCollections(queryClient, { ...task, dueDate: "2026-08-15T09:00:00.000Z" });
-    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0].dueDate).toBe("2026-08-15T09:00:00.000Z");
+    upsertTaskInCollections(queryClient, {
+      ...task,
+      dueDate: "2026-08-15T09:00:00.000Z",
+    });
+    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0].dueDate).toBe(
+      "2026-08-15T09:00:00.000Z",
+    );
 
     restoreSnapshot(queryClient, snapshot);
-    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0].dueDate).toBe("2026-08-14T09:00:00.000Z");
+    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0].dueDate).toBe(
+      "2026-08-14T09:00:00.000Z",
+    );
   });
 
   it("replaces a collision-safe temporary copy with the server task", () => {
     queryClient.setQueryData(calendarKey, []);
     const temporaryId = "optimistic-temp-uuid";
-    const optimisticTask = { ...makeTask(temporaryId), dueDate: "2026-08-15T09:00:00.000Z" };
+    const optimisticTask = {
+      ...makeTask(temporaryId),
+      dueDate: "2026-08-15T09:00:00.000Z",
+    };
     const serverTask = { ...optimisticTask, _id: "server-task" };
 
     upsertTaskInCollections(queryClient, optimisticTask);
-    expect(queryClient.getQueryData<Task[]>(calendarKey)?.map((t) => t._id)).toEqual([temporaryId]);
+    expect(
+      queryClient.getQueryData<Task[]>(calendarKey)?.map((t) => t._id),
+    ).toEqual([temporaryId]);
 
     upsertTaskInCollections(queryClient, serverTask, temporaryId);
-    expect(queryClient.getQueryData<Task[]>(calendarKey)?.map((t) => t._id)).toEqual(["server-task"]);
+    expect(
+      queryClient.getQueryData<Task[]>(calendarKey)?.map((t) => t._id),
+    ).toEqual(["server-task"]);
   });
 
   it("removes a task from collections when it falls outside range or loses due date", () => {
@@ -70,7 +84,10 @@ describe("calendarCache", () => {
     queryClient.setQueryData(calendarKey, [task]);
 
     // Move task to next month (outside August range)
-    upsertTaskInCollections(queryClient, { ...task, dueDate: "2026-09-14T09:00:00.000Z" });
+    upsertTaskInCollections(queryClient, {
+      ...task,
+      dueDate: "2026-09-14T09:00:00.000Z",
+    });
     expect(queryClient.getQueryData<Task[]>(calendarKey)).toEqual([]);
 
     // Remove task directly
@@ -101,6 +118,9 @@ describe("calendarCache", () => {
     queryClient.setQueryData(projectKeys.list(), [project]);
 
     replaceProjectInList(queryClient, { _id: "p1", status: "completed" });
-    expect(queryClient.getQueryData<ProjectWithSummary[]>(projectKeys.list())?.[0].status).toBe("completed");
+    expect(
+      queryClient.getQueryData<ProjectWithSummary[]>(projectKeys.list())?.[0]
+        .status,
+    ).toBe("completed");
   });
 });

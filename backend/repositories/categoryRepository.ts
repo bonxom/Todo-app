@@ -1,27 +1,33 @@
-import mongoose from 'mongoose';
-import Category from '../models/Category.js';
-import { ICategoryDocument } from '../types/ICategory.js';
+import mongoose from "mongoose";
+import Category from "../models/Category.js";
+import { ICategoryDocument } from "../types/ICategory.js";
 
 export const categoryRepository = {
-  findById(id: mongoose.Types.ObjectId | string): Promise<ICategoryDocument | null> {
+  findById(
+    id: mongoose.Types.ObjectId | string,
+  ): Promise<ICategoryDocument | null> {
     return Category.findById(id);
   },
 
-  findByIdPopulated(id: mongoose.Types.ObjectId | string): Promise<ICategoryDocument | null> {
-    return Category.findById(id).populate('userId', 'name email');
+  findByIdPopulated(
+    id: mongoose.Types.ObjectId | string,
+  ): Promise<ICategoryDocument | null> {
+    return Category.findById(id).populate("userId", "name email");
   },
 
-  findByUser(userId: mongoose.Types.ObjectId | string): Promise<ICategoryDocument[]> {
-    return Category.find({ userId }).populate('userId', 'name email');
+  findByUser(
+    userId: mongoose.Types.ObjectId | string,
+  ): Promise<ICategoryDocument[]> {
+    return Category.find({ userId }).populate("userId", "name email");
   },
 
   findAll(): Promise<ICategoryDocument[]> {
-    return Category.find({}).populate('userId', 'name email');
+    return Category.find({}).populate("userId", "name email");
   },
 
   findByUserAndName(
     userId: mongoose.Types.ObjectId | string,
-    name: string
+    name: string,
   ): Promise<ICategoryDocument | null> {
     return Category.findOne({ userId, name });
   },
@@ -32,12 +38,18 @@ export const categoryRepository = {
 
   updateById(
     id: mongoose.Types.ObjectId | string,
-    update: Record<string, unknown>
+    update: Record<string, unknown>,
   ): Promise<ICategoryDocument | null> {
-    return Category.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true });
+    return Category.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    );
   },
 
-  deleteById(id: mongoose.Types.ObjectId | string): Promise<ICategoryDocument | null> {
+  deleteById(
+    id: mongoose.Types.ObjectId | string,
+  ): Promise<ICategoryDocument | null> {
     return Category.findByIdAndDelete(id);
   },
 };

@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with: { node-version: "20" }
       - run: npm ci
       - run: npx playwright install --with-deps
 
@@ -108,12 +108,12 @@ test:
 
 ## Quick Reference
 
-| CI System | Config File | Secrets |
-|-----------|------------|---------|
-| GitHub Actions | `.github/workflows/test.yml` | Settings → Secrets |
-| Jenkins | `Jenkinsfile` | Credentials store |
-| GitLab CI | `.gitlab-ci.yml` | Settings → CI/CD → Variables |
-| Azure DevOps | `azure-pipelines.yml` | Library → Variable Groups |
+| CI System      | Config File                  | Secrets                      |
+| -------------- | ---------------------------- | ---------------------------- |
+| GitHub Actions | `.github/workflows/test.yml` | Settings → Secrets           |
+| Jenkins        | `Jenkinsfile`                | Credentials store            |
+| GitLab CI      | `.gitlab-ci.yml`             | Settings → CI/CD → Variables |
+| Azure DevOps   | `azure-pipelines.yml`        | Library → Variable Groups    |
 
 ## Deep Patterns
 

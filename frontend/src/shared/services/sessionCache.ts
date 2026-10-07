@@ -2,7 +2,9 @@ type CacheResetHandler = () => void | Promise<void>;
 
 let activeResetHandler: CacheResetHandler | null = null;
 
-export const registerUserCacheReset = (handler: CacheResetHandler): (() => void) => {
+export const registerUserCacheReset = (
+  handler: CacheResetHandler,
+): (() => void) => {
   activeResetHandler = handler;
   return () => {
     if (activeResetHandler === handler) {

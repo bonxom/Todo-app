@@ -1,10 +1,12 @@
-import CategoryCard from './CategoryCard';
+import CategoryCard from "./CategoryCard";
 
 const CategoryGrid = ({ items, onTaskUpdated, onCreateCategory }) => {
   if (items.length === 0) {
     return (
       <section className="ui-section-card border-dashed px-6 py-14 text-center">
-        <p className="text-lg font-semibold text-[color:var(--color-text)]">No categories to show</p>
+        <p className="text-lg font-semibold text-[color:var(--color-text)]">
+          No categories to show
+        </p>
         <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
           Create a category to keep related tasks grouped in one place.
         </p>

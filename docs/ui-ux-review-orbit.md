@@ -33,23 +33,23 @@ Vấn đề cốt lõi vẫn là:
 
 ## 2. Đánh giá từng khu vực
 
-| Khu vực | Đánh giá | Vấn đề | Khuyến nghị | Mức độ |
-|---|---|---|---|---|
-| Header Today | Khá tốt | Ngày là secondary information nhưng đang khá dài | Giữ `Today`, rút gọn date hoặc giảm visual weight | P2 |
-| Status filter trên header | Cải thiện tốt | Gọn hơn bản cũ nhưng khá xa task list; scope chưa thật rõ | Xác định rõ filter áp dụng cho task list hay toàn bộ dashboard | P1 |
-| Sidebar | Visual sạch | Icon-only làm giảm discoverability | Thêm tooltip và hỗ trợ expand | P1 |
-| Todos header | Chưa tối ưu | `111 completed` nổi bật hơn số task còn lại | Ưu tiên `17 remaining` hoặc số việc hôm nay | P1 |
-| Add Task / Category / Project | Khá tốt | 3 CTA vẫn hơi ngang cấp | Giữ Add Task primary, các action còn lại secondary | P2 |
-| Project Focus | Visual tốt | Chiếm quá nhiều first viewport | Compact/collapse project cards hoặc đưa xuống dưới task list | P1 |
-| All Tasks card | Có duplication | Lặp số task và progress đã xuất hiện nơi khác | Chỉ giữ một summary rõ ràng | P1 |
-| Project cards | Dễ hiểu | Progress hiện thay đổi theo status filter, dễ gây hiểu nhầm | Project progress nên dùng dữ liệu toàn project hoặc phải ghi rõ đang filtered | **P0/P1** |
-| Show Completed Projects | Hợp lý | Checkbox hơi giống form setting | Có thể đổi thành toggle/filter chip | P2 |
-| Search | Tốt | Nằm gần task list nhưng status filter lại ở header | Cân nhắc gom Search + Filter + Sort thành một task toolbar | P1 |
-| Task list | Sạch | Mỗi row còn hơi cao | Giảm khoảng 20–30% chiều cao | P1 |
-| Task status | Chưa ổn semantic | Checkbox vẫn không diễn đạt tốt workflow nhiều trạng thái | Dùng status control riêng hoặc đơn giản hóa state model | P0 |
-| Edit / Give up / Delete | Đủ action | Icon-only cần tooltip, delete luôn visible gây noise | Đưa secondary/danger action vào menu `...` | P2 |
-| Assistant floating button | Dễ thấy | Có thể che bottom content/action | Thu gọn hoặc tăng safe area | P1 |
-| Overall progress | Dễ đọc | Có nguy cơ lặp lại với project/all-task summary | Chỉ giữ nếu mang insight riêng | P2 |
+| Khu vực                       | Đánh giá         | Vấn đề                                                      | Khuyến nghị                                                                   | Mức độ    |
+| ----------------------------- | ---------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------- | --------- |
+| Header Today                  | Khá tốt          | Ngày là secondary information nhưng đang khá dài            | Giữ `Today`, rút gọn date hoặc giảm visual weight                             | P2        |
+| Status filter trên header     | Cải thiện tốt    | Gọn hơn bản cũ nhưng khá xa task list; scope chưa thật rõ   | Xác định rõ filter áp dụng cho task list hay toàn bộ dashboard                | P1        |
+| Sidebar                       | Visual sạch      | Icon-only làm giảm discoverability                          | Thêm tooltip và hỗ trợ expand                                                 | P1        |
+| Todos header                  | Chưa tối ưu      | `111 completed` nổi bật hơn số task còn lại                 | Ưu tiên `17 remaining` hoặc số việc hôm nay                                   | P1        |
+| Add Task / Category / Project | Khá tốt          | 3 CTA vẫn hơi ngang cấp                                     | Giữ Add Task primary, các action còn lại secondary                            | P2        |
+| Project Focus                 | Visual tốt       | Chiếm quá nhiều first viewport                              | Compact/collapse project cards hoặc đưa xuống dưới task list                  | P1        |
+| All Tasks card                | Có duplication   | Lặp số task và progress đã xuất hiện nơi khác               | Chỉ giữ một summary rõ ràng                                                   | P1        |
+| Project cards                 | Dễ hiểu          | Progress hiện thay đổi theo status filter, dễ gây hiểu nhầm | Project progress nên dùng dữ liệu toàn project hoặc phải ghi rõ đang filtered | **P0/P1** |
+| Show Completed Projects       | Hợp lý           | Checkbox hơi giống form setting                             | Có thể đổi thành toggle/filter chip                                           | P2        |
+| Search                        | Tốt              | Nằm gần task list nhưng status filter lại ở header          | Cân nhắc gom Search + Filter + Sort thành một task toolbar                    | P1        |
+| Task list                     | Sạch             | Mỗi row còn hơi cao                                         | Giảm khoảng 20–30% chiều cao                                                  | P1        |
+| Task status                   | Chưa ổn semantic | Checkbox vẫn không diễn đạt tốt workflow nhiều trạng thái   | Dùng status control riêng hoặc đơn giản hóa state model                       | P0        |
+| Edit / Give up / Delete       | Đủ action        | Icon-only cần tooltip, delete luôn visible gây noise        | Đưa secondary/danger action vào menu `...`                                    | P2        |
+| Assistant floating button     | Dễ thấy          | Có thể che bottom content/action                            | Thu gọn hoặc tăng safe area                                                   | P1        |
+| Overall progress              | Dễ đọc           | Có nguy cơ lặp lại với project/all-task summary             | Chỉ giữ nếu mang insight riêng                                                | P2        |
 
 ---
 

@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, CheckCircle2 } from 'lucide-react';
-import TaskDetailButton from '@/features/tasks/components/TaskDetailButton';
-import CalendarTaskDetailCard from './CalendarTaskDetailCard';
-import Pagination from '@/shared/components/Pagination';
-import { usePagination } from '@/shared/hooks/usePagination';
-import { formatDateTime } from '@/shared/utils/dateTime';
-import { sortTasksByDueTime } from './calendarUtils';
+import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, CheckCircle2 } from "lucide-react";
+import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
+import CalendarTaskDetailCard from "./CalendarTaskDetailCard";
+import Pagination from "@/shared/components/Pagination";
+import { usePagination } from "@/shared/hooks/usePagination";
+import { formatDateTime } from "@/shared/utils/dateTime";
+import { sortTasksByDueTime } from "./calendarUtils";
 
 const ProjectFocusWeekAgenda = ({
   selectedDate,
@@ -20,7 +20,9 @@ const ProjectFocusWeekAgenda = ({
   const [selectedTask, setSelectedTask] = useState(null);
 
   const summary = useMemo(() => {
-    const completed = tasks.filter((task) => task.status === 'completed').length;
+    const completed = tasks.filter(
+      (task) => task.status === "completed",
+    ).length;
     const total = tasks.length;
 
     return {
@@ -32,16 +34,11 @@ const ProjectFocusWeekAgenda = ({
 
   const sortedTasks = useMemo(() => sortTasksByDueTime(tasks), [tasks]);
 
-  const {
-    pageNo,
-    pageSize,
-    setPageNo,
-    setPageSize,
-    syncPageInfo,
-  } = usePagination({
-    initialPageSize: 5,
-    resetDeps: [selectedDate, tasks.length],
-  });
+  const { pageNo, pageSize, setPageNo, setPageSize, syncPageInfo } =
+    usePagination({
+      initialPageSize: 5,
+      resetDeps: [selectedDate, tasks.length],
+    });
 
   const totalTasksCount = sortedTasks.length;
   const totalPages = Math.ceil(totalTasksCount / pageSize) || 1;
@@ -74,27 +71,38 @@ const ProjectFocusWeekAgenda = ({
       />
 
       <div className="border-b border-[var(--color-line)] px-5 py-4">
-        <div className={`flex flex-col gap-4 ${compact ? '' : 'lg:flex-row lg:items-start lg:justify-between'}`}>
+        <div
+          className={`flex flex-col gap-4 ${compact ? "" : "lg:flex-row lg:items-start lg:justify-between"}`}
+        >
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
               <CalendarDays className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
               <p className="text-sm font-medium text-[var(--color-accent)]">
-                {selectedProjectCount > 0 ? 'Filtered Day' : 'All Tasks Day'}
+                {selectedProjectCount > 0 ? "Filtered Day" : "All Tasks Day"}
               </p>
               <h3 className="mt-1 text-xl font-semibold text-[var(--color-text)]">
-                {selectedDate ? formatDateTime(selectedDate) : 'Pick a day from the week strip'}
+                {selectedDate
+                  ? formatDateTime(selectedDate)
+                  : "Pick a day from the week strip"}
               </h3>
             </div>
           </div>
 
-          <div className={`flex flex-wrap gap-2 ${compact ? '' : 'lg:justify-end'}`}>
-            <span className="ui-chip ui-tabular">{summary.completed}/{summary.total} complete</span>
-            <span className="ui-chip ui-tabular">{summary.completionRate}% completion</span>
+          <div
+            className={`flex flex-wrap gap-2 ${compact ? "" : "lg:justify-end"}`}
+          >
+            <span className="ui-chip ui-tabular">
+              {summary.completed}/{summary.total} complete
+            </span>
+            <span className="ui-chip ui-tabular">
+              {summary.completionRate}% completion
+            </span>
             {selectedProjectCount > 0 ? (
               <span className="ui-chip ui-tabular">
-                {selectedProjectCount} filtered project{selectedProjectCount > 1 ? 's' : ''}
+                {selectedProjectCount} filtered project
+                {selectedProjectCount > 1 ? "s" : ""}
               </span>
             ) : null}
           </div>
@@ -136,12 +144,17 @@ const ProjectFocusWeekAgenda = ({
           </>
         ) : (
           <div className="rounded-[16px] border border-dashed border-[var(--color-line)] bg-[var(--color-surface-muted)] px-5 py-10 text-center">
-            <CheckCircle2 className="mx-auto h-10 w-10 text-[var(--color-text-muted)]" aria-hidden="true" />
-            <p className="mt-4 text-lg font-semibold text-[var(--color-text)]">No tasks scheduled for this day</p>
+            <CheckCircle2
+              className="mx-auto h-10 w-10 text-[var(--color-text-muted)]"
+              aria-hidden="true"
+            />
+            <p className="mt-4 text-lg font-semibold text-[var(--color-text)]">
+              No tasks scheduled for this day
+            </p>
             <p className="mt-2 text-sm text-[var(--color-text-muted)]">
               {selectedProjectCount > 0
-                ? 'The selected projects have no due tasks on this exact day.'
-                : 'No standalone or project tasks are due on this exact day.'}
+                ? "The selected projects have no due tasks on this exact day."
+                : "No standalone or project tasks are due on this exact day."}
             </p>
           </div>
         )}

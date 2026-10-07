@@ -10,14 +10,18 @@ describe("query keys", () => {
     it("generates exact hierarchy keys", () => {
       expect(taskKeys.all).toEqual(["tasks"]);
       expect(taskKeys.lists()).toEqual(["tasks", "list"]);
-      expect(taskKeys.list({ projectId: "p1", status: undefined })).toEqual(["tasks", "list", { projectId: "p1" }]);
+      expect(taskKeys.list({ projectId: "p1", status: undefined })).toEqual([
+        "tasks",
+        "list",
+        { projectId: "p1" },
+      ]);
       expect(taskKeys.detail("t1")).toEqual(["tasks", "detail", "t1"]);
       expect(taskKeys.calendarRoot()).toEqual(["tasks", "calendar"]);
       expect(
         taskKeys.calendar({
           startDate: "2026-08-01T00:00:00.000Z",
           endDate: "2026-08-31T23:59:59.999Z",
-        })
+        }),
       ).toEqual([
         "tasks",
         "calendar",
@@ -29,11 +33,9 @@ describe("query keys", () => {
     });
 
     it("preserves null filter properties while stripping undefined and empty strings", () => {
-      expect(taskKeys.list({ projectId: null, status: "", categoryId: undefined })).toEqual([
-        "tasks",
-        "list",
-        { projectId: null },
-      ]);
+      expect(
+        taskKeys.list({ projectId: null, status: "", categoryId: undefined }),
+      ).toEqual(["tasks", "list", { projectId: null }]);
     });
   });
 
@@ -59,7 +61,11 @@ describe("query keys", () => {
     it("generates exact stat keys", () => {
       expect(statKeys.all).toEqual(["stats"]);
       expect(statKeys.summary()).toEqual(["stats", "summary"]);
-      expect(statKeys.activity({ date: "2026-08-14" })).toEqual(["stats", "activity", { date: "2026-08-14" }]);
+      expect(statKeys.activity({ date: "2026-08-14" })).toEqual([
+        "stats",
+        "activity",
+        { date: "2026-08-14" },
+      ]);
     });
   });
 

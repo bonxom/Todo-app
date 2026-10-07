@@ -1,35 +1,35 @@
-import { useState } from 'react';
-import { LogIn } from 'lucide-react';
-import Button from './Button';
-import Input from './Input';
-import PasswordInput from './PasswordInput';
+import { useState } from "react";
+import { LogIn } from "lucide-react";
+import Button from "./Button";
+import Input from "./Input";
+import PasswordInput from "./PasswordInput";
 
 const LoginForm = ({ onSubmit, isLoading }) => {
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!credentials.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = "Invalid email format";
     }
-    
+
     if (!credentials.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (credentials.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = "Password must be at least 6 characters";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       const form = e.currentTarget;
       window.requestAnimationFrame(() => {
@@ -37,7 +37,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
       });
       return;
     }
-    
+
     onSubmit(credentials, setErrors);
   };
 
@@ -59,7 +59,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
         fullWidth
         error={errors.email}
       />
-      
+
       <PasswordInput
         label="Password"
         name="password"
@@ -73,7 +73,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
         fullWidth
         error={errors.password}
       />
-      
+
       <div className="auth-form-row">
         <label className="auth-checkbox-label">
           <input type="checkbox" name="remember" />
@@ -89,7 +89,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
         loading={isLoading}
         icon={<LogIn className="h-4 w-4" aria-hidden="true" />}
       >
-        {isLoading ? 'Signing in…' : 'Sign In'}
+        {isLoading ? "Signing in…" : "Sign In"}
       </Button>
     </form>
   );

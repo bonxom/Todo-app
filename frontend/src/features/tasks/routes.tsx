@@ -1,10 +1,10 @@
-import type { RouteObject } from 'react-router-dom';
+import type { RouteObject } from "react-router-dom";
 
 export const taskRoutes: RouteObject[] = [
   {
-    path: 'dashboard',
+    path: "dashboard",
     lazy: async () => {
-      const Component = (await import('./TodoPage')).default;
+      const Component = (await import("./TodoPage")).default;
       return { Component };
     },
   },

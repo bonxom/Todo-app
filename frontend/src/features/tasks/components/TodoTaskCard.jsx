@@ -1,278 +1,196 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 import {
+  CalendarDays,
   Check,
-  CircleDot,
-  Clock,
   Flag,
   Loader2,
+  MoreHorizontal,
   Pencil,
+  Play,
   RotateCcw,
-  Tag,
-  ThumbsDown,
-  ThumbsUp,
   Trash2,
-} from 'lucide-react';
-import { formatDateTime } from '@/shared/utils/dateTime';
-
-const STATUS_CONFIG = {
-  pending: {
-    label: 'Pending',
-    badgeClass: 'bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-transparent',
-  },
-  'in-progress': {
-    label: 'In Progress',
-    badgeClass: 'bg-[var(--color-accent-soft)] text-[var(--color-accent)] border-transparent',
-  },
-  completed: {
-    label: 'Completed',
-    badgeClass: 'bg-[var(--color-success-soft)] text-[var(--color-success)] border-transparent',
-  },
-  'given-up': {
-    label: 'Given Up',
-    badgeClass: 'bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-transparent',
-  },
-};
-
-const PRIORITY_CONFIG = {
-  High: 'bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-transparent',
-  high: 'bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-transparent',
-  Medium: 'bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-transparent',
-  medium: 'bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-transparent',
-  Low: 'bg-[var(--color-success-soft)] text-[var(--color-success)] border-transparent',
-  low: 'bg-[var(--color-success-soft)] text-[var(--color-success)] border-transparent',
-};
-
-const getDaysLeft = (deadline) => {
-  if (!deadline) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(deadline);
-  target.setHours(0, 0, 0, 0);
-  return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
-};
+} from "lucide-react";
+import { differenceInCalendarDays, format, isValid } from "date-fns";
 
 const TodoTaskCard = ({
   task,
   onAccept,
-  onDeny,
   onComplete,
   onGiveUp,
   onRestore,
   onEdit,
   onDelete,
 }) => {
-  const [isActionPending, setIsActionPending] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const triggerRef = useRef(null);
   const taskId = task._id || task.id;
-  const isPending = task.status === 'pending';
-  const isCompleted = task.status === 'completed';
-  const isGivenUp = task.status === 'given-up';
-  const isInProgress = task.status === 'in-progress';
-  const isMuted = isCompleted || isGivenUp;
-
-  const statusCfg = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
-  const priorityClass = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.Medium;
-  const daysLeft = getDaysLeft(task.dueDate);
-
-  const handleAction = async (fn) => {
-    if (isActionPending || !fn) return;
-    try {
-      setIsActionPending(true);
-      await fn(taskId);
-    } finally {
-      setIsActionPending(false);
-    }
-  };
-
+  const completed = task.status === "completed";
+  const givenUp = task.status === "given-up";
+  const pending = task.status === "pending";
+  const closed = completed || givenUp;
+  const date = task.dueDate ? new Date(task.dueDate) : null;
+  const days =
+    date && isValid(date) ? differenceInCalendarDays(date, new Date()) : null;
+  const dateLabel =
+    days === null
+      ? "No due date"
+      : days < 0
+        ? `${Math.abs(days)}d overdue`
+        : days === 0
+          ? "Today"
+          : days === 1
+            ? "Tomorrow"
+            : format(date, "MMM d");
+  const action = closed ? onRestore : pending ? onAccept : onComplete;
+  const actionLabel = closed
+    ? `Restore ${task.title} to in-progress`
+    : pending
+      ? `Accept ${task.title}`
+      : `Mark ${task.title} as completed`;
+  const ActionIcon = busy
+    ? Loader2
+    : givenUp
+      ? RotateCcw
+      : pending
+        ? Play
+        : Check;
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointer = (e) => {
+      if (!menuRef.current?.contains(e.target)) setMenuOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
   return (
-    <article
-      className={`ui-section-card ui-task-card relative px-3.5 py-3 transition-colors duration-150 ${
-        isMuted ? 'opacity-80 bg-[var(--color-surface-muted)]' : 'bg-[var(--color-surface)]'
-      }`}
-
-    >
-      <div className="flex items-start gap-2.5">
-        {/* Left Action Button (Status Specific) */}
-        <div className="mt-0.5 shrink-0">
-          {isPending && (
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => handleAction(onAccept)}
-                disabled={isActionPending}
-                className="inline-flex h-7 items-center gap-1 rounded-full border border-[var(--color-success)] bg-[var(--color-success-soft)] px-2 text-xs font-semibold text-[var(--color-success)] transition-colors disabled:opacity-50 cursor-pointer"
-                aria-label={`Accept ${task.title}`}
-                title="Accept task to in-progress"
-              >
-                {isActionPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ThumbsUp className="h-3 w-3" />}
-                <span>Accept</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleAction(onDeny)}
-                disabled={isActionPending}
-                className="inline-flex h-7 items-center gap-1 rounded-full border border-[var(--color-danger)] bg-[var(--color-danger-soft)] px-2 text-xs font-semibold text-[var(--color-danger)] transition-colors disabled:opacity-50 cursor-pointer"
-                aria-label={`Deny and delete ${task.title}`}
-                title="Deny and delete task"
-              >
-                <ThumbsDown className="h-3 w-3" />
-                <span>Deny</span>
-              </button>
-            </div>
-          )}
-
-          {isInProgress && (
-            <button
-              type="button"
-              onClick={() => handleAction(onComplete)}
-              disabled={isActionPending}
-              className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] text-transparent hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)] transition-colors cursor-pointer"
-              aria-label={`Mark ${task.title} as completed`}
-              title="Mark as completed"
-            >
-              {isActionPending ? <Loader2 className="h-3 w-3 animate-spin text-[var(--color-accent)]" /> : <Check className="h-3.5 w-3.5" />}
-            </button>
-          )}
-
-          {isCompleted && (
-            <button
-              type="button"
-              onClick={() => handleAction(onRestore)}
-              disabled={isActionPending}
-              className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md border border-[var(--color-success)] bg-[var(--color-success)] text-[var(--color-on-status,#fff)] hover:opacity-90 transition-all cursor-pointer"
-              aria-label={`Restore ${task.title} to in-progress`}
-              title="Click to restore to in-progress"
-            >
-              {isActionPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-            </button>
-          )}
-
-          {isGivenUp && (
-            <button
-              type="button"
-              onClick={() => handleAction(onRestore)}
-              disabled={isActionPending}
-              className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md border border-[var(--color-danger)] bg-[var(--color-danger)] text-[var(--color-on-status,#fff)] hover:opacity-90 transition-all cursor-pointer"
-              aria-label={`Restore ${task.title} to in-progress`}
-              title="Click to restore to in-progress"
-            >
-              {isActionPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
-            </button>
-          )}
-        </div>
-
-        {/* Content Body */}
-        <div className="min-w-0 flex-1">
-          <h3
-            className={`text-sm font-semibold leading-tight transition-colors ${
-              isMuted ? 'line-through text-[var(--color-text-muted)]' : 'text-[var(--color-text)]'
-            }`}
-          >
-            {task.title}
-          </h3>
-
-          {task.description && (
-            <p className="mt-0.5 text-xs text-[var(--color-text-muted)] line-clamp-1">
-              {task.description}
-            </p>
-          )}
-
-          {/* Badges row */}
-          <div className="ui-task-metadata mt-1.5 flex flex-wrap items-center gap-2">
-            {/* Status chip */}
-            <span className={`ui-chip ui-tabular !py-0.5 !text-[11px] ${statusCfg.badgeClass}`}>
-              <CircleDot className="h-2 w-3" />
-              {statusCfg.label}
+    <article className="todo-task" data-status={task.status}>
+      <button
+        type="button"
+        className="todo-check"
+        disabled={busy}
+        aria-label={actionLabel}
+        title={
+          pending ? "Start task" : closed ? "Restore task" : "Complete task"
+        }
+        onClick={async () => {
+          if (busy || !action) return;
+          setBusy(true);
+          try {
+            await action(taskId);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <ActionIcon size={14} className={busy ? "animate-spin" : ""} />
+      </button>
+      <div className="todo-task-content">
+        <button
+          type="button"
+          className="todo-task-title"
+          onClick={() => onEdit(task)}
+        >
+          {task.title}
+        </button>
+        {task.description && (
+          <p className="todo-task-description">{task.description}</p>
+        )}
+        <div className="todo-task-meta">
+          {task.projectId?.name && (
+            <span className="todo-task-project">
+              <i
+                style={{
+                  background: task.projectId.color || "var(--color-accent)",
+                }}
+              />
+              {task.projectId.name}
             </span>
-
-            {/* Priority chip */}
-            {task.priority && (
-              <span className={`ui-chip !py-0.5 !text-[11px] ${priorityClass}`}>
-                {task.priority}
-              </span>
-            )}
-
-            {/* Project chip */}
-            {task.projectId?.name && (
-              <span className="ui-chip ui-chip--accent !py-0.5 !text-[11px]">
-                {task.projectId.name}
-              </span>
-            )}
-
-            {/* Category chip */}
-            {task.categoryId?.name && (
-              <span className="ui-chip !py-0.5 !text-[11px]">
-                <Tag className="h-2.5 w-2.5" />
-                {task.categoryId.name}
-              </span>
-            )}
-
-            {/* Due date badge */}
-            {task.dueDate && !isMuted && (
-              <span
-                className={`ui-chip ui-tabular !py-0.5 !text-[11px] ${
-                  daysLeft !== null && daysLeft < 0
-                    ? 'ui-chip--danger'
-                    : daysLeft !== null && daysLeft <= 2
-                    ? 'ui-chip--warning'
-                    : ''
-                }`}
-              >
-                <Clock className="h-2.5 w-2.5" />
-                {daysLeft !== null && daysLeft < 0
-                  ? `${Math.abs(daysLeft)}d overdue`
-                  : daysLeft === 0
-                  ? 'Due today'
-                  : `${daysLeft}d left`}
-              </span>
-            )}
-
-            {/* Completed timestamp */}
-            {isCompleted && task.completedAt && (
-              <span className="ui-chip ui-chip--success ui-tabular !py-0.5 !text-[11px]">
-                Done {formatDateTime(task.completedAt)}
-              </span>
-            )}
-          </div>
+          )}
+          <span
+            className="todo-task-priority"
+            data-priority={task.priority?.toLowerCase()}
+          >
+            <Flag size={11} />
+            {task.priority || "Medium"}
+          </span>
+          {pending && <span className="todo-pending-label">Pending</span>}
+          {givenUp && <span>Given up</span>}
+          {completed && <span className="todo-completed-label">Completed</span>}
         </div>
-
-        {/* Right Action Tools */}
-        <div className="flex shrink-0 items-center gap-0.5">
-          {isInProgress && (
+      </div>
+      <span
+        className="todo-task-date"
+        data-urgent={!closed && days !== null && days <= 0}
+        title={date && isValid(date) ? format(date, "PPP") : undefined}
+      >
+        <CalendarDays size={13} />
+        {closed ? (completed ? "Done" : "Paused") : dateLabel}
+      </span>
+      <div className="todo-task-menu" ref={menuRef}>
+        <button
+          ref={triggerRef}
+          type="button"
+          className="todo-icon-button"
+          aria-label={`Actions for ${task.title}`}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          <MoreHorizontal size={18} />
+        </button>
+        {menuOpen && (
+          <div
+            className="todo-action-popover"
+            aria-label={`Task actions for ${task.title}`}
+          >
             <button
               type="button"
-              onClick={() => onGiveUp?.(taskId)}
-              disabled={isActionPending}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-warning)] hover:bg-[var(--color-warning-soft)] transition-colors cursor-pointer"
-              aria-label={`Give up ${task.title}`}
-              title="Give up task"
+              onClick={() => {
+                setMenuOpen(false);
+                onEdit(task);
+              }}
             >
-              <Flag className="h-3.5 w-3.5" />
+              <Pencil size={14} />
+              Edit task
             </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => onEdit?.(task)}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
-            aria-label={`Edit ${task.title}`}
-            title="Edit task"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onDelete?.(taskId)}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)] transition-colors cursor-pointer"
-            aria-label={`Delete ${task.title}`}
-            title="Delete task"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
+            {task.status === "in-progress" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onGiveUp(taskId);
+                }}
+              >
+                <Flag size={14} />
+                Give up task
+              </button>
+            )}
+            <button
+              type="button"
+              className="todo-delete-action"
+              onClick={() => {
+                setMenuOpen(false);
+                onDelete(taskId);
+              }}
+            >
+              <Trash2 size={14} />
+              Delete task
+            </button>
+          </div>
+        )}
       </div>
     </article>
   );
 };
-
 export default TodoTaskCard;

@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import Bubble from './Bubble';
-import SmallChat from './SmallChat';
+import { useState } from "react";
+import Bubble from "./Bubble";
+import SmallChat from "./SmallChat";
 
 const ChatBubble = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -22,15 +22,10 @@ const ChatBubble = () => {
 
   return (
     <>
-      {!isChatOpen && (
-        <Bubble onClick={handleOpenChat} hasUnread={hasUnread} />
-      )}
-      
+      {!isChatOpen && <Bubble onClick={handleOpenChat} hasUnread={hasUnread} />}
+
       {isChatOpen && (
-        <SmallChat
-          onClose={handleCloseChat}
-          onMinimize={handleMinimizeChat}
-        />
+        <SmallChat onClose={handleCloseChat} onMinimize={handleMinimizeChat} />
       )}
     </>
   );

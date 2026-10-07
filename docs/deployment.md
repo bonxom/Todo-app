@@ -11,16 +11,16 @@ The CD workflow begins with image publishing and does not repeat CI validation. 
 
 Configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as repository secrets because the image-publishing jobs use them. Configure the `DEPLOY_*` values as secrets in a GitHub environment named `production` (repository secrets also work, but environment secrets provide tighter deployment scoping):
 
-| Secret | Purpose |
-| --- | --- |
-| `DOCKERHUB_USERNAME` | Docker Hub account or organization that owns `todoapp-backend` and `todoapp-frontend` |
-| `DOCKERHUB_TOKEN` | Docker Hub access token with push access; the server also uses it to pull private images |
-| `DEPLOY_HOST` | Production server hostname or IP address |
-| `DEPLOY_USER` | SSH user with Docker access |
-| `DEPLOY_PORT` | SSH port; optional, defaults to `22` |
-| `DEPLOY_PATH` | Absolute deployment directory on the server, for example `/home/deployer/todoapp` |
-| `DEPLOY_SSH_KEY` | Private key matching a public key in the server user's `authorized_keys` |
-| `DEPLOY_KNOWN_HOSTS` | Trusted known-hosts entry for the server |
+| Secret               | Purpose                                                                                  |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| `DOCKERHUB_USERNAME` | Docker Hub account or organization that owns `todoapp-backend` and `todoapp-frontend`    |
+| `DOCKERHUB_TOKEN`    | Docker Hub access token with push access; the server also uses it to pull private images |
+| `DEPLOY_HOST`        | Production server hostname or IP address                                                 |
+| `DEPLOY_USER`        | SSH user with Docker access                                                              |
+| `DEPLOY_PORT`        | SSH port; optional, defaults to `22`                                                     |
+| `DEPLOY_PATH`        | Absolute deployment directory on the server, for example `/home/deployer/todoapp`        |
+| `DEPLOY_SSH_KEY`     | Private key matching a public key in the server user's `authorized_keys`                 |
+| `DEPLOY_KNOWN_HOSTS` | Trusted known-hosts entry for the server                                                 |
 
 Generate the known-hosts value from a trusted network and verify its fingerprint before saving it:
 

@@ -1,72 +1,96 @@
-import { useState, useEffect, useRef } from 'react';
-import { CalendarClock, Check, CircleDot, FolderKanban, Loader2, Pencil, Tag, ThumbsDown, ThumbsUp, Trash2, X } from 'lucide-react';
-import { formatDateTime } from '@/shared/utils/dateTime';
-import { setTaskDragData } from '@/shared/utils/taskDrag';
-import { getTaskProjectColor } from '@/shared/utils/projectColor';
+import { useState, useEffect, useRef } from "react";
+import {
+  CalendarClock,
+  Check,
+  CircleDot,
+  FolderKanban,
+  Loader2,
+  Pencil,
+  Tag,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+  X,
+} from "lucide-react";
+import { formatDateTime } from "@/shared/utils/dateTime";
+import { setTaskDragData } from "@/shared/utils/taskDrag";
+import { getTaskProjectColor } from "@/shared/utils/projectColor";
 
 const formatLabel = (value) => {
-  if (!value) return 'None';
+  if (!value) return "None";
 
   return value
-    .split('-')
+    .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .join(" ");
 };
 
 const chipStyles = {
   neutral: {
-    borderColor: 'var(--color-line)',
-    background: 'var(--color-surface-muted)',
-    color: 'var(--color-text-muted)',
+    borderColor: "var(--color-line)",
+    background: "var(--color-surface-muted)",
+    color: "var(--color-text-muted)",
   },
   accent: {
-    borderColor: 'transparent',
-    background: 'var(--color-accent-soft)',
-    color: 'var(--color-accent)',
+    borderColor: "transparent",
+    background: "var(--color-accent-soft)",
+    color: "var(--color-accent)",
   },
   success: {
-    borderColor: 'transparent',
-    background: 'var(--color-success-soft)',
-    color: 'var(--color-success)',
+    borderColor: "transparent",
+    background: "var(--color-success-soft)",
+    color: "var(--color-success)",
   },
   warning: {
-    borderColor: 'transparent',
-    background: 'var(--color-warning-soft)',
-    color: 'var(--color-warning)',
+    borderColor: "transparent",
+    background: "var(--color-warning-soft)",
+    color: "var(--color-warning)",
   },
   danger: {
-    borderColor: 'transparent',
-    background: 'var(--color-danger-soft)',
-    color: 'var(--color-danger)',
+    borderColor: "transparent",
+    background: "var(--color-danger-soft)",
+    color: "var(--color-danger)",
   },
 };
 
 const getPriorityStyle = (priority) => {
-  if (priority === 'High') return chipStyles.danger;
-  if (priority === 'Medium') return chipStyles.warning;
-  if (priority === 'Low') return chipStyles.success;
+  if (priority === "High") return chipStyles.danger;
+  if (priority === "Medium") return chipStyles.warning;
+  if (priority === "Low") return chipStyles.success;
   return chipStyles.neutral;
 };
 
 const getStatusStyle = (status) => {
-  if (status === 'completed') return chipStyles.success;
-  if (status === 'in-progress') return chipStyles.accent;
-  if (status === 'pending') return chipStyles.warning;
-  if (status === 'given-up') return chipStyles.danger;
+  if (status === "completed") return chipStyles.success;
+  if (status === "in-progress") return chipStyles.accent;
+  if (status === "pending") return chipStyles.warning;
+  if (status === "given-up") return chipStyles.danger;
   return chipStyles.neutral;
 };
 
-const Badge = ({ icon: Icon, children, style, compact = false, className = '', truncate = false }) => (
+const Badge = ({
+  icon: Icon,
+  children,
+  style,
+  compact = false,
+  className = "",
+  truncate = false,
+}) => (
   <span
     className={`inline-flex items-center rounded-full border font-semibold transition-transform duration-150 hover:scale-[1.04] ${
       compact
-        ? 'min-h-6 gap-1 px-2 py-0.5 text-[11px]'
-        : 'min-h-7 gap-1.5 px-2.5 py-1 text-xs'
+        ? "min-h-6 gap-1 px-2 py-0.5 text-[11px]"
+        : "min-h-7 gap-1.5 px-2.5 py-1 text-xs"
     } ${className}`}
     style={style}
   >
-    {Icon ? <Icon className={`${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} shrink-0`} aria-hidden="true" /> : null}
-    <span className={truncate ? 'truncate' : undefined}>{children}</span>
+    {Icon ? (
+      <Icon
+        className={`${compact ? "h-3 w-3" : "h-3.5 w-3.5"} shrink-0`}
+        aria-hidden="true"
+      />
+    ) : null}
+    <span className={truncate ? "truncate" : undefined}>{children}</span>
   </span>
 );
 
@@ -74,18 +98,28 @@ const Badge = ({ icon: Icon, children, style, compact = false, className = '', t
 // own color so the card itself visibly "announces" what just happened, not
 // just the small button that was clicked.
 const cardFlashPresets = {
-  complete: { border: 'var(--color-success)', shadow: 'color-mix(in srgb, var(--color-success) 35%, transparent)' },
-  giveUp: { border: 'var(--color-danger)', shadow: 'color-mix(in srgb, var(--color-danger) 35%, transparent)' },
-  accept: { border: '#8b5cf6', shadow: 'rgba(139, 92, 246, 0.35)' },
-  deny: { border: '#eab308', shadow: 'rgba(234, 179, 8, 0.35)' },
+  complete: {
+    border: "var(--color-success)",
+    shadow: "color-mix(in srgb, var(--color-success) 35%, transparent)",
+  },
+  giveUp: {
+    border: "var(--color-danger)",
+    shadow: "color-mix(in srgb, var(--color-danger) 35%, transparent)",
+  },
+  accept: { border: "#8b5cf6", shadow: "rgba(139, 92, 246, 0.35)" },
+  deny: { border: "#eab308", shadow: "rgba(234, 179, 8, 0.35)" },
 };
 
-const IconAction = ({ label, onClick, tone = 'neutral', children }) => {
+const IconAction = ({ label, onClick, tone = "neutral", children }) => {
   const hoverStyles = {
-    neutral: 'hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] focus-visible:ring-[var(--ring-focus-outline)]',
-    accent: 'hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)] focus-visible:ring-[var(--ring-focus-outline)]',
-    warning: 'hover:bg-[var(--color-warning-soft)] hover:text-[var(--color-warning)] focus-visible:ring-[var(--ring-focus-outline)]',
-    danger: 'hover:bg-[var(--color-danger-soft)] hover:text-[var(--color-danger)] focus-visible:ring-[var(--ring-focus-outline)]',
+    neutral:
+      "hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] focus-visible:ring-[var(--ring-focus-outline)]",
+    accent:
+      "hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-accent)] focus-visible:ring-[var(--ring-focus-outline)]",
+    warning:
+      "hover:bg-[var(--color-warning-soft)] hover:text-[var(--color-warning)] focus-visible:ring-[var(--ring-focus-outline)]",
+    danger:
+      "hover:bg-[var(--color-danger-soft)] hover:text-[var(--color-danger)] focus-visible:ring-[var(--ring-focus-outline)]",
   };
 
   return (
@@ -102,7 +136,7 @@ const IconAction = ({ label, onClick, tone = 'neutral', children }) => {
 
 const CalendarTaskDetailCard = ({
   task,
-  mode = 'panel',
+  mode = "panel",
   onClick,
   onEdit,
   onDelete,
@@ -128,28 +162,40 @@ const CalendarTaskDetailCard = ({
     flashTimeoutRef.current = setTimeout(() => setFlashColor(null), 700);
   };
 
-  const projectName = task.projectId?.name || 'Standalone';
-  const categoryName = task.categoryId?.name || 'Uncategorized';
+  const projectName = task.projectId?.name || "Standalone";
+  const categoryName = task.categoryId?.name || "Uncategorized";
   const taskId = task._id || task.id;
-  const isPending = task.status === 'pending';
-  const isCompleted = task.status === 'completed';
-  const isGivenUp = task.status === 'given-up';
-  const isGiveUpAvailable = task.status === 'in-progress' || isGivenUp || isPending;
+  const isPending = task.status === "pending";
+  const isCompleted = task.status === "completed";
+  const isGivenUp = task.status === "given-up";
+  const isGiveUpAvailable =
+    task.status === "in-progress" || isGivenUp || isPending;
   const isMutedStatus = isCompleted || isGivenUp;
   const priorityStyle = getPriorityStyle(task.priority);
-  const taskLevel = { High: 'Hard', Medium: 'Moderate', Low: 'Easy' }[task.priority] || 'Moderate';
+  const taskLevel =
+    { High: "Hard", Medium: "Moderate", Low: "Easy" }[task.priority] ||
+    "Moderate";
   const statusStyle = getStatusStyle(task.status);
   const projectColor = task.projectId ? getTaskProjectColor(task) : null;
   const AcceptOrCompleteIcon = isPending ? ThumbsUp : Check;
   const DenyOrGiveUpIcon = isPending ? ThumbsDown : X;
   const cardStyle = {
-    borderColor: task.isOverDue && !isMutedStatus ? 'var(--color-danger-soft)' : 'var(--color-line)',
-    borderStyle: isPending ? 'dashed' : 'solid',
-    borderLeftStyle: 'solid',
-    background: isMutedStatus ? 'var(--color-surface-muted)' : 'var(--color-surface)',
-    boxShadow: 'var(--shadow-xs)',
-    borderLeftColor: projectColor || (task.isOverDue && !isMutedStatus ? 'var(--color-danger-soft)' : 'var(--color-line)'),
-    borderLeftWidth: projectColor ? '5px' : undefined,
+    borderColor:
+      task.isOverDue && !isMutedStatus
+        ? "var(--color-danger-soft)"
+        : "var(--color-line)",
+    borderStyle: isPending ? "dashed" : "solid",
+    borderLeftStyle: "solid",
+    background: isMutedStatus
+      ? "var(--color-surface-muted)"
+      : "var(--color-surface)",
+    boxShadow: "var(--shadow-xs)",
+    borderLeftColor:
+      projectColor ||
+      (task.isOverDue && !isMutedStatus
+        ? "var(--color-danger-soft)"
+        : "var(--color-line)"),
+    borderLeftWidth: projectColor ? "5px" : undefined,
     ...(flashColor
       ? {
           borderColor: cardFlashPresets[flashColor].border,
@@ -159,10 +205,14 @@ const CalendarTaskDetailCard = ({
       : null),
   };
 
-  useEffect(() => () => {
-    if (celebrationTimeoutRef.current) clearTimeout(celebrationTimeoutRef.current);
-    if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (celebrationTimeoutRef.current)
+        clearTimeout(celebrationTimeoutRef.current);
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+    },
+    [],
+  );
 
   const handleDragStart = (event) => {
     event.stopPropagation();
@@ -170,7 +220,7 @@ const CalendarTaskDetailCard = ({
   };
 
   const handleOpen = () => {
-    if (mode === 'panel') {
+    if (mode === "panel") {
       onClick?.(task);
     }
   };
@@ -185,19 +235,25 @@ const CalendarTaskDetailCard = ({
     try {
       setIsCompletionUpdating(true);
       if (isPending) {
-        await onTaskStatusChange?.(task, 'in-progress');
-        triggerCardFlash('accept');
+        await onTaskStatusChange?.(task, "in-progress");
+        triggerCardFlash("accept");
       } else {
         const goingToComplete = !isCompleted;
-        await onTaskStatusChange?.(task, isCompleted ? 'in-progress' : 'completed');
+        await onTaskStatusChange?.(
+          task,
+          isCompleted ? "in-progress" : "completed",
+        );
         if (goingToComplete) {
           setJustCompleted(true);
-          celebrationTimeoutRef.current = setTimeout(() => setJustCompleted(false), 500);
-          triggerCardFlash('complete');
+          celebrationTimeoutRef.current = setTimeout(
+            () => setJustCompleted(false),
+            500,
+          );
+          triggerCardFlash("complete");
         }
       }
     } catch (error) {
-      console.error('Failed to update task completion:', error);
+      console.error("Failed to update task completion:", error);
     } finally {
       setIsCompletionUpdating(false);
     }
@@ -212,12 +268,12 @@ const CalendarTaskDetailCard = ({
 
       try {
         setIsGiveUpUpdating(true);
-        triggerCardFlash('deny');
+        triggerCardFlash("deny");
         setIsFlushing(true);
         await new Promise((resolve) => setTimeout(resolve, 350));
         await deleteHandler(taskId);
       } catch (error) {
-        console.error('Failed to deny/delete task:', error);
+        console.error("Failed to deny/delete task:", error);
         setIsFlushing(false);
       } finally {
         setIsGiveUpUpdating(false);
@@ -232,12 +288,12 @@ const CalendarTaskDetailCard = ({
     try {
       setIsGiveUpUpdating(true);
       const goingToGiveUp = !isGivenUp;
-      await onTaskStatusChange?.(task, isGivenUp ? 'in-progress' : 'given-up');
+      await onTaskStatusChange?.(task, isGivenUp ? "in-progress" : "given-up");
       if (goingToGiveUp) {
-        triggerCardFlash('giveUp');
+        triggerCardFlash("giveUp");
       }
     } catch (error) {
-      console.error('Failed to update task give-up status:', error);
+      console.error("Failed to update task give-up status:", error);
     } finally {
       setIsGiveUpUpdating(false);
     }
@@ -245,13 +301,17 @@ const CalendarTaskDetailCard = ({
 
   const details = (
     <>
-      <div className={`flex flex-col ${compact ? 'gap-2' : 'gap-3 lg:flex-row lg:items-start lg:justify-between'}`}>
-        <div className={`min-w-0 ${compact ? 'pr-4' : ''}`}>
+      <div
+        className={`flex flex-col ${compact ? "gap-2" : "gap-3 lg:flex-row lg:items-start lg:justify-between"}`}
+      >
+        <div className={`min-w-0 ${compact ? "pr-4" : ""}`}>
           <h3
             className={`min-w-0 text-sm font-semibold transition-colors duration-300 ${
-              compact ? 'truncate' : 'break-words'
+              compact ? "truncate" : "break-words"
             } ${
-              isMutedStatus ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text)]'
+              isMutedStatus
+                ? "text-[var(--color-text-muted)] line-through"
+                : "text-[var(--color-text)]"
             }`}
             title={compact ? task.title : undefined}
           >
@@ -259,7 +319,7 @@ const CalendarTaskDetailCard = ({
           </h3>
           {task.description ? (
             <p
-              className={`mt-1 text-xs text-[var(--color-text-muted)] ${compact ? 'truncate' : 'break-words'}`}
+              className={`mt-1 text-xs text-[var(--color-text-muted)] ${compact ? "truncate" : "break-words"}`}
               title={compact ? task.description : undefined}
             >
               {task.description}
@@ -269,13 +329,17 @@ const CalendarTaskDetailCard = ({
 
         {!compact ? (
           <div className="flex flex-wrap gap-2 lg:justify-end">
-            <Badge style={priorityStyle}>{task.priority || 'Medium'}</Badge>
-            <Badge icon={CircleDot} style={statusStyle}>{formatLabel(task.status)}</Badge>
+            <Badge style={priorityStyle}>{task.priority || "Medium"}</Badge>
+            <Badge icon={CircleDot} style={statusStyle}>
+              {formatLabel(task.status)}
+            </Badge>
           </div>
         ) : null}
       </div>
 
-      <div className={`${compact ? 'mt-2 gap-1.5' : 'mt-3 gap-2'} flex flex-wrap items-center`}>
+      <div
+        className={`${compact ? "mt-2 gap-1.5" : "mt-3 gap-2"} flex flex-wrap items-center`}
+      >
         {compact ? (
           <div
             className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,7rem)] items-center gap-x-2 gap-y-1.5"
@@ -306,7 +370,7 @@ const CalendarTaskDetailCard = ({
               style={chipStyles.neutral}
               className="min-w-0 max-w-full justify-self-start"
             >
-              {formatDateTime(task.dueDate, 'No due date')}
+              {formatDateTime(task.dueDate, "No due date")}
             </Badge>
             <Badge
               compact
@@ -321,7 +385,7 @@ const CalendarTaskDetailCard = ({
         ) : (
           <div className="flex flex-wrap items-center gap-2">
             <Badge icon={CalendarClock} style={chipStyles.neutral}>
-              {formatDateTime(task.dueDate, 'No due date')}
+              {formatDateTime(task.dueDate, "No due date")}
             </Badge>
             <Badge icon={FolderKanban} style={chipStyles.accent}>
               {projectName}
@@ -333,7 +397,9 @@ const CalendarTaskDetailCard = ({
         )}
 
         {isPending ? (
-          <div className={`${compact ? 'w-full justify-end' : 'ml-auto'} flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100`}>
+          <div
+            className={`${compact ? "w-full justify-end" : "ml-auto"} flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100`}
+          >
             <button
               type="button"
               onClick={handleToggleCompletion}
@@ -342,7 +408,10 @@ const CalendarTaskDetailCard = ({
               aria-label={`Accept ${task.title}`}
             >
               {isCompletionUpdating ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                <Loader2
+                  className="h-3.5 w-3.5 animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 <Check className="h-3.5 w-3.5" aria-hidden="true" />
               )}
@@ -356,11 +425,14 @@ const CalendarTaskDetailCard = ({
               aria-label={`Deny ${task.title}`}
             >
               {isGiveUpUpdating ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                <Loader2
+                  className="h-3.5 w-3.5 animate-spin"
+                  aria-hidden="true"
+                />
               ) : (
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
               )}
-              <span>{isFlushing ? 'Denying…' : 'Deny'}</span>
+              <span>{isFlushing ? "Denying…" : "Deny"}</span>
             </button>
           </div>
         ) : null}
@@ -373,13 +445,11 @@ const CalendarTaskDetailCard = ({
       draggable={Boolean(taskId) && !isFlushing}
       onDragStart={handleDragStart}
       className={`group relative cursor-grab rounded-[16px] border active:cursor-grabbing transition-all duration-350 ease-in-out ${
-        compact ? 'p-3' : 'p-4'
-      } ${
-        isMutedStatus ? 'opacity-85' : ''
-      } ${
+        compact ? "p-3" : "p-4"
+      } ${isMutedStatus ? "opacity-85" : ""} ${
         isFlushing
-          ? 'pointer-events-none opacity-0 scale-90 -translate-x-10 max-h-0 !p-0 !m-0 !border-transparent bg-[var(--color-danger-soft)]'
-          : 'max-h-[500px] opacity-100 scale-100 translate-x-0 hover:shadow-md'
+          ? "pointer-events-none opacity-0 scale-90 -translate-x-10 max-h-0 !p-0 !m-0 !border-transparent bg-[var(--color-danger-soft)]"
+          : "max-h-[500px] opacity-100 scale-100 translate-x-0 hover:shadow-md"
       }`}
       style={cardStyle}
     >
@@ -391,14 +461,14 @@ const CalendarTaskDetailCard = ({
           title={`Task level: ${taskLevel}`}
         />
       ) : null}
-      <div className={`flex items-start ${compact ? 'gap-2' : 'gap-3'}`}>
+      <div className={`flex items-start ${compact ? "gap-2" : "gap-3"}`}>
         {!isPending ? (
           <div className="mt-0.5 flex w-6 shrink-0 flex-col items-center gap-1.5">
             <div className="relative">
               {justCompleted ? (
                 <span
                   className="pointer-events-none absolute inset-0 rounded-lg animate-ping"
-                  style={{ background: 'var(--color-success)', opacity: 0.5 }}
+                  style={{ background: "var(--color-success)", opacity: 0.5 }}
                   aria-hidden="true"
                 />
               ) : null}
@@ -413,20 +483,21 @@ const CalendarTaskDetailCard = ({
                     : `Mark ${task.title} as completed`
                 }
                 title={
-                  isCompleted
-                    ? 'Mark as in progress'
-                    : 'Mark as completed'
+                  isCompleted ? "Mark as in progress" : "Mark as completed"
                 }
                 className={`ui-focus-ring relative inline-flex h-6 w-6 items-center justify-center rounded-lg border transition-all duration-200 ease-out hover:scale-110 active:scale-90 disabled:cursor-wait disabled:opacity-70 disabled:hover:scale-100 ${
-                  justCompleted ? 'scale-125' : 'scale-100'
+                  justCompleted ? "scale-125" : "scale-100"
                 } ${
                   isCompleted
-                    ? 'border-[var(--color-success)] bg-[var(--color-success)] text-[var(--color-on-status,#fff)] shadow-sm'
-                    : 'border-[var(--color-line)] bg-[var(--color-surface)] text-transparent hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)] hover:shadow-sm'
+                    ? "border-[var(--color-success)] bg-[var(--color-success)] text-[var(--color-on-status,#fff)] shadow-sm"
+                    : "border-[var(--color-line)] bg-[var(--color-surface)] text-transparent hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)] hover:shadow-sm"
                 }`}
               >
                 {isCompletionUpdating ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  <Loader2
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
                 ) : (
                   <Check className="h-4 w-4" aria-hidden="true" />
                 )}
@@ -443,15 +514,11 @@ const CalendarTaskDetailCard = ({
                   ? `Restore ${task.title} to in progress`
                   : `Give up ${task.title}`
               }
-              title={
-                isGivenUp
-                  ? 'Restore to in progress'
-                  : 'Give up task'
-              }
+              title={isGivenUp ? "Restore to in progress" : "Give up task"}
               className={`ui-focus-ring inline-flex h-6 w-6 items-center justify-center rounded-lg border transition-all duration-200 ease-out hover:scale-110 active:scale-90 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100 ${
                 isGivenUp
-                  ? 'border-[var(--color-danger)] bg-[var(--color-danger)] text-[var(--color-on-status,#fff)] shadow-sm'
-                  : 'border-[var(--color-danger-soft)] bg-[var(--color-surface)] text-[var(--color-danger)] hover:border-[var(--color-danger)] hover:bg-[var(--color-danger-soft)] hover:shadow-sm'
+                  ? "border-[var(--color-danger)] bg-[var(--color-danger)] text-[var(--color-on-status,#fff)] shadow-sm"
+                  : "border-[var(--color-danger-soft)] bg-[var(--color-surface)] text-[var(--color-danger)] hover:border-[var(--color-danger)] hover:bg-[var(--color-danger-soft)] hover:shadow-sm"
               }`}
             >
               {isGiveUpUpdating ? (
@@ -464,7 +531,7 @@ const CalendarTaskDetailCard = ({
         ) : null}
 
         <div className="min-w-0 flex-1">
-          {mode === 'panel' ? (
+          {mode === "panel" ? (
             <button
               type="button"
               onClick={handleOpen}
@@ -478,7 +545,7 @@ const CalendarTaskDetailCard = ({
           )}
         </div>
 
-        {mode === 'modal' ? (
+        {mode === "modal" ? (
           <div className="flex shrink-0 items-center gap-1">
             <IconAction
               label={`Edit ${task.title}`}

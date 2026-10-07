@@ -3,7 +3,12 @@ import { parseEnv } from "../env";
 
 describe("parseEnv", () => {
   it("normalizes optional URL and debug values", () => {
-    expect(parseEnv({ VITE_SERVER_URL: " https://api.example.com ", VITE_API_DEBUG: "true" })).toEqual({
+    expect(
+      parseEnv({
+        VITE_SERVER_URL: " https://api.example.com ",
+        VITE_API_DEBUG: "true",
+      }),
+    ).toEqual({
       serverUrl: "https://api.example.com",
       apiDebug: true,
     });

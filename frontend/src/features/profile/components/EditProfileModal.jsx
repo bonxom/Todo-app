@@ -1,22 +1,22 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { X } from "lucide-react";
 
 const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    dob: user?.dob ? new Date(user.dob).toISOString().split('T')[0] : '',
-    nationality: user?.nationality || '',
+    name: user?.name || "",
+    email: user?.email || "",
+    dob: user?.dob ? new Date(user.dob).toISOString().split("T")[0] : "",
+    nationality: user?.nationality || "",
   });
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
@@ -37,7 +37,10 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
       >
         <div className="ui-modal-header flex items-center justify-between gap-4">
           <div>
-            <h2 id="edit-profile-title" className="m-0 text-xl font-semibold text-[var(--color-text)]">
+            <h2
+              id="edit-profile-title"
+              className="m-0 text-xl font-semibold text-[var(--color-text)]"
+            >
               Edit Profile
             </h2>
             <p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">
@@ -57,7 +60,10 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
         <form onSubmit={handleSubmit}>
           <div className="ui-modal-body space-y-4">
             <div>
-              <label htmlFor="profile-name" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+              <label
+                htmlFor="profile-name"
+                className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+              >
                 Full Name
               </label>
               <input
@@ -65,7 +71,9 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                 name="name"
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 autoComplete="name"
                 className="ui-input"
                 required
@@ -73,7 +81,10 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
             </div>
 
             <div>
-              <label htmlFor="profile-email" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+              <label
+                htmlFor="profile-email"
+                className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+              >
                 Email
               </label>
               <input
@@ -81,7 +92,9 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                 name="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 autoComplete="email"
                 spellCheck={false}
                 className="ui-input"
@@ -90,7 +103,10 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
             </div>
 
             <div>
-              <label htmlFor="profile-dob" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+              <label
+                htmlFor="profile-dob"
+                className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+              >
                 Birthday
               </label>
               <input
@@ -98,7 +114,9 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                 name="dob"
                 type="date"
                 value={formData.dob}
-                onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, dob: e.target.value })
+                }
                 autoComplete="bday"
                 className="ui-input"
               />

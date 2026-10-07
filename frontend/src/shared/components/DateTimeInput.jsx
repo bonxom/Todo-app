@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-const pad = (v) => String(v).padStart(2, '0');
+const pad = (v) => String(v).padStart(2, "0");
 
 /**
  * Converts a datetime-local value (YYYY-MM-DDTHH:mm) to dd/mm/YYYY HH:mm display string.
  */
 const toDisplayValue = (datetimeLocalValue) => {
-  if (!datetimeLocalValue) return '';
+  if (!datetimeLocalValue) return "";
 
   const date = new Date(datetimeLocalValue);
   if (Number.isNaN(date.getTime())) return datetimeLocalValue;
@@ -21,9 +21,9 @@ const toDisplayValue = (datetimeLocalValue) => {
 const parseDisplayValue = (displayStr) => {
   if (!displayStr) return null;
 
-  const match = displayStr.trim().match(
-    /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\s+(\d{1,2}):(\d{2})$/
-  );
+  const match = displayStr
+    .trim()
+    .match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\s+(\d{1,2}):(\d{2})$/);
 
   if (!match) return null;
 
@@ -34,7 +34,14 @@ const parseDisplayValue = (displayStr) => {
   const hour = Number(hourStr);
   const minute = Number(minuteStr);
 
-  if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59) {
+  if (
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31 ||
+    hour > 23 ||
+    minute > 59
+  ) {
     return null;
   }
 
@@ -49,8 +56,8 @@ const parseDisplayValue = (displayStr) => {
  * - onChange: called with datetime-local string when valid input is provided
  * - All other props are forwarded to the underlying <input>.
  */
-const DateTimeInput = ({ value, onChange, className = '', ...rest }) => {
-  const [draftText, setDraftText] = useState('');
+const DateTimeInput = ({ value, onChange, className = "", ...rest }) => {
+  const [draftText, setDraftText] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [hasError, setHasError] = useState(false);
   const externalDisplayText = toDisplayValue(value);
@@ -64,9 +71,9 @@ const DateTimeInput = ({ value, onChange, className = '', ...rest }) => {
     if (parsed) {
       setHasError(false);
       onChange?.(parsed);
-    } else if (raw === '') {
+    } else if (raw === "") {
       setHasError(false);
-      onChange?.('');
+      onChange?.("");
     } else {
       setHasError(true);
     }
@@ -78,7 +85,7 @@ const DateTimeInput = ({ value, onChange, className = '', ...rest }) => {
   };
 
   const handleBlur = () => {
-    setDraftText('');
+    setDraftText("");
     setHasError(false);
     setIsEditing(false);
   };
@@ -92,7 +99,7 @@ const DateTimeInput = ({ value, onChange, className = '', ...rest }) => {
       onChange={handleChange}
       onBlur={handleBlur}
       placeholder="dd/mm/YYYY HH:mm"
-      className={`${className}${hasError ? ' ring-2 ring-[var(--color-danger)] ring-offset-1' : ''}`}
+      className={`${className}${hasError ? " ring-2 ring-[var(--color-danger)] ring-offset-1" : ""}`}
       {...rest}
     />
   );

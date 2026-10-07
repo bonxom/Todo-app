@@ -1,9 +1,9 @@
-import mongoose, { Schema } from 'mongoose';
-import { IStatDocument, IStatModel } from '../types/IStat.js';
+import mongoose, { Schema } from "mongoose";
+import { IStatDocument, IStatModel } from "../types/IStat.js";
 
 const statSchema = new Schema<IStatDocument, IStatModel>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     totalTasks: { type: Number, required: true, default: 0 },
     completedTasks: { type: Number, required: true, default: 0 },
     pendingTasks: { type: Number, required: true, default: 0 },
@@ -15,7 +15,7 @@ const statSchema = new Schema<IStatDocument, IStatModel>(
         completedTasks: { type: Number, required: true, default: 0 },
         completedOfEachCategory: [
           {
-            categoryId: { type: Schema.Types.ObjectId, ref: 'Category' },
+            categoryId: { type: Schema.Types.ObjectId, ref: "Category" },
             categoryName: { type: String, required: true },
             count: { type: Number, required: true, default: 0 },
           },
@@ -23,7 +23,7 @@ const statSchema = new Schema<IStatDocument, IStatModel>(
         givenUpTasks: { type: Number, required: true, default: 0 },
         givenUpOfEachCategory: [
           {
-            categoryId: { type: Schema.Types.ObjectId, ref: 'Category' },
+            categoryId: { type: Schema.Types.ObjectId, ref: "Category" },
             categoryName: { type: String, required: true },
             count: { type: Number, required: true, default: 0 },
           },
@@ -31,8 +31,8 @@ const statSchema = new Schema<IStatDocument, IStatModel>(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-const Stat = mongoose.model<IStatDocument, IStatModel>('Stat', statSchema);
+const Stat = mongoose.model<IStatDocument, IStatModel>("Stat", statSchema);
 export default Stat;

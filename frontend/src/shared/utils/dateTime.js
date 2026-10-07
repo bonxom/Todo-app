@@ -1,4 +1,4 @@
-const pad = (value) => String(value).padStart(2, '0');
+const pad = (value) => String(value).padStart(2, "0");
 
 const toDate = (value) => {
   if (!value) {
@@ -9,7 +9,7 @@ const toDate = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-export const formatDateTime = (value, fallback = 'N/A') => {
+export const formatDateTime = (value, fallback = "N/A") => {
   const date = toDate(value);
 
   if (!date) {
@@ -19,7 +19,7 @@ export const formatDateTime = (value, fallback = 'N/A') => {
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
-export const formatDateOnly = (value, fallback = 'N/A') => {
+export const formatDateOnly = (value, fallback = "N/A") => {
   const date = toDate(value);
 
   if (!date) {
@@ -33,7 +33,7 @@ export const toDateTimeInputValue = (value) => {
   const date = toDate(value);
 
   if (!date) {
-    return '';
+    return "";
   }
 
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -47,7 +47,7 @@ export const toMidnightDateTimeLocalValue = (value = new Date()) => {
   const date = toDate(value);
 
   if (!date) {
-    return '';
+    return "";
   }
 
   date.setHours(0, 0, 0, 0);
@@ -72,7 +72,7 @@ export const toISOStringLocal = (datetimeLocalValue) => {
   }
 
   const tzOffset = -date.getTimezoneOffset();
-  const sign = tzOffset >= 0 ? '+' : '-';
+  const sign = tzOffset >= 0 ? "+" : "-";
   const absOffset = Math.abs(tzOffset);
   const offsetHours = pad(Math.floor(absOffset / 60));
   const offsetMinutes = pad(absOffset % 60);

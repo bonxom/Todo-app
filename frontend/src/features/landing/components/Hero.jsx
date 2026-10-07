@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarDays, Sparkles } from 'lucide-react';
-import OrbitScene from './OrbitScene';
+import { Link } from "react-router-dom";
+import { ArrowRight, CalendarDays, Sparkles } from "lucide-react";
+import OrbitScene from "./OrbitScene";
 
 const Hero = () => {
   return (
@@ -16,11 +16,19 @@ const Hero = () => {
             Create your workspace
             <ArrowRight size={17} aria-hidden="true" />
           </Link>
-          <Link className="orbit-button orbit-button--secondary" to="/login">Sign in</Link>
+          <Link className="orbit-button orbit-button--secondary" to="/login">
+            Sign in
+          </Link>
         </div>
         <div className="orbit-hero__proof" aria-label="Product highlights">
-          <span><Sparkles size={15} aria-hidden="true" />AI task assist</span>
-          <span><CalendarDays size={15} aria-hidden="true" />Calendar planning</span>
+          <span>
+            <Sparkles size={15} aria-hidden="true" />
+            AI task assist
+          </span>
+          <span>
+            <CalendarDays size={15} aria-hidden="true" />
+            Calendar planning
+          </span>
           <span>Completion tracking</span>
         </div>
       </div>

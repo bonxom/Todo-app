@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useRef } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Home,
   ArrowLeft,
@@ -13,50 +13,59 @@ import {
   Play,
   Pause,
   Sparkles,
-} from 'lucide-react';
+} from "lucide-react";
 
 const ERROR_CONFIGS = {
-  '404': {
-    badge: 'Lỗi 404',
-    title: 'Trang không tồn tại',
-    description: 'Đường dẫn bạn truy cập không tồn tại hoặc đã bị di chuyển. Vui lòng kiểm tra lại URL hoặc quay lại trang trước.',
+  404: {
+    badge: "Lỗi 404",
+    title: "Trang không tồn tại",
+    description:
+      "Đường dẫn bạn truy cập không tồn tại hoặc đã bị di chuyển. Vui lòng kiểm tra lại URL hoặc quay lại trang trước.",
     icon: FileQuestion,
-    accentColor: 'from-blue-500 to-cyan-500',
-    badgeColor: 'bg-blue-50 text-blue-600 border-blue-200',
+    accentColor: "from-blue-500 to-cyan-500",
+    badgeColor: "bg-blue-50 text-blue-600 border-blue-200",
   },
-  '403': {
-    badge: 'Lỗi 403',
-    title: 'Quyền truy cập bị từ chối',
-    description: 'Bạn không có quyền truy cập vào nội dung này. Vui lòng kiểm tra tài khoản hoặc quay lại trang trước.',
+  403: {
+    badge: "Lỗi 403",
+    title: "Quyền truy cập bị từ chối",
+    description:
+      "Bạn không có quyền truy cập vào nội dung này. Vui lòng kiểm tra tài khoản hoặc quay lại trang trước.",
     icon: Lock,
-    accentColor: 'from-amber-500 to-orange-500',
-    badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+    accentColor: "from-amber-500 to-orange-500",
+    badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
   },
-  '500': {
-    badge: 'Lỗi 500',
-    title: 'Lỗi máy chủ nội bộ',
-    description: 'Đã xảy ra sự cố từ phía máy chủ trong quá trình xử lý. Vui lòng thử lại sau hoặc quay về trang chủ.',
+  500: {
+    badge: "Lỗi 500",
+    title: "Lỗi máy chủ nội bộ",
+    description:
+      "Đã xảy ra sự cố từ phía máy chủ trong quá trình xử lý. Vui lòng thử lại sau hoặc quay về trang chủ.",
     icon: AlertTriangle,
-    accentColor: 'from-rose-500 to-red-600',
-    badgeColor: 'bg-rose-50 text-rose-600 border-rose-200',
+    accentColor: "from-rose-500 to-red-600",
+    badgeColor: "bg-rose-50 text-rose-600 border-rose-200",
   },
-  '503': {
-    badge: 'Lỗi 503',
-    title: 'Dịch vụ tạm thời không khả dụng',
-    description: 'Hệ thống đang được nâng cấp hoặc bảo trì định kỳ. Vui lòng quay lại sau ít phút.',
+  503: {
+    badge: "Lỗi 503",
+    title: "Dịch vụ tạm thời không khả dụng",
+    description:
+      "Hệ thống đang được nâng cấp hoặc bảo trì định kỳ. Vui lòng quay lại sau ít phút.",
     icon: ShieldAlert,
-    accentColor: 'from-purple-500 to-indigo-500',
-    badgeColor: 'bg-purple-50 text-purple-600 border-purple-200',
+    accentColor: "from-purple-500 to-indigo-500",
+    badgeColor: "bg-purple-50 text-purple-600 border-purple-200",
   },
 };
 
-const ErrorPage = ({ code = '404', title = '', description = '', onRetry = null }) => {
+const ErrorPage = ({
+  code = "404",
+  title = "",
+  description = "",
+  onRetry = null,
+}) => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
 
-  const config = ERROR_CONFIGS[code] || ERROR_CONFIGS['404'];
+  const config = ERROR_CONFIGS[code] || ERROR_CONFIGS["404"];
   const displayTitle = title || config.title;
   const displayDescription = description || config.description;
   const IconComponent = config.icon;
@@ -83,7 +92,7 @@ const ErrorPage = ({ code = '404', title = '', description = '', onRetry = null 
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate('/');
+      navigate("/");
     }
   };
 
@@ -95,12 +104,16 @@ const ErrorPage = ({ code = '404', title = '', description = '', onRetry = null 
 
       <main className="max-w-2xl w-full bg-[var(--color-surface)] border border-[var(--color-line)] rounded-[var(--radius-2xl)] shadow-lg overflow-hidden relative z-10">
         {/* Header Accent Line */}
-        <div className={`h-1.5 w-full bg-gradient-to-r ${config.accentColor}`} />
+        <div
+          className={`h-1.5 w-full bg-gradient-to-r ${config.accentColor}`}
+        />
 
         <div className="p-6 sm:p-10 flex flex-col items-center text-center">
           {/* Badge & Code */}
           <div className="flex items-center gap-2 mb-6">
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border ${config.badgeColor}`}>
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border ${config.badgeColor}`}
+            >
               <IconComponent className="w-3.5 h-3.5" />
               {config.badge}
             </span>
@@ -124,18 +137,26 @@ const ErrorPage = ({ code = '404', title = '', description = '', onRetry = null 
                 onClick={togglePlay}
                 type="button"
                 className="p-2.5 rounded-full bg-white/90 text-slate-800 hover:bg-white hover:scale-110 transition-all shadow-md"
-                title={isPlaying ? 'Tạm dừng video' : 'Phát video'}
+                title={isPlaying ? "Tạm dừng video" : "Phát video"}
               >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                {isPlaying ? (
+                  <Pause className="w-5 h-5" />
+                ) : (
+                  <Play className="w-5 h-5" />
+                )}
               </button>
 
               <button
                 onClick={toggleMute}
                 type="button"
                 className="p-2.5 rounded-full bg-white/90 text-slate-800 hover:bg-white hover:scale-110 transition-all shadow-md"
-                title={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+                title={isMuted ? "Bật âm thanh" : "Tắt âm thanh"}
               >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                {isMuted ? (
+                  <VolumeX className="w-5 h-5" />
+                ) : (
+                  <Volume2 className="w-5 h-5" />
+                )}
               </button>
             </div>
 
@@ -188,17 +209,42 @@ const ErrorPage = ({ code = '404', title = '', description = '', onRetry = null 
 
         {/* Quick Error Code Switcher Footer */}
         <div className="bg-[var(--color-surface-muted)] px-6 py-4 border-t border-[var(--color-line)] flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
-          <span>Mã lỗi: <strong className="font-semibold text-[var(--color-text)]">{code}</strong></span>
+          <span>
+            Mã lỗi:{" "}
+            <strong className="font-semibold text-[var(--color-text)]">
+              {code}
+            </strong>
+          </span>
 
           <div className="flex items-center gap-2">
             <span>Xem thử trang lỗi khác:</span>
-            <Link to="/404" className="hover:text-[var(--color-accent)] hover:underline font-medium">404</Link>
+            <Link
+              to="/404"
+              className="hover:text-[var(--color-accent)] hover:underline font-medium"
+            >
+              404
+            </Link>
             <span>•</span>
-            <Link to="/403" className="hover:text-[var(--color-accent)] hover:underline font-medium">403</Link>
+            <Link
+              to="/403"
+              className="hover:text-[var(--color-accent)] hover:underline font-medium"
+            >
+              403
+            </Link>
             <span>•</span>
-            <Link to="/500" className="hover:text-[var(--color-accent)] hover:underline font-medium">500</Link>
+            <Link
+              to="/500"
+              className="hover:text-[var(--color-accent)] hover:underline font-medium"
+            >
+              500
+            </Link>
             <span>•</span>
-            <Link to="/503" className="hover:text-[var(--color-accent)] hover:underline font-medium">503</Link>
+            <Link
+              to="/503"
+              className="hover:text-[var(--color-accent)] hover:underline font-medium"
+            >
+              503
+            </Link>
           </div>
         </div>
       </main>

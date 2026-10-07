@@ -1,38 +1,42 @@
 const birthdayFormatter = new Intl.DateTimeFormat(undefined, {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric',
+  year: "numeric",
+  month: "short",
+  day: "numeric",
 });
 
 const memberSinceFormatter = new Intl.DateTimeFormat(undefined, {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric',
-  hour: 'numeric',
-  minute: '2-digit',
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
 });
 
 const formatDateOnly = (value) => {
   if (!value) {
-    return 'Not set';
+    return "Not set";
   }
 
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Not set' : birthdayFormatter.format(date);
+  return Number.isNaN(date.getTime())
+    ? "Not set"
+    : birthdayFormatter.format(date);
 };
 
 const formatDateTime = (value) => {
   if (!value) {
-    return 'Not available';
+    return "Not available";
   }
 
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Not available' : memberSinceFormatter.format(date);
+  return Number.isNaN(date.getTime())
+    ? "Not available"
+    : memberSinceFormatter.format(date);
 };
 
 const formatRoleLabel = (value) => {
   if (!value) {
-    return 'User';
+    return "User";
   }
 
   return value
@@ -40,29 +44,29 @@ const formatRoleLabel = (value) => {
     .split(/[_-\s]+/)
     .filter(Boolean)
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ');
+    .join(" ");
 };
 
 const ProfileInfo = ({ user }) => {
   const fields = [
     {
-      label: 'Full Name',
-      value: user?.name || 'Not set',
+      label: "Full Name",
+      value: user?.name || "Not set",
     },
     {
-      label: 'Email',
-      value: user?.email || 'Not set',
+      label: "Email",
+      value: user?.email || "Not set",
     },
     {
-      label: 'Role',
+      label: "Role",
       value: formatRoleLabel(user?.role),
     },
     {
-      label: 'Birthday',
+      label: "Birthday",
       value: formatDateOnly(user?.dob),
     },
     {
-      label: 'Member Since',
+      label: "Member Since",
       value: formatDateTime(user?.createdAt),
     },
   ];

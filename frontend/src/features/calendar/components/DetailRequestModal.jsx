@@ -1,28 +1,33 @@
-import { useState } from 'react';
-import { X, Sparkles } from 'lucide-react';
-import { useGenerateTasksMutation } from '@/features/tasks/api/aiMutations';
-import { formatDateTime } from '@/shared/utils/dateTime';
+import { useState } from "react";
+import { X, Sparkles } from "lucide-react";
+import { useGenerateTasksMutation } from "@/features/tasks/api/aiMutations";
+import { formatDateTime } from "@/shared/utils/dateTime";
 
-const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated }) => {
-  const [userInput, setUserInput] = useState('');
+const DetailRequestModal = ({
+  isOpen,
+  onClose,
+  selectedDate,
+  onTasksGenerated,
+}) => {
+  const [userInput, setUserInput] = useState("");
   const [selectedTopics, setSelectedTopics] = useState([]);
   const generateTasksMutation = useGenerateTasksMutation();
   const isLoading = generateTasksMutation.isPending;
 
   const topics = [
-    'Cooking',
-    'Work-out',
-    'Game',
-    'Learning',
-    'Coding',
-    'Reading',
-    'Shopping',
-    'Meeting',
+    "Cooking",
+    "Work-out",
+    "Game",
+    "Learning",
+    "Coding",
+    "Reading",
+    "Shopping",
+    "Meeting",
   ];
 
   const toggleTopic = (topic) => {
     if (selectedTopics.includes(topic)) {
-      setSelectedTopics(selectedTopics.filter(t => t !== topic));
+      setSelectedTopics(selectedTopics.filter((t) => t !== topic));
     } else {
       setSelectedTopics([...selectedTopics, topic]);
     }
@@ -30,40 +35,46 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!userInput.trim() && selectedTopics.length === 0) {
-      alert('Please enter your request or select at least one topic');
+      alert("Please enter your request or select at least one topic");
       return;
     }
 
     // Format date
-    const dateStr = selectedDate ? formatDateTime(selectedDate) : 'today';
+    const dateStr = selectedDate ? formatDateTime(selectedDate) : "today";
 
     // Build request string
     let requestString = `In date ${dateStr}, I want: ${userInput.trim()}`;
     if (selectedTopics.length > 0) {
-      requestString += `, ${selectedTopics.join(', ')}`;
+      requestString += `, ${selectedTopics.join(", ")}`;
     }
 
     try {
-      const response = await generateTasksMutation.mutateAsync({ userRequirement: requestString });
-      
+      const response = await generateTasksMutation.mutateAsync({
+        userRequirement: requestString,
+      });
+
       if (response.success && response.data) {
         if (onTasksGenerated) {
           onTasksGenerated();
         }
-        
-        setUserInput('');
+
+        setUserInput("");
         setSelectedTopics([]);
         onClose();
-        
-        alert(`Successfully generated ${response.data.length} tasks! Check your tasks list.`);
+
+        alert(
+          `Successfully generated ${response.data.length} tasks! Check your tasks list.`,
+        );
       } else {
-        alert('Sorry, I couldn\'t generate tasks. Please try again with a different description.');
+        alert(
+          "Sorry, I couldn't generate tasks. Please try again with a different description.",
+        );
       }
     } catch (error) {
-      console.error('Error generating tasks:', error);
-      alert('Failed to generate tasks. Please try again.');
+      console.error("Error generating tasks:", error);
+      alert("Failed to generate tasks. Please try again.");
     }
   };
 
@@ -78,8 +89,12 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
               <Sparkles className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-[var(--color-text)]">Generate Tasks</h2>
-              <p className="text-sm text-[var(--color-text-muted)]">Create a short task list for the selected day.</p>
+              <h2 className="text-xl font-semibold text-[var(--color-text)]">
+                Generate Tasks
+              </h2>
+              <p className="text-sm text-[var(--color-text-muted)]">
+                Create a short task list for the selected day.
+              </p>
             </div>
           </div>
           <button
@@ -97,18 +112,20 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--color-surface)] opacity-95">
             <div className="flex flex-col items-center gap-3">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--color-accent-soft)] border-t-[var(--color-accent)]" />
-              <p className="font-medium text-[var(--color-text-muted)]">Generating tasks…</p>
+              <p className="font-medium text-[var(--color-text-muted)]">
+                Generating tasks…
+              </p>
             </div>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="ui-modal-body space-y-5">
           <div className="rounded-[14px] border border-[var(--color-line)] bg-[var(--color-surface-muted)] p-3 text-center">
-            <p className="text-sm text-[var(--color-text-muted)]">Generating tasks for</p>
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Generating tasks for
+            </p>
             <p className="text-lg font-semibold text-[var(--color-text)]">
-              {selectedDate 
-                ? formatDateTime(selectedDate)
-                : 'Today'}
+              {selectedDate ? formatDateTime(selectedDate) : "Today"}
             </p>
           </div>
 
@@ -124,8 +141,8 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
                   onClick={() => toggleTopic(topic)}
                   className={`rounded-full border px-4 py-2 text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ${
                     selectedTopics.includes(topic)
-                      ? 'border-transparent bg-[var(--color-accent)] text-[var(--color-on-status,#fff)] shadow-[var(--shadow-xs)]'
-                      : 'border-[var(--color-line)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]'
+                      ? "border-transparent bg-[var(--color-accent)] text-[var(--color-on-status,#fff)] shadow-[var(--shadow-xs)]"
+                      : "border-[var(--color-line)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
                   }`}
                 >
                   {topic}
@@ -135,7 +152,10 @@ const DetailRequestModal = ({ isOpen, onClose, selectedDate, onTasksGenerated })
           </div>
 
           <div>
-            <label htmlFor="calendar-task-request" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+            <label
+              htmlFor="calendar-task-request"
+              className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+            >
               What do you want to accomplish?
             </label>
             <textarea

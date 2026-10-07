@@ -1,25 +1,28 @@
-import { CheckSquare, LayoutDashboard, PlusCircle } from 'lucide-react';
+import { CheckSquare, LayoutDashboard, PlusCircle } from "lucide-react";
 
 const HowItWorks = () => {
   const steps = [
     {
-      number: '01',
+      number: "01",
       Icon: LayoutDashboard,
-      title: 'Open Your Workspace',
-      description: 'Create an account and land in the same dashboard used for everyday planning.'
+      title: "Open Your Workspace",
+      description:
+        "Create an account and land in the same dashboard used for everyday planning.",
     },
     {
-      number: '02',
+      number: "02",
       Icon: PlusCircle,
-      title: 'Capture the Work',
-      description: 'Add tasks with projects, categories, dates, and the details you need later.'
+      title: "Capture the Work",
+      description:
+        "Add tasks with projects, categories, dates, and the details you need later.",
     },
     {
-      number: '03',
+      number: "03",
       Icon: CheckSquare,
-      title: 'Review Progress',
-      description: 'Use calendar and statistics views to keep your next actions honest.'
-    }
+      title: "Review Progress",
+      description:
+        "Use calendar and statistics views to keep your next actions honest.",
+    },
   ];
 
   return (
@@ -28,7 +31,9 @@ const HowItWorks = () => {
         <header className="landing-section-header">
           <p className="ui-page-kicker">Workflow</p>
           <h2 className="how-it-works-title">How It Works</h2>
-          <p className="how-it-works-subtitle">A short path from account setup to a working task system.</p>
+          <p className="how-it-works-subtitle">
+            A short path from account setup to a working task system.
+          </p>
         </header>
         <div className="steps-container">
           {steps.map((step) => {

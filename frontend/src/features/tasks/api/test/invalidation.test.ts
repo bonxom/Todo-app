@@ -5,7 +5,10 @@ import { projectKeys } from "../projectKeys";
 import { categoryKeys } from "@/features/categories/api/categoryKeys";
 import { statKeys } from "@/features/statistics/api/statKeys";
 import { userKeys } from "@/features/profile/api/userKeys";
-import { invalidateTaskDependents, invalidateWorkspaceQueries } from "../invalidation";
+import {
+  invalidateTaskDependents,
+  invalidateWorkspaceQueries,
+} from "../invalidation";
 
 describe("invalidation helpers", () => {
   it("invalidates task dependents without invalidating current user", async () => {
@@ -19,8 +22,12 @@ describe("invalidation helpers", () => {
     await invalidateTaskDependents(client);
 
     // Tasks, projects, stats should be invalidated (state.isInvalidated === true)
-    const taskQuery = client.getQueryCache().find({ queryKey: taskKeys.list({}) });
-    const userQuery = client.getQueryCache().find({ queryKey: userKeys.current() });
+    const taskQuery = client
+      .getQueryCache()
+      .find({ queryKey: taskKeys.list({}) });
+    const userQuery = client
+      .getQueryCache()
+      .find({ queryKey: userKeys.current() });
 
     expect(taskQuery?.state.isInvalidated).toBe(true);
     expect(userQuery?.state.isInvalidated).toBe(false);
@@ -33,8 +40,12 @@ describe("invalidation helpers", () => {
 
     await invalidateWorkspaceQueries(client);
 
-    const taskQuery = client.getQueryCache().find({ queryKey: taskKeys.list({}) });
-    const catQuery = client.getQueryCache().find({ queryKey: categoryKeys.list() });
+    const taskQuery = client
+      .getQueryCache()
+      .find({ queryKey: taskKeys.list({}) });
+    const catQuery = client
+      .getQueryCache()
+      .find({ queryKey: categoryKeys.list() });
 
     expect(taskQuery?.state.isInvalidated).toBe(true);
     expect(catQuery?.state.isInvalidated).toBe(true);

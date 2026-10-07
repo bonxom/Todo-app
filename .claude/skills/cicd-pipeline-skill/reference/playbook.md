@@ -3,6 +3,7 @@
 ## §1 GitHub Actions — Production Workflows
 
 ### Complete Multi-Stage Pipeline
+
 ```yaml
 name: CI/CD Pipeline
 on:
@@ -16,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: "20"
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
@@ -26,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '${{ env.NODE_VERSION }}' }
+        with: { node-version: "${{ env.NODE_VERSION }}" }
       - run: npm ci
       - run: npm run lint
       - run: npm run type-check
@@ -43,7 +44,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       - run: npm test -- --coverage --shard=${{ matrix.shard }}/3
       - uses: actions/upload-artifact@v4
@@ -61,16 +62,16 @@ jobs:
       db:
         image: postgres:16
         env: { POSTGRES_PASSWORD: test, POSTGRES_DB: testdb }
-        ports: ['5432:5432']
+        ports: ["5432:5432"]
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       redis:
         image: redis:7
-        ports: ['6379:6379']
+        ports: ["6379:6379"]
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '${{ env.NODE_VERSION }}', cache: 'npm' }
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: "npm" }
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Run E2E
@@ -148,6 +149,7 @@ jobs:
 ## §2 Caching & Optimization
 
 ### Dependency Caching
+
 ```yaml
 # Node.js
 - uses: actions/setup-node@v4
@@ -173,6 +175,7 @@ jobs:
 ```
 
 ### Playwright Browser Caching
+
 ```yaml
 - name: Cache Playwright browsers
   uses: actions/cache@v4
@@ -183,6 +186,7 @@ jobs:
 ```
 
 ### Docker Layer Caching
+
 ```yaml
 - uses: docker/build-push-action@v5
   with:
@@ -360,6 +364,7 @@ pipeline {
 ## §5 Quality Gates & Checks
 
 ### Branch Protection Rules
+
 ```yaml
 # Required checks before merge:
 # - lint
@@ -381,6 +386,7 @@ pipeline {
 ```
 
 ### Coverage Threshold Enforcement
+
 ```yaml
 # In CI job:
 - name: Check coverage threshold
@@ -394,6 +400,7 @@ pipeline {
 ```
 
 ### PR Comment with Results
+
 ```yaml
 - uses: marocchino/sticky-pull-request-comment@v2
   if: github.event_name == 'pull_request'
@@ -439,7 +446,7 @@ deploy:
 
 ```yaml
 # docker-compose.test.yml
-version: '3.8'
+version: "3.8"
 services:
   app:
     build: .
@@ -485,6 +492,7 @@ docker compose -f docker-compose.test.yml run --rm playwright
 ## §8 Notification & Reporting
 
 ### Slack Notifications
+
 ```yaml
 - name: Notify Slack on failure
   if: failure()
@@ -508,6 +516,7 @@ docker compose -f docker-compose.test.yml run --rm playwright
 ```
 
 ### Test Report Publishing
+
 ```yaml
 - name: Publish Test Report
   uses: dorny/test-reporter@v1
@@ -523,18 +532,18 @@ docker compose -f docker-compose.test.yml run --rm playwright
 
 ## §9 Debugging Table
 
-| # | Problem | Cause | Fix |
-|---|---------|-------|-----|
-| 1 | Cache not restoring | Key mismatch after lockfile change | Verify `hashFiles()` targets correct lockfile path |
-| 2 | Service container not reachable | Wrong hostname | Use `localhost` in GitHub Actions; service alias in GitLab CI |
-| 3 | E2E tests timeout in CI | Slower CI runners | Increase timeouts; use `ubuntu-latest-4-cores` for larger runner |
-| 4 | Artifacts not uploading | Path doesn't exist | Use `if: always()` and verify path; check for directory creation |
-| 5 | Secrets showing in logs | Echoing secret in `run` | Never echo secrets; GitHub auto-masks `${{ secrets.* }}` |
-| 6 | Parallel jobs interfere | Shared database without isolation | Use unique DB per job; or serialize with `needs:` |
-| 7 | Docker build slow | No layer caching | Use `cache-from: type=gha` with `docker/build-push-action` |
-| 8 | `concurrency` cancels needed runs | Wrong group key | Use `${{ github.workflow }}-${{ github.ref }}` for branch-level grouping |
-| 9 | Coverage report not merging | Different artifact names | Use consistent naming; merge with `download-artifact` + `merge-multiple` |
-| 10 | Deploy runs on PRs | Missing `if` condition | Add `if: github.ref == 'refs/heads/main' && github.event_name == 'push'` |
+| #   | Problem                           | Cause                              | Fix                                                                      |
+| --- | --------------------------------- | ---------------------------------- | ------------------------------------------------------------------------ |
+| 1   | Cache not restoring               | Key mismatch after lockfile change | Verify `hashFiles()` targets correct lockfile path                       |
+| 2   | Service container not reachable   | Wrong hostname                     | Use `localhost` in GitHub Actions; service alias in GitLab CI            |
+| 3   | E2E tests timeout in CI           | Slower CI runners                  | Increase timeouts; use `ubuntu-latest-4-cores` for larger runner         |
+| 4   | Artifacts not uploading           | Path doesn't exist                 | Use `if: always()` and verify path; check for directory creation         |
+| 5   | Secrets showing in logs           | Echoing secret in `run`            | Never echo secrets; GitHub auto-masks `${{ secrets.* }}`                 |
+| 6   | Parallel jobs interfere           | Shared database without isolation  | Use unique DB per job; or serialize with `needs:`                        |
+| 7   | Docker build slow                 | No layer caching                   | Use `cache-from: type=gha` with `docker/build-push-action`               |
+| 8   | `concurrency` cancels needed runs | Wrong group key                    | Use `${{ github.workflow }}-${{ github.ref }}` for branch-level grouping |
+| 9   | Coverage report not merging       | Different artifact names           | Use consistent naming; merge with `download-artifact` + `merge-multiple` |
+| 10  | Deploy runs on PRs                | Missing `if` condition             | Add `if: github.ref == 'refs/heads/main' && github.event_name == 'push'` |
 
 ---
 

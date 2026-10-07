@@ -1,12 +1,16 @@
-import mongoose from 'mongoose';
-import Stat from '../models/Stat.js';
-import { statRepository } from '../repositories/statRepository.js';
-import { DATE_KEY_PATTERN } from '../constants/datePatterns.js';
-import { AppError } from '../error/AppError.js';
-import { COMMON_ERROR } from '../error/definitions/commonErrors.js';
-import { IStatDocument, IDailyCategoryStat, IDailyStat } from '../types/IStat.js';
-import { ITaskDocument } from '../types/ITask.js';
-import { IUserDocument } from '../types/IUser.js';
+import mongoose from "mongoose";
+import Stat from "../models/Stat.js";
+import { statRepository } from "../repositories/statRepository.js";
+import { DATE_KEY_PATTERN } from "../constants/datePatterns.js";
+import { AppError } from "../error/AppError.js";
+import { COMMON_ERROR } from "../error/definitions/commonErrors.js";
+import {
+  IStatDocument,
+  IDailyCategoryStat,
+  IDailyStat,
+} from "../types/IStat.js";
+import { ITaskDocument } from "../types/ITask.js";
+import { IUserDocument } from "../types/IUser.js";
 
 interface CategoryCount {
   categoryId: mongoose.Types.ObjectId | null;
@@ -47,13 +51,13 @@ const toDateKey = (value: unknown): string | null => {
   if (Number.isNaN(date.getTime())) return null;
   return [
     date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0'),
-  ].join('-');
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 };
 
 const ensureStat = async (
-  userId: mongoose.Types.ObjectId | string
+  userId: mongoose.Types.ObjectId | string,
 ): Promise<IStatDocument> => {
   let stats = await statRepository.findByUser(userId);
   if (!stats) {
@@ -65,10 +69,10 @@ const ensureStat = async (
 
 const getTodayDailyStat = (stats: IStatDocument): IDailyStat => {
   const today = new Date();
-  const dateStr = today.toISOString().split('T')[0];
+  const dateStr = today.toISOString().split("T")[0];
 
   let dailyStat = stats.dailyStats.find(
-    (ds) => ds.date.toISOString().split('T')[0] === dateStr
+    (ds) => ds.date.toISOString().split("T")[0] === dateStr,
   );
 
   if (!dailyStat) {
@@ -88,12 +92,12 @@ const getTodayDailyStat = (stats: IStatDocument): IDailyStat => {
 const incrementCategoryCount = (
   collection: IDailyCategoryStat[],
   categoryId: mongoose.Types.ObjectId | null,
-  categoryName: string
+  categoryName: string,
 ): void => {
   if (!categoryId) return;
 
   const existing = collection.find(
-    (c) => c.categoryId.toString() === categoryId.toString()
+    (c) => c.categoryId.toString() === categoryId.toString(),
   );
 
   if (existing) {
@@ -105,10 +109,10 @@ const incrementCategoryCount = (
 
 const decrementCategoryCount = (
   collection: IDailyCategoryStat[],
-  categoryId: mongoose.Types.ObjectId
+  categoryId: mongoose.Types.ObjectId,
 ): void => {
   const existing = collection.find(
-    (c) => c.categoryId.toString() === categoryId.toString()
+    (c) => c.categoryId.toString() === categoryId.toString(),
   );
 
   if (existing) {
@@ -117,12 +121,13 @@ const decrementCategoryCount = (
 };
 
 const getCategoryStatPayload = (
-  task: ITaskDocument
+  task: ITaskDocument,
 ): { categoryId: mongoose.Types.ObjectId | null; categoryName: string } => {
   const cat = task.categoryId as unknown as PopulatedCategory | null;
   return {
-    categoryId: cat?._id || (task.categoryId as mongoose.Types.ObjectId | null) || null,
-    categoryName: cat?.name || 'Uncategorized',
+    categoryId:
+      cat?._id || (task.categoryId as mongoose.Types.ObjectId | null) || null,
+    categoryName: cat?.name || "Uncategorized",
   };
 };
 
@@ -130,13 +135,15 @@ const getTaskCompletionDate = (task: ITaskDocument): Date =>
   task.completedAt || task.updatedAt || task.createdAt;
 
 const getEntityPayload = (
-  entity: PopulatedProject | PopulatedCategory | null
+  entity: PopulatedProject | PopulatedCategory | null,
 ): EntityPayload | null => {
   if (!entity) return null;
   return { _id: entity._id, name: entity.name };
 };
 
-const serializeCompletedTask = (task: ITaskDocument): SerializedCompletedTask => ({
+const serializeCompletedTask = (
+  task: ITaskDocument,
+): SerializedCompletedTask => ({
   _id: task._id,
   title: task.title,
   description: task.description,
@@ -145,8 +152,12 @@ const serializeCompletedTask = (task: ITaskDocument): SerializedCompletedTask =>
   dueDate: task.dueDate || null,
   priority: task.priority,
   status: task.status,
-  project: getEntityPayload(task.projectId as unknown as PopulatedProject | null),
-  category: getEntityPayload(task.categoryId as unknown as PopulatedCategory | null),
+  project: getEntityPayload(
+    task.projectId as unknown as PopulatedProject | null,
+  ),
+  category: getEntityPayload(
+    task.categoryId as unknown as PopulatedCategory | null,
+  ),
 });
 
 async function rebuildStats(user: IUserDocument): Promise<IStatDocument> {
@@ -158,10 +169,12 @@ async function rebuildStats(user: IUserDocument): Promise<IStatDocument> {
   }
 
   stats.totalTasks = tasks.length;
-  stats.pendingTasks = tasks.filter((t) => t.status === 'pending').length;
-  stats.inProgressTasks = tasks.filter((t) => t.status === 'in-progress').length;
-  stats.completedTasks = tasks.filter((t) => t.status === 'completed').length;
-  stats.givenUpTasks = tasks.filter((t) => t.status === 'given-up').length;
+  stats.pendingTasks = tasks.filter((t) => t.status === "pending").length;
+  stats.inProgressTasks = tasks.filter(
+    (t) => t.status === "in-progress",
+  ).length;
+  stats.completedTasks = tasks.filter((t) => t.status === "completed").length;
+  stats.givenUpTasks = tasks.filter((t) => t.status === "given-up").length;
 
   const dailyStatsMap = new Map<string, IDailyStat>();
 
@@ -179,29 +192,39 @@ async function rebuildStats(user: IUserDocument): Promise<IStatDocument> {
   };
 
   tasks.forEach((task) => {
-    if (task.status === 'completed') {
-      const dateKey = toDateKey(task.completedAt || task.updatedAt || task.createdAt);
+    if (task.status === "completed") {
+      const dateKey = toDateKey(
+        task.completedAt || task.updatedAt || task.createdAt,
+      );
       if (dateKey) {
         const ds = ensureDaily(dateKey);
         ds.completedTasks += 1;
         const { categoryId, categoryName } = getCategoryStatPayload(task);
-        incrementCategoryCount(ds.completedOfEachCategory, categoryId, categoryName);
+        incrementCategoryCount(
+          ds.completedOfEachCategory,
+          categoryId,
+          categoryName,
+        );
       }
     }
 
-    if (task.status === 'given-up') {
+    if (task.status === "given-up") {
       const dateKey = toDateKey(task.updatedAt || task.createdAt);
       if (dateKey) {
         const ds = ensureDaily(dateKey);
         ds.givenUpTasks += 1;
         const { categoryId, categoryName } = getCategoryStatPayload(task);
-        incrementCategoryCount(ds.givenUpOfEachCategory, categoryId, categoryName);
+        incrementCategoryCount(
+          ds.givenUpOfEachCategory,
+          categoryId,
+          categoryName,
+        );
       }
     }
   });
 
   stats.dailyStats = Array.from(dailyStatsMap.values()).sort(
-    (a, b) => a.date.getTime() - b.date.getTime()
+    (a, b) => a.date.getTime() - b.date.getTime(),
   );
 
   await stats.save();
@@ -209,7 +232,7 @@ async function rebuildStats(user: IUserDocument): Promise<IStatDocument> {
 }
 
 const incrementInProgress = async (
-  userId: mongoose.Types.ObjectId | string
+  userId: mongoose.Types.ObjectId | string,
 ): Promise<void> => {
   const stats = await ensureStat(userId);
   stats.totalTasks += 1;
@@ -220,7 +243,7 @@ const incrementInProgress = async (
 const incrementCompleted = async (
   userId: mongoose.Types.ObjectId | string,
   categoryId: mongoose.Types.ObjectId,
-  categoryName: string
+  categoryName: string,
 ): Promise<void> => {
   const stats = await ensureStat(userId);
   stats.completedTasks += 1;
@@ -228,7 +251,11 @@ const incrementCompleted = async (
 
   const dailyStat = getTodayDailyStat(stats);
   dailyStat.completedTasks += 1;
-  incrementCategoryCount(dailyStat.completedOfEachCategory, categoryId, categoryName);
+  incrementCategoryCount(
+    dailyStat.completedOfEachCategory,
+    categoryId,
+    categoryName,
+  );
 
   await stats.save();
 };
@@ -236,7 +263,7 @@ const incrementCompleted = async (
 const incrementGivenUp = async (
   userId: mongoose.Types.ObjectId | string,
   categoryId: mongoose.Types.ObjectId,
-  categoryName: string
+  categoryName: string,
 ): Promise<void> => {
   const stats = await ensureStat(userId);
   stats.givenUpTasks += 1;
@@ -244,13 +271,17 @@ const incrementGivenUp = async (
 
   const dailyStat = getTodayDailyStat(stats);
   dailyStat.givenUpTasks += 1;
-  incrementCategoryCount(dailyStat.givenUpOfEachCategory, categoryId, categoryName);
+  incrementCategoryCount(
+    dailyStat.givenUpOfEachCategory,
+    categoryId,
+    categoryName,
+  );
 
   await stats.save();
 };
 
 const incrementStart = async (
-  userId: mongoose.Types.ObjectId | string
+  userId: mongoose.Types.ObjectId | string,
 ): Promise<void> => {
   const stats = await ensureStat(userId);
   stats.inProgressTasks += 1;
@@ -259,7 +290,7 @@ const incrementStart = async (
 };
 
 const incrementPending = async (
-  userId: mongoose.Types.ObjectId | string
+  userId: mongoose.Types.ObjectId | string,
 ): Promise<void> => {
   const stats = await ensureStat(userId);
   stats.totalTasks += 1;
@@ -268,7 +299,7 @@ const incrementPending = async (
 };
 
 const incrementRawInProgress = async (
-  userId: mongoose.Types.ObjectId | string
+  userId: mongoose.Types.ObjectId | string,
 ): Promise<void> => {
   const stats = await ensureStat(userId);
   stats.inProgressTasks += 1;
@@ -276,7 +307,7 @@ const incrementRawInProgress = async (
 };
 
 const incrementFinish = async (
-  userId: mongoose.Types.ObjectId | string
+  userId: mongoose.Types.ObjectId | string,
 ): Promise<void> => {
   const stats = await ensureStat(userId);
   stats.completedTasks += 1;
@@ -285,7 +316,7 @@ const incrementFinish = async (
 };
 
 const incrementGiveUp = async (
-  userId: mongoose.Types.ObjectId | string
+  userId: mongoose.Types.ObjectId | string,
 ): Promise<void> => {
   const stats = await ensureStat(userId);
   stats.givenUpTasks += 1;
@@ -295,7 +326,7 @@ const incrementGiveUp = async (
 
 const decrementCompleted = async (
   userId: mongoose.Types.ObjectId | string,
-  categoryId: mongoose.Types.ObjectId
+  categoryId: mongoose.Types.ObjectId,
 ): Promise<void> => {
   const stats = await statRepository.findByUser(userId);
   if (!stats) return;
@@ -303,9 +334,9 @@ const decrementCompleted = async (
   stats.completedTasks = Math.max(0, stats.completedTasks - 1);
 
   const today = new Date();
-  const dateStr = today.toISOString().split('T')[0];
+  const dateStr = today.toISOString().split("T")[0];
   const dailyStat = stats.dailyStats.find(
-    (ds) => ds.date.toISOString().split('T')[0] === dateStr
+    (ds) => ds.date.toISOString().split("T")[0] === dateStr,
   );
 
   if (dailyStat) {
@@ -318,7 +349,7 @@ const decrementCompleted = async (
 
 const decrementGivenUp = async (
   userId: mongoose.Types.ObjectId | string,
-  categoryId: mongoose.Types.ObjectId
+  categoryId: mongoose.Types.ObjectId,
 ): Promise<void> => {
   const stats = await statRepository.findByUser(userId);
   if (!stats) return;
@@ -326,9 +357,9 @@ const decrementGivenUp = async (
   stats.givenUpTasks = Math.max(0, stats.givenUpTasks - 1);
 
   const today = new Date();
-  const dateStr = today.toISOString().split('T')[0];
+  const dateStr = today.toISOString().split("T")[0];
   const dailyStat = stats.dailyStats.find(
-    (ds) => ds.date.toISOString().split('T')[0] === dateStr
+    (ds) => ds.date.toISOString().split("T")[0] === dateStr,
   );
 
   if (dailyStat) {
@@ -344,21 +375,23 @@ export const statService = {
 
   async getCompletedTasksByDate(
     user: IUserDocument,
-    date: string
+    date: string,
   ): Promise<SerializedCompletedTask[]> {
-    if (!DATE_KEY_PATTERN.test(date || '')) {
+    if (!DATE_KEY_PATTERN.test(date || "")) {
       throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
     }
 
     const tasks = await statRepository.getTasksByUser(user);
     return tasks
       .filter(
-        (task) => task.status === 'completed' && toDateKey(getTaskCompletionDate(task)) === date
+        (task) =>
+          task.status === "completed" &&
+          toDateKey(getTaskCompletionDate(task)) === date,
       )
       .sort(
         (a, b) =>
           new Date(getTaskCompletionDate(a)).getTime() -
-          new Date(getTaskCompletionDate(b)).getTime()
+          new Date(getTaskCompletionDate(b)).getTime(),
       )
       .map(serializeCompletedTask);
   },

@@ -1,4 +1,5 @@
-import TodoTaskCard from './TodoTaskCard';
+import TodoTaskCard from "./TodoTaskCard";
+import { ListTodo, Plus, Search } from "lucide-react";
 
 const TaskList = ({
   tasks,
@@ -12,12 +13,16 @@ const TaskList = ({
   onEdit,
   onDelete,
   onClearFilters,
+  onAddTask,
 }) => {
   if (isLoading) {
     return (
       <div className="space-y-3" aria-live="polite" aria-label="Loading tasks">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="h-24 animate-pulse ui-section-card rounded-[14px]" />
+          <div
+            key={index}
+            className="h-24 animate-pulse ui-section-card rounded-[14px]"
+          />
         ))}
       </div>
     );
@@ -25,13 +30,30 @@ const TaskList = ({
 
   if (!tasks || tasks.length === 0) {
     return (
-      <div className="ui-section-card border-dashed px-6 py-12 text-center">
+      <div className="todo-empty-state">
+        <span className="todo-empty-icon">
+          {emptyState?.isFiltered ? (
+            <Search size={28} />
+          ) : (
+            <ListTodo size={28} />
+          )}
+        </span>
         <p className="text-base font-semibold text-[var(--color-text)]">
-          {emptyState?.title || 'No tasks found'}
+          {emptyState?.title || "No tasks found"}
         </p>
         <p className="mt-2 text-sm text-[var(--color-text-muted)] max-w-md mx-auto">
-          {emptyState?.description || 'Add a new task to get started.'}
+          {emptyState?.description || "Add a new task to get started."}
         </p>
+        {!emptyState?.isFiltered && onAddTask && (
+          <button
+            type="button"
+            className="ui-btn-primary mt-5"
+            onClick={onAddTask}
+          >
+            <Plus size={16} />
+            Add your first task
+          </button>
+        )}
         {emptyState?.isFiltered && onClearFilters && (
           <button
             type="button"
@@ -46,7 +68,7 @@ const TaskList = ({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="todo-task-list">
       {tasks.map((task) => (
         <TodoTaskCard
           key={task._id || task.id}

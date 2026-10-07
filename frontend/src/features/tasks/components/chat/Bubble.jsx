@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { BotMessageSquare } from 'lucide-react';
+import { useRef } from "react";
+import { BotMessageSquare } from "lucide-react";
 
 const Bubble = ({ onClick, hasUnread = false }) => {
   const hoverVideoRef = useRef(null);

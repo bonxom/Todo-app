@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, type ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '../stores/useAuthStore';
-import { userKeys } from '../features/profile/api/userKeys';
-import { authService } from '../shared/services/authService';
-import { ApiError } from '../shared/services/apiError';
+import React, { useEffect, useRef, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "../stores/useAuthStore";
+import { userKeys } from "../features/profile/api/userKeys";
+import { authService } from "../shared/services/authService";
+import { ApiError } from "../shared/services/apiError";
 
 export interface AuthBootstrapProps {
   children: ReactNode;
@@ -23,7 +23,9 @@ export const AuthBootstrap: React.FC<AuthBootstrapProps> = ({ children }) => {
     queryFn: () => authService.getMe(),
     enabled: Boolean(token),
     retry: (failureCount, error) =>
-      error instanceof ApiError && ![401, 403].includes(error.status ?? 0) && failureCount < 1,
+      error instanceof ApiError &&
+      ![401, 403].includes(error.status ?? 0) &&
+      failureCount < 1,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -42,7 +44,10 @@ export const AuthBootstrap: React.FC<AuthBootstrapProps> = ({ children }) => {
       }
     } else if (userQuery.isError) {
       const error = userQuery.error;
-      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+      if (
+        error instanceof ApiError &&
+        (error.status === 401 || error.status === 403)
+      ) {
         clearSession();
       }
       if (!isAuthReady) {

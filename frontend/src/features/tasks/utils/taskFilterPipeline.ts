@@ -1,6 +1,6 @@
-import type { Task } from '@/shared/types/domain';
+import type { Task } from "@/shared/types/domain";
 
-export type TaskSortOption = 'dueDate' | 'priority' | 'title';
+export type TaskSortOption = "dueDate" | "priority" | "title";
 
 export interface TaskFilterParams {
   tasks: Task[];
@@ -21,10 +21,10 @@ const PRIORITY_ORDER: Record<string, number> = {
 
 export function filterAndSortTasks({
   tasks,
-  searchTerm = '',
+  searchTerm = "",
   selectedStatuses = [],
-  selectedProjectId = 'all-projects',
-  sortBy = 'dueDate',
+  selectedProjectId = "all-projects",
+  sortBy = "dueDate",
 }: TaskFilterParams): Task[] {
   if (!Array.isArray(tasks)) return [];
 
@@ -33,8 +33,8 @@ export function filterAndSortTasks({
   const filtered = tasks.filter((task) => {
     // 1. Search filter
     if (query) {
-      const titleMatch = (task.title || '').toLowerCase().includes(query);
-      const descMatch = (task.description || '').toLowerCase().includes(query);
+      const titleMatch = (task.title || "").toLowerCase().includes(query);
+      const descMatch = (task.description || "").toLowerCase().includes(query);
       if (!titleMatch && !descMatch) return false;
     }
 
@@ -44,10 +44,13 @@ export function filterAndSortTasks({
     }
 
     // 3. Project filter
-    const taskProjectId = (typeof task.projectId === 'object' && task.projectId !== null) ? task.projectId._id : task.projectId || null;
-    if (selectedProjectId === 'standalone-projects') {
+    const taskProjectId =
+      typeof task.projectId === "object" && task.projectId !== null
+        ? task.projectId._id
+        : task.projectId || null;
+    if (selectedProjectId === "standalone-projects") {
       if (taskProjectId !== null) return false;
-    } else if (selectedProjectId !== 'all-projects') {
+    } else if (selectedProjectId !== "all-projects") {
       if (taskProjectId !== selectedProjectId) return false;
     }
 
@@ -55,12 +58,12 @@ export function filterAndSortTasks({
   });
 
   return filtered.sort((a, b) => {
-    if (sortBy === 'priority') {
-      const rankA = PRIORITY_ORDER[a.priority || 'Medium'] ?? 2;
-      const rankB = PRIORITY_ORDER[b.priority || 'Medium'] ?? 2;
+    if (sortBy === "priority") {
+      const rankA = PRIORITY_ORDER[a.priority || "Medium"] ?? 2;
+      const rankB = PRIORITY_ORDER[b.priority || "Medium"] ?? 2;
       if (rankA !== rankB) return rankA - rankB;
-    } else if (sortBy === 'title') {
-      return (a.title || '').localeCompare(b.title || '');
+    } else if (sortBy === "title") {
+      return (a.title || "").localeCompare(b.title || "");
     }
 
     // Default: sortBy === 'dueDate'
@@ -72,20 +75,23 @@ export function filterAndSortTasks({
 
 export function calculateProjectMetrics(
   tasks: Task[],
-  projectId: string | null
+  projectId: string | null,
 ): { total: number; completed: number; progress: number } {
   if (!Array.isArray(tasks)) return { total: 0, completed: 0, progress: 0 };
 
   const projectTasks = tasks.filter((task) => {
-    const taskProjectId = (typeof task.projectId === 'object' && task.projectId !== null) ? task.projectId._id : task.projectId || null;
-    if (projectId === null || projectId === 'standalone-projects') {
+    const taskProjectId =
+      typeof task.projectId === "object" && task.projectId !== null
+        ? task.projectId._id
+        : task.projectId || null;
+    if (projectId === null || projectId === "standalone-projects") {
       return !taskProjectId;
     }
     return taskProjectId === projectId;
   });
 
   const total = projectTasks.length;
-  const completed = projectTasks.filter((t) => t.status === 'completed').length;
+  const completed = projectTasks.filter((t) => t.status === "completed").length;
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return { total, completed, progress };

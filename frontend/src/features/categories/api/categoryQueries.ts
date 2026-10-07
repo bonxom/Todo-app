@@ -4,7 +4,7 @@ import type { Category, EntityId } from "../../../shared/types/domain";
 import { categoryKeys } from "./categoryKeys";
 
 export const useCategoriesQuery = (
-  options?: Omit<UseQueryOptions<Category[], Error>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<Category[], Error>, "queryKey" | "queryFn">,
 ) => {
   return useQuery({
     queryKey: categoryKeys.list(),
@@ -15,11 +15,12 @@ export const useCategoriesQuery = (
 
 export const useCategoryQuery = (
   categoryId: EntityId,
-  options?: Omit<UseQueryOptions<Category, Error>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<Category, Error>, "queryKey" | "queryFn">,
 ) => {
   return useQuery({
     queryKey: categoryKeys.detail(categoryId),
-    queryFn: ({ signal }) => categoryService.getCategoryById(categoryId, { signal }),
+    queryFn: ({ signal }) =>
+      categoryService.getCategoryById(categoryId, { signal }),
     enabled: Boolean(categoryId) && (options?.enabled ?? true),
     ...options,
   });

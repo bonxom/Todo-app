@@ -1,14 +1,27 @@
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}/;
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
-const pad = (value) => String(value).padStart(2, '0');
+const pad = (value) => String(value).padStart(2, "0");
 
 export const toUtcDateKey = (value) => {
   if (!value) {
     return null;
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const match = value.match(DATE_KEY_PATTERN);
     if (match) {
       return match[0];
@@ -33,11 +46,11 @@ export const parseUtcDateKey = (dateKey) => {
 };
 
 const parseLocalDateKey = (dateKey) => {
-  if (!DATE_KEY_PATTERN.test(dateKey || '')) {
+  if (!DATE_KEY_PATTERN.test(dateKey || "")) {
     return null;
   }
 
-  const [year, month, day] = dateKey.slice(0, 10).split('-').map(Number);
+  const [year, month, day] = dateKey.slice(0, 10).split("-").map(Number);
   return new Date(year, month - 1, day);
 };
 
@@ -59,7 +72,7 @@ const toLocalDateKey = (value) => {
     return null;
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const match = value.match(DATE_KEY_PATTERN);
     if (match) {
       return match[0];
@@ -144,37 +157,37 @@ export const formatUtcDateLabel = (dateKey, options) => {
   const parsedDate = parseUtcDateKey(dateKey);
 
   if (!parsedDate) {
-    return '';
+    return "";
   }
 
   return new Intl.DateTimeFormat(undefined, {
-    timeZone: 'UTC',
+    timeZone: "UTC",
     ...options,
   }).format(parsedDate);
 };
 
 export const formatDateKeyLabel = (dateKey) => {
-  if (!DATE_KEY_PATTERN.test(dateKey || '')) {
-    return '';
+  if (!DATE_KEY_PATTERN.test(dateKey || "")) {
+    return "";
   }
 
   return dateKey.slice(0, 10);
 };
 
 export const formatDateKeyMonthLabel = (dateKey) => {
-  if (!DATE_KEY_PATTERN.test(dateKey || '')) {
-    return '';
+  if (!DATE_KEY_PATTERN.test(dateKey || "")) {
+    return "";
   }
 
   const monthIndex = Number(dateKey.slice(5, 7)) - 1;
-  return MONTH_LABELS[monthIndex] || '';
+  return MONTH_LABELS[monthIndex] || "";
 };
 
 export const formatUtcDateTimeLabel = (dateKey) => {
   const parsedDate = parseUtcDateKey(dateKey);
 
   if (!parsedDate) {
-    return '';
+    return "";
   }
 
   return `${parsedDate.getUTCFullYear()}/${pad(parsedDate.getUTCMonth() + 1)}/${pad(parsedDate.getUTCDate())} 00:00`;
@@ -211,7 +224,10 @@ export const createHeatmapModel = (dailyStats = [], totalDays = 365) => {
   const completionMap = new Map();
 
   normalizedDailyStats.forEach((stat) => {
-    completionMap.set(stat.dateKey, (completionMap.get(stat.dateKey) || 0) + stat.completedTasks);
+    completionMap.set(
+      stat.dateKey,
+      (completionMap.get(stat.dateKey) || 0) + stat.completedTasks,
+    );
   });
 
   const rangeEndKey = getLocalTodayKey();
@@ -258,7 +274,9 @@ export const createHeatmapModel = (dailyStats = [], totalDays = 365) => {
   let lastMonthKey = null;
 
   weeks.forEach((week, columnIndex) => {
-    const firstMonthCell = week.find((cell) => cell.isInRange && cell.dayOfMonth <= 7);
+    const firstMonthCell = week.find(
+      (cell) => cell.isInRange && cell.dayOfMonth <= 7,
+    );
 
     if (!firstMonthCell) {
       return;
@@ -289,7 +307,11 @@ export const createHeatmapModel = (dailyStats = [], totalDays = 365) => {
   const bestDay = inRangeDateKeys.reduce((best, dateKey) => {
     const count = completionMap.get(dateKey) || 0;
 
-    if (!best || count > best.count || (count === best.count && dateKey > best.dateKey)) {
+    if (
+      !best ||
+      count > best.count ||
+      (count === best.count && dateKey > best.dateKey)
+    ) {
       return { dateKey, count };
     }
 

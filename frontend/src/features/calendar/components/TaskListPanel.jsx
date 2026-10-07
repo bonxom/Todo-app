@@ -1,12 +1,20 @@
-import { useMemo, useState } from 'react';
-import { Calendar as CalendarIcon, ChevronDown, Plus, Sparkles } from 'lucide-react';
-import TaskDetailButton from '@/features/tasks/components/TaskDetailButton';
-import TaskListDetailModal from './TaskListDetailModal';
-import DetailRequestModal from './DetailRequestModal';
-import AddTaskModal from '@/features/tasks/components/dialogs/AddTaskModal';
-import CalendarTaskDetailCard from './CalendarTaskDetailCard';
-import { formatDateTime, toMidnightDateTimeLocalValue } from '@/shared/utils/dateTime';
-import { sortTasksByDueTime } from './calendarUtils';
+import { useMemo, useState } from "react";
+import {
+  Calendar as CalendarIcon,
+  ChevronDown,
+  Plus,
+  Sparkles,
+} from "lucide-react";
+import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
+import TaskListDetailModal from "./TaskListDetailModal";
+import DetailRequestModal from "./DetailRequestModal";
+import AddTaskModal from "@/features/tasks/components/dialogs/AddTaskModal";
+import CalendarTaskDetailCard from "./CalendarTaskDetailCard";
+import {
+  formatDateTime,
+  toMidnightDateTimeLocalValue,
+} from "@/shared/utils/dateTime";
+import { sortTasksByDueTime } from "./calendarUtils";
 
 const TaskListPanel = ({
   selectedDate,
@@ -28,7 +36,8 @@ const TaskListPanel = ({
     return date;
   }, []);
 
-  const isToday = selectedDate && selectedDate.toDateString() === today.toDateString();
+  const isToday =
+    selectedDate && selectedDate.toDateString() === today.toDateString();
 
   const sortedTasks = sortTasksByDueTime(tasks);
 
@@ -63,9 +72,12 @@ const TaskListPanel = ({
       <div className="mb-6">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CalendarIcon className="h-5 w-5 text-[var(--color-accent)]" aria-hidden="true" />
+            <CalendarIcon
+              className="h-5 w-5 text-[var(--color-accent)]"
+              aria-hidden="true"
+            />
             <h2 className="text-lg font-semibold text-[var(--color-text)]">
-              {isToday ? 'Today\'s Tasks' : 'Day Detail'}
+              {isToday ? "Today's Tasks" : "Day Detail"}
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -96,14 +108,16 @@ const TaskListPanel = ({
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
           <span className="ui-chip ui-tabular">Total: {tasks.length}</span>
-          {tasks.filter((task) => task.status === 'in-progress').length > 0 && (
+          {tasks.filter((task) => task.status === "in-progress").length > 0 && (
             <span className="ui-chip ui-chip--accent ui-tabular">
-              In Progress: {tasks.filter((task) => task.status === 'in-progress').length}
+              In Progress:{" "}
+              {tasks.filter((task) => task.status === "in-progress").length}
             </span>
           )}
-          {tasks.filter((task) => task.status === 'pending').length > 0 && (
+          {tasks.filter((task) => task.status === "pending").length > 0 && (
             <span className="ui-chip ui-tabular">
-              Pending: {tasks.filter((task) => task.status === 'pending').length}
+              Pending:{" "}
+              {tasks.filter((task) => task.status === "pending").length}
             </span>
           )}
         </div>
@@ -141,10 +155,17 @@ const TaskListPanel = ({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <CalendarIcon className="mb-3 h-12 w-12 text-[var(--color-text-muted)] opacity-40" aria-hidden="true" />
-            <p className="text-base font-medium text-[var(--color-text)]">No tasks for this day</p>
+            <CalendarIcon
+              className="mb-3 h-12 w-12 text-[var(--color-text-muted)] opacity-40"
+              aria-hidden="true"
+            />
+            <p className="text-base font-medium text-[var(--color-text)]">
+              No tasks for this day
+            </p>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              {isToday ? 'You are all caught up.' : 'Select another date to view its exact-day workload.'}
+              {isToday
+                ? "You are all caught up."
+                : "Select another date to view its exact-day workload."}
             </p>
           </div>
         )}
@@ -154,7 +175,9 @@ const TaskListPanel = ({
         isOpen={isAddTaskModalOpen}
         onClose={() => setIsAddTaskModalOpen(false)}
         onTaskCreated={onTaskUpdated}
-        initialDueDate={selectedDate ? toMidnightDateTimeLocalValue(selectedDate) : ''}
+        initialDueDate={
+          selectedDate ? toMidnightDateTimeLocalValue(selectedDate) : ""
+        }
       />
 
       <DetailRequestModal

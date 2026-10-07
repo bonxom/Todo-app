@@ -61,7 +61,6 @@
   text-wrap: balance;
 }
 
-
 .auth-aside-video {
   display: block;
   width: min(100%, 22rem);
@@ -330,8 +329,6 @@
   .auth-aside h1 {
     max-width: 16ch;
   }
-
-
 }
 
 @media (max-width: 640px) {

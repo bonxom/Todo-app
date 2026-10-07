@@ -1,12 +1,12 @@
-import jwt from 'jsonwebtoken';
-import mongoose from 'mongoose';
-import { userRepository } from '../repositories/userRepository.js';
-import { invalidatedTokenRepository } from '../repositories/invalidatedTokenRepository.js';
-import { AppError } from '../error/AppError.js';
-import { AUTH_ERROR } from '../error/definitions/authErrors.js';
-import { USER_ERROR } from '../error/definitions/userErrors.js';
-import { mapDatabaseError } from '../error/errorGuards.js';
-import { IUserDocument } from '../types/IUser.js';
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import { userRepository } from "../repositories/userRepository.js";
+import { invalidatedTokenRepository } from "../repositories/invalidatedTokenRepository.js";
+import { AppError } from "../error/AppError.js";
+import { AUTH_ERROR } from "../error/definitions/authErrors.js";
+import { USER_ERROR } from "../error/definitions/userErrors.js";
+import { mapDatabaseError } from "../error/errorGuards.js";
+import { IUserDocument } from "../types/IUser.js";
 
 interface JwtPayload {
   id: string;
@@ -22,12 +22,16 @@ interface AuthTokens {
 const getRefreshSecret = (): string => process.env.JWT_REFRESH_SECRET!;
 
 const generateAccessToken = (id: mongoose.Types.ObjectId | string): string => {
-  const expiresIn = process.env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions['expiresIn'];
+  const expiresIn = process.env
+    .JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"];
   return jwt.sign({ id }, process.env.JWT_SECRET!, { expiresIn });
 };
 
-const generateRefreshToken = (userId: mongoose.Types.ObjectId | string): string => {
-  const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN as jwt.SignOptions['expiresIn'];
+const generateRefreshToken = (
+  userId: mongoose.Types.ObjectId | string,
+): string => {
+  const expiresIn = process.env
+    .JWT_REFRESH_EXPIRES_IN as jwt.SignOptions["expiresIn"];
   return jwt.sign({ id: userId }, getRefreshSecret(), { expiresIn });
 };
 
@@ -47,7 +51,7 @@ const addTokenToBlacklist = async (tokenString: string): Promise<void> => {
 
 export const authService = {
   async register(
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
   ): Promise<{ user: IUserDocument } & AuthTokens> {
     const existing = await userRepository.findByEmail(data.email as string);
     if (existing) throw new AppError(USER_ERROR.EMAIL_EXISTED);
@@ -59,8 +63,8 @@ export const authService = {
         password: data.password,
         name: data.name,
         dob: data.dob,
-        nationality: data.nationality || 'Vietnam',
-        role: 'USER',
+        nationality: data.nationality || "Vietnam",
+        role: "USER",
       });
     } catch (error: unknown) {
       throw mapDatabaseError(error, USER_ERROR.EMAIL_EXISTED);
@@ -74,7 +78,7 @@ export const authService = {
 
   async login(
     email: string,
-    password: string
+    password: string,
   ): Promise<{ user: IUserDocument } & AuthTokens> {
     const user = await userRepository.findByEmailWithPassword(email);
     if (!user) throw new AppError(AUTH_ERROR.INVALID_CREDENTIALS);
@@ -95,7 +99,10 @@ export const authService = {
 
     let decoded: JwtPayload;
     try {
-      decoded = jwt.verify(refreshTokenString, getRefreshSecret()) as JwtPayload;
+      decoded = jwt.verify(
+        refreshTokenString,
+        getRefreshSecret(),
+      ) as JwtPayload;
     } catch (error: unknown) {
       if (error instanceof jwt.TokenExpiredError) {
         throw new AppError(AUTH_ERROR.REFRESH_TOKEN_EXPIRED, { cause: error });
@@ -106,12 +113,17 @@ export const authService = {
       throw error;
     }
 
-    if (!decoded || typeof decoded.id !== 'string' || !mongoose.isObjectIdOrHexString(decoded.id)) {
+    if (
+      !decoded ||
+      typeof decoded.id !== "string" ||
+      !mongoose.isObjectIdOrHexString(decoded.id)
+    ) {
       throw new AppError(AUTH_ERROR.REFRESH_TOKEN_INVALID);
     }
 
     // Check if token is in the blacklist
-    const isBlacklisted = await invalidatedTokenRepository.findByToken(refreshTokenString);
+    const isBlacklisted =
+      await invalidatedTokenRepository.findByToken(refreshTokenString);
     if (isBlacklisted) {
       throw new AppError(AUTH_ERROR.REFRESH_TOKEN_REVOKED);
     }
@@ -128,7 +140,11 @@ export const authService = {
     // Blacklist the old refresh token
     await addTokenToBlacklist(refreshTokenString);
 
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken, token: newAccessToken };
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      token: newAccessToken,
+    };
   },
 
   async logout(refreshTokenString?: string): Promise<void> {
@@ -137,7 +153,9 @@ export const authService = {
     }
   },
 
-  async getMe(userId: mongoose.Types.ObjectId | string): Promise<IUserDocument> {
+  async getMe(
+    userId: mongoose.Types.ObjectId | string,
+  ): Promise<IUserDocument> {
     const user = await userRepository.findByIdPopulated(userId);
     if (!user) throw new AppError(USER_ERROR.NOT_FOUND);
     return user;
@@ -146,7 +164,7 @@ export const authService = {
   async changePassword(
     userId: mongoose.Types.ObjectId | string,
     currentPassword: string,
-    newPassword: string
+    newPassword: string,
   ): Promise<void> {
     const user = await userRepository.findByIdWithPassword(userId);
     if (!user) throw new AppError(USER_ERROR.NOT_FOUND);
@@ -163,9 +181,9 @@ export const authService = {
 
   async updateInfo(
     userId: mongoose.Types.ObjectId | string,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
   ): Promise<IUserDocument> {
-    const ALLOWED_FIELDS = ['email', 'name', 'dob', 'nationality', 'avatarUrl'];
+    const ALLOWED_FIELDS = ["email", "name", "dob", "nationality", "avatarUrl"];
     const filtered: Record<string, unknown> = {};
     for (const key of ALLOWED_FIELDS) {
       if (data[key] !== undefined) filtered[key] = data[key];

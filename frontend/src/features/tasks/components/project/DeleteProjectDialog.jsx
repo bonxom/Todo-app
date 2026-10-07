@@ -15,7 +15,10 @@ const DeleteProjectDialog = ({ isOpen, onClose, onConfirm, projectName }) => {
         aria-labelledby="delete-project-title"
       >
         <div className="ui-modal-header">
-          <h2 id="delete-project-title" className="text-xl font-semibold text-[color:var(--color-text)]">
+          <h2
+            id="delete-project-title"
+            className="text-xl font-semibold text-[color:var(--color-text)]"
+          >
             Delete Project
           </h2>
         </div>
@@ -24,7 +27,8 @@ const DeleteProjectDialog = ({ isOpen, onClose, onConfirm, projectName }) => {
             Delete <span className="font-semibold">“{projectName}”</span>?
           </p>
           <p className="mb-6 text-sm text-[color:var(--color-text-muted)]">
-            Tasks will stay in your account and their project assignment will be cleared.
+            Tasks will stay in your account and their project assignment will be
+            cleared.
           </p>
           <div className="flex gap-3">
             <button

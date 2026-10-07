@@ -4,11 +4,17 @@
  * where `crypto.randomUUID` might not be available or exposed.
  */
 export const generateUUID = (): string => {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
 
-  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.getRandomValues === "function"
+  ) {
     try {
       const buffer = new Uint8Array(16);
       crypto.getRandomValues(buffer);
@@ -16,7 +22,9 @@ export const generateUUID = (): string => {
       buffer[6] = (buffer[6] & 0x0f) | 0x40;
       buffer[8] = (buffer[8] & 0x3f) | 0x80;
 
-      const hex = Array.from(buffer, (byte) => byte.toString(16).padStart(2, "0")).join("");
+      const hex = Array.from(buffer, (byte) =>
+        byte.toString(16).padStart(2, "0"),
+      ).join("");
       return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
     } catch {
       // Fall through to Math.random fallback
@@ -33,10 +41,10 @@ export const generateUUID = (): string => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (char) => {
     let random = Math.random() * 16;
     if (timestamp > 0) {
-      random = (timestamp + random) % 16 | 0;
+      random = ((timestamp + random) % 16) | 0;
       timestamp = Math.floor(timestamp / 16);
     } else if (performanceNow > 0) {
-      random = (performanceNow + random) % 16 | 0;
+      random = ((performanceNow + random) % 16) | 0;
       performanceNow = Math.floor(performanceNow / 16);
     } else {
       random = random | 0;

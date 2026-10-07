@@ -1,10 +1,18 @@
-import { useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationOptions,
+} from "@tanstack/react-query";
 import { authService } from "../../../shared/services/authService";
 import { useAuthStore } from "../../../stores/useAuthStore";
-import type { AuthSession, LoginPayload, RegisterPayload } from "../../../shared/types/domain";
+import type {
+  AuthSession,
+  LoginPayload,
+  RegisterPayload,
+} from "../../../shared/types/domain";
 
 export const useLoginMutation = (
-  options?: UseMutationOptions<AuthSession, Error, LoginPayload>
+  options?: UseMutationOptions<AuthSession, Error, LoginPayload>,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -19,7 +27,7 @@ export const useLoginMutation = (
 };
 
 export const useRegisterMutation = (
-  options?: UseMutationOptions<AuthSession, Error, RegisterPayload>
+  options?: UseMutationOptions<AuthSession, Error, RegisterPayload>,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -34,7 +42,7 @@ export const useRegisterMutation = (
 };
 
 export const useLogoutMutation = (
-  options?: UseMutationOptions<unknown, Error, void>
+  options?: UseMutationOptions<unknown, Error, void>,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({

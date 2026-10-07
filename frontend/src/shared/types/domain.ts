@@ -113,8 +113,12 @@ export type TaskMutationPayload = Partial<{
   dueDate: string | null;
 }>;
 
-export type ProjectMutationPayload = Partial<Pick<Project, "name" | "description" | "color" | "status">>;
-export type CategoryMutationPayload = Partial<Pick<Category, "name" | "description">>;
+export type ProjectMutationPayload = Partial<
+  Pick<Project, "name" | "description" | "color" | "status">
+>;
+export type CategoryMutationPayload = Partial<
+  Pick<Category, "name" | "description">
+>;
 export interface LoginPayload {
   email: string;
   password: string;
@@ -124,7 +128,9 @@ export interface RegisterPayload extends LoginPayload {
   dob: string;
   nationality?: string;
 }
-export type UpdateProfilePayload = Partial<Pick<User, "email" | "name" | "dob" | "nationality" | "avatarUrl">>;
+export type UpdateProfilePayload = Partial<
+  Pick<User, "email" | "name" | "dob" | "nationality" | "avatarUrl">
+>;
 export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;

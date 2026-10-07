@@ -12,7 +12,11 @@ export interface AuthState extends AuthSnapshot {
   isAuthReady: boolean;
   sessionRevision: number;
   setSession: (session: AuthSession) => void;
-  updateTokens: (tokens: { token?: string; accessToken?: string; refreshToken?: string }) => void;
+  updateTokens: (tokens: {
+    token?: string;
+    accessToken?: string;
+    refreshToken?: string;
+  }) => void;
   clearSession: () => void;
   syncUser: (user: User | null) => void;
   setAuthReady: (isAuthReady: boolean) => void;

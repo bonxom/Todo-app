@@ -12,7 +12,10 @@ export class ApiError extends Error {
   }
 }
 
-export const getApiErrorMessage = (error: unknown, fallback = "An unexpected error occurred"): string => {
+export const getApiErrorMessage = (
+  error: unknown,
+  fallback = "An unexpected error occurred",
+): string => {
   if (error instanceof ApiError) {
     return error.message || fallback;
   }

@@ -80,6 +80,17 @@ test("toggles the real task workspace on mobile without changing task actions", 
   };
   await page.route("**/api/auth/me", (route) => route.fulfill({ json: user }));
   await page.route("**/api/projects**", (route) => route.fulfill({ json: [] }));
+  await page.route("**/api/stats**", (route) =>
+    route.fulfill({
+      json: {
+        totalTasks: 1,
+        completedTasks: 0,
+        inProgressTasks: 1,
+        pendingTasks: 0,
+        givenUpTasks: 0,
+      },
+    }),
+  );
   await page.route("**/api/tasks**", (route) =>
     route.fulfill({
       json: {

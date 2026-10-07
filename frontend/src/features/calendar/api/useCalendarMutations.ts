@@ -15,7 +15,14 @@ import {
   type CalendarSnapshot,
 } from "./calendarCache";
 import { generateOptimisticId } from "../../../shared/utils/id";
-import type { EntityId, Project, ProjectStatus, Task, TaskMutationPayload, TaskStatus } from "../../../shared/types/domain";
+import type {
+  EntityId,
+  Project,
+  ProjectStatus,
+  Task,
+  TaskMutationPayload,
+  TaskStatus,
+} from "../../../shared/types/domain";
 
 export const useCalendarMutations = () => {
   const queryClient = useQueryClient();
@@ -58,8 +65,8 @@ export const useCalendarMutations = () => {
           nextStatus === "completed"
             ? now
             : nextStatus === "in-progress"
-            ? null
-            : task.completedAt,
+              ? null
+              : task.completedAt,
       };
 
       upsertTaskInCollections(queryClient, optimisticTask);
@@ -79,7 +86,12 @@ export const useCalendarMutations = () => {
     },
   });
 
-  const deleteMutation = useMutation<unknown, Error, EntityId, { snapshot: CalendarSnapshot }>({
+  const deleteMutation = useMutation<
+    unknown,
+    Error,
+    EntityId,
+    { snapshot: CalendarSnapshot }
+  >({
     mutationFn: (taskId: EntityId) => taskService.deleteTask(taskId),
     onMutate: async (taskId) => {
       await Promise.all([
@@ -117,7 +129,10 @@ export const useCalendarMutations = () => {
         queryClient.cancelQueries({ queryKey: projectKeys.all }),
       ]);
       const snapshot = createCalendarSnapshot(queryClient);
-      upsertTaskInCollections(queryClient, { ...task, dueDate: nextDueDate || undefined });
+      upsertTaskInCollections(queryClient, {
+        ...task,
+        dueDate: nextDueDate || undefined,
+      });
       return { snapshot };
     },
     onError: (_err, _variables, context) => {
@@ -190,7 +205,8 @@ export const useCalendarMutations = () => {
     { projectId: EntityId; status: ProjectStatus },
     { snapshot: CalendarSnapshot }
   >({
-    mutationFn: ({ projectId, status }) => projectService.updateProject(projectId, { status }),
+    mutationFn: ({ projectId, status }) =>
+      projectService.updateProject(projectId, { status }),
     onMutate: async ({ projectId, status }) => {
       await Promise.all([
         queryClient.cancelQueries({ queryKey: projectKeys.all }),
@@ -219,8 +235,10 @@ export const useCalendarMutations = () => {
     deleteTask: (taskId: EntityId) => deleteMutation.mutateAsync(taskId),
     changeTaskDueDate: (task: Task, nextDueDate: string | null) =>
       dueDateMutation.mutateAsync({ task, nextDueDate }),
-    copyTask: (taskCopyPayload: Partial<TaskMutationPayload>, nextDueDate: string) =>
-      copyMutation.mutateAsync({ taskCopyPayload, nextDueDate }),
+    copyTask: (
+      taskCopyPayload: Partial<TaskMutationPayload>,
+      nextDueDate: string,
+    ) => copyMutation.mutateAsync({ taskCopyPayload, nextDueDate }),
     changeProjectStatus: (projectId: EntityId, status: ProjectStatus) =>
       projectStatusMutation.mutateAsync({ projectId, status }),
     isMutating:

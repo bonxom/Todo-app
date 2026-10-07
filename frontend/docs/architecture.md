@@ -19,6 +19,7 @@ src/
 ```
 
 ### Import Rules:
+
 1. **`app/`** can import from `features/`, `shared/`, `stores/`, `config/`.
 2. **`features/`** can import from `shared/`, `stores/`, `config/`, and feature-local files.
 3. **Cross-Feature Imports:** Features should import other features only through their canonical entry point (`@/features/<name>`) or shared contracts.
@@ -67,6 +68,7 @@ src/
 ## 3. State Management Principles
 
 ### Client State (Zustand)
+
 - **`useAuthStore`**: Stores client session state (`token`, `refreshToken`, `user`, `isAuthReady`, `sessionRevision`).
   - Persists `token`, `refreshToken`, and `user` to `localStorage` (matching legacy keys).
   - Increments `sessionRevision` on `setSession` and `clearSession` to isolate user caches.
@@ -74,6 +76,7 @@ src/
 - **`useTaskFilterStore`**: Stores UI-only task filtering preferences (`onlyInProgress`, `toggleOnlyInProgress`).
 
 ### Server State (React Query / TanStack Query v5)
+
 - Server data is owned strictly by React Query with typed query keys.
 - Never duplicate server data into Zustand or React component local state for long-term caching.
 - Stale times:
@@ -88,11 +91,13 @@ All queries use centralized query key factories to guarantee consistency:
 
 ```ts
 export const taskKeys = {
-  all: ['tasks'] as const,
-  lists: () => [...taskKeys.all, 'list'] as const,
-  list: (filters: Record<string, unknown> = {}) => [...taskKeys.lists(), filters] as const,
-  calendar: (range: { startDate: string; endDate: string }) => [...taskKeys.all, 'calendar', range] as const,
-  details: () => [...taskKeys.all, 'detail'] as const,
+  all: ["tasks"] as const,
+  lists: () => [...taskKeys.all, "list"] as const,
+  list: (filters: Record<string, unknown> = {}) =>
+    [...taskKeys.lists(), filters] as const,
+  calendar: (range: { startDate: string; endDate: string }) =>
+    [...taskKeys.all, "calendar", range] as const,
+  details: () => [...taskKeys.all, "detail"] as const,
   detail: (id: string) => [...taskKeys.details(), id] as const,
 };
 ```
@@ -129,11 +134,13 @@ pnpm create-feature notifications
 ```
 
 To preview without writing files:
+
 ```bash
 pnpm create-feature notifications --dry-run
 ```
 
 This scaffolds:
+
 - `src/features/<feature-name>/<PascalName>Page.tsx`
 - `src/features/<feature-name>/api/index.ts`
 - `src/features/<feature-name>/components/index.ts`

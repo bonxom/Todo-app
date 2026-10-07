@@ -1,6 +1,6 @@
-import { Check, Plus, RotateCcw } from 'lucide-react';
-import ProgressBar from './ProgressBar';
-import { isCompletedProject } from '@/shared/utils/projectStatus';
+import { Check, Plus, RotateCcw } from "lucide-react";
+import ProgressBar from "./ProgressBar";
+import { isCompletedProject } from "@/shared/utils/projectStatus";
 
 const ProjectOverviewGrid = ({
   items,
@@ -18,11 +18,15 @@ const ProjectOverviewGrid = ({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="ui-page-kicker">Project Focus</p>
-          <h2 id="project-overview-heading" className="text-xl font-semibold text-[var(--color-text)]">
+          <h2
+            id="project-overview-heading"
+            className="text-xl font-semibold text-[var(--color-text)]"
+          >
             Track work by project
           </h2>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            Pick a project to focus the list, or keep tasks standalone when they do not belong to a larger effort.
+            Pick a project to focus the list, or keep tasks standalone when they
+            do not belong to a larger effort.
           </p>
         </div>
 
@@ -31,7 +35,9 @@ const ProjectOverviewGrid = ({
             <input
               type="checkbox"
               checked={showCompletedProjects}
-              onChange={(event) => onShowCompletedProjectsChange?.(event.target.checked)}
+              onChange={(event) =>
+                onShowCompletedProjectsChange?.(event.target.checked)
+              }
               className="h-4 w-4 rounded border-[var(--color-line)] accent-[var(--color-accent)]"
             />
             Show Completed Projects
@@ -57,9 +63,9 @@ const ProjectOverviewGrid = ({
               key={item.id}
               className={`relative ui-section-card p-5 text-left transition-[border-color,box-shadow,background-color] duration-200 ${
                 isSelected
-                  ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-[var(--shadow-sm)]'
-                  : 'hover:border-[var(--color-accent)]'
-              } ${isCompleted ? 'opacity-75' : ''}`}
+                  ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-[var(--shadow-sm)]"
+                  : "hover:border-[var(--color-accent)]"
+              } ${isCompleted ? "opacity-75" : ""}`}
             >
               <button
                 type="button"
