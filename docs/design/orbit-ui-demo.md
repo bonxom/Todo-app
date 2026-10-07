@@ -12,13 +12,13 @@ satellite, and a heavy midnight wordmark. The check grounds the space metaphor
 in task completion. The monochrome version confirms that silhouette, not glow,
 is the essential recognizable element.
 
-| Source color | Role in the demo |
-| --- | --- |
-| `#456B8C` | Steel blue: focus button, selected navigation, structural identity |
-| `#6065B4` | Indigo: orbit stroke and project progress |
-| `#22C5DB` | Cyan: primary creation action, daily completion, focus satellite |
-| `rgba(34,197,219,0.62)` | Logo glow reference; no ambient glow on workspace surfaces |
-| `#111827` | Midnight: primary workspace canvas |
+| Source color            | Role in the demo                                                   |
+| ----------------------- | ------------------------------------------------------------------ |
+| `#456B8C`               | Steel blue: focus button, selected navigation, structural identity |
+| `#6065B4`               | Indigo: orbit stroke and project progress                          |
+| `#22C5DB`               | Cyan: primary creation action, daily completion, focus satellite   |
+| `rgba(34,197,219,0.62)` | Logo glow reference; no ambient glow on workspace surfaces         |
+| `#111827`               | Midnight: primary workspace canvas                                 |
 
 Supporting shades are derived UI surfaces and readable text colors, not extra
 brand colors. Cyan buttons use dark text. Steel blue buttons use white text.

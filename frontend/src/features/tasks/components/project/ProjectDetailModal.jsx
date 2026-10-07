@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { FolderOpen, Pencil, Trash2, X } from 'lucide-react';
-import TaskCard from '../category/TaskCard';
-import TaskDetailButton from '../TaskDetailButton';
-import GiveUpDialog from '../dialogs/GiveUpDialog';
-import DeleteDialog from '../dialogs/DeleteDialog';
-import { useDeleteTaskMutation, useGiveUpTaskMutation } from '../../api/taskMutations';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { FolderOpen, Pencil, Trash2, X } from "lucide-react";
+import TaskCard from "../category/TaskCard";
+import TaskDetailButton from "../TaskDetailButton";
+import GiveUpDialog from "../dialogs/GiveUpDialog";
+import DeleteDialog from "../dialogs/DeleteDialog";
+import {
+  useDeleteTaskMutation,
+  useGiveUpTaskMutation,
+} from "../../api/taskMutations";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const ProjectDetailModal = ({
   isOpen,
@@ -30,22 +33,25 @@ const ProjectDetailModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
   if (!isOpen || !project) return null;
 
-  const completedTasks = tasks.filter((task) => task.status === 'completed').length;
+  const completedTasks = tasks.filter(
+    (task) => task.status === "completed",
+  ).length;
   const totalTasks = tasks.length;
-  const pendingTasks = tasks.filter((task) => task.status === 'pending').length;
-  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const pendingTasks = tasks.filter((task) => task.status === "pending").length;
+  const progress =
+    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const handleEditTask = (task) => {
     setSelectedTask(task);
@@ -64,8 +70,8 @@ const ProjectDetailModal = ({
       setIsGiveUpModalOpen(false);
       setTaskToGiveUp(null);
     } catch (error) {
-      console.error('Failed to give up task:', error);
-      alert(getApiErrorMessage(error, 'Failed to give up task.'));
+      console.error("Failed to give up task:", error);
+      alert(getApiErrorMessage(error, "Failed to give up task."));
     }
   };
 
@@ -86,8 +92,8 @@ const ProjectDetailModal = ({
         onTaskUpdated?.();
       }, 300);
     } catch (error) {
-      console.error('Failed to delete task:', error);
-      alert(getApiErrorMessage(error, 'Failed to delete task.'));
+      console.error("Failed to delete task:", error);
+      alert(getApiErrorMessage(error, "Failed to delete task."));
       setDeletingTaskId(null);
       setTaskToDelete(null);
     }
@@ -145,13 +151,17 @@ const ProjectDetailModal = ({
                   </div>
                   <div className="min-w-0">
                     <p className="ui-page-kicker">Project</p>
-                    <h2 id="project-detail-title" className="truncate text-2xl font-semibold text-[color:var(--color-text)]">
+                    <h2
+                      id="project-detail-title"
+                      className="truncate text-2xl font-semibold text-[color:var(--color-text)]"
+                    >
                       {project.name}
                     </h2>
                   </div>
                 </div>
                 <p className="mt-3 max-w-3xl break-words text-sm leading-6 text-[color:var(--color-text-muted)]">
-                  {project.description || 'No project description yet. Add context so this workstream is easier to scan later.'}
+                  {project.description ||
+                    "No project description yet. Add context so this workstream is easier to scan later."}
                 </p>
               </div>
 
@@ -185,7 +195,9 @@ const ProjectDetailModal = ({
 
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="ui-chip ui-tabular">{totalTasks} tasks</span>
-              <span className="ui-chip ui-chip--success ui-tabular">{completedTasks} completed</span>
+              <span className="ui-chip ui-chip--success ui-tabular">
+                {completedTasks} completed
+              </span>
               <span className="ui-chip ui-tabular">{pendingTasks} pending</span>
               <span className="ui-chip ui-tabular">{progress}% complete</span>
             </div>
@@ -193,7 +205,9 @@ const ProjectDetailModal = ({
             <div className="mt-5">
               <div className="flex items-center justify-between text-xs text-[color:var(--color-text-muted)]">
                 <span>Progress</span>
-                <span className="ui-tabular">{completedTasks}/{totalTasks}</span>
+                <span className="ui-tabular">
+                  {completedTasks}/{totalTasks}
+                </span>
               </div>
               <div
                 className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-surface-muted)]"
@@ -219,8 +233,8 @@ const ProjectDetailModal = ({
                     key={task._id || task.id}
                     className={`transition-[opacity,transform] duration-300 ${
                       deletingTaskId === (task._id || task.id)
-                        ? 'pointer-events-none scale-[0.98] opacity-0'
-                        : 'scale-100 opacity-100'
+                        ? "pointer-events-none scale-[0.98] opacity-0"
+                        : "scale-100 opacity-100"
                     }`}
                   >
                     <TaskCard
@@ -236,10 +250,16 @@ const ProjectDetailModal = ({
               </div>
             ) : (
               <div className="rounded-[14px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-6 py-14 text-center">
-                <FolderOpen className="mx-auto h-12 w-12 text-[color:var(--color-text-muted)]" aria-hidden="true" />
-                <p className="mt-4 text-lg font-semibold text-[color:var(--color-text)]">No tasks in this project</p>
+                <FolderOpen
+                  className="mx-auto h-12 w-12 text-[color:var(--color-text-muted)]"
+                  aria-hidden="true"
+                />
+                <p className="mt-4 text-lg font-semibold text-[color:var(--color-text)]">
+                  No tasks in this project
+                </p>
                 <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
-                  Assign tasks from the Todo page or from task edit forms to start tracking project progress here.
+                  Assign tasks from the Todo page or from task edit forms to
+                  start tracking project progress here.
                 </p>
               </div>
             )}

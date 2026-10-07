@@ -39,13 +39,16 @@ describe("useCalendarTasksQuery", () => {
     let resolveNextRange!: (tasks: Task[]) => void;
     vi.spyOn(taskService, "getTasksByDateRange")
       .mockResolvedValueOnce([task])
-      .mockImplementationOnce(() => new Promise<Task[]>((resolve) => {
-        resolveNextRange = resolve;
-      }));
+      .mockImplementationOnce(
+        () =>
+          new Promise<Task[]>((resolve) => {
+            resolveNextRange = resolve;
+          }),
+      );
 
     const { result, rerender } = renderHook(
       ({ range }) => useCalendarTasksQuery(range),
-      { initialProps: { range: rangeA }, wrapper }
+      { initialProps: { range: rangeA }, wrapper },
     );
 
     await waitFor(() => {

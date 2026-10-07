@@ -1,4 +1,8 @@
-import type { EntityId, PagingParams, TaskStatus } from "../../../shared/types/domain";
+import type {
+  EntityId,
+  PagingParams,
+  TaskStatus,
+} from "../../../shared/types/domain";
 
 export interface TaskListFilters {
   status?: TaskStatus | string;
@@ -17,7 +21,7 @@ export interface CalendarRangeParams {
 }
 
 export const normalizeFilters = <T extends Record<string, unknown>>(
-  filters?: T
+  filters?: T,
 ): Record<string, unknown> | undefined => {
   if (!filters || typeof filters !== "object") return undefined;
 

@@ -9,15 +9,18 @@ For detailed architectural guidelines and design principles, see [docs/architect
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js >= 20
 - pnpm >= 9
 
 ### Installation
+
 ```bash
 pnpm install
 ```
 
 ### Running Locally
+
 ```bash
 # Start Vite development server (port 5000)
 pnpm dev
@@ -27,16 +30,16 @@ pnpm dev
 
 ## Available Scripts
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Starts the local development server at `http://localhost:5000` |
-| `pnpm test` | Runs the Vitest unit & integration test suite |
-| `pnpm test:watch` | Runs Vitest in interactive watch mode |
-| `pnpm test:e2e` | Runs Playwright browser automation tests |
-| `pnpm typecheck` | Runs TypeScript compilation checks (`tsc -b`) |
-| `pnpm lint` | Runs ESLint across the codebase |
-| `pnpm build` | Typechecks and creates the production bundle in `dist/` |
-| `pnpm preview` | Previews the production build locally |
+| Command                      | Description                                                          |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `pnpm dev`                   | Starts the local development server at `http://localhost:5000`       |
+| `pnpm test`                  | Runs the Vitest unit & integration test suite                        |
+| `pnpm test:watch`            | Runs Vitest in interactive watch mode                                |
+| `pnpm test:e2e`              | Runs Playwright browser automation tests                             |
+| `pnpm typecheck`             | Runs TypeScript compilation checks (`tsc -b`)                        |
+| `pnpm lint`                  | Runs ESLint across the codebase                                      |
+| `pnpm build`                 | Typechecks and creates the production bundle in `dist/`              |
+| `pnpm preview`               | Previews the production build locally                                |
 | `pnpm create-feature <name>` | Scaffolds a new feature directory adhering to architecture standards |
 
 ---

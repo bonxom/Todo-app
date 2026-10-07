@@ -1,15 +1,15 @@
-import { useMemo } from 'react';
-import DonutChartCard from './DonutChartCard';
+import { useMemo } from "react";
+import DonutChartCard from "./DonutChartCard";
 
 const CATEGORY_COLORS = [
-  '#456B8C',
-  '#2F7D5A',
-  '#A46A2A',
-  '#7A7F87',
-  '#6A7E93',
-  '#8B9A74',
-  '#B25547',
-  '#9BA7B5',
+  "#456B8C",
+  "#2F7D5A",
+  "#A46A2A",
+  "#7A7F87",
+  "#6A7E93",
+  "#8B9A74",
+  "#B25547",
+  "#9BA7B5",
 ];
 
 const CategoryPieChart = ({ dailyStats }) => {
@@ -21,7 +21,10 @@ const CategoryPieChart = ({ dailyStats }) => {
     const categoryMap = new Map();
 
     dailyStats.forEach((day) => {
-      if (!day.completedOfEachCategory || day.completedOfEachCategory.length === 0) {
+      if (
+        !day.completedOfEachCategory ||
+        day.completedOfEachCategory.length === 0
+      ) {
         return;
       }
 
@@ -53,7 +56,7 @@ const CategoryPieChart = ({ dailyStats }) => {
     return {
       items: items.map((item) => ({
         ...item,
-        percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
+        percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : "0.0",
       })),
       total,
     };

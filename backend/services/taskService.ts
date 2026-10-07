@@ -1,19 +1,26 @@
-import mongoose from 'mongoose';
-import { taskRepository } from '../repositories/taskRepository.js';
-import { categoryRepository } from '../repositories/categoryRepository.js';
-import { projectRepository } from '../repositories/projectRepository.js';
-import { statService } from './statService.js';
-import { normalizeTaskDateInput } from '../utils/dateTime.js';
-import { AppError } from '../error/AppError.js';
-import { COMMON_ERROR } from '../error/definitions/commonErrors.js';
-import { CATEGORY_ERROR } from '../error/definitions/categoryErrors.js';
-import { TASK_ERROR } from '../error/definitions/taskErrors.js';
-import { TASK_STATUSES } from '../constants/taskStatus.js';
-import { ITaskDocument } from '../types/ITask.js';
-import { IUserDocument } from '../types/IUser.js';
-import { DEFAULT_PAGE_NO, DEFAULT_PAGE_SIZE } from '../types/PagingParameter.js';
-import type { ResponsePage } from '../types/ResponsePage.js';
-import { parseSortString, calculateSkip, buildResponsePage } from '../utils/pagingUtils.js';
+import mongoose from "mongoose";
+import { taskRepository } from "../repositories/taskRepository.js";
+import { categoryRepository } from "../repositories/categoryRepository.js";
+import { projectRepository } from "../repositories/projectRepository.js";
+import { statService } from "./statService.js";
+import { normalizeTaskDateInput } from "../utils/dateTime.js";
+import { AppError } from "../error/AppError.js";
+import { COMMON_ERROR } from "../error/definitions/commonErrors.js";
+import { CATEGORY_ERROR } from "../error/definitions/categoryErrors.js";
+import { TASK_ERROR } from "../error/definitions/taskErrors.js";
+import { TASK_STATUSES } from "../constants/taskStatus.js";
+import { ITaskDocument } from "../types/ITask.js";
+import { IUserDocument } from "../types/IUser.js";
+import {
+  DEFAULT_PAGE_NO,
+  DEFAULT_PAGE_SIZE,
+} from "../types/PagingParameter.js";
+import type { ResponsePage } from "../types/ResponsePage.js";
+import {
+  parseSortString,
+  calculateSkip,
+  buildResponsePage,
+} from "../utils/pagingUtils.js";
 
 interface ResolveResult<T> {
   shouldUpdate: boolean;
@@ -38,7 +45,7 @@ interface PopulatedProjectRef {
 
 const resolveCategory = async (
   categoryId: string | undefined,
-  userId: mongoose.Types.ObjectId | string
+  userId: mongoose.Types.ObjectId | string,
 ): Promise<mongoose.Types.ObjectId> => {
   if (categoryId) {
     const category = await categoryRepository.findById(categoryId);
@@ -48,27 +55,33 @@ const resolveCategory = async (
     return categoryId as unknown as mongoose.Types.ObjectId;
   }
 
-  const uncategorized = await categoryRepository.findByUserAndName(userId, 'Uncategorized');
-  if (!uncategorized) throw new AppError(CATEGORY_ERROR.DEFAULT_CATEGORY_UNAVAILABLE);
+  const uncategorized = await categoryRepository.findByUserAndName(
+    userId,
+    "Uncategorized",
+  );
+  if (!uncategorized)
+    throw new AppError(CATEGORY_ERROR.DEFAULT_CATEGORY_UNAVAILABLE);
   return uncategorized._id;
 };
 
 const resolveProject = async (
   projectId: string | undefined | null,
   userId: mongoose.Types.ObjectId | string,
-  currentProjectId: mongoose.Types.ObjectId | null = null
+  currentProjectId: mongoose.Types.ObjectId | null = null,
 ): Promise<ResolveResult<mongoose.Types.ObjectId>> => {
   if (projectId === undefined) return { shouldUpdate: false };
-  if (projectId === '' || projectId === null) return { shouldUpdate: true, value: null };
+  if (projectId === "" || projectId === null)
+    return { shouldUpdate: true, value: null };
 
   const project = await projectRepository.findById(projectId);
   if (!project || project.userId.toString() !== userId.toString()) {
     throw new AppError(TASK_ERROR.PROJECT_NOT_FOUND);
   }
 
-  const normalizedCurrent: string | null = currentProjectId?.toString?.() || null;
+  const normalizedCurrent: string | null =
+    currentProjectId?.toString?.() || null;
   const normalizedNext = project._id.toString();
-  if (project.status === 'completed' && normalizedNext !== normalizedCurrent) {
+  if (project.status === "completed" && normalizedNext !== normalizedCurrent) {
     throw new AppError(TASK_ERROR.PROJECT_COMPLETED);
   }
 
@@ -76,9 +89,9 @@ const resolveProject = async (
 };
 
 const buildTaskAccessQuery = async (
-  user: IUserDocument
+  user: IUserDocument,
 ): Promise<Record<string, unknown>> => {
-  if (user.role === 'ADMIN') return {};
+  if (user.role === "ADMIN") return {};
 
   const [userCategories, userProjects] = await Promise.all([
     categoryRepository.findByUser(user._id),
@@ -99,24 +112,29 @@ const buildTaskAccessQuery = async (
 };
 
 const parseDateRangeQuery = (
-  queryParams: Record<string, unknown>
+  queryParams: Record<string, unknown>,
 ): { filter?: Record<string, unknown>; error?: string } => {
   const { startDate, endDate } = queryParams;
   if (startDate === undefined && endDate === undefined) return {};
 
   if (!startDate || !endDate) {
-    return { error: 'Both startDate and endDate are required for date range filtering' };
+    return {
+      error: "Both startDate and endDate are required for date range filtering",
+    };
   }
 
   const parsedStart = new Date(startDate as string);
   const parsedEnd = new Date(endDate as string);
 
-  if (Number.isNaN(parsedStart.getTime()) || Number.isNaN(parsedEnd.getTime())) {
-    return { error: 'Invalid date range' };
+  if (
+    Number.isNaN(parsedStart.getTime()) ||
+    Number.isNaN(parsedEnd.getTime())
+  ) {
+    return { error: "Invalid date range" };
   }
 
   if (parsedStart > parsedEnd) {
-    return { error: 'startDate must be before or equal to endDate' };
+    return { error: "startDate must be before or equal to endDate" };
   }
 
   return { filter: { dueDate: { $gte: parsedStart, $lte: parsedEnd } } };
@@ -124,35 +142,30 @@ const parseDateRangeQuery = (
 
 const applyCompletionTimestamp = (
   update: Record<string, unknown>,
-  currentStatus: string
+  currentStatus: string,
 ): void => {
   if (update.status === undefined) return;
 
-  if (update.status === 'completed') {
-    if (currentStatus !== 'completed') {
+  if (update.status === "completed") {
+    if (currentStatus !== "completed") {
       update.completedAt = new Date();
     }
-  } else if (currentStatus === 'completed') {
+  } else if (currentStatus === "completed") {
     update.completedAt = null;
   }
 };
 
 const getOwnerId = (task: ITaskDocument): string | null => {
-  const categoryOwner =
-    (task.categoryId as unknown as PopulatedCategoryRef | null)?.userId as
-      | PopulatedUserId
-      | mongoose.Types.ObjectId
-      | undefined;
+  const categoryOwner = (
+    task.categoryId as unknown as PopulatedCategoryRef | null
+  )?.userId as PopulatedUserId | mongoose.Types.ObjectId | undefined;
   const categoryOwnerId =
     (categoryOwner as PopulatedUserId)?._id?.toString() ||
     (categoryOwner as mongoose.Types.ObjectId)?.toString?.();
   if (categoryOwnerId) return categoryOwnerId;
 
-  const projectOwner =
-    (task.projectId as unknown as PopulatedProjectRef | null)?.userId as
-      | PopulatedUserId
-      | mongoose.Types.ObjectId
-      | undefined;
+  const projectOwner = (task.projectId as unknown as PopulatedProjectRef | null)
+    ?.userId as PopulatedUserId | mongoose.Types.ObjectId | undefined;
   return (
     (projectOwner as PopulatedUserId)?._id?.toString() ||
     (projectOwner as mongoose.Types.ObjectId)?.toString?.() ||
@@ -161,7 +174,7 @@ const getOwnerId = (task: ITaskDocument): string | null => {
 };
 
 const verifyOwnership = (task: ITaskDocument, user: IUserDocument): void => {
-  if (user.role === 'ADMIN') return;
+  if (user.role === "ADMIN") return;
   if (getOwnerId(task) !== user._id.toString()) {
     throw new AppError(TASK_ERROR.ACCESS_DENIED);
   }
@@ -170,12 +183,15 @@ const verifyOwnership = (task: ITaskDocument, user: IUserDocument): void => {
 export const taskService = {
   async create(
     data: Record<string, unknown>,
-    userId: mongoose.Types.ObjectId | string
+    userId: mongoose.Types.ObjectId | string,
   ): Promise<ITaskDocument | null> {
-    const categoryId = await resolveCategory(data.categoryId as string | undefined, userId);
+    const categoryId = await resolveCategory(
+      data.categoryId as string | undefined,
+      userId,
+    );
     const projectUpdate = await resolveProject(
       data.projectId as string | undefined | null,
-      userId
+      userId,
     );
 
     const startDate = normalizeTaskDateInput(data.startDate);
@@ -188,7 +204,7 @@ export const taskService = {
     const task = await taskRepository.create({
       title: data.title,
       description: data.description,
-      status: 'in-progress',
+      status: "in-progress",
       priority: data.priority,
       categoryId,
       projectId: projectUpdate.shouldUpdate ? projectUpdate.value : null,
@@ -202,7 +218,7 @@ export const taskService = {
 
   async getAll(
     user: IUserDocument,
-    queryParams: Record<string, unknown>
+    queryParams: Record<string, unknown>,
   ): Promise<ResponsePage<ITaskDocument>> {
     const query: Record<string, unknown> = await buildTaskAccessQuery(user);
     const dateRange = parseDateRangeQuery(queryParams);
@@ -210,42 +226,50 @@ export const taskService = {
     if (dateRange.filter) Object.assign(query, dateRange.filter);
 
     // Server-side search (title + description)
-    if (queryParams.search && typeof queryParams.search === 'string' && queryParams.search.trim()) {
-      const escaped = queryParams.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const searchRegex = new RegExp(escaped, 'i');
+    if (
+      queryParams.search &&
+      typeof queryParams.search === "string" &&
+      queryParams.search.trim()
+    ) {
+      const escaped = queryParams.search
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const searchRegex = new RegExp(escaped, "i");
       query.$or = [{ title: searchRegex }, { description: searchRegex }];
     }
 
     // Server-side status filter
-    if (queryParams.status && typeof queryParams.status === 'string') {
+    if (queryParams.status && typeof queryParams.status === "string") {
       query.status = queryParams.status;
     }
 
     // Server-side project filter
-    if (queryParams.projectId && typeof queryParams.projectId === 'string') {
-      query.projectId = queryParams.projectId === 'standalone' ? null : queryParams.projectId;
+    if (queryParams.projectId && typeof queryParams.projectId === "string") {
+      query.projectId =
+        queryParams.projectId === "standalone" ? null : queryParams.projectId;
     }
 
     // Pagination
     const pageNo = Number(queryParams.pageNo) || DEFAULT_PAGE_NO;
     const pageSize = Number(queryParams.pageSize) || DEFAULT_PAGE_SIZE;
-    const sort = parseSortString(
-      queryParams.sort as string | undefined,
-      { dueDate: 1, createdAt: -1 }
-    );
+    const sort = parseSortString(queryParams.sort as string | undefined, {
+      dueDate: 1,
+      createdAt: -1,
+    });
     const skip = calculateSkip(pageNo, pageSize);
 
-    const { data, totalCount } = await taskRepository.findPaginated(
-      query,
-      { skip, limit: pageSize, sort }
-    );
+    const { data, totalCount } = await taskRepository.findPaginated(query, {
+      skip,
+      limit: pageSize,
+      sort,
+    });
 
     return buildResponsePage(data, totalCount, pageNo, pageSize);
   },
 
   async getById(
     id: mongoose.Types.ObjectId | string,
-    user: IUserDocument
+    user: IUserDocument,
   ): Promise<ITaskDocument> {
     const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
@@ -256,7 +280,7 @@ export const taskService = {
   async update(
     id: mongoose.Types.ObjectId | string,
     data: Record<string, unknown>,
-    user: IUserDocument
+    user: IUserDocument,
   ): Promise<ITaskDocument | null> {
     const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
@@ -277,18 +301,21 @@ export const taskService = {
 
     if (data.categoryId !== undefined) {
       if (
-        data.categoryId === 'uncategorized' ||
-        data.categoryId === '' ||
+        data.categoryId === "uncategorized" ||
+        data.categoryId === "" ||
         data.categoryId === null
       ) {
         const uncategorized = await categoryRepository.findByUserAndName(
           user._id,
-          'Uncategorized'
+          "Uncategorized",
         );
-        if (!uncategorized) throw new AppError(CATEGORY_ERROR.DEFAULT_CATEGORY_UNAVAILABLE);
+        if (!uncategorized)
+          throw new AppError(CATEGORY_ERROR.DEFAULT_CATEGORY_UNAVAILABLE);
         update.categoryId = uncategorized._id;
       } else {
-        const newCategory = await categoryRepository.findById(data.categoryId as string);
+        const newCategory = await categoryRepository.findById(
+          data.categoryId as string,
+        );
         if (
           !newCategory ||
           newCategory.userId.toString() !== user._id.toString()
@@ -305,7 +332,7 @@ export const taskService = {
     const projectUpdate = await resolveProject(
       data.projectId as string | undefined | null,
       user._id,
-      currentProjectId
+      currentProjectId,
     );
     if (projectUpdate.error) throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
     if (projectUpdate.shouldUpdate) update.projectId = projectUpdate.value;
@@ -329,16 +356,17 @@ export const taskService = {
 
   async finish(
     id: mongoose.Types.ObjectId | string,
-    user: IUserDocument
+    user: IUserDocument,
   ): Promise<ITaskDocument | null> {
     const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
 
-    if (task.status !== 'in-progress') throw new AppError(TASK_ERROR.CANNOT_FINISH);
+    if (task.status !== "in-progress")
+      throw new AppError(TASK_ERROR.CANNOT_FINISH);
 
     const currentDate = new Date();
-    task.status = 'completed';
+    task.status = "completed";
     task.completedAt = currentDate;
     task.isOverDue = !!(task.dueDate && currentDate > task.dueDate);
     await task.save();
@@ -346,7 +374,11 @@ export const taskService = {
     const cat = task.categoryId as unknown as PopulatedCategoryRef | null;
     const categoryName =
       cat?.name ||
-      (await categoryRepository.findById(task.categoryId as mongoose.Types.ObjectId))?.name;
+      (
+        await categoryRepository.findById(
+          task.categoryId as mongoose.Types.ObjectId,
+        )
+      )?.name;
 
     const catId = cat?._id || (task.categoryId as mongoose.Types.ObjectId);
     if (catId && categoryName) {
@@ -358,16 +390,15 @@ export const taskService = {
 
   async start(
     id: mongoose.Types.ObjectId | string,
-    user: IUserDocument
+    user: IUserDocument,
   ): Promise<ITaskDocument | null> {
     const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
 
-    if (task.status !== 'pending')
-      throw new AppError(TASK_ERROR.CANNOT_START);
+    if (task.status !== "pending") throw new AppError(TASK_ERROR.CANNOT_START);
 
-    task.status = 'in-progress';
+    task.status = "in-progress";
     await task.save();
 
     await statService.incrementStart(user._id);
@@ -376,22 +407,26 @@ export const taskService = {
 
   async giveUp(
     id: mongoose.Types.ObjectId | string,
-    user: IUserDocument
+    user: IUserDocument,
   ): Promise<ITaskDocument | null> {
     const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     verifyOwnership(task, user);
 
-    if (task.status !== 'in-progress')
+    if (task.status !== "in-progress")
       throw new AppError(TASK_ERROR.CANNOT_GIVE_UP);
 
-    task.status = 'given-up';
+    task.status = "given-up";
     await task.save();
 
     const cat = task.categoryId as unknown as PopulatedCategoryRef | null;
     const categoryName =
       cat?.name ||
-      (await categoryRepository.findById(task.categoryId as mongoose.Types.ObjectId))?.name;
+      (
+        await categoryRepository.findById(
+          task.categoryId as mongoose.Types.ObjectId,
+        )
+      )?.name;
 
     const catId = cat?._id || (task.categoryId as mongoose.Types.ObjectId);
     if (catId && categoryName) {
@@ -403,7 +438,7 @@ export const taskService = {
 
   async delete(
     id: mongoose.Types.ObjectId | string,
-    user: IUserDocument
+    user: IUserDocument,
   ): Promise<void> {
     const task = await taskRepository.findByIdPopulated(id);
     if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
@@ -414,7 +449,7 @@ export const taskService = {
 
   async getTodayDeadlines(
     user: IUserDocument,
-    queryParams: Record<string, unknown> = {}
+    queryParams: Record<string, unknown> = {},
   ): Promise<ResponsePage<ITaskDocument>> {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -427,22 +462,23 @@ export const taskService = {
 
     const pageNo = Number(queryParams.pageNo) || DEFAULT_PAGE_NO;
     const pageSize = Number(queryParams.pageSize) || DEFAULT_PAGE_SIZE;
-    const sort = parseSortString(
-      queryParams.sort as string | undefined,
-      { dueDate: 1, createdAt: -1 }
-    );
+    const sort = parseSortString(queryParams.sort as string | undefined, {
+      dueDate: 1,
+      createdAt: -1,
+    });
     const skip = calculateSkip(pageNo, pageSize);
 
     const query = {
       ...baseQuery,
       dueDate: { $gte: startOfDay, $lt: endOfDay },
-      status: { $nin: ['completed', 'given-up'] },
+      status: { $nin: ["completed", "given-up"] },
     };
 
-    const { data, totalCount } = await taskRepository.findPaginated(
-      query,
-      { skip, limit: pageSize, sort }
-    );
+    const { data, totalCount } = await taskRepository.findPaginated(query, {
+      skip,
+      limit: pageSize,
+      sort,
+    });
 
     return buildResponsePage(data, totalCount, pageNo, pageSize);
   },
@@ -450,24 +486,25 @@ export const taskService = {
   async getByStatus(
     user: IUserDocument,
     status: string,
-    queryParams: Record<string, unknown> = {}
+    queryParams: Record<string, unknown> = {},
   ): Promise<ResponsePage<ITaskDocument>> {
     const baseQuery = await buildTaskAccessQuery(user);
 
     const pageNo = Number(queryParams.pageNo) || DEFAULT_PAGE_NO;
     const pageSize = Number(queryParams.pageSize) || DEFAULT_PAGE_SIZE;
-    const sort = parseSortString(
-      queryParams.sort as string | undefined,
-      { dueDate: 1, createdAt: -1 }
-    );
+    const sort = parseSortString(queryParams.sort as string | undefined, {
+      dueDate: 1,
+      createdAt: -1,
+    });
     const skip = calculateSkip(pageNo, pageSize);
 
     const query = { ...baseQuery, status };
 
-    const { data, totalCount } = await taskRepository.findPaginated(
-      query,
-      { skip, limit: pageSize, sort }
-    );
+    const { data, totalCount } = await taskRepository.findPaginated(query, {
+      skip,
+      limit: pageSize,
+      sort,
+    });
 
     return buildResponsePage(data, totalCount, pageNo, pageSize);
   },
@@ -475,24 +512,25 @@ export const taskService = {
   async getByCategory(
     user: IUserDocument,
     categoryId: string,
-    queryParams: Record<string, unknown> = {}
+    queryParams: Record<string, unknown> = {},
   ): Promise<ResponsePage<ITaskDocument>> {
     const baseQuery = await buildTaskAccessQuery(user);
 
     const pageNo = Number(queryParams.pageNo) || DEFAULT_PAGE_NO;
     const pageSize = Number(queryParams.pageSize) || DEFAULT_PAGE_SIZE;
-    const sort = parseSortString(
-      queryParams.sort as string | undefined,
-      { dueDate: 1, createdAt: -1 }
-    );
+    const sort = parseSortString(queryParams.sort as string | undefined, {
+      dueDate: 1,
+      createdAt: -1,
+    });
     const skip = calculateSkip(pageNo, pageSize);
 
     const query = { ...baseQuery, categoryId };
 
-    const { data, totalCount } = await taskRepository.findPaginated(
-      query,
-      { skip, limit: pageSize, sort }
-    );
+    const { data, totalCount } = await taskRepository.findPaginated(query, {
+      skip,
+      limit: pageSize,
+      sort,
+    });
 
     return buildResponsePage(data, totalCount, pageNo, pageSize);
   },

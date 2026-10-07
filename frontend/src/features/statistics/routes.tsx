@@ -1,10 +1,10 @@
-import type { RouteObject } from 'react-router-dom';
+import type { RouteObject } from "react-router-dom";
 
 export const statisticsRoutes: RouteObject[] = [
   {
-    path: 'statistics',
+    path: "statistics",
     lazy: async () => {
-      const Component = (await import('./StatisticsPage')).default;
+      const Component = (await import("./StatisticsPage")).default;
       return { Component };
     },
   },

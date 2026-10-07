@@ -1,4 +1,4 @@
-import { Document, Model, Types } from 'mongoose';
+import { Document, Model, Types } from "mongoose";
 
 export interface ICategory {
   userId: Types.ObjectId;
@@ -11,5 +11,8 @@ export interface ICategory {
 export interface ICategoryDocument extends ICategory, Document {}
 
 export interface ICategoryModel extends Model<ICategoryDocument> {
-  findByUserAndName(userId: Types.ObjectId | string, name: string): Promise<ICategoryDocument | null>;
+  findByUserAndName(
+    userId: Types.ObjectId | string,
+    name: string,
+  ): Promise<ICategoryDocument | null>;
 }

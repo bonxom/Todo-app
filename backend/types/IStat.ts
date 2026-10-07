@@ -1,4 +1,4 @@
-import { Document, Model, Types } from 'mongoose';
+import { Document, Model, Types } from "mongoose";
 
 export interface IDailyCategoryStat {
   categoryId: Types.ObjectId;

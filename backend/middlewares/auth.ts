@@ -1,9 +1,9 @@
-import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import mongoose from 'mongoose';
-import User from '../models/User.js';
-import { AppError } from '../error/AppError.js';
-import { AUTH_ERROR } from '../error/definitions/authErrors.js';
+import type { NextFunction, Request, RequestHandler, Response } from "express";
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import User from "../models/User.js";
+import { AppError } from "../error/AppError.js";
+import { AUTH_ERROR } from "../error/definitions/authErrors.js";
 
 interface JwtPayload {
   id: string;
@@ -12,7 +12,7 @@ interface JwtPayload {
 export const protect = async (
   req: Request,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   const authorization = req.headers.authorization;
   if (!authorization) {
@@ -38,11 +38,15 @@ export const protect = async (
     throw error;
   }
 
-  if (!decoded || typeof decoded.id !== 'string' || !mongoose.isObjectIdOrHexString(decoded.id)) {
+  if (
+    !decoded ||
+    typeof decoded.id !== "string" ||
+    !mongoose.isObjectIdOrHexString(decoded.id)
+  ) {
     throw new AppError(AUTH_ERROR.TOKEN_INVALID);
   }
 
-  const user = await User.findById(decoded.id).select('-password');
+  const user = await User.findById(decoded.id).select("-password");
   if (!user) {
     throw new AppError(AUTH_ERROR.UNAUTHORIZED);
   }

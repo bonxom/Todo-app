@@ -13,7 +13,7 @@ export const addDays = (value, amount) => {
 export const getDateKey = (value) => {
   const date = startOfDay(value);
 
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
 export const isSameDay = (left, right) => {
@@ -69,7 +69,8 @@ export const buildWeekDays = (currentDate) => {
 
   return Array.from({ length: 7 }, (_, index) => ({
     date: addDays(weekStart, index),
-    isCurrentMonth: addDays(weekStart, index).getMonth() === currentDate.getMonth(),
+    isCurrentMonth:
+      addDays(weekStart, index).getMonth() === currentDate.getMonth(),
   }));
 };
 
@@ -94,12 +95,14 @@ export const getTaskDueTimestamp = (task) => {
   if (!task?.dueDate) return Number.POSITIVE_INFINITY;
 
   const date = new Date(task.dueDate);
-  return Number.isNaN(date.getTime()) ? Number.POSITIVE_INFINITY : date.getTime();
+  return Number.isNaN(date.getTime())
+    ? Number.POSITIVE_INFINITY
+    : date.getTime();
 };
 
-const getTaskStatusRank = (task) => (task?.status === 'in-progress' ? 0 : 1);
+const getTaskStatusRank = (task) => (task?.status === "in-progress" ? 0 : 1);
 
-export const sortTasksByDueTime = (tasks = []) => (
+export const sortTasksByDueTime = (tasks = []) =>
   [...tasks].sort((left, right) => {
     const statusDiff = getTaskStatusRank(left) - getTaskStatusRank(right);
     if (statusDiff !== 0) return statusDiff;
@@ -107,27 +110,32 @@ export const sortTasksByDueTime = (tasks = []) => (
     const dueDiff = getTaskDueTimestamp(left) - getTaskDueTimestamp(right);
     if (dueDiff !== 0) return dueDiff;
 
-    return (left.title || '').localeCompare(right.title || '');
-  })
-);
+    return (left.title || "").localeCompare(right.title || "");
+  });
 
-export const formatMonthLabel = (currentDate) => currentDate.toLocaleDateString('en-US', {
-  month: 'long',
-  year: 'numeric',
-});
+export const formatMonthLabel = (currentDate) =>
+  currentDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
 export const formatWeekLabel = (currentDate) => {
   const weekStart = getStartOfWeek(currentDate);
   const weekEnd = addDays(weekStart, 6);
-  const startLabel = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const endLabel = weekEnd.toLocaleDateString('en-US', {
-    month: weekStart.getMonth() === weekEnd.getMonth() ? undefined : 'short',
-    day: 'numeric',
-    year: weekStart.getFullYear() === weekEnd.getFullYear() ? undefined : 'numeric',
+  const startLabel = weekStart.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
   });
-  const yearLabel = weekStart.getFullYear() === weekEnd.getFullYear()
-    ? weekEnd.getFullYear()
-    : `${weekStart.getFullYear()} / ${weekEnd.getFullYear()}`;
+  const endLabel = weekEnd.toLocaleDateString("en-US", {
+    month: weekStart.getMonth() === weekEnd.getMonth() ? undefined : "short",
+    day: "numeric",
+    year:
+      weekStart.getFullYear() === weekEnd.getFullYear() ? undefined : "numeric",
+  });
+  const yearLabel =
+    weekStart.getFullYear() === weekEnd.getFullYear()
+      ? weekEnd.getFullYear()
+      : `${weekStart.getFullYear()} / ${weekEnd.getFullYear()}`;
 
   return `${startLabel} - ${endLabel}, ${yearLabel}`;
 };

@@ -30,7 +30,9 @@ const MainLayout = ({ children = null, assistant = null }) => {
       return undefined;
     }
 
-    const mediaQuery = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`);
+    const mediaQuery = window.matchMedia(
+      `(min-width: ${DESKTOP_BREAKPOINT}px)`,
+    );
     const syncViewport = (event) => {
       setIsDesktop(event.matches);
       setIsSidebarHovered(false);
@@ -77,9 +79,7 @@ const MainLayout = ({ children = null, assistant = null }) => {
           paddingTop: `${TOPBAR_HEIGHT}px`,
         }}
       >
-        <div className="ui-main-content">
-          {children || <Outlet />}
-        </div>
+        <div className="ui-main-content">{children || <Outlet />}</div>
       </main>
       {assistant}
     </div>

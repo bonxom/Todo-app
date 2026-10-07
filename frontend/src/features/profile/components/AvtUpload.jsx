@@ -1,29 +1,29 @@
-import { useEffect, useState } from 'react';
-import { Camera, X } from 'lucide-react';
-import { useUpdateProfileMutation } from '../api/userMutations';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+import { useEffect, useState } from "react";
+import { Camera, X } from "lucide-react";
+import { useUpdateProfileMutation } from "../api/userMutations";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const AvatarUpload = ({ onUploadSuccess }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState("");
   const updateProfileMutation = useUpdateProfileMutation();
   const isUploading = updateProfileMutation.isPending;
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
   const handleClose = () => {
     setIsOpen(false);
-    setAvatarUrl('');
+    setAvatarUrl("");
   };
 
   const handleSubmit = async (e) => {
@@ -32,14 +32,14 @@ const AvatarUpload = ({ onUploadSuccess }) => {
 
     try {
       await updateProfileMutation.mutateAsync({ avatarUrl });
-      alert('Avatar updated successfully!');
+      alert("Avatar updated successfully!");
       handleClose();
       if (onUploadSuccess) {
         onUploadSuccess();
       }
     } catch (error) {
-      console.error('Error updating avatar:', error);
-      alert('Error updating avatar: ' + getApiErrorMessage(error));
+      console.error("Error updating avatar:", error);
+      alert("Error updating avatar: " + getApiErrorMessage(error));
     }
   };
 
@@ -54,9 +54,9 @@ const AvatarUpload = ({ onUploadSuccess }) => {
         onClick={handleButtonClick}
         className="ui-focus-ring absolute bottom-0 right-0 inline-flex h-10 w-10 items-center justify-center rounded-full border text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
         style={{
-          borderColor: 'var(--color-line)',
-          backgroundColor: 'var(--color-surface)',
-          boxShadow: 'var(--shadow-xs)',
+          borderColor: "var(--color-line)",
+          backgroundColor: "var(--color-surface)",
+          boxShadow: "var(--shadow-xs)",
         }}
         aria-label="Update avatar image"
         title="Update avatar image"
@@ -74,7 +74,10 @@ const AvatarUpload = ({ onUploadSuccess }) => {
           >
             <div className="ui-modal-header flex items-center justify-between gap-4">
               <div>
-                <h3 id="avatar-upload-title" className="m-0 text-xl font-semibold text-[var(--color-text)]">
+                <h3
+                  id="avatar-upload-title"
+                  className="m-0 text-xl font-semibold text-[var(--color-text)]"
+                >
                   Update Avatar
                 </h3>
                 <p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">
@@ -93,7 +96,10 @@ const AvatarUpload = ({ onUploadSuccess }) => {
 
             <form onSubmit={handleSubmit}>
               <div className="ui-modal-body">
-                <label htmlFor="avatar-url" className="mb-2 block text-sm font-medium text-[var(--color-text)]">
+                <label
+                  htmlFor="avatar-url"
+                  className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+                >
                   Avatar URL
                 </label>
                 <input
@@ -124,7 +130,7 @@ const AvatarUpload = ({ onUploadSuccess }) => {
                   className="ui-btn-primary ui-focus-ring min-w-[8.5rem] flex-1 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isUploading}
                 >
-                  {isUploading ? 'Updating…' : 'Update Avatar'}
+                  {isUploading ? "Updating…" : "Update Avatar"}
                 </button>
               </div>
             </form>

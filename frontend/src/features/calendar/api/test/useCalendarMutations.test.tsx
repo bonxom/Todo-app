@@ -29,7 +29,10 @@ describe("useCalendarMutations", () => {
 
   const createWrapper = () => {
     queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     return ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -64,7 +67,9 @@ describe("useCalendarMutations", () => {
     });
 
     // Check optimistic update in query cache before promise settles
-    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0].status).toBe("completed");
+    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0].status).toBe(
+      "completed",
+    );
 
     // Reject the mutation
     await act(async () => {
@@ -73,7 +78,9 @@ describe("useCalendarMutations", () => {
     });
 
     // Cache must be rolled back to original status
-    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0].status).toBe("in-progress");
+    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0].status).toBe(
+      "in-progress",
+    );
   });
 
   it("applies optimistic due date change and commits server response on success", async () => {
@@ -90,7 +97,9 @@ describe("useCalendarMutations", () => {
       await result.current.changeTaskDueDate(task, "2026-08-20T09:00:00.000Z");
     });
 
-    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0].dueDate).toBe("2026-08-20T09:00:00.000Z");
+    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0].dueDate).toBe(
+      "2026-08-20T09:00:00.000Z",
+    );
   });
 
   it("applies optimistic task deletion and rolls back on failure", async () => {
@@ -98,7 +107,9 @@ describe("useCalendarMutations", () => {
     const task = makeTask("t1");
     queryClient.setQueryData(calendarKey, [task]);
 
-    vi.spyOn(taskService, "deleteTask").mockRejectedValueOnce(new Error("Failed"));
+    vi.spyOn(taskService, "deleteTask").mockRejectedValueOnce(
+      new Error("Failed"),
+    );
 
     const { result } = renderHook(() => useCalendarMutations(), { wrapper });
 
@@ -125,7 +136,7 @@ describe("useCalendarMutations", () => {
     await act(async () => {
       await result.current.copyTask(
         { title: "Copied Task", startDate: "2026-08-01T00:00:00.000Z" },
-        "2026-08-18T09:00:00.000Z"
+        "2026-08-18T09:00:00.000Z",
       );
     });
 
@@ -157,14 +168,21 @@ describe("useCalendarMutations", () => {
     };
     queryClient.setQueryData(projectKeys.list(), [project]);
 
-    vi.spyOn(projectService, "updateProject").mockRejectedValueOnce(new Error("Fail"));
+    vi.spyOn(projectService, "updateProject").mockRejectedValueOnce(
+      new Error("Fail"),
+    );
 
     const { result } = renderHook(() => useCalendarMutations(), { wrapper });
 
     await act(async () => {
-      await result.current.changeProjectStatus("p1", "completed").catch(() => {});
+      await result.current
+        .changeProjectStatus("p1", "completed")
+        .catch(() => {});
     });
 
-    expect(queryClient.getQueryData<ProjectWithSummary[]>(projectKeys.list())?.[0].status).toBe("active");
+    expect(
+      queryClient.getQueryData<ProjectWithSummary[]>(projectKeys.list())?.[0]
+        .status,
+    ).toBe("active");
   });
 });

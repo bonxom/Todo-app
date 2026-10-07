@@ -18,7 +18,7 @@ This specification addresses the key findings from [ui-ux-review-orbit.md](../..
 2. **Decoupled Data Scope & Accurate Metrics:**
    - Project cards, overall progress, and project completion counters must always calculate from the full raw dataset (`allTasks`).
    - Task list filters (Search, Status multi-select, Sort) must strictly filter the task list view only.
-   - Separate empty states: distinguish between a project having *no tasks at all* versus *no tasks matching current filters*.
+   - Separate empty states: distinguish between a project having _no tasks at all_ versus _no tasks matching current filters_.
 3. **Calendar-Aligned Task Status Model & Action Semantics:**
    - Adopt the 4-status visual language from `CalendarTaskDetailCard.jsx` (Pending, In Progress, Completed, Given Up).
    - Dedicated contextual actions per status:
@@ -86,6 +86,7 @@ This specification addresses the key findings from [ui-ux-review-orbit.md](../..
 ## 3. Detailed Component Specifications
 
 ### 3.1 Task Toolbar (`TodoTaskToolbar.jsx`)
+
 - **Search:** Instant filter on task title and description, with clear (`X`) button.
 - **Status Filter Multi-Select:**
   - Dropdown containing: `Pending`, `In Progress`, `Completed`, `Given Up`.
@@ -97,7 +98,9 @@ This specification addresses the key findings from [ui-ux-review-orbit.md](../..
   - Displays removable pills for active search/status/project filter with a global `Clear all filters` button when active.
 
 ### 3.2 Task Card (`TodoTaskCard.jsx` / enhanced `TaskItem.jsx`)
+
 Adopts the proven patterns from `CalendarTaskDetailCard`:
+
 - **Left Border Accent:** 4px–5px solid border in the Project's color (or default line color if Standalone/No Project).
 - **Status Representations:**
   - `pending`: Dashed border (`border-dashed`), warning-soft background or chip, subdued title.
@@ -122,6 +125,7 @@ Adopts the proven patterns from `CalendarTaskDetailCard`:
   - Category Badge & Project Badge.
 
 ### 3.3 Project Focus Rail (`ProjectFocusRail.jsx` / enhanced `ProjectOverviewGrid.jsx`)
+
 - **Stable Metrics:**
   - `total`: Count of all tasks belonging to this project (from `rawTasks`), ignoring toolbar filters.
   - `completed`: Count of completed tasks in this project (from `rawTasks`).
@@ -139,13 +143,14 @@ Adopts the proven patterns from `CalendarTaskDetailCard`:
   - The list container inside the rail has `max-h-[calc(100vh-18rem)] overflow-y-auto pr-1` so users with 20+ projects can smoothly scroll without moving the main viewport.
 
 ### 3.4 Empty States & Microcopy
+
 - **Real Empty (No tasks exist in project / workspace):**
-  - Title: *"No tasks in this project yet"* (or *"No tasks created yet"*).
-  - Description: *"Create your first task to start tracking progress."*
+  - Title: _"No tasks in this project yet"_ (or _"No tasks created yet"_).
+  - Description: _"Create your first task to start tracking progress."_
   - CTA: `+ Add Task`.
 - **Filtered Empty (Tasks exist, but filtered out by search/status):**
-  - Title: *"No tasks match the active filters"*.
-  - Description: *"Try selecting different statuses or clearing your search query."*
+  - Title: _"No tasks match the active filters"_.
+  - Description: _"Try selecting different statuses or clearing your search query."_
   - CTA: `Clear filters` button (resets search and status filter).
 
 ---
@@ -153,6 +158,7 @@ Adopts the proven patterns from `CalendarTaskDetailCard`:
 ## 4. Comprehensive Component States (Loading, Error, Mutation)
 
 ### 4.1 Loading States
+
 - **Task List Loading:**
   - Render 3–5 skeleton task cards with pulsing placeholders matching the height and layout of `TodoTaskCard` (`h-24 animate-pulse ui-section-card rounded-[14px]`).
 - **Project Rail Loading:**
@@ -161,12 +167,14 @@ Adopts the proven patterns from `CalendarTaskDetailCard`:
   - Subtle top progress indicator or small chip `Refreshing…` without blocking UI interactions.
 
 ### 4.2 Query Error States
+
 - **Inline Error Banner:**
   - If `tasksQuery.isError` or `projectsQuery.isError`, show a distinct banner above the list with the specific error message.
   - Provide an explicit `Retry` button that triggers `refetch()`.
   - Preserve any previously cached data if available rather than blanking the screen.
 
 ### 4.3 Mutation States & Optimistic Behavior
+
 - **Pending Mutation:**
   - Disable the clicked button to prevent duplicate submissions.
   - Replace button icon with a spinner (`<Loader2 className="h-4 w-4 animate-spin" />`).

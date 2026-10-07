@@ -1,20 +1,21 @@
-import { RotateCcw, Search, X } from 'lucide-react';
+import { RotateCcw, Search, X } from "lucide-react";
 
 const SORT_OPTIONS = [
-  { id: 'dueDate', label: 'Due date (Earliest)' },
-  { id: 'priority', label: 'Priority (High to Low)' },
-  { id: 'title', label: 'Title (A-Z)' },
+  { id: "dueDate", label: "Due date (Earliest)" },
+  { id: "priority", label: "Priority (High to Low)" },
+  { id: "title", label: "Title (A-Z)" },
 ];
 
 const TodoTaskToolbar = ({
   searchTerm,
   onSearchChange,
-  sortBy = 'dueDate',
+  sortBy = "dueDate",
   onSortChange,
   activeProjectName,
   onClearProjectFilter,
 }) => {
-  const hasActiveFilters = Boolean(searchTerm.trim()) || Boolean(activeProjectName);
+  const hasActiveFilters =
+    Boolean(searchTerm.trim()) || Boolean(activeProjectName);
 
   return (
     <div className="todo-toolbar space-y-3">
@@ -34,7 +35,7 @@ const TodoTaskToolbar = ({
           {searchTerm && (
             <button
               type="button"
-              onClick={() => onSearchChange('')}
+              onClick={() => onSearchChange("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer"
               aria-label="Clear search text"
             >
@@ -61,7 +62,9 @@ const TodoTaskToolbar = ({
       {/* Active Filter Pills Bar */}
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-          <span className="text-[var(--color-text-muted)] font-medium">Active filters:</span>
+          <span className="text-[var(--color-text-muted)] font-medium">
+            Active filters:
+          </span>
 
           {activeProjectName && (
             <span className="ui-chip ui-chip--accent">
@@ -82,7 +85,7 @@ const TodoTaskToolbar = ({
               Keyword: "{searchTerm.trim()}"
               <button
                 type="button"
-                onClick={() => onSearchChange('')}
+                onClick={() => onSearchChange("")}
                 className="ml-1 hover:text-[var(--color-danger)] cursor-pointer"
                 aria-label="Remove search keyword"
               >
@@ -94,7 +97,7 @@ const TodoTaskToolbar = ({
           <button
             type="button"
             onClick={() => {
-              onSearchChange('');
+              onSearchChange("");
               onClearProjectFilter?.();
             }}
             className="ml-auto inline-flex items-center gap-1 text-[var(--color-accent)] hover:underline font-semibold cursor-pointer"

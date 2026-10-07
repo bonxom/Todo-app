@@ -1,4 +1,4 @@
-import { Document, Model, Types } from 'mongoose';
+import { Document, Model, Types } from "mongoose";
 
 export interface IUser {
   email: string;
@@ -6,7 +6,7 @@ export interface IUser {
   name: string;
   dob?: Date;
   nationality?: string;
-  role: 'USER' | 'ADMIN';
+  role: "USER" | "ADMIN";
   categories: Types.ObjectId[];
   avatarUrl: string;
   createdAt: Date;

@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { render, screen, act } from "@testing-library/react";
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { AuthCacheBoundary } from "../AuthCacheBoundary";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { taskKeys } from "@/features/tasks/api/taskKeys";
@@ -8,7 +12,11 @@ import { taskKeys } from "@/features/tasks/api/taskKeys";
 const Probe = () => {
   const client = useQueryClient();
   const tasks = client.getQueryData<Array<{ _id: string }>>(taskKeys.list({}));
-  return <div data-testid="probe">{tasks ? tasks.map((t) => t._id).join(",") : "empty"}</div>;
+  return (
+    <div data-testid="probe">
+      {tasks ? tasks.map((t) => t._id).join(",") : "empty"}
+    </div>
+  );
 };
 
 describe("AuthCacheBoundary", () => {
@@ -32,7 +40,7 @@ describe("AuthCacheBoundary", () => {
         <AuthCacheBoundary>
           <Probe />
         </AuthCacheBoundary>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByTestId("probe").textContent).toBe("task-1");
@@ -52,7 +60,7 @@ describe("AuthCacheBoundary", () => {
         <AuthCacheBoundary>
           <Probe />
         </AuthCacheBoundary>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByTestId("probe").textContent).toBe("user-a-task");
@@ -81,7 +89,7 @@ describe("AuthCacheBoundary", () => {
         <AuthCacheBoundary>
           <Probe />
         </AuthCacheBoundary>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByTestId("probe").textContent).toBe("keep-me");
@@ -110,7 +118,7 @@ describe("AuthCacheBoundary", () => {
         <AuthCacheBoundary>
           <Probe />
         </AuthCacheBoundary>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByTestId("probe").textContent).toBe("keep-me-sync");

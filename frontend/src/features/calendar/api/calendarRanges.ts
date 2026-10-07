@@ -19,13 +19,19 @@ export const endOfDay = (value: Date | string | number): Date => {
   return date;
 };
 
-export const addDays = (value: Date | string | number, amount: number): Date => {
+export const addDays = (
+  value: Date | string | number,
+  amount: number,
+): Date => {
   const date = startOfDay(value);
   date.setDate(date.getDate() + amount);
   return date;
 };
 
-export const addMonths = (value: Date | string | number, amount: number): Date => {
+export const addMonths = (
+  value: Date | string | number,
+  amount: number,
+): Date => {
   const date = startOfDay(value);
   date.setMonth(date.getMonth() + amount);
   return date;
@@ -37,15 +43,20 @@ export const getStartOfWeek = (value: Date | string | number): Date => {
   return date;
 };
 
-export const buildWeekDays = (currentDate: Date): Array<{ date: Date; isCurrentMonth: boolean }> => {
+export const buildWeekDays = (
+  currentDate: Date,
+): Array<{ date: Date; isCurrentMonth: boolean }> => {
   const weekStart = getStartOfWeek(currentDate);
   return Array.from({ length: 7 }, (_, index) => ({
     date: addDays(weekStart, index),
-    isCurrentMonth: addDays(weekStart, index).getMonth() === currentDate.getMonth(),
+    isCurrentMonth:
+      addDays(weekStart, index).getMonth() === currentDate.getMonth(),
   }));
 };
 
-export const buildMonthDays = (currentDate: Date): Array<{ date: Date; isCurrentMonth: boolean }> => {
+export const buildMonthDays = (
+  currentDate: Date,
+): Array<{ date: Date; isCurrentMonth: boolean }> => {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDayOfMonth = new Date(year, month, 1);
@@ -82,10 +93,21 @@ export const buildMonthDays = (currentDate: Date): Array<{ date: Date; isCurrent
   return calendarDays;
 };
 
-export const getBufferedCalendarRange = (currentDate: Date, viewMode: CalendarViewMode): CalendarRange => {
+export const getBufferedCalendarRange = (
+  currentDate: Date,
+  viewMode: CalendarViewMode,
+): CalendarRange => {
   if (viewMode === "month") {
-    const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const monthStart = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1,
+    );
+    const monthEnd = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0,
+    );
     const start = startOfDay(addMonths(monthStart, -1));
     const end = endOfDay(addMonths(monthEnd, 1));
     return {
@@ -107,8 +129,14 @@ export const getBufferedCalendarRange = (currentDate: Date, viewMode: CalendarVi
   };
 };
 
-export const getVisibleCalendarRange = (currentDate: Date, viewMode: CalendarViewMode): CalendarRange => {
-  const days = viewMode === "month" ? buildMonthDays(currentDate) : buildWeekDays(currentDate);
+export const getVisibleCalendarRange = (
+  currentDate: Date,
+  viewMode: CalendarViewMode,
+): CalendarRange => {
+  const days =
+    viewMode === "month"
+      ? buildMonthDays(currentDate)
+      : buildWeekDays(currentDate);
   const start = startOfDay(days[0].date);
   const end = endOfDay(days[days.length - 1].date);
   return {
@@ -121,9 +149,13 @@ export const getVisibleCalendarRange = (currentDate: Date, viewMode: CalendarVie
 
 export const taskHasDueDateInRange = (
   task: { dueDate?: string | null } | null | undefined,
-  range: { start: Date; end: Date }
+  range: { start: Date; end: Date },
 ): boolean => {
   if (!task?.dueDate) return false;
   const dueTime = new Date(task.dueDate).getTime();
-  return !Number.isNaN(dueTime) && dueTime >= range.start.getTime() && dueTime <= range.end.getTime();
+  return (
+    !Number.isNaN(dueTime) &&
+    dueTime >= range.start.getTime() &&
+    dueTime <= range.end.getTime()
+  );
 };

@@ -58,8 +58,16 @@ The runner's `tools` array accepts raw server-tool definitions (`web_search_2026
 const params = {
   model: "claude-opus-5",
   max_tokens: 16000,
-  tools: [getWeather, { type: "web_search_20260209", name: "web_search", max_uses: 5 }],
-  messages: [{ role: "user", content: "Compare this week's forecasts for Paris across two sources" }],
+  tools: [
+    getWeather,
+    { type: "web_search_20260209", name: "web_search", max_uses: 5 },
+  ],
+  messages: [
+    {
+      role: "user",
+      content: "Compare this week's forecasts for Paris across two sources",
+    },
+  ],
 };
 
 const runner = client.beta.messages.toolRunner(params);
@@ -74,11 +82,17 @@ for await (const message of runner) {
 // Streaming alternative — construct the runner with `stream: true` (same
 // params as above). Each iteration then yields a stream, not a message — a
 // bare `message.stop_reason` check never fires. Resolve the stream first:
-const streamingRunner = client.beta.messages.toolRunner({ ...params, stream: true });
+const streamingRunner = client.beta.messages.toolRunner({
+  ...params,
+  stream: true,
+});
 for await (const stream of streamingRunner) {
   const message = await stream.finalMessage();
   if (message.stop_reason === "pause_turn") {
-    streamingRunner.pushMessages({ role: "assistant", content: message.content });
+    streamingRunner.pushMessages({
+      role: "assistant",
+      content: message.content,
+    });
   }
 }
 ```
@@ -89,7 +103,7 @@ Each pause–resume consumes a `max_iterations` tick, so a capped run can still 
 
 ## Manual Agentic Loop
 
-Prefer the tool runner above. Drop to a manual loop only when you need control the runner does not expose (e.g., a custom transport, request shapes the SDK cannot build, or avoiding a beta dependency — the runner is beta, and it supports per-token streaming via `stream: true`). Human-in-the-loop approval does *not* require a manual loop — gate inside the tool's `run()` function (return a "user declined" result) or inspect pending `tool_use` blocks and call `setMessagesParams()` between iterations.
+Prefer the tool runner above. Drop to a manual loop only when you need control the runner does not expose (e.g., a custom transport, request shapes the SDK cannot build, or avoiding a beta dependency — the runner is beta, and it supports per-token streaming via `stream: true`). Human-in-the-loop approval does _not_ require a manual loop — gate inside the tool's `run()` function (return a "user declined" result) or inspect pending `tool_use` blocks and call `setMessagesParams()` between iterations.
 
 If you do need a manual loop:
 
@@ -273,20 +287,19 @@ const response = await client.messages.create({
 // const tools: Anthropic.Tool[] = [{ type: "text_editor_20250728", ... }]
 ```
 
-| Interface | `name` | `type` |
-|---|---|---|
-| `ToolTextEditor20250124` | `str_replace_editor` | `text_editor_20250124` |
-| `ToolTextEditor20250429` | `str_replace_based_edit_tool` | `text_editor_20250429` |
-| `ToolTextEditor20250728` | `str_replace_based_edit_tool` | `text_editor_20250728` |
-| `ToolBash20250124` | `bash` | `bash_20250124` |
-| `WebSearchTool20260209` | `web_search` | `web_search_20260209` |
-| `WebFetchTool20260209` | `web_fetch` | `web_fetch_20260209` |
-| `CodeExecutionTool20260120` | `code_execution` | `code_execution_20260120` |
+| Interface                   | `name`                        | `type`                    |
+| --------------------------- | ----------------------------- | ------------------------- |
+| `ToolTextEditor20250124`    | `str_replace_editor`          | `text_editor_20250124`    |
+| `ToolTextEditor20250429`    | `str_replace_based_edit_tool` | `text_editor_20250429`    |
+| `ToolTextEditor20250728`    | `str_replace_based_edit_tool` | `text_editor_20250728`    |
+| `ToolBash20250124`          | `bash`                        | `bash_20250124`           |
+| `WebSearchTool20260209`     | `web_search`                  | `web_search_20260209`     |
+| `WebFetchTool20260209`      | `web_fetch`                   | `web_fetch_20260209`      |
+| `CodeExecutionTool20260120` | `code_execution`              | `code_execution_20260120` |
 
 **Don't mix beta and non-beta types**: if you call `client.beta.messages.create()`, the response `content` is `BetaContentBlock[]` — you cannot pass that to a non-beta `ContentBlockParam[]` without narrowing each element.
 
 ---
-
 
 ## Code Execution
 
@@ -384,7 +397,9 @@ for (const block of response.content) {
           const metadata = await client.beta.files.retrieveMetadata(
             fileRef.file_id,
           );
-          const downloadResponse = await client.beta.files.download(fileRef.file_id);
+          const downloadResponse = await client.beta.files.download(
+            fileRef.file_id,
+          );
           const fileBytes = Buffer.from(await downloadResponse.arrayBuffer());
           const safeName = path.basename(metadata.filename);
           if (!safeName || safeName === "." || safeName === "..") {

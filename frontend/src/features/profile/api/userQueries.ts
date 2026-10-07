@@ -4,7 +4,7 @@ import type { User } from "../../../shared/types/domain";
 import { userKeys } from "./userKeys";
 
 export const useCurrentUserQuery = (
-  options?: Omit<UseQueryOptions<User, Error>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<User, Error>, "queryKey" | "queryFn">,
 ) => {
   return useQuery({
     queryKey: userKeys.me(),

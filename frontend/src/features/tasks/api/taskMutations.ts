@@ -1,14 +1,23 @@
-import { useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationOptions,
+} from "@tanstack/react-query";
 import { taskService } from "../../../shared/services/taskService";
-import type { EntityId, Task, TaskMutationPayload } from "../../../shared/types/domain";
+import type {
+  EntityId,
+  Task,
+  TaskMutationPayload,
+} from "../../../shared/types/domain";
 import { invalidateTaskDependents } from "./invalidation";
 
 export const useCreateTaskMutation = (
-  options?: UseMutationOptions<Task, Error, Partial<TaskMutationPayload>>
+  options?: UseMutationOptions<Task, Error, Partial<TaskMutationPayload>>,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<TaskMutationPayload>) => taskService.createTask(payload),
+    mutationFn: (payload: Partial<TaskMutationPayload>) =>
+      taskService.createTask(payload),
     onSuccess: async (...args) => {
       await invalidateTaskDependents(queryClient);
       await options?.onSuccess?.(...args);
@@ -23,11 +32,12 @@ export interface UpdateTaskVariables {
 }
 
 export const useUpdateTaskMutation = (
-  options?: UseMutationOptions<Task, Error, UpdateTaskVariables>
+  options?: UseMutationOptions<Task, Error, UpdateTaskVariables>,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ taskId, payload }: UpdateTaskVariables) => taskService.updateTask(taskId, payload),
+    mutationFn: ({ taskId, payload }: UpdateTaskVariables) =>
+      taskService.updateTask(taskId, payload),
     onSuccess: async (...args) => {
       await invalidateTaskDependents(queryClient);
       await options?.onSuccess?.(...args);
@@ -37,7 +47,7 @@ export const useUpdateTaskMutation = (
 };
 
 export const useDeleteTaskMutation = (
-  options?: UseMutationOptions<unknown, Error, EntityId>
+  options?: UseMutationOptions<unknown, Error, EntityId>,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -51,7 +61,7 @@ export const useDeleteTaskMutation = (
 };
 
 export const useStartTaskMutation = (
-  options?: UseMutationOptions<Task, Error, EntityId>
+  options?: UseMutationOptions<Task, Error, EntityId>,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -65,7 +75,7 @@ export const useStartTaskMutation = (
 };
 
 export const useFinishTaskMutation = (
-  options?: UseMutationOptions<Task, Error, EntityId>
+  options?: UseMutationOptions<Task, Error, EntityId>,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -79,7 +89,7 @@ export const useFinishTaskMutation = (
 };
 
 export const useGiveUpTaskMutation = (
-  options?: UseMutationOptions<Task, Error, EntityId>
+  options?: UseMutationOptions<Task, Error, EntityId>,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -93,7 +103,7 @@ export const useGiveUpTaskMutation = (
 };
 
 export const useRestoreTaskMutation = (
-  options?: UseMutationOptions<Task, Error, EntityId>
+  options?: UseMutationOptions<Task, Error, EntityId>,
 ) => {
   const queryClient = useQueryClient();
   return useMutation({

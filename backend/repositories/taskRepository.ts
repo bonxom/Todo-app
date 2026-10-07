@@ -1,39 +1,43 @@
-import mongoose from 'mongoose';
-import Task from '../models/Task.js';
-import { ITaskDocument } from '../types/ITask.js';
+import mongoose from "mongoose";
+import Task from "../models/Task.js";
+import { ITaskDocument } from "../types/ITask.js";
 
 const TASK_POPULATE = [
   {
-    path: 'categoryId',
-    select: 'name userId',
-    populate: { path: 'userId', select: 'name email' },
+    path: "categoryId",
+    select: "name userId",
+    populate: { path: "userId", select: "name email" },
   },
   {
-    path: 'projectId',
-    select: 'name description color status userId',
-    populate: { path: 'userId', select: 'name email' },
+    path: "projectId",
+    select: "name description color status userId",
+    populate: { path: "userId", select: "name email" },
   },
 ];
 
 export const taskRepository = {
-  findById(id: mongoose.Types.ObjectId | string): Promise<ITaskDocument | null> {
+  findById(
+    id: mongoose.Types.ObjectId | string,
+  ): Promise<ITaskDocument | null> {
     return Task.findById(id);
   },
 
-  findByIdPopulated(id: mongoose.Types.ObjectId | string): Promise<ITaskDocument | null> {
+  findByIdPopulated(
+    id: mongoose.Types.ObjectId | string,
+  ): Promise<ITaskDocument | null> {
     return Task.findById(id).populate(TASK_POPULATE);
   },
 
   find(
     query: Record<string, unknown> = {},
-    options: { sort?: Record<string, 1 | -1> } = {}
+    options: { sort?: Record<string, 1 | -1> } = {},
   ): Promise<ITaskDocument[]> {
     return Task.find(query).sort(options.sort || { dueDate: 1, createdAt: -1 });
   },
 
   findPopulated(
     query: Record<string, unknown> = {},
-    options: { sort?: Record<string, 1 | -1> } = {}
+    options: { sort?: Record<string, 1 | -1> } = {},
   ): Promise<ITaskDocument[]> {
     return Task.find(query)
       .sort(options.sort || { dueDate: 1, createdAt: -1 })
@@ -46,27 +50,35 @@ export const taskRepository = {
 
   updateById(
     id: mongoose.Types.ObjectId | string,
-    update: Record<string, unknown>
+    update: Record<string, unknown>,
   ): Promise<ITaskDocument | null> {
-    return Task.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true });
+    return Task.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    );
   },
 
   updateByIdPopulated(
     id: mongoose.Types.ObjectId | string,
-    update: Record<string, unknown>
+    update: Record<string, unknown>,
   ): Promise<ITaskDocument | null> {
-    return Task.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true }).populate(
-      TASK_POPULATE
-    );
+    return Task.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    ).populate(TASK_POPULATE);
   },
 
-  deleteById(id: mongoose.Types.ObjectId | string): Promise<ITaskDocument | null> {
+  deleteById(
+    id: mongoose.Types.ObjectId | string,
+  ): Promise<ITaskDocument | null> {
     return Task.findByIdAndDelete(id);
   },
 
   async findPaginated(
     query: Record<string, unknown>,
-    paging: { skip: number; limit: number; sort: Record<string, 1 | -1> }
+    paging: { skip: number; limit: number; sort: Record<string, 1 | -1> },
   ): Promise<{ data: ITaskDocument[]; totalCount: number }> {
     const [data, totalCount] = await Promise.all([
       Task.find(query)
@@ -79,7 +91,9 @@ export const taskRepository = {
     return { data, totalCount };
   },
 
-  aggregate(pipeline: mongoose.PipelineStage[]): Promise<Array<Record<string, unknown>>> {
+  aggregate(
+    pipeline: mongoose.PipelineStage[],
+  ): Promise<Array<Record<string, unknown>>> {
     return Task.aggregate(pipeline);
   },
 };

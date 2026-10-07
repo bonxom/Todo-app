@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useChangePasswordMutation, useUpdateProfileMutation } from "../userMutations";
+import {
+  useChangePasswordMutation,
+  useUpdateProfileMutation,
+} from "../userMutations";
 import { authService } from "@/shared/services/authService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { userKeys } from "../userKeys";
@@ -27,14 +30,28 @@ describe("userMutations", () => {
 
   it("updates profile, synchronizes store user and updates query cache", async () => {
     const wrapper = createWrapper();
-    const initialUser = { email: "u@example.com", name: "Initial", role: "USER" as const };
-    useAuthStore.getState().setSession({ accessToken: "token", user: initialUser });
+    const initialUser = {
+      email: "u@example.com",
+      name: "Initial",
+      role: "USER" as const,
+    };
+    useAuthStore
+      .getState()
+      .setSession({ accessToken: "token", user: initialUser });
     queryClient.setQueryData(userKeys.me(), initialUser);
 
-    const updatedUser = { email: "u@example.com", name: "Updated Name", role: "USER" as const };
-    vi.spyOn(authService, "updateInfo").mockResolvedValueOnce({ user: updatedUser });
+    const updatedUser = {
+      email: "u@example.com",
+      name: "Updated Name",
+      role: "USER" as const,
+    };
+    vi.spyOn(authService, "updateInfo").mockResolvedValueOnce({
+      user: updatedUser,
+    });
 
-    const { result } = renderHook(() => useUpdateProfileMutation(), { wrapper });
+    const { result } = renderHook(() => useUpdateProfileMutation(), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.mutateAsync({ name: "Updated Name" });
@@ -47,14 +64,24 @@ describe("userMutations", () => {
 
   it("calls changePassword endpoint", async () => {
     const wrapper = createWrapper();
-    const changeSpy = vi.spyOn(authService, "changePassword").mockResolvedValueOnce({ success: true });
+    const changeSpy = vi
+      .spyOn(authService, "changePassword")
+      .mockResolvedValueOnce({ success: true });
 
-    const { result } = renderHook(() => useChangePasswordMutation(), { wrapper });
-
-    await act(async () => {
-      await result.current.mutateAsync({ currentPassword: "old", newPassword: "new" });
+    const { result } = renderHook(() => useChangePasswordMutation(), {
+      wrapper,
     });
 
-    expect(changeSpy).toHaveBeenCalledWith({ currentPassword: "old", newPassword: "new" });
+    await act(async () => {
+      await result.current.mutateAsync({
+        currentPassword: "old",
+        newPassword: "new",
+      });
+    });
+
+    expect(changeSpy).toHaveBeenCalledWith({
+      currentPassword: "old",
+      newPassword: "new",
+    });
   });
 });

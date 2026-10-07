@@ -13,12 +13,14 @@ Orbit is a feature-rich personal task management system designed to help users o
 ## ✨ Features
 
 ### 🔐 Authentication & User Management
+
 - **Secure Authentication**: JWT-based authentication system with bcrypt password hashing
 - **User Registration & Login**: Secure user account creation and login
 - **Profile Management**: Users can update their profile information and change passwords
 - **Avatar Upload**: Custom profile picture support
 
 ### 📋 Task Management
+
 - **CRUD Operations**: Create, read, update, and delete tasks
 - **Task Status Tracking**: Four status types - Pending, In Progress, Completed, and Given Up
 - **Priority Levels**: Organize tasks by Low, Medium, or High priority
@@ -28,24 +30,28 @@ Orbit is a feature-rich personal task management system designed to help users o
 - **Quick Actions**: Start, finish, or give up on tasks with one click
 
 ### 🤖 AI-Powered Task Generation
+
 - **Natural Language Task Creation**: Generate tasks using Google Gemini AI by describing your requirements
 - **Smart Categorization**: AI automatically assigns tasks to appropriate categories
 - **Batch Generation**: Generate multiple related tasks at once
 - **Interactive AI Chat**: Built-in chat interface for task generation and management
 
 ### 📊 Categories
+
 - **Custom Categories**: Create and manage custom task categories
 - **Category Statistics**: View task distribution and completion rates per category
 - **Default Category**: Auto-assigned "Uncategorized" category for tasks
 - **Category-based Task View**: Filter and view tasks by category
 
 ### 📅 Calendar View
+
 - **Visual Timeline**: Interactive calendar displaying tasks with due dates
 - **Monthly Overview**: View all deadlines at a glance
 - **Task Details**: Click on calendar dates to view task details
 - **Deadline Management**: Track upcoming and overdue tasks
 
 ### 📈 Statistics & Analytics
+
 - **Progress Tracking**: Visual progress bars showing task completion
 - **Status Distribution**: Pie charts showing tasks by status
 - **Category Distribution**: Pie charts showing tasks by category
@@ -53,6 +59,7 @@ Orbit is a feature-rich personal task management system designed to help users o
 - **Summary Statistics**: Total tasks, completion rate, and category breakdown
 
 ### 🎨 User Interface
+
 - **Responsive Design**: Mobile-first design that works on all devices
 - **Dark Theme**: Modern dark-themed interface for comfortable viewing
 - **Smooth Animations**: Polished animations and transitions
@@ -64,6 +71,7 @@ Orbit is a feature-rich personal task management system designed to help users o
 ## 🛠️ Tech Stack
 
 ### Backend
+
 ![Node.js](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
 ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
@@ -79,6 +87,7 @@ Orbit is a feature-rich personal task management system designed to help users o
 - **Zod**: Schema validation
 
 ### Frontend
+
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
@@ -91,6 +100,7 @@ Orbit is a feature-rich personal task management system designed to help users o
 - **Chart.js**: Data visualization
 
 ### DevOps
+
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Vercel](https://img.shields.io/badge/vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![Postman](https://img.shields.io/badge/postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
@@ -141,6 +151,7 @@ Orbit/
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Node.js (v14 or higher)
 - MongoDB (local or Atlas)
 - Google Gemini API key
@@ -148,6 +159,7 @@ Orbit/
 ### Run with Docker (Fast)
 
 1. **Create backend env file**
+
 ```bash
 cd backend
 cp .env.example .env
@@ -155,6 +167,7 @@ cp .env.example .env
 ```
 
 Example `.env`:
+
 ```env
 PORT=4000
 HOST=0.0.0.0
@@ -164,15 +177,18 @@ API_KEY=your_google_gemini_api_key
 ```
 
 2. **Run with Docker Compose (build + up)**
+
 ```bash
 cd ..
 docker compose up --build
 ```
 
 3. **Access the app**
+
 - `http://localhost:3636`
 
 Stop containers:
+
 ```bash
 docker compose down
 ```
@@ -180,12 +196,14 @@ docker compose down
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone <repository-url>
 cd Orbit
 ```
 
 2. **Backend Setup**
+
 ```bash
 cd backend
 pnpm install
@@ -202,6 +220,7 @@ pnpm run dev
 ```
 
 3. **Frontend Setup**
+
 ```bash
 cd frontend
 pnpm install
@@ -211,6 +230,7 @@ pnpm run dev
 ```
 
 The application will be available at:
+
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:3001`
 
@@ -219,10 +239,12 @@ The application will be available at:
 ## 📡 API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - User login
 
 ### Tasks
+
 - `GET /api/tasks` - Get all user tasks
 - `POST /api/tasks` - Create new task
 - `GET /api/tasks/:id` - Get task by ID
@@ -236,18 +258,22 @@ The application will be available at:
 - `GET /api/tasks/category/:categoryId` - Get tasks by category
 
 ### Categories
+
 - `GET /api/categories` - Get all categories
 - `POST /api/categories` - Create category
 - `PUT /api/categories/:id` - Update category
 - `DELETE /api/categories/:id` - Delete category
 
 ### AI
+
 - `POST /api/ai/generate-tasks` - Generate tasks with AI
 
 ### Statistics
+
 - `GET /api/stats/user` - Get user statistics
 
 ### Users
+
 - `GET /api/users/profile` - Get user profile
 - `PUT /api/users/profile` - Update profile
 - `PUT /api/users/change-password` - Change password

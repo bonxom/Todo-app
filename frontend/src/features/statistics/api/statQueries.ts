@@ -4,7 +4,7 @@ import type { Stat, Task } from "../../../shared/types/domain";
 import { statKeys, type ActivityFilters } from "./statKeys";
 
 export const useStatsQuery = (
-  options?: Omit<UseQueryOptions<Stat, Error>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<Stat, Error>, "queryKey" | "queryFn">,
 ) => {
   return useQuery({
     queryKey: statKeys.summary(),
@@ -15,7 +15,7 @@ export const useStatsQuery = (
 
 export const useActivityQuery = (
   filters?: ActivityFilters | string,
-  options?: Omit<UseQueryOptions<Task[], Error>, "queryKey" | "queryFn">
+  options?: Omit<UseQueryOptions<Task[], Error>, "queryKey" | "queryFn">,
 ) => {
   const date = typeof filters === "string" ? filters : filters?.date;
   return useQuery({

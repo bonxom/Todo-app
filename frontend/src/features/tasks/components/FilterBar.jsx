@@ -1,13 +1,10 @@
-const FilterBar = ({
-  selectedStatus,
-  onStatusChange,
-}) => {
+const FilterBar = ({ selectedStatus, onStatusChange }) => {
   const statusOptions = [
-    { value: 'all', label: 'All Tasks' },
-    { value: 'pending', label: 'Pending Tasks' },
-    { value: 'in-progress', label: 'In Progress Tasks' },
-    { value: 'completed', label: 'Completed Tasks' },
-    { value: 'given-up', label: 'Given Up Tasks' },
+    { value: "all", label: "All Tasks" },
+    { value: "pending", label: "Pending Tasks" },
+    { value: "in-progress", label: "In Progress Tasks" },
+    { value: "completed", label: "Completed Tasks" },
+    { value: "given-up", label: "Given Up Tasks" },
   ];
 
   return (
@@ -74,7 +71,12 @@ const FilterBar = ({
         viewBox="0 0 24 24"
         aria-hidden="true"
       >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M19 9l-7 7-7-7"
+        />
       </svg>
     </div>
   );

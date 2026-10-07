@@ -6,8 +6,8 @@
  * - buildResponsePage: assembles the final ResponsePage<T> envelope
  */
 
-import type { ParsedSort } from '../types/PagingParameter.js';
-import type { PageInfo, ResponsePage } from '../types/ResponsePage.js';
+import type { ParsedSort } from "../types/PagingParameter.js";
+import type { PageInfo, ResponsePage } from "../types/ResponsePage.js";
 
 /**
  * Parse a sort string into a Mongoose-compatible sort object.
@@ -20,9 +20,9 @@ import type { PageInfo, ResponsePage } from '../types/ResponsePage.js';
  */
 export const parseSortString = (
   sort: string | undefined,
-  defaultSort: ParsedSort = { dueDate: 1, createdAt: -1 }
+  defaultSort: ParsedSort = { dueDate: 1, createdAt: -1 },
 ): ParsedSort => {
-  if (!sort || typeof sort !== 'string' || sort.trim() === '') {
+  if (!sort || typeof sort !== "string" || sort.trim() === "") {
     return defaultSort;
   }
 
@@ -33,13 +33,16 @@ export const parseSortString = (
 
   const result: ParsedSort = {};
 
-  const segments = sort.split('_');
+  const segments = sort.split("_");
   for (const segment of segments) {
-    const colonIndex = segment.lastIndexOf(':');
+    const colonIndex = segment.lastIndexOf(":");
     if (colonIndex === -1) continue;
 
     const field = segment.slice(0, colonIndex).trim();
-    const direction = segment.slice(colonIndex + 1).trim().toLowerCase();
+    const direction = segment
+      .slice(colonIndex + 1)
+      .trim()
+      .toLowerCase();
 
     if (!field || !FIELD_PATTERN.test(field)) continue;
     if (!(direction in ALLOWED_DIRECTIONS)) continue;
@@ -64,7 +67,7 @@ export const buildResponsePage = <T>(
   data: T[],
   totalCount: number,
   pageNo: number,
-  pageSize: number
+  pageSize: number,
 ): ResponsePage<T> => {
   const totalPage = pageSize > 0 ? Math.ceil(totalCount / pageSize) : 0;
 

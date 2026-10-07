@@ -1,30 +1,30 @@
-import { useMemo, useState } from 'react';
-import CalendarView from './components/CalendarView';
-import { useCalendarTasksQuery } from '@/features/tasks/api/taskQueries';
-import { useProjectsQuery } from '@/features/tasks/api/projectQueries';
-import { useCalendarMutations } from './api/useCalendarMutations';
-import { useVisibleTasks } from '@/stores/useTaskFilterStore';
+import { useMemo, useState } from "react";
+import CalendarView from "./components/CalendarView";
+import { useCalendarTasksQuery } from "@/features/tasks/api/taskQueries";
+import { useProjectsQuery } from "@/features/tasks/api/projectQueries";
+import { useCalendarMutations } from "./api/useCalendarMutations";
+import { useVisibleTasks } from "@/stores/useTaskFilterStore";
 import {
   getBufferedCalendarRange,
   getVisibleCalendarRange,
   startOfDay,
   taskHasDueDateInRange,
-} from './api/calendarRanges';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+} from "./api/calendarRanges";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const CalendarPage = () => {
   const today = useMemo(() => startOfDay(new Date()), []);
   const [currentDate, setCurrentDate] = useState(today);
-  const [viewMode, setViewMode] = useState('week');
+  const [viewMode, setViewMode] = useState("week");
 
   const bufferedRange = useMemo(
     () => getBufferedCalendarRange(currentDate, viewMode),
-    [currentDate, viewMode]
+    [currentDate, viewMode],
   );
 
   const visibleRange = useMemo(
     () => getVisibleCalendarRange(currentDate, viewMode),
-    [currentDate, viewMode]
+    [currentDate, viewMode],
   );
 
   const tasksQuery = useCalendarTasksQuery({
@@ -40,23 +40,24 @@ const CalendarPage = () => {
 
   const visibleTasks = useVisibleTasks(rawTasks);
   const renderedTasks = useMemo(
-    () => visibleTasks.filter((task) => taskHasDueDateInRange(task, visibleRange)),
-    [visibleRange, visibleTasks]
+    () =>
+      visibleTasks.filter((task) => taskHasDueDateInRange(task, visibleRange)),
+    [visibleRange, visibleTasks],
   );
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading;
   const errorMessage = tasksQuery.isError
-    ? getApiErrorMessage(tasksQuery.error, 'Failed to load calendar tasks.')
+    ? getApiErrorMessage(tasksQuery.error, "Failed to load calendar tasks.")
     : projectsQuery.isError
-    ? getApiErrorMessage(projectsQuery.error, 'Failed to load projects.')
-    : '';
+      ? getApiErrorMessage(projectsQuery.error, "Failed to load projects.")
+      : "";
 
   const handleTaskStatusChange = async (task, nextStatus) => {
     try {
       await calendarMutations.changeTaskStatus(task, nextStatus);
     } catch (error) {
-      console.error('Failed to update task status:', error);
-      alert(getApiErrorMessage(error, 'Failed to update task status.'));
+      console.error("Failed to update task status:", error);
+      alert(getApiErrorMessage(error, "Failed to update task status."));
     }
   };
 
@@ -64,8 +65,8 @@ const CalendarPage = () => {
     try {
       await calendarMutations.deleteTask(taskId);
     } catch (error) {
-      console.error('Failed to delete task:', error);
-      alert(getApiErrorMessage(error, 'Failed to delete task.'));
+      console.error("Failed to delete task:", error);
+      alert(getApiErrorMessage(error, "Failed to delete task."));
     }
   };
 
@@ -75,8 +76,8 @@ const CalendarPage = () => {
       if (!task) return;
       await calendarMutations.changeTaskDueDate(task, nextDueDate);
     } catch (error) {
-      console.error('Failed to update task deadline:', error);
-      alert(getApiErrorMessage(error, 'Failed to update task deadline.'));
+      console.error("Failed to update task deadline:", error);
+      alert(getApiErrorMessage(error, "Failed to update task deadline."));
     }
   };
 
@@ -84,8 +85,8 @@ const CalendarPage = () => {
     try {
       await calendarMutations.copyTask(taskCopyPayload, nextDueDate);
     } catch (error) {
-      console.error('Failed to copy task:', error);
-      alert(getApiErrorMessage(error, 'Failed to copy task.'));
+      console.error("Failed to copy task:", error);
+      alert(getApiErrorMessage(error, "Failed to copy task."));
     }
   };
 
@@ -93,15 +94,17 @@ const CalendarPage = () => {
     try {
       await calendarMutations.changeProjectStatus(projectId, status);
     } catch (error) {
-      console.error('Failed to update project status:', error);
-      alert(getApiErrorMessage(error, 'Failed to update project status.'));
+      console.error("Failed to update project status:", error);
+      alert(getApiErrorMessage(error, "Failed to update project status."));
     }
   };
 
   if (isLoading) {
     return (
       <div className="ui-page-shell flex min-h-full items-center justify-center">
-        <div className="text-sm text-[var(--color-text-muted)]">Loading calendar…</div>
+        <div className="text-sm text-[var(--color-text-muted)]">
+          Loading calendar…
+        </div>
       </div>
     );
   }
@@ -119,8 +122,12 @@ const CalendarPage = () => {
 
       {errorMessage ? (
         <div className="ui-section-card ui-card-padding text-center">
-          <p className="text-lg font-semibold text-[var(--color-danger)]">Unable to load the calendar</p>
-          <p className="mt-2 text-sm text-[var(--color-text-muted)]">{errorMessage}</p>
+          <p className="text-lg font-semibold text-[var(--color-danger)]">
+            Unable to load the calendar
+          </p>
+          <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+            {errorMessage}
+          </p>
           <div className="mt-6 flex justify-center">
             <button
               type="button"

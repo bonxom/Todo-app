@@ -7,8 +7,8 @@
  * - syncPageInfo() to hydrate totalCount/totalPage from server response
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import type { PageInfo } from '../types/domain';
+import { useState, useCallback, useEffect, useRef } from "react";
+import type { PageInfo } from "../types/domain";
 
 interface UsePaginationOptions {
   initialPageNo?: number;
@@ -28,12 +28,10 @@ interface UsePaginationReturn {
   totalPage: number;
 }
 
-export function usePagination(options: UsePaginationOptions = {}): UsePaginationReturn {
-  const {
-    initialPageNo = 1,
-    initialPageSize = 20,
-    resetDeps = [],
-  } = options;
+export function usePagination(
+  options: UsePaginationOptions = {},
+): UsePaginationReturn {
+  const { initialPageNo = 1, initialPageSize = 20, resetDeps = [] } = options;
 
   const [pageNo, setPageNo] = useState(initialPageNo);
   const [pageSize, setPageSizeState] = useState(initialPageSize);
@@ -52,9 +50,7 @@ export function usePagination(options: UsePaginationOptions = {}): UsePagination
     }
 
     // Shallow compare deps
-    const changed = resetDeps.some(
-      (dep, i) => dep !== prevDepsRef.current[i]
-    );
+    const changed = resetDeps.some((dep, i) => dep !== prevDepsRef.current[i]);
 
     if (changed) {
       setPageNo(1);

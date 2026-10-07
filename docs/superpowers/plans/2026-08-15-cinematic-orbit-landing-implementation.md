@@ -28,34 +28,36 @@
 
 ## File Structure
 
-| Path | Change | Responsibility |
-| --- | --- | --- |
-| `frontend/src/features/landing/hooks/useInView.js` | Create | Safe, one-shot/continuous `IntersectionObserver` state for landing reveal choreography. |
-| `frontend/src/features/landing/hooks/usePointerTilt.js` | Create | Fine-pointer, non-reduced-motion CSS custom-property tilt handlers with rAF throttling and reset. |
-| `frontend/src/features/landing/components/OrbitMark.jsx` | Create | Reusable decorative SVG brand mark for the nav/footer. |
-| `frontend/src/features/landing/components/Navbar.jsx` | Modify | Orbit mark, section anchors, account links, and hero-passed glass state. |
-| `frontend/src/features/landing/components/Hero.jsx` | Modify | Orbital hero copy, proof chips, normal CTA links, and `OrbitScene` composition. |
-| `frontend/src/features/landing/components/OrbitScene.jsx` | Create | Decorative orbit SVG, tilt-able command deck, and floating static product modules. |
-| `frontend/src/features/landing/components/NarrativeSection.jsx` | Create | Shared semantic Capture/Organize chapter shell and visible-on-fallback reveal state. |
-| `frontend/src/features/landing/components/CaptureScene.jsx` | Create | Static task capture composition that assembles through CSS reveal classes. |
-| `frontend/src/features/landing/components/OrganizeScene.jsx` | Create | Static category/project/calendar/priority composition that aligns through CSS reveal classes. |
-| `frontend/src/features/landing/components/ProductExhibit.jsx` | Create | Focus chapter’s static dashboard, metric, progress ring, tasks, and timeline. |
-| `frontend/src/features/landing/components/LaunchCTA.jsx` | Create | Final register CTA plus presentation-only portal composition. |
-| `frontend/src/features/landing/components/Footer.jsx` | Modify | Orbit Control footer presentation and product/account anchor links. |
-| `frontend/src/features/landing/LandingPage.jsx` | Modify | New page composition, chapter data, skip link, and `hero-passed` navigation state. |
-| `frontend/src/styles/landing.css` | Replace | Landing-scoped visual tokens, layout, 3D surfaces, responsive rules, reduced-motion fallback, and focus treatment. |
-| `frontend/src/features/landing/test/LandingPage.test.jsx` | Create | Structural, link contract, and no-browser-API fallback tests. |
-| `frontend/e2e/landing.spec.ts` | Create | Guest desktop/mobile/reduced-motion landing validation and console-error checks. |
-| `frontend/e2e/app.spec.ts` | Modify | Leave existing root-guard regression coverage intact; only adjust an assertion if the redesigned heading selector requires it. |
+| Path                                                            | Change  | Responsibility                                                                                                                 |
+| --------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `frontend/src/features/landing/hooks/useInView.js`              | Create  | Safe, one-shot/continuous `IntersectionObserver` state for landing reveal choreography.                                        |
+| `frontend/src/features/landing/hooks/usePointerTilt.js`         | Create  | Fine-pointer, non-reduced-motion CSS custom-property tilt handlers with rAF throttling and reset.                              |
+| `frontend/src/features/landing/components/OrbitMark.jsx`        | Create  | Reusable decorative SVG brand mark for the nav/footer.                                                                         |
+| `frontend/src/features/landing/components/Navbar.jsx`           | Modify  | Orbit mark, section anchors, account links, and hero-passed glass state.                                                       |
+| `frontend/src/features/landing/components/Hero.jsx`             | Modify  | Orbital hero copy, proof chips, normal CTA links, and `OrbitScene` composition.                                                |
+| `frontend/src/features/landing/components/OrbitScene.jsx`       | Create  | Decorative orbit SVG, tilt-able command deck, and floating static product modules.                                             |
+| `frontend/src/features/landing/components/NarrativeSection.jsx` | Create  | Shared semantic Capture/Organize chapter shell and visible-on-fallback reveal state.                                           |
+| `frontend/src/features/landing/components/CaptureScene.jsx`     | Create  | Static task capture composition that assembles through CSS reveal classes.                                                     |
+| `frontend/src/features/landing/components/OrganizeScene.jsx`    | Create  | Static category/project/calendar/priority composition that aligns through CSS reveal classes.                                  |
+| `frontend/src/features/landing/components/ProductExhibit.jsx`   | Create  | Focus chapter’s static dashboard, metric, progress ring, tasks, and timeline.                                                  |
+| `frontend/src/features/landing/components/LaunchCTA.jsx`        | Create  | Final register CTA plus presentation-only portal composition.                                                                  |
+| `frontend/src/features/landing/components/Footer.jsx`           | Modify  | Orbit Control footer presentation and product/account anchor links.                                                            |
+| `frontend/src/features/landing/LandingPage.jsx`                 | Modify  | New page composition, chapter data, skip link, and `hero-passed` navigation state.                                             |
+| `frontend/src/styles/landing.css`                               | Replace | Landing-scoped visual tokens, layout, 3D surfaces, responsive rules, reduced-motion fallback, and focus treatment.             |
+| `frontend/src/features/landing/test/LandingPage.test.jsx`       | Create  | Structural, link contract, and no-browser-API fallback tests.                                                                  |
+| `frontend/e2e/landing.spec.ts`                                  | Create  | Guest desktop/mobile/reduced-motion landing validation and console-error checks.                                               |
+| `frontend/e2e/app.spec.ts`                                      | Modify  | Leave existing root-guard regression coverage intact; only adjust an assertion if the redesigned heading selector requires it. |
 
 ## Task 1: Add safe landing browser-effect hooks
 
 **Files:**
+
 - Create: `frontend/src/features/landing/hooks/useInView.js`
 - Create: `frontend/src/features/landing/hooks/usePointerTilt.js`
 - Test: `frontend/src/features/landing/test/LandingHooks.test.jsx`
 
 **Interfaces:**
+
 - Produces `useInView(options?)`, returning `{ ref, isVisible }`, where `ref` is attached to an observed element and `isVisible` defaults to `true` when `IntersectionObserver` is unsupported.
 - Produces `usePointerTilt({ maxTilt = 7, maxShift = 10 }?)`, returning `{ onPointerMove, onPointerLeave }`, which writes `--tilt-x`, `--tilt-y`, `--pointer-x`, and `--pointer-y` on `event.currentTarget` only when the effect is supported.
 - Later components consume these exact exports; no component owns observer/rAF lifecycle code.
@@ -63,10 +65,10 @@
 - [ ] **Step 1: Write the failing hook fallback tests**
 
 ```jsx
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import { useInView } from '../hooks/useInView';
-import { usePointerTilt } from '../hooks/usePointerTilt';
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { useInView } from "../hooks/useInView";
+import { usePointerTilt } from "../hooks/usePointerTilt";
 
 const InViewProbe = () => {
   const { ref, isVisible } = useInView();
@@ -78,17 +80,24 @@ const TiltProbe = () => {
   return <div data-testid="tilt" {...tilt} />;
 };
 
-describe('landing enhancement hooks', () => {
-  it('keeps content visible without IntersectionObserver', () => {
-    vi.stubGlobal('IntersectionObserver', undefined);
+describe("landing enhancement hooks", () => {
+  it("keeps content visible without IntersectionObserver", () => {
+    vi.stubGlobal("IntersectionObserver", undefined);
     render(<InViewProbe />);
-    expect(screen.getByTestId('probe')).toHaveAttribute('data-visible', 'true');
+    expect(screen.getByTestId("probe")).toHaveAttribute("data-visible", "true");
   });
 
-  it('does not write tilt variables for a coarse pointer', () => {
-    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener() {}, removeEventListener() {} })));
+  it("does not write tilt variables for a coarse pointer", () => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: true,
+        addEventListener() {},
+        removeEventListener() {},
+      })),
+    );
     render(<TiltProbe />);
-    expect(screen.getByTestId('tilt')).not.toHaveAttribute('style');
+    expect(screen.getByTestId("tilt")).not.toHaveAttribute("style");
   });
 });
 ```
@@ -102,24 +111,34 @@ Expected: FAIL because the hook modules do not exist.
 - [ ] **Step 3: Implement `useInView` with an explicit visible fallback**
 
 ```js
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
-export const useInView = ({ threshold = 0.2, once = true, rootMargin = '0px' } = {}) => {
+export const useInView = ({
+  threshold = 0.2,
+  once = true,
+  rootMargin = "0px",
+} = {}) => {
   const ref = useRef(null);
-  const [isVisible, setIsVisible] = useState(() => typeof IntersectionObserver === 'undefined');
+  const [isVisible, setIsVisible] = useState(
+    () => typeof IntersectionObserver === "undefined",
+  );
 
   useEffect(() => {
     const element = ref.current;
-    if (!element || typeof IntersectionObserver === 'undefined') return undefined;
+    if (!element || typeof IntersectionObserver === "undefined")
+      return undefined;
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) {
-        if (!once) setIsVisible(false);
-        return;
-      }
-      setIsVisible(true);
-      if (once) observer.unobserve(entry.target);
-    }, { threshold, rootMargin });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          if (!once) setIsVisible(false);
+          return;
+        }
+        setIsVisible(true);
+        if (once) observer.unobserve(entry.target);
+      },
+      { threshold, rootMargin },
+    );
 
     observer.observe(element);
     return () => observer.disconnect();
@@ -132,30 +151,35 @@ export const useInView = ({ threshold = 0.2, once = true, rootMargin = '0px' } =
 - [ ] **Step 4: Implement `usePointerTilt` with guarded rAF writes and cleanup**
 
 ```js
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-const effectIsSupported = () => (
-  typeof window !== 'undefined'
-  && typeof window.matchMedia === 'function'
-  && window.matchMedia('(pointer: fine)').matches
-  && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  && typeof window.requestAnimationFrame === 'function'
-);
+const effectIsSupported = () =>
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(pointer: fine)").matches &&
+  !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+  typeof window.requestAnimationFrame === "function";
 
 export const usePointerTilt = ({ maxTilt = 7, maxShift = 10 } = {}) => {
   const frameRef = useRef(0);
 
-  useEffect(() => () => {
-    if (frameRef.current && typeof window.cancelAnimationFrame === 'function') {
-      window.cancelAnimationFrame(frameRef.current);
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (
+        frameRef.current &&
+        typeof window.cancelAnimationFrame === "function"
+      ) {
+        window.cancelAnimationFrame(frameRef.current);
+      }
+    },
+    [],
+  );
 
   const reset = (element) => {
-    element.style.setProperty('--tilt-x', '0deg');
-    element.style.setProperty('--tilt-y', '0deg');
-    element.style.setProperty('--pointer-x', '0px');
-    element.style.setProperty('--pointer-y', '0px');
+    element.style.setProperty("--tilt-x", "0deg");
+    element.style.setProperty("--tilt-y", "0deg");
+    element.style.setProperty("--pointer-x", "0px");
+    element.style.setProperty("--pointer-y", "0px");
   };
 
   return {
@@ -167,10 +191,19 @@ export const usePointerTilt = ({ maxTilt = 7, maxShift = 10 } = {}) => {
       const y = (event.clientY - top) / height - 0.5;
       if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
       frameRef.current = window.requestAnimationFrame(() => {
-        element.style.setProperty('--tilt-x', `${(-y * maxTilt).toFixed(2)}deg`);
-        element.style.setProperty('--tilt-y', `${(x * maxTilt).toFixed(2)}deg`);
-        element.style.setProperty('--pointer-x', `${(x * maxShift).toFixed(2)}px`);
-        element.style.setProperty('--pointer-y', `${(y * maxShift).toFixed(2)}px`);
+        element.style.setProperty(
+          "--tilt-x",
+          `${(-y * maxTilt).toFixed(2)}deg`,
+        );
+        element.style.setProperty("--tilt-y", `${(x * maxTilt).toFixed(2)}deg`);
+        element.style.setProperty(
+          "--pointer-x",
+          `${(x * maxShift).toFixed(2)}px`,
+        );
+        element.style.setProperty(
+          "--pointer-y",
+          `${(y * maxShift).toFixed(2)}px`,
+        );
       });
     },
     onPointerLeave: (event) => reset(event.currentTarget),
@@ -193,6 +226,7 @@ Expected: PASS with no hook-dependency or unused-value errors.
 ## Task 2: Build the reusable Orbit visual primitives and hero scene
 
 **Files:**
+
 - Create: `frontend/src/features/landing/components/OrbitMark.jsx`
 - Create: `frontend/src/features/landing/components/OrbitScene.jsx`
 - Modify: `frontend/src/features/landing/components/Hero.jsx`
@@ -200,6 +234,7 @@ Expected: PASS with no hook-dependency or unused-value errors.
 - Test: `frontend/src/features/landing/test/LandingPage.test.jsx`
 
 **Interfaces:**
+
 - Consumes `usePointerTilt` from Task 1.
 - Produces `<OrbitMark className?: string />` as an `aria-hidden` inline SVG with orbital rings and a cyan core.
 - Produces `<OrbitScene />`, which owns decorative `aria-hidden` SVG tracks and invokes `usePointerTilt` only on the noninteractive deck wrapper.
@@ -208,16 +243,27 @@ Expected: PASS with no hook-dependency or unused-value errors.
 - [ ] **Step 1: Write failing hero and visual-semantics tests**
 
 ```jsx
-import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
-import { expect, it } from 'vitest';
-import Hero from '../components/Hero';
+import { MemoryRouter } from "react-router-dom";
+import { render, screen } from "@testing-library/react";
+import { expect, it } from "vitest";
+import Hero from "../components/Hero";
 
-it('renders normal account links alongside the orbital scene', () => {
-  render(<MemoryRouter><Hero /></MemoryRouter>);
-  expect(screen.getByRole('heading', { name: /control the day/i })).toBeVisible();
-  expect(screen.getByRole('link', { name: /start your orbit/i })).toHaveAttribute('href', '/register');
-  expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/login');
+it("renders normal account links alongside the orbital scene", () => {
+  render(
+    <MemoryRouter>
+      <Hero />
+    </MemoryRouter>,
+  );
+  expect(
+    screen.getByRole("heading", { name: /control the day/i }),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("link", { name: /start your orbit/i }),
+  ).toHaveAttribute("href", "/register");
+  expect(screen.getByRole("link", { name: /sign in/i })).toHaveAttribute(
+    "href",
+    "/login",
+  );
   expect(screen.getByLabelText(/orbit command deck preview/i)).toBeVisible();
 });
 ```
@@ -231,10 +277,26 @@ Expected: FAIL because the headline, CTA label, and OrbitScene are not implement
 - [ ] **Step 3: Create the image-free `OrbitMark`**
 
 ```jsx
-const OrbitMark = ({ className = '' }) => (
-  <svg className={`orbit-mark ${className}`} viewBox="0 0 40 40" aria-hidden="true" focusable="false">
-    <circle className="orbit-mark__ring orbit-mark__ring--one" cx="20" cy="20" r="14" />
-    <ellipse className="orbit-mark__ring orbit-mark__ring--two" cx="20" cy="20" rx="17" ry="8" />
+const OrbitMark = ({ className = "" }) => (
+  <svg
+    className={`orbit-mark ${className}`}
+    viewBox="0 0 40 40"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <circle
+      className="orbit-mark__ring orbit-mark__ring--one"
+      cx="20"
+      cy="20"
+      r="14"
+    />
+    <ellipse
+      className="orbit-mark__ring orbit-mark__ring--two"
+      cx="20"
+      cy="20"
+      rx="17"
+      ry="8"
+    />
     <circle className="orbit-mark__core" cx="20" cy="20" r="4" />
   </svg>
 );
@@ -253,7 +315,14 @@ const tilt = usePointerTilt();
 
 return (
   <div className="orbit-scene" aria-label="Orbit command deck preview">
-    <svg className="orbit-scene__tracks" viewBox="0 0 600 500" aria-hidden="true" focusable="false">...</svg>
+    <svg
+      className="orbit-scene__tracks"
+      viewBox="0 0 600 500"
+      aria-hidden="true"
+      focusable="false"
+    >
+      ...
+    </svg>
     <div className="orbit-scene__deck-wrap" {...tilt}>
       <div className="orbit-scene__deck">...</div>
     </div>
@@ -288,6 +357,7 @@ Expected: PASS. The browser-independent hero has normal links, the scene label, 
 ## Task 3: Add reusable Capture and Organize narrative chapters
 
 **Files:**
+
 - Create: `frontend/src/features/landing/components/NarrativeSection.jsx`
 - Create: `frontend/src/features/landing/components/CaptureScene.jsx`
 - Create: `frontend/src/features/landing/components/OrganizeScene.jsx`
@@ -296,6 +366,7 @@ Expected: PASS. The browser-independent hero has normal links, the scene label, 
 - Modify: `frontend/src/features/landing/test/LandingPage.test.jsx`
 
 **Interfaces:**
+
 - Consumes `useInView` from Task 1.
 - Produces `<NarrativeSection id, chapter, kicker, title, description, visual, reverse?>`; it marks the visual/text region with `data-visible={isVisible}` without making initial markup hidden.
 - Produces `<CaptureScene />` and `<OrganizeScene />`, each presentation-only (`aria-hidden="true"`) and styled through their enclosing narrative state.
@@ -304,10 +375,14 @@ Expected: PASS. The browser-independent hero has normal links, the scene label, 
 - [ ] **Step 1: Extend the page test with the required chapter structure**
 
 ```jsx
-expect(screen.getByRole('heading', { name: /bring work into orbit/i })).toBeVisible();
-expect(screen.getByRole('heading', { name: /shape the workspace/i })).toBeVisible();
-expect(document.querySelector('#capture')).toBeTruthy();
-expect(document.querySelector('#organize')).toBeTruthy();
+expect(
+  screen.getByRole("heading", { name: /bring work into orbit/i }),
+).toBeVisible();
+expect(
+  screen.getByRole("heading", { name: /shape the workspace/i }),
+).toBeVisible();
+expect(document.querySelector("#capture")).toBeTruthy();
+expect(document.querySelector("#organize")).toBeTruthy();
 ```
 
 - [ ] **Step 2: Run the page test to verify it fails**
@@ -319,15 +394,32 @@ Expected: FAIL because the Capture and Organize chapters are absent.
 - [ ] **Step 3: Implement `NarrativeSection` as the only reveal-state owner**
 
 ```jsx
-import { useInView } from '../hooks/useInView';
+import { useInView } from "../hooks/useInView";
 
-const NarrativeSection = ({ id, chapter, kicker, title, description, visual, reverse = false }) => {
+const NarrativeSection = ({
+  id,
+  chapter,
+  kicker,
+  title,
+  description,
+  visual,
+  reverse = false,
+}) => {
   const { ref, isVisible } = useInView({ threshold: 0.18 });
   return (
-    <section id={id} className={`narrative-section${reverse ? ' narrative-section--reverse' : ''}`}>
-      <div ref={ref} className="narrative-section__inner" data-visible={isVisible}>
+    <section
+      id={id}
+      className={`narrative-section${reverse ? " narrative-section--reverse" : ""}`}
+    >
+      <div
+        ref={ref}
+        className="narrative-section__inner"
+        data-visible={isVisible}
+      >
         <div className="narrative-section__copy">
-          <p className="orbit-kicker">{chapter} / {kicker}</p>
+          <p className="orbit-kicker">
+            {chapter} / {kicker}
+          </p>
           <h2>{title}</h2>
           <p>{description}</p>
         </div>
@@ -379,6 +471,7 @@ Expected: PASS. Both chapter headings exist in order and content remains visible
 ## Task 4: Implement Focus exhibit, launch portal, navigation, footer, and full page composition
 
 **Files:**
+
 - Create: `frontend/src/features/landing/components/ProductExhibit.jsx`
 - Create: `frontend/src/features/landing/components/LaunchCTA.jsx`
 - Modify: `frontend/src/features/landing/components/Navbar.jsx`
@@ -388,6 +481,7 @@ Expected: PASS. Both chapter headings exist in order and content remains visible
 - Modify: `frontend/src/features/landing/test/LandingPage.test.jsx`
 
 **Interfaces:**
+
 - Consumes `useInView` from Task 1 and `OrbitMark` from Task 2.
 - Produces `<ProductExhibit />` with `id="focus"`, static final readable metric values, and `data-visible` enhancement state.
 - Produces `<LaunchCTA />` with one visible register link named `Launch your workspace`.
@@ -397,11 +491,19 @@ Expected: PASS. Both chapter headings exist in order and content remains visible
 - [ ] **Step 1: Add failing focus/final CTA/navigation tests**
 
 ```jsx
-expect(screen.getByRole('heading', { name: /turn progress into momentum/i })).toBeVisible();
-expect(screen.getByText('68%')).toBeVisible();
-expect(screen.getByRole('heading', { name: /start with a clear orbit/i })).toBeVisible();
-expect(screen.getByRole('link', { name: /launch your workspace/i })).toHaveAttribute('href', '/register');
-expect(screen.getByRole('navigation', { name: /landing navigation/i })).toBeVisible();
+expect(
+  screen.getByRole("heading", { name: /turn progress into momentum/i }),
+).toBeVisible();
+expect(screen.getByText("68%")).toBeVisible();
+expect(
+  screen.getByRole("heading", { name: /start with a clear orbit/i }),
+).toBeVisible();
+expect(
+  screen.getByRole("link", { name: /launch your workspace/i }),
+).toHaveAttribute("href", "/register");
+expect(
+  screen.getByRole("navigation", { name: /landing navigation/i }),
+).toBeVisible();
 ```
 
 - [ ] **Step 2: Run the page test to verify it fails**
@@ -439,12 +541,14 @@ Expected: PASS. The finished page has semantic narrative chapters, proper CTA ro
 ## Task 5: Add route/semantic regression coverage and Playwright viewport validation
 
 **Files:**
+
 - Modify: `frontend/src/features/landing/test/LandingPage.test.jsx`
 - Modify: `frontend/src/app/test/routeGuards.test.tsx`
 - Create: `frontend/e2e/landing.spec.ts`
 - Modify: `frontend/e2e/app.spec.ts` only if a generic heading selector fails after the redesign
 
 **Interfaces:**
+
 - Consumes all finished landing components and existing guard decision helpers.
 - Produces automated proof that guest root access remains landing, authenticated root decisions remain `/dashboard`, links remain routable, and the landing is usable on desktop, mobile, and reduced-motion contexts.
 
@@ -453,15 +557,32 @@ Expected: PASS. The finished page has semantic narrative chapters, proper CTA ro
 Render `LandingPage` under `MemoryRouter`, stub `IntersectionObserver` as unavailable for the fallback case, and assert all of the following:
 
 ```jsx
-expect(screen.getByRole('link', { name: /skip to main content/i })).toHaveAttribute('href', '#landing-main');
-expect(screen.getByRole('main')).toHaveAttribute('id', 'landing-main');
-expect(screen.getByRole('heading', { name: /control the day/i })).toBeVisible();
-expect(screen.getByRole('heading', { name: /bring work into orbit/i })).toBeVisible();
-expect(screen.getByRole('heading', { name: /shape the workspace/i })).toBeVisible();
-expect(screen.getByRole('heading', { name: /turn progress into momentum/i })).toBeVisible();
-expect(screen.getByRole('heading', { name: /start with a clear orbit/i })).toBeVisible();
-expect(screen.getAllByRole('link', { name: /start your orbit|launch your workspace/i }).every((link) => link.getAttribute('href') === '/register')).toBe(true);
-expect(screen.getByRole('link', { name: /^sign in$/i })).toHaveAttribute('href', '/login');
+expect(
+  screen.getByRole("link", { name: /skip to main content/i }),
+).toHaveAttribute("href", "#landing-main");
+expect(screen.getByRole("main")).toHaveAttribute("id", "landing-main");
+expect(screen.getByRole("heading", { name: /control the day/i })).toBeVisible();
+expect(
+  screen.getByRole("heading", { name: /bring work into orbit/i }),
+).toBeVisible();
+expect(
+  screen.getByRole("heading", { name: /shape the workspace/i }),
+).toBeVisible();
+expect(
+  screen.getByRole("heading", { name: /turn progress into momentum/i }),
+).toBeVisible();
+expect(
+  screen.getByRole("heading", { name: /start with a clear orbit/i }),
+).toBeVisible();
+expect(
+  screen
+    .getAllByRole("link", { name: /start your orbit|launch your workspace/i })
+    .every((link) => link.getAttribute("href") === "/register"),
+).toBe(true);
+expect(screen.getByRole("link", { name: /^sign in$/i })).toHaveAttribute(
+  "href",
+  "/login",
+);
 ```
 
 - [ ] **Step 2: Preserve/strengthen root guard assertions**
@@ -469,8 +590,10 @@ expect(screen.getByRole('link', { name: /^sign in$/i })).toHaveAttribute('href',
 In `routeGuards.test.tsx`, retain the existing pure decision tests and add no component-level dependency on landing visuals. The required assertions are:
 
 ```ts
-expect(getRootDecision({ isAuthReady: true, token: null })).toBe('landing');
-expect(getRootDecision({ isAuthReady: true, token: 'token-abc' })).toBe('/dashboard');
+expect(getRootDecision({ isAuthReady: true, token: null })).toBe("landing");
+expect(getRootDecision({ isAuthReady: true, token: "token-abc" })).toBe(
+  "/dashboard",
+);
 ```
 
 - [ ] **Step 3: Run the relevant unit tests**
@@ -482,43 +605,68 @@ Expected: PASS.
 - [ ] **Step 4: Create browser tests for the public landing**
 
 ```ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 const expectNoConsoleErrors = (page) => {
   const errors: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
   });
   return () => expect(errors).toEqual([]);
 };
 
-test('guest desktop landing tells the Orbit Control story', async ({ page }) => {
+test("guest desktop landing tells the Orbit Control story", async ({
+  page,
+}) => {
   const assertNoConsoleErrors = expectNoConsoleErrors(page);
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: /control the day/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /start your orbit/i })).toHaveAttribute('href', '/register');
-  await page.locator('#focus').scrollIntoViewIfNeeded();
-  await expect(page.getByRole('heading', { name: /turn progress into momentum/i })).toBeVisible();
-  await page.locator('.launch-cta').scrollIntoViewIfNeeded();
-  await expect(page.getByRole('link', { name: /launch your workspace/i })).toBeVisible();
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: /control the day/i }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /start your orbit/i }),
+  ).toHaveAttribute("href", "/register");
+  await page.locator("#focus").scrollIntoViewIfNeeded();
+  await expect(
+    page.getByRole("heading", { name: /turn progress into momentum/i }),
+  ).toBeVisible();
+  await page.locator(".launch-cta").scrollIntoViewIfNeeded();
+  await expect(
+    page.getByRole("link", { name: /launch your workspace/i }),
+  ).toBeVisible();
   assertNoConsoleErrors();
 });
 
-test('mobile guest landing has no horizontal overflow and reachable CTA', async ({ page }) => {
+test("mobile guest landing has no horizontal overflow and reachable CTA", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: /control the day/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /start your orbit/i })).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: /control the day/i }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /start your orbit/i }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
 });
 
-test('reduced motion keeps all narrative content visible', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
-  for (const name of [/bring work into orbit/i, /shape the workspace/i, /turn progress into momentum/i, /start with a clear orbit/i]) {
-    await expect(page.getByRole('heading', { name })).toBeVisible();
+test("reduced motion keeps all narrative content visible", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  for (const name of [
+    /bring work into orbit/i,
+    /shape the workspace/i,
+    /turn progress into momentum/i,
+    /start with a clear orbit/i,
+  ]) {
+    await expect(page.getByRole("heading", { name })).toBeVisible();
   }
-  await expect(page.getByText('68%')).toBeVisible();
+  await expect(page.getByText("68%")).toBeVisible();
 });
 ```
 
@@ -537,9 +685,11 @@ Expected: PASS. The existing guest/protected/authenticated routing tests remain 
 ## Task 6: Run final quality gate and inspect the finished public route
 
 **Files:**
+
 - Modify only files identified by failing verification from Tasks 1–5.
 
 **Interfaces:**
+
 - Consumes the completed landing implementation and tests.
 - Produces verified lint, unit, production-build, and browser-validation evidence without modifying routing or application behavior outside the landing feature.
 

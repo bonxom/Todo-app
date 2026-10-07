@@ -8,7 +8,10 @@ export interface QueryProviderProps {
   client?: QueryClient;
 }
 
-export const QueryProvider: React.FC<QueryProviderProps> = ({ children, client = defaultQueryClient }) => {
+export const QueryProvider: React.FC<QueryProviderProps> = ({
+  children,
+  client = defaultQueryClient,
+}) => {
   useEffect(() => {
     const unregister = registerUserCacheReset(() => {
       client.removeQueries();

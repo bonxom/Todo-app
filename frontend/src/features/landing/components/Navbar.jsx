@@ -1,10 +1,14 @@
-import ThemeToggle from '@/shared/components/ThemeToggle';
-import { Link } from 'react-router-dom';
-import OrbitMark from '@/shared/components/OrbitMark';
+import ThemeToggle from "@/shared/components/ThemeToggle";
+import { Link } from "react-router-dom";
+import OrbitMark from "@/shared/components/OrbitMark";
 
 const Navbar = ({ heroPassed = false }) => {
   return (
-    <nav className="landing-navbar" aria-label="Landing navigation" data-scrolled={heroPassed}>
+    <nav
+      className="landing-navbar"
+      aria-label="Landing navigation"
+      data-scrolled={heroPassed}
+    >
       <div className="landing-navbar__inner">
         <Link to="/" className="landing-brand" aria-label="Orbit home">
           <OrbitMark />
@@ -18,7 +22,9 @@ const Navbar = ({ heroPassed = false }) => {
         <div className="landing-navbar__actions">
           <ThemeToggle />
           <Link to="/login">Sign in</Link>
-          <Link className="landing-navbar__start" to="/register">Start free</Link>
+          <Link className="landing-navbar__start" to="/register">
+            Start free
+          </Link>
         </div>
       </div>
     </nav>

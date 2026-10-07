@@ -1,15 +1,15 @@
-import { z } from 'zod';
-import type { ZodType } from 'zod';
-import mongoose from 'mongoose';
-import OpenAI from 'openai';
-import { getAiClient } from '../libs/aiClient.js';
-import { getAiModel } from '../config/env.js';
-import { categoryRepository } from '../repositories/categoryRepository.js';
-import { taskRepository } from '../repositories/taskRepository.js';
-import { statService } from './statService.js';
-import { normalizeTaskDateInput } from '../utils/dateTime.js';
-import { AppError } from '../error/AppError.js';
-import { AI_ERROR } from '../error/definitions/aiErrors.js';
+import { z } from "zod";
+import type { ZodType } from "zod";
+import mongoose from "mongoose";
+import OpenAI from "openai";
+import { getAiClient } from "../libs/aiClient.js";
+import { getAiModel } from "../config/env.js";
+import { categoryRepository } from "../repositories/categoryRepository.js";
+import { taskRepository } from "../repositories/taskRepository.js";
+import { statService } from "./statService.js";
+import { normalizeTaskDateInput } from "../utils/dateTime.js";
+import { AppError } from "../error/AppError.js";
+import { AI_ERROR } from "../error/definitions/aiErrors.js";
 
 const parseAiResponse = <T>(schema: ZodType<T>, content: string): T => {
   try {
@@ -34,7 +34,7 @@ const callAiProvider = async <T>(operation: () => Promise<T>): Promise<T> => {
 export const aiService = {
   async generateTasks(
     userRequirement: string,
-    userId: mongoose.Types.ObjectId | string
+    userId: mongoose.Types.ObjectId | string,
   ): Promise<unknown[]> {
     const ai = getAiClient();
     const categories = await categoryRepository.findByUser(userId);
@@ -47,18 +47,18 @@ export const aiService = {
     const taskSchema = z.object({
       title: z.string().min(1).max(100),
       description: z.string().max(500).optional(),
-      priority: z.enum(['Low', 'Medium', 'High']).optional(),
+      priority: z.enum(["Low", "Medium", "High"]).optional(),
       categoryName: z.string().optional().nullable(),
       dueDate: z.string().optional(),
     });
 
     const tasksArraySchema = z.array(taskSchema).length(3);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
     const prompt = `Generate EXACTLY 3 tasks (as an array) based on the following user requirement: "${userRequirement}".
 
 Available categories (choose ONE of these EXACT names for each task or pick the "Uncategorized" category if none fit):
-${categories.map((c) => `- "${c.name}"`).join('\n')}
+${categories.map((c) => `- "${c.name}"`).join("\n")}
 
 IMPORTANT:
 - Return an ARRAY of EXACTLY 3 TASK OBJECTS
@@ -79,17 +79,19 @@ Create 3 practical, actionable tasks with:
     const rawSchema = tasksArraySchema.toJSONSchema();
     const { $schema, ...jsonSchema } = rawSchema;
 
-    const response = await callAiProvider(() => ai.chat.completions.create({
-      model,
-      messages: [
-        {
-          role: 'system',
-          content: `You must respond with a JSON array of exactly 3 task objects. Follow this JSON Schema:\n${JSON.stringify(jsonSchema, null, 2)}`,
-        },
-        { role: 'user', content: prompt },
-      ],
-      response_format: { type: 'json_object' },
-    }));
+    const response = await callAiProvider(() =>
+      ai.chat.completions.create({
+        model,
+        messages: [
+          {
+            role: "system",
+            content: `You must respond with a JSON array of exactly 3 task objects. Follow this JSON Schema:\n${JSON.stringify(jsonSchema, null, 2)}`,
+          },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    );
 
     const content = response.choices[0]?.message?.content;
     if (!content) throw new AppError(AI_ERROR.EMPTY_RESPONSE);
@@ -105,11 +107,13 @@ Create 3 practical, actionable tasks with:
           categoryId = categoryMap[generatedTask.categoryName];
         } else {
           const lower = generatedTask.categoryName.toLowerCase();
-          const matched = categories.find((c) => c.name.toLowerCase() === lower);
+          const matched = categories.find(
+            (c) => c.name.toLowerCase() === lower,
+          );
           if (matched) {
             categoryId = matched._id.toString();
-          } else if (categoryMap['Uncategorized']) {
-            categoryId = categoryMap['Uncategorized'];
+          } else if (categoryMap["Uncategorized"]) {
+            categoryId = categoryMap["Uncategorized"];
           }
         }
       }
@@ -119,9 +123,9 @@ Create 3 practical, actionable tasks with:
 
       const task = await taskRepository.create({
         title: generatedTask.title,
-        description: generatedTask.description || '',
-        priority: generatedTask.priority || 'Medium',
-        status: 'pending',
+        description: generatedTask.description || "",
+        priority: generatedTask.priority || "Medium",
+        status: "pending",
         categoryId,
         dueDate: dueDateUpdate.shouldUpdate ? dueDateUpdate.value : undefined,
       });
@@ -145,13 +149,15 @@ Provide short, clear, concise, and friendly responses.`;
     const model = getAiModel();
     if (!model) throw new AppError(AI_ERROR.CONFIG_MISSING);
 
-    const response = await callAiProvider(() => ai.chat.completions.create({
-      model,
-      messages: [
-        { role: 'system', content: sysInstruction },
-        { role: 'user', content: userInput },
-      ],
-    }));
+    const response = await callAiProvider(() =>
+      ai.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: sysInstruction },
+          { role: "user", content: userInput },
+        ],
+      }),
+    );
 
     const content = response.choices[0]?.message?.content;
     if (!content) throw new AppError(AI_ERROR.EMPTY_RESPONSE);

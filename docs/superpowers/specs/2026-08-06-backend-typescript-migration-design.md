@@ -61,21 +61,23 @@
 
 ### Enums (replace string array constants)
 
-| File | TypeScript |
-|------|-----------|
-| `priority.js` | `enum Priority { Low = 'Low', Medium = 'Medium', High = 'High' }` |
-| `taskStatus.js` | `enum TaskStatus { Pending = 'pending', InProgress = 'in-progress', Completed = 'completed', GivenUp = 'given-up' }` |
-| `projectStatus.js` | `enum ProjectStatus { Active = 'active', Completed = 'completed' }` |
-| New | `enum UserRole { User = 'USER', Admin = 'ADMIN' }` |
+| File               | TypeScript                                                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `priority.js`      | `enum Priority { Low = 'Low', Medium = 'Medium', High = 'High' }`                                                    |
+| `taskStatus.js`    | `enum TaskStatus { Pending = 'pending', InProgress = 'in-progress', Completed = 'completed', GivenUp = 'given-up' }` |
+| `projectStatus.js` | `enum ProjectStatus { Active = 'active', Completed = 'completed' }`                                                  |
+| New                | `enum UserRole { User = 'USER', Admin = 'ADMIN' }`                                                                   |
 
 ### Mongoose Document Interfaces (`types/` directory)
 
 Each model gets:
+
 - `I<Name>` — plain object interface (fields only)
 - `I<Name>Document` — extends `I<Name>` and `Document` (Mongoose document instance)
 - `I<Name>Model` — extends `Model<I<Name>Document>` (model statics)
 
 Key patterns:
+
 - `categoryId`/`projectId` on Task use union types for populated vs unpopulated state
 - Timestamps are auto-generated via Mongoose, included in interfaces as `createdAt: Date; updatedAt: Date`
 - Schema hooks access `this` which is typed as the document type
@@ -96,6 +98,7 @@ declare global {
 ### Zod Inferred Types
 
 Each validation schema exports its inferred type:
+
 ```typescript
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 ```
@@ -112,19 +115,19 @@ Create a typed env helper or use `process.env` with non-null assertions after `v
 
 ## Migration Order (11 steps, bottom-up)
 
-| Step | Layer | Files |
-|------|-------|-------|
-| 1 | Constants | `taskStatus.ts`, `projectStatus.ts`, `priority.ts`, `datePatterns.ts` |
-| 2 | Utils | `errors.ts`, `dateTime.ts` |
-| 3 | Types | `express.d.ts`, `IUser.ts`, `ITask.ts`, `ICategory.ts`, `IProject.ts`, `IStat.ts`, `IInvalidatedToken.ts` |
-| 4 | Models | `User.ts`, `Task.ts`, `Category.ts`, `Project.ts`, `Stat.ts`, `InvalidatedToken.ts` |
-| 5 | Config | `env.ts`, `db.ts`, `initialize.ts` |
-| 6 | Repositories | All 6 repository files |
-| 7 | Validations | All 6 validation files |
-| 8 | Services | All 7 service files |
-| 9 | Middlewares | `auth.ts`, `errorHandler.ts`, `validate.ts` |
-| 10 | Controllers | All 7 controller files |
-| 11 | Entry | `libs/aiClient.ts`, routes (7 files), `app.ts`, `server.ts` |
+| Step | Layer        | Files                                                                                                     |
+| ---- | ------------ | --------------------------------------------------------------------------------------------------------- |
+| 1    | Constants    | `taskStatus.ts`, `projectStatus.ts`, `priority.ts`, `datePatterns.ts`                                     |
+| 2    | Utils        | `errors.ts`, `dateTime.ts`                                                                                |
+| 3    | Types        | `express.d.ts`, `IUser.ts`, `ITask.ts`, `ICategory.ts`, `IProject.ts`, `IStat.ts`, `IInvalidatedToken.ts` |
+| 4    | Models       | `User.ts`, `Task.ts`, `Category.ts`, `Project.ts`, `Stat.ts`, `InvalidatedToken.ts`                       |
+| 5    | Config       | `env.ts`, `db.ts`, `initialize.ts`                                                                        |
+| 6    | Repositories | All 6 repository files                                                                                    |
+| 7    | Validations  | All 6 validation files                                                                                    |
+| 8    | Services     | All 7 service files                                                                                       |
+| 9    | Middlewares  | `auth.ts`, `errorHandler.ts`, `validate.ts`                                                               |
+| 10   | Controllers  | All 7 controller files                                                                                    |
+| 11   | Entry        | `libs/aiClient.ts`, routes (7 files), `app.ts`, `server.ts`                                               |
 
 Each step: rename `.js` → `.ts`, add types, verify with `tsx server.ts`.
 After all steps pass, remove old `.js` files.

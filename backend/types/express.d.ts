@@ -1,4 +1,4 @@
-import { IUserDocument } from './IUser.js';
+import { IUserDocument } from "./IUser.js";
 
 declare global {
   namespace Express {

@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 
 const CTA = () => {
   return (
@@ -8,8 +8,9 @@ const CTA = () => {
         <p className="ui-page-kicker">Ready</p>
         <h2 className="cta-title">Ready to Get Organized?</h2>
         <p className="cta-description">
-          Start with the same clean workspace shown here, then build your categories, projects,
-          calendar, and progress views as your task list grows.
+          Start with the same clean workspace shown here, then build your
+          categories, projects, calendar, and progress views as your task list
+          grows.
         </p>
         <Link className="ui-btn-primary cta-button" to="/register">
           Create Workspace

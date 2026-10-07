@@ -1,10 +1,17 @@
-import axios, { type AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from "axios";
+import axios, {
+  type AxiosError,
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
+} from "axios";
 import { env } from "../../config/env";
 import { useAuthStore } from "../../stores/useAuthStore";
 import { ApiError } from "./apiError";
 import { resetUserCache } from "./sessionCache";
 
-export type RequestOptions = Pick<AxiosRequestConfig, "signal" | "headers" | "params">;
+export type RequestOptions = Pick<
+  AxiosRequestConfig,
+  "signal" | "headers" | "params"
+>;
 
 const axiosInstance = axios.create({
   baseURL: env.serverUrl,
@@ -54,25 +61,58 @@ const normalizeToApiError = (error: unknown): ApiError => {
     const status = axiosErr.response?.status;
     const backendMessage = axiosErr.response?.data?.message;
 
-    if (axiosErr.code === "ECONNABORTED" || axiosErr.message?.toLowerCase().includes("timeout")) {
-      return new ApiError(backendMessage || "Request timed out", status, "timeout", axiosErr.code, axiosErr);
+    if (
+      axiosErr.code === "ECONNABORTED" ||
+      axiosErr.message?.toLowerCase().includes("timeout")
+    ) {
+      return new ApiError(
+        backendMessage || "Request timed out",
+        status,
+        "timeout",
+        axiosErr.code,
+        axiosErr,
+      );
     }
 
     if (!axiosErr.response) {
       if (axiosErr.request) {
-        return new ApiError("No response from server", undefined, "network", axiosErr.code, axiosErr);
+        return new ApiError(
+          "No response from server",
+          undefined,
+          "network",
+          axiosErr.code,
+          axiosErr,
+        );
       }
-      return new ApiError(axiosErr.message || "Network error", undefined, "network", axiosErr.code, axiosErr);
+      return new ApiError(
+        axiosErr.message || "Network error",
+        undefined,
+        "network",
+        axiosErr.code,
+        axiosErr,
+      );
     }
 
-    return new ApiError(backendMessage || axiosErr.message || "An error occurred", status, "http", axiosErr.code, axiosErr);
+    return new ApiError(
+      backendMessage || axiosErr.message || "An error occurred",
+      status,
+      "http",
+      axiosErr.code,
+      axiosErr,
+    );
   }
 
   if (error instanceof Error) {
     return new ApiError(error.message, undefined, "http", undefined, error);
   }
 
-  return new ApiError("An unexpected error occurred", undefined, "http", undefined, error);
+  return new ApiError(
+    "An unexpected error occurred",
+    undefined,
+    "http",
+    undefined,
+    error,
+  );
 };
 
 // Request interceptor
@@ -101,7 +141,7 @@ axiosInstance.interceptors.request.use(
       console.error("Request error:", error);
     }
     return Promise.reject(normalizeToApiError(error));
-  }
+  },
 );
 
 // Response interceptor
@@ -113,7 +153,8 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   async (error) => {
-    const originalRequest = error?.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const originalRequest = error?.config as
+      (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
 
     if (env.apiDebug) {
       console.error("Response error:", error);
@@ -134,16 +175,24 @@ axiosInstance.interceptors.response.use(
 
       if (isAuthEndpoint || originalRequest?._retry) {
         await handleTerminalAuthFailure();
-        const message = (error.response.data as { message?: string })?.message || "Authentication failed";
-        return Promise.reject(new ApiError(message, 401, "http", error.code, error));
+        const message =
+          (error.response.data as { message?: string })?.message ||
+          "Authentication failed";
+        return Promise.reject(
+          new ApiError(message, 401, "http", error.code, error),
+        );
       }
 
       const refreshToken = useAuthStore.getState().refreshToken;
 
       if (!refreshToken) {
         await handleTerminalAuthFailure();
-        const message = (error.response.data as { message?: string })?.message || "Session expired";
-        return Promise.reject(new ApiError(message, 401, "http", error.code, error));
+        const message =
+          (error.response.data as { message?: string })?.message ||
+          "Session expired";
+        return Promise.reject(
+          new ApiError(message, 401, "http", error.code, error),
+        );
       }
 
       if (isRefreshing) {
@@ -155,7 +204,13 @@ axiosInstance.interceptors.response.use(
               originalRequest.headers.Authorization = `Bearer ${newToken}`;
               return axiosInstance(originalRequest);
             }
-            return Promise.reject(new ApiError("Original request missing configuration", undefined, "http"));
+            return Promise.reject(
+              new ApiError(
+                "Original request missing configuration",
+                undefined,
+                "http",
+              ),
+            );
           })
           .catch((err) => Promise.reject(normalizeToApiError(err)));
       }
@@ -167,11 +222,18 @@ axiosInstance.interceptors.response.use(
 
       try {
         const refreshBaseUrl = env.serverUrl || "";
-        const refreshResponse = await axios.post(`${refreshBaseUrl}/api/auth/refresh`, {
-          refreshToken,
-        });
+        const refreshResponse = await axios.post(
+          `${refreshBaseUrl}/api/auth/refresh`,
+          {
+            refreshToken,
+          },
+        );
 
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken, token: fallbackToken } = refreshResponse.data;
+        const {
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+          token: fallbackToken,
+        } = refreshResponse.data;
         const effectiveToken = newAccessToken || fallbackToken;
 
         useAuthStore.getState().updateTokens({
@@ -195,7 +257,10 @@ axiosInstance.interceptors.response.use(
         processQueue(normalizedRefreshErr, null);
 
         // Terminal auth failures on refresh are 401 or 403
-        if (normalizedRefreshErr.status === 401 || normalizedRefreshErr.status === 403) {
+        if (
+          normalizedRefreshErr.status === 401 ||
+          normalizedRefreshErr.status === 403
+        ) {
           await handleTerminalAuthFailure();
         }
 
@@ -206,7 +271,7 @@ axiosInstance.interceptors.response.use(
     }
 
     return Promise.reject(normalizeToApiError(error));
-  }
+  },
 );
 
 export default axiosInstance;

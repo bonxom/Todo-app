@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, X } from 'lucide-react';
-import { useLogoutMutation } from '@/features/auth/api/authMutations';
-import OrbitMark from './OrbitMark';
+import { useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LogOut, X } from "lucide-react";
+import { useLogoutMutation } from "@/features/auth/api/authMutations";
+import OrbitMark from "./OrbitMark";
 
 export const DESKTOP_BREAKPOINT = 1024;
 export const drawerWidthExpanded = 272;
@@ -10,10 +10,15 @@ export const drawerWidthCollapsed = 88;
 
 const menuItems = [
   {
-    path: '/dashboard',
-    label: 'Todos',
+    path: "/dashboard",
+    label: "Todos",
     icon: (
-      <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="h-5 w-5 flex-shrink-0"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -24,10 +29,15 @@ const menuItems = [
     ),
   },
   {
-    path: '/categories',
-    label: 'Categories',
+    path: "/categories",
+    label: "Categories",
     icon: (
-      <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="h-5 w-5 flex-shrink-0"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -38,10 +48,15 @@ const menuItems = [
     ),
   },
   {
-    path: '/calendar',
-    label: 'Calendar',
+    path: "/calendar",
+    label: "Calendar",
     icon: (
-      <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="h-5 w-5 flex-shrink-0"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -52,10 +67,15 @@ const menuItems = [
     ),
   },
   {
-    path: '/statistics',
-    label: 'Statistics',
+    path: "/statistics",
+    label: "Statistics",
     icon: (
-      <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="h-5 w-5 flex-shrink-0"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -84,15 +104,19 @@ const Sidebar = ({
     ? isExpanded
       ? drawerWidthExpanded
       : drawerWidthCollapsed
-    : 'min(18rem, calc(100vw - 1rem))';
-  const todayLabel = new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
+    : "min(18rem, calc(100vw - 1rem))";
+  const todayLabel = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   }).format(new Date());
 
   useEffect(() => {
-    if (!isDesktop && isOpen && previousPathnameRef.current !== location.pathname) {
+    if (
+      !isDesktop &&
+      isOpen &&
+      previousPathnameRef.current !== location.pathname
+    ) {
       onClose?.();
     }
 
@@ -106,17 +130,17 @@ const Sidebar = ({
 
     const previousOverflow = document.body.style.overflow;
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         onClose?.();
       }
     };
 
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isDesktop, isOpen, onClose]);
 
@@ -124,7 +148,7 @@ const Sidebar = ({
     try {
       await logoutMutation.mutateAsync();
     } finally {
-      navigate('/');
+      navigate("/");
     }
   };
 
@@ -145,16 +169,18 @@ const Sidebar = ({
         data-open={isOpen}
         data-expanded={isExpanded}
         onPointerEnter={(event) => {
-          if (isDesktop && event.pointerType !== 'touch') onHoverChange?.(true);
+          if (isDesktop && event.pointerType !== "touch") onHoverChange?.(true);
         }}
         onPointerLeave={() => {
           if (isDesktop) onHoverChange?.(false);
         }}
         onFocusCapture={(event) => {
-          if (isDesktop && event.target.matches(':focus-visible')) onFocusChange?.(true);
+          if (isDesktop && event.target.matches(":focus-visible"))
+            onFocusChange?.(true);
         }}
         onBlurCapture={(event) => {
-          if (isDesktop && !event.currentTarget.contains(event.relatedTarget)) onFocusChange?.(false);
+          if (isDesktop && !event.currentTarget.contains(event.relatedTarget))
+            onFocusChange?.(false);
         }}
         aria-hidden={!isDesktop && !isOpen}
         style={{ width: currentDrawerWidth }}
@@ -173,16 +199,22 @@ const Sidebar = ({
 
         <div
           className="ui-shell-sidebar__content"
-          style={{ padding: showLabels ? '1rem' : '1rem 0.75rem' }}
+          style={{ padding: showLabels ? "1rem" : "1rem 0.75rem" }}
         >
-          <div className={`ui-shell-brand ${showLabels ? '' : 'justify-center'}`}>
+          <div
+            className={`ui-shell-brand ${showLabels ? "" : "justify-center"}`}
+          >
             <div className="ui-shell-brand-mark" aria-hidden="true">
               <OrbitMark />
             </div>
             {showLabels && (
               <div className="ui-shell-brand-copy">
-                <p className="text-sm font-semibold text-[var(--color-text)]">Orbit</p>
-                <p className="ui-tabular text-xs text-[var(--color-text-muted)]">{todayLabel}</p>
+                <p className="text-sm font-semibold text-[var(--color-text)]">
+                  Orbit
+                </p>
+                <p className="ui-tabular text-xs text-[var(--color-text-muted)]">
+                  {todayLabel}
+                </p>
               </div>
             )}
           </div>
@@ -199,9 +231,9 @@ const Sidebar = ({
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`ui-shell-nav-link ui-focus-ring ${showLabels ? '' : 'justify-center'}`}
+                  className={`ui-shell-nav-link ui-focus-ring ${showLabels ? "" : "justify-center"}`}
                   data-active={isActive}
-                  aria-current={isActive ? 'page' : undefined}
+                  aria-current={isActive ? "page" : undefined}
                   onClick={!isDesktop ? onClose : undefined}
                   aria-label={item.label}
                   title={!showLabels ? item.label : undefined}
@@ -209,7 +241,9 @@ const Sidebar = ({
                   <span className="flex-shrink-0" aria-hidden="true">
                     {item.icon}
                   </span>
-                  {showLabels && <span className="ui-shell-nav-label">{item.label}</span>}
+                  {showLabels && (
+                    <span className="ui-shell-nav-label">{item.label}</span>
+                  )}
                 </Link>
               );
             })}
@@ -219,8 +253,8 @@ const Sidebar = ({
             <button
               type="button"
               onClick={handleLogout}
-              className={`ui-shell-nav-link ui-focus-ring w-full ${showLabels ? '' : 'justify-center'}`}
-              title={!showLabels ? 'Logout' : undefined}
+              className={`ui-shell-nav-link ui-focus-ring w-full ${showLabels ? "" : "justify-center"}`}
+              title={!showLabels ? "Logout" : undefined}
             >
               <LogOut className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
               {showLabels && <span className="ui-shell-nav-label">Logout</span>}

@@ -9,7 +9,7 @@ export interface TaskFilterState {
 
 export const filterTasks = (
   tasks: Task[] | null | undefined,
-  selectedStatuses: TaskStatus[]
+  selectedStatuses: TaskStatus[],
 ): Task[] => {
   const taskList = Array.isArray(tasks) ? tasks : [];
 
@@ -25,13 +25,24 @@ export const useTaskFilterStore = create<TaskFilterState>((set) => ({
   setSelectedStatuses: (selectedStatuses) => set({ selectedStatuses }),
 }));
 
-export const useVisibleTasks = <T extends Task>(tasks: T[] | null | undefined): T[] => {
-  const selectedStatuses = useTaskFilterStore((state) => state.selectedStatuses);
-  return useMemo(() => filterTasks(tasks, selectedStatuses) as T[], [tasks, selectedStatuses]);
+export const useVisibleTasks = <T extends Task>(
+  tasks: T[] | null | undefined,
+): T[] => {
+  const selectedStatuses = useTaskFilterStore(
+    (state) => state.selectedStatuses,
+  );
+  return useMemo(
+    () => filterTasks(tasks, selectedStatuses) as T[],
+    [tasks, selectedStatuses],
+  );
 };
 
 export const useTaskFilter = () => {
-  const selectedStatuses = useTaskFilterStore((state) => state.selectedStatuses);
-  const setSelectedStatuses = useTaskFilterStore((state) => state.setSelectedStatuses);
+  const selectedStatuses = useTaskFilterStore(
+    (state) => state.selectedStatuses,
+  );
+  const setSelectedStatuses = useTaskFilterStore(
+    (state) => state.setSelectedStatuses,
+  );
   return { selectedStatuses, setSelectedStatuses };
 };

@@ -1,41 +1,52 @@
-import { useEffect, useRef } from 'react';
-import { useModalKeyboard } from '@/shared/hooks/useModalKeyboard';
-import { X } from 'lucide-react';
-import AddTaskForm from './Form/AddTaskForm';
+import { useEffect, useRef } from "react";
+import { useModalKeyboard } from "@/shared/hooks/useModalKeyboard";
+import { X } from "lucide-react";
+import AddTaskForm from "./Form/AddTaskForm";
 
-const AddTaskButton = ({ isOpen, onClose, onTaskCreated, onProjectCreated, initialProjectId = '' }) => {
+const AddTaskButton = ({
+  isOpen,
+  onClose,
+  onTaskCreated,
+  onProjectCreated,
+  initialProjectId = "",
+}) => {
   const dialogRef = useRef(null);
   useModalKeyboard(isOpen, dialogRef, onClose);
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={onClose}
       role="presentation"
     >
-      <div 
+      <div
         ref={dialogRef}
         className="ui-modal-shell w-full max-w-xl animate-fadeIn"
-        style={{ maxHeight: '90vh' }}
+        style={{ maxHeight: "90vh" }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-task-title"
       >
         <div className="ui-modal-header flex items-start justify-between gap-4">
-          <h2 id="add-task-title" className="text-xl font-semibold text-[var(--color-text)]">Add New Task</h2>
+          <h2
+            id="add-task-title"
+            className="text-xl font-semibold text-[var(--color-text)]"
+          >
+            Add New Task
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -46,7 +57,10 @@ const AddTaskButton = ({ isOpen, onClose, onTaskCreated, onProjectCreated, initi
           </button>
         </div>
 
-        <div className="ui-modal-body overflow-y-auto" style={{ maxHeight: 'calc(90vh - 100px)' }}>
+        <div
+          className="ui-modal-body overflow-y-auto"
+          style={{ maxHeight: "calc(90vh - 100px)" }}
+        >
           <AddTaskForm
             onClose={onClose}
             onTaskCreated={onTaskCreated}

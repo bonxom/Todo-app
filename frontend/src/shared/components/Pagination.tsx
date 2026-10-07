@@ -7,8 +7,8 @@
  * - Optional page size selector dropdown
  */
 
-import { useMemo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMemo } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   pageNo: number;
@@ -26,15 +26,18 @@ interface PaginationProps {
  * Build the page number array with ellipsis markers.
  * Always shows first, last, and a window around the current page.
  */
-function buildPageNumbers(currentPage: number, totalPage: number): (number | 'ellipsis')[] {
+function buildPageNumbers(
+  currentPage: number,
+  totalPage: number,
+): (number | "ellipsis")[] {
   if (totalPage <= 7) {
     return Array.from({ length: totalPage }, (_, i) => i + 1);
   }
 
-  const pages: (number | 'ellipsis')[] = [1];
+  const pages: (number | "ellipsis")[] = [1];
 
   if (currentPage > 3) {
-    pages.push('ellipsis');
+    pages.push("ellipsis");
   }
 
   const start = Math.max(2, currentPage - 1);
@@ -45,7 +48,7 @@ function buildPageNumbers(currentPage: number, totalPage: number): (number | 'el
   }
 
   if (currentPage < totalPage - 2) {
-    pages.push('ellipsis');
+    pages.push("ellipsis");
   }
 
   pages.push(totalPage);
@@ -60,12 +63,12 @@ export default function Pagination({
   onPageChange,
   onPageSizeChange,
   pageSizeOptions = [10, 20, 50],
-  className = '',
+  className = "",
   compact = false,
 }: PaginationProps) {
   const pageNumbers = useMemo(
     () => buildPageNumbers(pageNo, totalPage),
-    [pageNo, totalPage]
+    [pageNo, totalPage],
   );
 
   if (totalCount === 0) return null;
@@ -78,23 +81,31 @@ export default function Pagination({
   return (
     <div
       className={`flex flex-col gap-3 ${
-        compact ? '' : 'sm:flex-row sm:items-center sm:justify-between'
+        compact ? "" : "sm:flex-row sm:items-center sm:justify-between"
       } ${className}`}
       role="navigation"
       aria-label="Pagination"
     >
       {/* Info text */}
       <p className="text-sm text-[var(--color-text-muted)] tabular-nums">
-        Showing{' '}
-        <span className="font-semibold text-[var(--color-text)]">{startItem}</span>
+        Showing{" "}
+        <span className="font-semibold text-[var(--color-text)]">
+          {startItem}
+        </span>
         –
-        <span className="font-semibold text-[var(--color-text)]">{endItem}</span>
-        {' '}of{' '}
-        <span className="font-semibold text-[var(--color-text)]">{totalCount}</span>
-        {' '}results
+        <span className="font-semibold text-[var(--color-text)]">
+          {endItem}
+        </span>{" "}
+        of{" "}
+        <span className="font-semibold text-[var(--color-text)]">
+          {totalCount}
+        </span>{" "}
+        results
       </p>
 
-      <div className={`flex gap-3 ${compact ? 'flex-col items-stretch' : 'items-center'}`}>
+      <div
+        className={`flex gap-3 ${compact ? "flex-col items-stretch" : "items-center"}`}
+      >
         {/* Page size selector */}
         {onPageSizeChange && (
           <div className="flex items-center gap-1.5">
@@ -120,7 +131,9 @@ export default function Pagination({
         )}
 
         {/* Page buttons */}
-        <div className={`flex items-center gap-1 ${compact ? 'justify-end overflow-x-auto pb-0.5' : ''}`}>
+        <div
+          className={`flex items-center gap-1 ${compact ? "justify-end overflow-x-auto pb-0.5" : ""}`}
+        >
           {/* Previous */}
           <button
             type="button"
@@ -134,7 +147,7 @@ export default function Pagination({
 
           {/* Page numbers */}
           {pageNumbers.map((page, index) =>
-            page === 'ellipsis' ? (
+            page === "ellipsis" ? (
               <span
                 key={`ellipsis-${index}`}
                 className="inline-flex h-8 w-8 items-center justify-center text-xs text-[var(--color-text-muted)]"
@@ -149,16 +162,16 @@ export default function Pagination({
                 onClick={() => onPageChange(page)}
                 disabled={page === pageNo}
                 aria-label={`Page ${page}`}
-                aria-current={page === pageNo ? 'page' : undefined}
+                aria-current={page === pageNo ? "page" : undefined}
                 className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-[var(--radius-sm)] border px-1.5 text-xs font-medium tabular-nums transition-colors cursor-pointer ${
                   page === pageNo
-                    ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--color-on-status,#fff)]'
-                    : 'border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
+                    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--color-on-status,#fff)]"
+                    : "border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
                 }`}
               >
                 {page}
               </button>
-            )
+            ),
           )}
 
           {/* Next */}

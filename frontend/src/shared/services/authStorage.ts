@@ -4,7 +4,8 @@ const AUTH_TOKEN_KEY = "token";
 const AUTH_REFRESH_TOKEN_KEY = "refreshToken";
 const AUTH_USER_KEY = "user";
 
-const canUseStorage = (): boolean => typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+const canUseStorage = (): boolean =>
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
 export const getStoredToken = (): string | null => {
   if (!canUseStorage()) return null;

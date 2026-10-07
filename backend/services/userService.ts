@@ -1,10 +1,10 @@
-import mongoose from 'mongoose';
-import { userRepository } from '../repositories/userRepository.js';
-import { AppError } from '../error/AppError.js';
-import { USER_ERROR } from '../error/definitions/userErrors.js';
-import { mapDatabaseError } from '../error/errorGuards.js';
-import { IUserDocument } from '../types/IUser.js';
-import { UpdateUserInput } from '../validations/userValidation.js';
+import mongoose from "mongoose";
+import { userRepository } from "../repositories/userRepository.js";
+import { AppError } from "../error/AppError.js";
+import { USER_ERROR } from "../error/definitions/userErrors.js";
+import { mapDatabaseError } from "../error/errorGuards.js";
+import { IUserDocument } from "../types/IUser.js";
+import { UpdateUserInput } from "../validations/userValidation.js";
 
 export const userService = {
   async create(data: Record<string, unknown>): Promise<IUserDocument> {
@@ -27,7 +27,7 @@ export const userService = {
 
   async update(
     id: mongoose.Types.ObjectId | string,
-    data: UpdateUserInput
+    data: UpdateUserInput,
   ): Promise<IUserDocument> {
     if (Object.keys(data).length === 0) {
       throw new AppError(USER_ERROR.NO_FIELDS_TO_UPDATE);
@@ -35,7 +35,10 @@ export const userService = {
 
     let user: IUserDocument | null;
     try {
-      user = await userRepository.updateById(id, data as Record<string, unknown>);
+      user = await userRepository.updateById(
+        id,
+        data as Record<string, unknown>,
+      );
     } catch (error: unknown) {
       throw mapDatabaseError(error, USER_ERROR.EMAIL_EXISTED);
     }

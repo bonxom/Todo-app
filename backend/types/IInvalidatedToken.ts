@@ -1,4 +1,4 @@
-import { Document, Model } from 'mongoose';
+import { Document, Model } from "mongoose";
 
 export interface IInvalidatedToken {
   token: string;
@@ -7,6 +7,7 @@ export interface IInvalidatedToken {
   updatedAt: Date;
 }
 
-export interface IInvalidatedTokenDocument extends IInvalidatedToken, Document {}
+export interface IInvalidatedTokenDocument
+  extends IInvalidatedToken, Document {}
 
 export interface IInvalidatedTokenModel extends Model<IInvalidatedTokenDocument> {}

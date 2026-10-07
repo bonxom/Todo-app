@@ -1,14 +1,23 @@
-import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, Plus, Sparkles } from 'lucide-react';
-import CalendarGrid from './CalendarGrid';
-import ProjectFocusPanel from './ProjectFocusPanel';
-import ProjectFocusWeekAgenda from './ProjectFocusWeekAgenda';
-import DetailRequestModal from './DetailRequestModal';
-import AddTaskModal from '@/features/tasks/components/dialogs/AddTaskModal';
-import AddProjectForm from '@/features/tasks/components/Form/AddProjectForm';
-import { addDays, getDateKey, groupTasksByDate, sortTasksByDueTime, startOfDay } from './calendarUtils';
-import { toMidnightDateTimeLocalValue } from '@/shared/utils/dateTime';
-import { PROJECT_STATUS, filterProjectsByVisibility } from '@/shared/utils/projectStatus';
+import { useMemo, useState } from "react";
+import { ChevronDown, ChevronUp, Plus, Sparkles } from "lucide-react";
+import CalendarGrid from "./CalendarGrid";
+import ProjectFocusPanel from "./ProjectFocusPanel";
+import ProjectFocusWeekAgenda from "./ProjectFocusWeekAgenda";
+import DetailRequestModal from "./DetailRequestModal";
+import AddTaskModal from "@/features/tasks/components/dialogs/AddTaskModal";
+import AddProjectForm from "@/features/tasks/components/Form/AddProjectForm";
+import {
+  addDays,
+  getDateKey,
+  groupTasksByDate,
+  sortTasksByDueTime,
+  startOfDay,
+} from "./calendarUtils";
+import { toMidnightDateTimeLocalValue } from "@/shared/utils/dateTime";
+import {
+  PROJECT_STATUS,
+  filterProjectsByVisibility,
+} from "@/shared/utils/projectStatus";
 
 const getProjectId = (task) => task.projectId?._id || task.projectId || null;
 
@@ -38,12 +47,15 @@ const CalendarView = ({
 
   const visibleProjects = useMemo(
     () => filterProjectsByVisibility(projects, showCompletedProjects),
-    [projects, showCompletedProjects]
+    [projects, showCompletedProjects],
   );
 
   const validSelectedProjectIds = useMemo(
-    () => selectedProjectIds.filter((projectId) => visibleProjects.some((project) => project._id === projectId)),
-    [visibleProjects, selectedProjectIds]
+    () =>
+      selectedProjectIds.filter((projectId) =>
+        visibleProjects.some((project) => project._id === projectId),
+      ),
+    [visibleProjects, selectedProjectIds],
   );
 
   const filteredTasks = useMemo(() => {
@@ -56,7 +68,10 @@ const CalendarView = ({
   }, [tasks, validSelectedProjectIds]);
 
   const allTasksByDate = useMemo(() => groupTasksByDate(tasks), [tasks]);
-  const activeTasksByDate = useMemo(() => groupTasksByDate(filteredTasks), [filteredTasks]);
+  const activeTasksByDate = useMemo(
+    () => groupTasksByDate(filteredTasks),
+    [filteredTasks],
+  );
 
   const selectedTasks = useMemo(() => {
     const dateKey = getDateKey(selectedDate);
@@ -68,9 +83,9 @@ const CalendarView = ({
 
     return visibleProjects.map((project) => {
       const summary = project.summary || {};
-      const selectedDayCount = (allTasksByDate[selectedDayKey] || [])
-        .filter((task) => getProjectId(task) === project._id)
-        .length;
+      const selectedDayCount = (allTasksByDate[selectedDayKey] || []).filter(
+        (task) => getProjectId(task) === project._id,
+      ).length;
 
       return {
         ...project,
@@ -81,22 +96,26 @@ const CalendarView = ({
     });
   }, [allTasksByDate, visibleProjects, selectedDate]);
 
-  const initialProjectIdForNewTask = validSelectedProjectIds.length === 1
-    ? validSelectedProjectIds[0]
-    : '';
+  const initialProjectIdForNewTask =
+    validSelectedProjectIds.length === 1 ? validSelectedProjectIds[0] : "";
 
   const handleNavigate = (direction) => {
-    if (viewMode === 'week') {
-      onCurrentDateChange?.((previousDate) => addDays(previousDate, direction * 7));
+    if (viewMode === "week") {
+      onCurrentDateChange?.((previousDate) =>
+        addDays(previousDate, direction * 7),
+      );
       setSelectedDate((previousDate) => addDays(previousDate, direction * 7));
       return;
     }
 
-    onCurrentDateChange?.((previousDate) => new Date(
-      previousDate.getFullYear(),
-      previousDate.getMonth() + direction,
-      1
-    ));
+    onCurrentDateChange?.(
+      (previousDate) =>
+        new Date(
+          previousDate.getFullYear(),
+          previousDate.getMonth() + direction,
+          1,
+        ),
+    );
   };
 
   const handleResetToToday = () => {
@@ -108,7 +127,7 @@ const CalendarView = ({
     const normalizedDate = startOfDay(date);
     setSelectedDate(normalizedDate);
 
-    if (viewMode === 'week') {
+    if (viewMode === "week") {
       onCurrentDateChange?.(normalizedDate);
     }
   };
@@ -116,25 +135,27 @@ const CalendarView = ({
   const handleViewModeChange = (nextMode) => {
     onViewModeChange?.(nextMode);
 
-    if (nextMode === 'week') {
+    if (nextMode === "week") {
       onCurrentDateChange?.(selectedDate);
     }
   };
 
   const handleProjectToggle = (projectId) => {
-    setSelectedProjectIds((previousIds) => (
+    setSelectedProjectIds((previousIds) =>
       previousIds.includes(projectId)
         ? previousIds.filter((value) => value !== projectId)
-        : [...previousIds, projectId]
-    ));
+        : [...previousIds, projectId],
+    );
   };
 
   const handleCompleteProject = async (projectId) => {
     try {
       await onProjectStatusChange?.(projectId, PROJECT_STATUS.COMPLETED);
-      setSelectedProjectIds((previousIds) => previousIds.filter((value) => value !== projectId));
+      setSelectedProjectIds((previousIds) =>
+        previousIds.filter((value) => value !== projectId),
+      );
     } catch (error) {
-      console.error('Failed to complete project:', error);
+      console.error("Failed to complete project:", error);
     }
   };
 
@@ -142,7 +163,7 @@ const CalendarView = ({
     try {
       await onProjectStatusChange?.(projectId, PROJECT_STATUS.ACTIVE);
     } catch (error) {
-      console.error('Failed to restore project:', error);
+      console.error("Failed to restore project:", error);
     }
   };
 
@@ -168,7 +189,7 @@ const CalendarView = ({
             isRangeLoading={isRangeLoading}
             showViewModeToggle
             onViewModeChange={handleViewModeChange}
-            actions={(
+            actions={
               <>
                 <button
                   type="button"
@@ -187,25 +208,33 @@ const CalendarView = ({
                   Generate
                 </button>
               </>
-            )}
+            }
           />
         </div>
 
         <div
           className={`calendar-project-filters-rail relative min-w-0 xl:col-start-2 xl:row-start-1 ${
-            isProjectFiltersOpen ? 'xl:row-span-2 xl:h-full' : ''
+            isProjectFiltersOpen ? "xl:row-span-2 xl:h-full" : ""
           }`}
           data-open={isProjectFiltersOpen}
-          style={{ maxHeight: 'calc(100vh - 150px)' }}
+          style={{ maxHeight: "calc(100vh - 150px)" }}
         >
           <button
             type="button"
             onClick={() => setIsProjectFiltersOpen((isOpen) => !isOpen)}
             className="ui-icon-button ui-focus-ring calendar-project-filters-toggle !h-9 !w-9"
-            aria-label={isProjectFiltersOpen ? 'Hide project filters' : 'Show project filters'}
+            aria-label={
+              isProjectFiltersOpen
+                ? "Hide project filters"
+                : "Show project filters"
+            }
             aria-controls="calendar-project-filters"
             aria-expanded={isProjectFiltersOpen}
-            title={isProjectFiltersOpen ? 'Hide project filters' : 'Show project filters'}
+            title={
+              isProjectFiltersOpen
+                ? "Hide project filters"
+                : "Show project filters"
+            }
           >
             {isProjectFiltersOpen ? (
               <ChevronDown className="h-4 w-4" aria-hidden="true" />
@@ -241,8 +270,8 @@ const CalendarView = ({
         <div
           className={`min-w-0 ${
             isProjectFiltersOpen
-              ? 'xl:col-start-1 xl:row-start-2'
-              : 'xl:col-start-2 xl:row-start-1'
+              ? "xl:col-start-1 xl:row-start-2"
+              : "xl:col-start-2 xl:row-start-1"
           }`}
         >
           <ProjectFocusWeekAgenda
@@ -261,7 +290,9 @@ const CalendarView = ({
         isOpen={isAddTaskModalOpen}
         onClose={() => setIsAddTaskModalOpen(false)}
         onTaskCreated={onTaskUpdated}
-        initialDueDate={selectedDate ? toMidnightDateTimeLocalValue(selectedDate) : ''}
+        initialDueDate={
+          selectedDate ? toMidnightDateTimeLocalValue(selectedDate) : ""
+        }
         initialProjectId={initialProjectIdForNewTask}
       />
 
@@ -279,13 +310,16 @@ const CalendarView = ({
         >
           <div
             className="ui-modal-shell animate-fadeIn"
-            style={{ width: 'min(100%, 34rem)' }}
+            style={{ width: "min(100%, 34rem)" }}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="ui-modal-header">
-              <h2 className="text-xl font-semibold text-[var(--color-text)]">Add Project</h2>
+              <h2 className="text-xl font-semibold text-[var(--color-text)]">
+                Add Project
+              </h2>
               <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                Create a project first, then use the filter rail to narrow the calendar.
+                Create a project first, then use the filter rail to narrow the
+                calendar.
               </p>
             </div>
             <div className="ui-modal-body">

@@ -65,6 +65,7 @@ backend/
 ### Key Problem: Fat Controllers
 
 `taskController.js` (540 lines) contains:
+
 - Request parsing and response sending
 - Business rules: category ownership validation, project completion checks, status transitions
 - Database queries: `Task.create()`, `Task.find()`, `Task.findByIdAndUpdate()`
@@ -74,6 +75,7 @@ backend/
 ### Key Problem: statController.js is a Hybrid
 
 `statController.js` exports both:
+
 - HTTP handlers: `getStats`, `getCompletedTasksByDate`
 - Internal helpers imported by `taskController.js`: `addCompletedTasks`, `addGivenUpTasks`, `addStartTask`, `addInProgressTask`, `addPendingTask`, `addRawInprogressTasks`, `addFinishTasks`, `addGiveUpTasks`, `removeCompletedTasks`, `removeGivenUpTasks`
 
@@ -159,21 +161,29 @@ Extract all magic values currently scattered across controllers into named const
 
 ```js
 // constants/taskStatus.js
-export const TASK_STATUSES = ['pending', 'in-progress', 'completed', 'given-up'];
-export const FINISHED_STATUSES = ['completed', 'given-up'];
-export const ACTIVE_STATUSES = ['pending', 'in-progress'];
+export const TASK_STATUSES = [
+  "pending",
+  "in-progress",
+  "completed",
+  "given-up",
+];
+export const FINISHED_STATUSES = ["completed", "given-up"];
+export const ACTIVE_STATUSES = ["pending", "in-progress"];
 
 // constants/priority.js
-export const PRIORITIES = ['Low', 'Medium', 'High'];
+export const PRIORITIES = ["Low", "Medium", "High"];
 
 // constants/projectStatus.js
-export const PROJECT_STATUSES = ['active', 'completed'];
+export const PROJECT_STATUSES = ["active", "completed"];
 
 // constants/datePatterns.js
 export const DATE_ONLY_PATTERN = /^(\d{4})[-/](\d{2})[-/](\d{2})$/;
-export const DATE_TIME_LOCAL_BARE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(:\d{2})?$/;
-export const DATE_TIME_WITH_TZ_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(:\d{2})?(Z|[+-]\d{2}:\d{2})$/;
-export const DISPLAY_DATE_TIME_PATTERN = /^(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})$/;
+export const DATE_TIME_LOCAL_BARE_PATTERN =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(:\d{2})?$/;
+export const DATE_TIME_WITH_TZ_PATTERN =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(:\d{2})?(Z|[+-]\d{2}:\d{2})$/;
+export const DISPLAY_DATE_TIME_PATTERN =
+  /^(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})$/;
 export const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 ```
 
@@ -183,12 +193,12 @@ Zod schemas per resource. Each export covers create and update variants:
 
 ```js
 // validations/taskValidation.js
-import { z } from 'zod';
-import { PRIORITIES } from '../constants/priority.js';
-import { TASK_STATUSES } from '../constants/taskStatus.js';
+import { z } from "zod";
+import { PRIORITIES } from "../constants/priority.js";
+import { TASK_STATUSES } from "../constants/taskStatus.js";
 
 export const createTaskSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200),
+  title: z.string().min(1, "Title is required").max(200),
   description: z.string().max(1000).optional(),
   priority: z.enum(PRIORITIES).optional(),
   categoryId: z.string().optional(),
@@ -217,11 +227,19 @@ Data access only — accept parameters, return Mongoose documents. Zero business
 
 ```js
 // repositories/taskRepository.js
-import Task from '../models/Task.js';
+import Task from "../models/Task.js";
 
 const TASK_POPULATE = [
-  { path: 'categoryId', select: 'name userId', populate: { path: 'userId', select: 'name email' } },
-  { path: 'projectId', select: 'name description color status userId', populate: { path: 'userId', select: 'name email' } },
+  {
+    path: "categoryId",
+    select: "name userId",
+    populate: { path: "userId", select: "name email" },
+  },
+  {
+    path: "projectId",
+    select: "name description color status userId",
+    populate: { path: "userId", select: "name email" },
+  },
 ];
 
 export const taskRepository = {
@@ -238,7 +256,9 @@ export const taskRepository = {
   },
 
   findPopulated(query = {}, options = {}) {
-    return Task.find(query).sort(options.sort || { dueDate: 1, createdAt: -1 }).populate(TASK_POPULATE);
+    return Task.find(query)
+      .sort(options.sort || { dueDate: 1, createdAt: -1 })
+      .populate(TASK_POPULATE);
   },
 
   create(data) {
@@ -246,11 +266,19 @@ export const taskRepository = {
   },
 
   updateById(id, update) {
-    return Task.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true });
+    return Task.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    );
   },
 
   updateByIdPopulated(id, update) {
-    return Task.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true }).populate(TASK_POPULATE);
+    return Task.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    ).populate(TASK_POPULATE);
   },
 
   deleteById(id) {
@@ -271,48 +299,57 @@ Business logic layer. Services call repositories and other services. They throw 
 
 ```js
 // services/taskService.js
-import { taskRepository } from '../repositories/taskRepository.js';
-import { categoryRepository } from '../repositories/categoryRepository.js';
-import { projectRepository } from '../repositories/projectRepository.js';
-import { statService } from './statService.js';
-import { normalizeTaskDateInput } from '../utils/dateTime.js';
-import { NotFoundError, ValidationError, ForbiddenError } from '../utils/errors.js';
-import { TASK_STATUSES } from '../constants/taskStatus.js';
+import { taskRepository } from "../repositories/taskRepository.js";
+import { categoryRepository } from "../repositories/categoryRepository.js";
+import { projectRepository } from "../repositories/projectRepository.js";
+import { statService } from "./statService.js";
+import { normalizeTaskDateInput } from "../utils/dateTime.js";
+import {
+  NotFoundError,
+  ValidationError,
+  ForbiddenError,
+} from "../utils/errors.js";
+import { TASK_STATUSES } from "../constants/taskStatus.js";
 
 const resolveCategory = async (categoryId, userId) => {
   if (categoryId) {
     const category = await categoryRepository.findById(categoryId);
     if (!category || category.userId.toString() !== userId.toString()) {
-      throw new ValidationError('Invalid categoryId');
+      throw new ValidationError("Invalid categoryId");
     }
     return categoryId;
   }
   // Fall back to Uncategorized
-  const uncategorized = await categoryRepository.findByUserAndName(userId, 'Uncategorized');
-  if (!uncategorized) throw new ValidationError('Uncategorized category not found');
+  const uncategorized = await categoryRepository.findByUserAndName(
+    userId,
+    "Uncategorized",
+  );
+  if (!uncategorized)
+    throw new ValidationError("Uncategorized category not found");
   return uncategorized._id;
 };
 
 const resolveProject = async (projectId, userId, currentProjectId = null) => {
   if (projectId === undefined) return { shouldUpdate: false };
-  if (projectId === '' || projectId === null) return { shouldUpdate: true, value: null };
+  if (projectId === "" || projectId === null)
+    return { shouldUpdate: true, value: null };
 
   const project = await projectRepository.findById(projectId);
   if (!project || project.userId.toString() !== userId.toString()) {
-    throw new ValidationError('Invalid projectId');
+    throw new ValidationError("Invalid projectId");
   }
 
   const normalizedCurrent = currentProjectId?.toString?.() || null;
   const normalizedNext = project._id.toString();
-  if (project.status === 'completed' && normalizedNext !== normalizedCurrent) {
-    throw new ValidationError('Completed projects cannot be assigned to tasks');
+  if (project.status === "completed" && normalizedNext !== normalizedCurrent) {
+    throw new ValidationError("Completed projects cannot be assigned to tasks");
   }
 
   return { shouldUpdate: true, value: project._id };
 };
 
 const verifyOwnership = async (task, user) => {
-  if (user.role === 'ADMIN') return;
+  if (user.role === "ADMIN") return;
   // ... ownership check via categoryId/projectId ...
   // Throws ForbiddenError if not authorized
 };
@@ -331,7 +368,7 @@ export const taskService = {
     const task = await taskRepository.create({
       title: data.title,
       description: data.description,
-      status: 'in-progress',
+      status: "in-progress",
       priority: data.priority,
       categoryId,
       projectId: projectUpdate.shouldUpdate ? projectUpdate.value : null,
@@ -348,28 +385,30 @@ export const taskService = {
     const dateRange = parseTaskDateRangeQuery(queryParams);
     if (dateRange.error) throw new ValidationError(dateRange.error);
 
-    return taskRepository.findPopulated(
-      { ...accessQuery, ...(dateRange.filter || {}) }
-    );
+    return taskRepository.findPopulated({
+      ...accessQuery,
+      ...(dateRange.filter || {}),
+    });
   },
 
   async getTaskById(id, user) {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new NotFoundError("Task not found");
     await verifyOwnership(task, user);
     return task;
   },
 
   async updateTask(id, data, user) {
     const task = await taskRepository.findById(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new NotFoundError("Task not found");
     await verifyOwnership(task, user);
 
     const update = {};
     if (data.title !== undefined) update.title = data.title;
     if (data.description !== undefined) update.description = data.description;
     if (data.status !== undefined) {
-      if (!TASK_STATUSES.includes(data.status)) throw new ValidationError('Invalid status');
+      if (!TASK_STATUSES.includes(data.status))
+        throw new ValidationError("Invalid status");
       update.status = data.status;
     }
     if (data.priority !== undefined) update.priority = data.priority;
@@ -378,8 +417,9 @@ export const taskService = {
     }
 
     const projectUpdate = await resolveProject(
-      data.projectId, user._id,
-      task.projectId?._id || task.projectId || null
+      data.projectId,
+      user._id,
+      task.projectId?._id || task.projectId || null,
     );
     if (projectUpdate.error) throw new ValidationError(projectUpdate.error);
     if (projectUpdate.shouldUpdate) update.projectId = projectUpdate.value;
@@ -387,7 +427,7 @@ export const taskService = {
     // ... date parsing and completion timestamp logic ...
 
     if (Object.keys(update).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new ValidationError("No fields to update");
     }
 
     return taskRepository.updateByIdPopulated(id, update);
@@ -395,28 +435,40 @@ export const taskService = {
 
   async finishTask(id, user) {
     const task = await taskRepository.findById(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new NotFoundError("Task not found");
     await verifyOwnership(task, user);
 
-    if (task.status === 'completed') throw new ValidationError('Task is already completed');
+    if (task.status === "completed")
+      throw new ValidationError("Task is already completed");
 
-    task.status = 'completed';
+    task.status = "completed";
     task.completedAt = new Date();
     task.isOverDue = task.dueDate && new Date() > task.dueDate;
     await task.save();
 
-    const categoryName = task.categoryId?.name
-      || (await categoryRepository.findById(task.categoryId?._id))?.name;
+    const categoryName =
+      task.categoryId?.name ||
+      (await categoryRepository.findById(task.categoryId?._id))?.name;
     if (task.categoryId?._id && categoryName) {
-      await statService.incrementCompleted(user._id, task.categoryId._id, categoryName);
+      await statService.incrementCompleted(
+        user._id,
+        task.categoryId._id,
+        categoryName,
+      );
     }
 
     return taskRepository.findByIdPopulated(id);
   },
 
-  async startTask(id, user) { /* similar pattern */ },
-  async giveUpTask(id, user) { /* similar pattern */ },
-  async deleteTask(id, user) { /* similar pattern */ },
+  async startTask(id, user) {
+    /* similar pattern */
+  },
+  async giveUpTask(id, user) {
+    /* similar pattern */
+  },
+  async deleteTask(id, user) {
+    /* similar pattern */
+  },
 };
 ```
 
@@ -428,12 +480,12 @@ Thin. Parse the request, delegate to service, send the response. Each method is 
 
 ```js
 // controllers/taskController.js
-import { taskService } from '../services/taskService.js';
+import { taskService } from "../services/taskService.js";
 
 export const createTask = async (req, res, next) => {
   try {
     const task = await taskService.createTask(req.validatedBody, req.user._id);
-    res.status(201).json({ message: 'Task created successfully', task });
+    res.status(201).json({ message: "Task created successfully", task });
   } catch (error) {
     next(error);
   }
@@ -467,25 +519,40 @@ Add `validate` middleware for POST/PUT endpoints. GET/DELETE routes stay unchang
 
 ```js
 // routes/taskRoute.js
-import express from 'express';
-import { createTask, getAllTasks, getTaskById, updateTask, startTask, finishTask, giveUpTask, deleteTask, getTodayDeadlines, getTaskByStatus, getTaskByCategory } from '../controllers/taskController.js';
-import { protect } from '../middlewares/auth.js';
-import { validate } from '../middlewares/validate.js';
-import { createTaskSchema, updateTaskSchema } from '../validations/taskValidation.js';
+import express from "express";
+import {
+  createTask,
+  getAllTasks,
+  getTaskById,
+  updateTask,
+  startTask,
+  finishTask,
+  giveUpTask,
+  deleteTask,
+  getTodayDeadlines,
+  getTaskByStatus,
+  getTaskByCategory,
+} from "../controllers/taskController.js";
+import { protect } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import {
+  createTaskSchema,
+  updateTaskSchema,
+} from "../validations/taskValidation.js";
 
 const router = express.Router();
 
-router.post('/', protect, validate(createTaskSchema), createTask);
-router.get('/', protect, getAllTasks);
-router.get('/today-deadlines', protect, getTodayDeadlines);
-router.get('/status/:status', protect, getTaskByStatus);
-router.get('/category/:categoryId', protect, getTaskByCategory);
-router.get('/:id', protect, getTaskById);
-router.put('/:id', protect, validate(updateTaskSchema), updateTask);
-router.put('/:id/start', protect, startTask);
-router.put('/:id/finish', protect, finishTask);
-router.put('/:id/give-up', protect, giveUpTask);
-router.delete('/:id', protect, deleteTask);
+router.post("/", protect, validate(createTaskSchema), createTask);
+router.get("/", protect, getAllTasks);
+router.get("/today-deadlines", protect, getTodayDeadlines);
+router.get("/status/:status", protect, getTaskByStatus);
+router.get("/category/:categoryId", protect, getTaskByCategory);
+router.get("/:id", protect, getTaskById);
+router.put("/:id", protect, validate(updateTaskSchema), updateTask);
+router.put("/:id/start", protect, startTask);
+router.put("/:id/finish", protect, finishTask);
+router.put("/:id/give-up", protect, giveUpTask);
+router.delete("/:id", protect, deleteTask);
 
 export default router;
 ```
@@ -508,7 +575,7 @@ export const validate = (schema) => (req, res, next) => {
 
 ```js
 // middlewares/errorHandler.js
-import { AppError } from '../utils/errors.js';
+import { AppError } from "../utils/errors.js";
 
 export const errorHandler = (err, req, res, next) => {
   if (res.headersSent) return next(err);
@@ -517,8 +584,8 @@ export const errorHandler = (err, req, res, next) => {
     return res.status(err.statusCode).json({ message: err.message });
   }
 
-  console.error('Unhandled error:', err);
-  res.status(500).json({ message: 'Internal server error' });
+  console.error("Unhandled error:", err);
+  res.status(500).json({ message: "Internal server error" });
 };
 ```
 
@@ -533,31 +600,31 @@ export class AppError extends Error {
 }
 
 export class NotFoundError extends AppError {
-  constructor(message = 'Resource not found') {
+  constructor(message = "Resource not found") {
     super(message, 404);
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message = 'Validation failed') {
+  constructor(message = "Validation failed") {
     super(message, 400);
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = 'Forbidden') {
+  constructor(message = "Forbidden") {
     super(message, 403);
   }
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message = 'Unauthorized') {
+  constructor(message = "Unauthorized") {
     super(message, 401);
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(message = 'Resource already exists') {
+  constructor(message = "Resource already exists") {
     super(message, 409);
   }
 }
@@ -567,8 +634,8 @@ export class ConflictError extends AppError {
 
 ```js
 // libs/aiClient.js
-import OpenAI from 'openai';
-import { getAiApiKey, getAiBaseUrl } from '../config/env.js';
+import OpenAI from "openai";
+import { getAiApiKey, getAiBaseUrl } from "../config/env.js";
 
 let client;
 
@@ -576,8 +643,8 @@ export const getAiClient = () => {
   if (!client) {
     const apiKey = getAiApiKey();
     const baseURL = getAiBaseUrl();
-    if (!apiKey) throw new AppError('Missing AI_API_KEY', 500);
-    if (!baseURL) throw new AppError('Missing AI_BASE_URL', 500);
+    if (!apiKey) throw new AppError("Missing AI_API_KEY", 500);
+    if (!baseURL) throw new AppError("Missing AI_BASE_URL", 500);
     client = new OpenAI({ apiKey, baseURL, timeout: 60000 });
   }
   return client;
@@ -590,35 +657,43 @@ Split current `index.js`:
 
 ```js
 // app.js
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import { createCorsOptions } from './config/env.js';
-import { errorHandler } from './middlewares/errorHandler.js';
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import { createCorsOptions } from "./config/env.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 // ... route imports ...
 
 const app = express();
 
 app.use(cors(createCorsOptions()));
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 app.use(express.json());
 
 // Lazy startup for Vercel compatibility
 let startupPromise;
-export const ensureAppReady = async () => { /* ... same as current ... */ };
+export const ensureAppReady = async () => {
+  /* ... same as current ... */
+};
 
-app.get('/healthz', async (req, res, next) => { /* ... */ });
-app.use(async (req, res, next) => { /* ensureAppReady wrapper ... */ });
+app.get("/healthz", async (req, res, next) => {
+  /* ... */
+});
+app.use(async (req, res, next) => {
+  /* ensureAppReady wrapper ... */
+});
 
-app.get('/', (req, res) => { res.send('This is the Orbit backend'); });
+app.get("/", (req, res) => {
+  res.send("This is the Orbit backend");
+});
 
-app.use('/api/auth', authRouter);
-app.use('/api/users', userRouter);
-app.use('/api/categories', categoryRouter);
-app.use('/api/projects', projectRouter);
-app.use('/api/tasks', taskRouter);
-app.use('/api/ai', aiRouter);
-app.use('/api/stats', statRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
+app.use("/api/categories", categoryRouter);
+app.use("/api/projects", projectRouter);
+app.use("/api/tasks", taskRouter);
+app.use("/api/ai", aiRouter);
+app.use("/api/stats", statRouter);
 
 app.use(errorHandler);
 
@@ -627,21 +702,23 @@ export default app;
 
 ```js
 // server.js
-import 'dotenv/config';
-import app from './app.js';
-import { connectDB } from './config/db.js';
-import { getServerConfig, validateServerEnv } from './config/env.js';
+import "dotenv/config";
+import app from "./app.js";
+import { connectDB } from "./config/db.js";
+import { getServerConfig, validateServerEnv } from "./config/env.js";
 
 const { host, port } = getServerConfig();
 
 const start = async () => {
   validateServerEnv();
   await connectDB();
-  app.listen(port, host, () => console.log(`Server running on http://${host}:${port}`));
+  app.listen(port, host, () =>
+    console.log(`Server running on http://${host}:${port}`),
+  );
 };
 
 start().catch((err) => {
-  console.error('Failed to start server:', err);
+  console.error("Failed to start server:", err);
   process.exit(1);
 });
 ```
@@ -650,24 +727,24 @@ start().catch((err) => {
 
 Currently the most problematic file. Splitting strategy:
 
-| Current Export | Moves To |
-|---|---|
-| `getStats` (HTTP handler) | `controllers/statController.js` |
-| `getCompletedTasksByDate` (HTTP handler) | `controllers/statController.js` |
-| `addCompletedTasks` (internal helper) | `services/statService.js` as `incrementCompleted()` |
-| `addGivenUpTasks` (internal helper) | `services/statService.js` as `incrementGivenUp()` |
-| `addStartTask` (internal helper) | `services/statService.js` as `incrementStart()` |
-| `addInProgressTask` (internal helper) | `services/statService.js` as `incrementInProgress()` |
-| `addPendingTask` (internal helper) | `services/statService.js` as `incrementPending()` |
-| `addRawInprogressTasks` (internal helper) | `services/statService.js` as `incrementRawInProgress()` |
-| `addFinishTasks` (internal helper) | `services/statService.js` as `incrementFinish()` |
-| `addGiveUpTasks` (internal helper) | `services/statService.js` as `incrementGiveUp()` |
-| `removeCompletedTasks` (internal helper) | `services/statService.js` as `decrementCompleted()` |
-| `removeGivenUpTasks` (internal helper) | `services/statService.js` as `decrementGivenUp()` |
-| `buildStatsFromTasks` (recalc logic) | `services/statService.js` as `rebuildStats()` |
-| `getUserStatTasks` (query helper) | `repositories/statRepository.js` |
-| `getCategoryStatPayload` (util) | Inline or in `utils/` |
-| `toDateKey`, `DATE_KEY_PATTERN` | `utils/dateTime.js` (toDateKey), `constants/datePatterns.js` |
+| Current Export                            | Moves To                                                     |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| `getStats` (HTTP handler)                 | `controllers/statController.js`                              |
+| `getCompletedTasksByDate` (HTTP handler)  | `controllers/statController.js`                              |
+| `addCompletedTasks` (internal helper)     | `services/statService.js` as `incrementCompleted()`          |
+| `addGivenUpTasks` (internal helper)       | `services/statService.js` as `incrementGivenUp()`            |
+| `addStartTask` (internal helper)          | `services/statService.js` as `incrementStart()`              |
+| `addInProgressTask` (internal helper)     | `services/statService.js` as `incrementInProgress()`         |
+| `addPendingTask` (internal helper)        | `services/statService.js` as `incrementPending()`            |
+| `addRawInprogressTasks` (internal helper) | `services/statService.js` as `incrementRawInProgress()`      |
+| `addFinishTasks` (internal helper)        | `services/statService.js` as `incrementFinish()`             |
+| `addGiveUpTasks` (internal helper)        | `services/statService.js` as `incrementGiveUp()`             |
+| `removeCompletedTasks` (internal helper)  | `services/statService.js` as `decrementCompleted()`          |
+| `removeGivenUpTasks` (internal helper)    | `services/statService.js` as `decrementGivenUp()`            |
+| `buildStatsFromTasks` (recalc logic)      | `services/statService.js` as `rebuildStats()`                |
+| `getUserStatTasks` (query helper)         | `repositories/statRepository.js`                             |
+| `getCategoryStatPayload` (util)           | Inline or in `utils/`                                        |
+| `toDateKey`, `DATE_KEY_PATTERN`           | `utils/dateTime.js` (toDateKey), `constants/datePatterns.js` |
 
 The coupling `taskController.js` importing from `statController.js` becomes clean: `taskService.js` imports `statService.js`.
 
@@ -703,6 +780,7 @@ MongoDB
 ## Vercel Compatibility
 
 The current lazy startup pattern (`ensureAppReady`) must be preserved:
+
 - `app.js` exports `app` as the default export (serverless target)
 - `server.js` only runs `app.listen()` when `process.env.VERCEL` is falsy
 - The `ensureAppReady` middleware wraps all routes
@@ -710,6 +788,7 @@ The current lazy startup pattern (`ensureAppReady`) must be preserved:
 ## API Response Compatibility
 
 All API responses maintain the same shape:
+
 - Success: `{ message: "...", task/project/category/user }` or direct array
 - Error: `{ message: "..." }`
 - Status codes unchanged (200, 201, 400, 401, 403, 404, 500)
@@ -717,6 +796,7 @@ All API responses maintain the same shape:
 ## Testing Impact
 
 The layered architecture enables isolated unit testing:
+
 - **Services** can be tested with mocked repositories
 - **Repositories** can be tested with an in-memory MongoDB
 - **Controllers** can be tested with mocked services

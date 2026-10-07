@@ -1,14 +1,17 @@
-import mongoose from 'mongoose';
-import { categoryRepository } from '../repositories/categoryRepository.js';
-import { userRepository } from '../repositories/userRepository.js';
-import { AppError } from '../error/AppError.js';
-import { CATEGORY_ERROR } from '../error/definitions/categoryErrors.js';
-import { mapDatabaseError } from '../error/errorGuards.js';
-import { ICategoryDocument } from '../types/ICategory.js';
-import { IUserDocument } from '../types/IUser.js';
+import mongoose from "mongoose";
+import { categoryRepository } from "../repositories/categoryRepository.js";
+import { userRepository } from "../repositories/userRepository.js";
+import { AppError } from "../error/AppError.js";
+import { CATEGORY_ERROR } from "../error/definitions/categoryErrors.js";
+import { mapDatabaseError } from "../error/errorGuards.js";
+import { ICategoryDocument } from "../types/ICategory.js";
+import { IUserDocument } from "../types/IUser.js";
 
-const verifyOwnership = (category: ICategoryDocument, user: IUserDocument): void => {
-  if (user.role === 'ADMIN') return;
+const verifyOwnership = (
+  category: ICategoryDocument,
+  user: IUserDocument,
+): void => {
+  if (user.role === "ADMIN") return;
   if (category.userId.toString() !== user._id.toString()) {
     throw new AppError(CATEGORY_ERROR.ACCESS_DENIED);
   }
@@ -17,9 +20,12 @@ const verifyOwnership = (category: ICategoryDocument, user: IUserDocument): void
 export const categoryService = {
   async create(
     data: Record<string, unknown>,
-    userId: mongoose.Types.ObjectId | string
+    userId: mongoose.Types.ObjectId | string,
   ): Promise<ICategoryDocument> {
-    const existing = await categoryRepository.findByUserAndName(userId, data.name as string);
+    const existing = await categoryRepository.findByUserAndName(
+      userId,
+      data.name as string,
+    );
     if (existing) {
       throw new AppError(CATEGORY_ERROR.NAME_EXISTED);
     }
@@ -35,7 +41,7 @@ export const categoryService = {
   },
 
   async getAll(user: IUserDocument): Promise<ICategoryDocument[]> {
-    if (user.role === 'ADMIN') {
+    if (user.role === "ADMIN") {
       return categoryRepository.findAll();
     }
     return categoryRepository.findByUser(user._id);
@@ -43,7 +49,7 @@ export const categoryService = {
 
   async getById(
     id: mongoose.Types.ObjectId | string,
-    user: IUserDocument
+    user: IUserDocument,
   ): Promise<ICategoryDocument> {
     const category = await categoryRepository.findByIdPopulated(id);
     if (!category) throw new AppError(CATEGORY_ERROR.NOT_FOUND);
@@ -54,12 +60,12 @@ export const categoryService = {
   async update(
     id: mongoose.Types.ObjectId | string,
     data: Record<string, unknown>,
-    user: IUserDocument
+    user: IUserDocument,
   ): Promise<ICategoryDocument | null> {
     const category = await categoryRepository.findById(id);
     if (!category) throw new AppError(CATEGORY_ERROR.NOT_FOUND);
 
-    if (category.name === 'Uncategorized') {
+    if (category.name === "Uncategorized") {
       throw new AppError(CATEGORY_ERROR.UNCATEGORIZED_CATEGORY_IMMUTABLE);
     }
 
@@ -81,12 +87,12 @@ export const categoryService = {
 
   async delete(
     id: mongoose.Types.ObjectId | string,
-    user: IUserDocument
+    user: IUserDocument,
   ): Promise<void> {
     const category = await categoryRepository.findById(id);
     if (!category) throw new AppError(CATEGORY_ERROR.NOT_FOUND);
 
-    if (category.name === 'Uncategorized') {
+    if (category.name === "Uncategorized") {
       throw new AppError(CATEGORY_ERROR.UNCATEGORIZED_CATEGORY_IMMUTABLE);
     }
 

@@ -1,6 +1,6 @@
-import { useTheme } from '@/shared/theme/theme';
-import { useMemo, useState } from 'react';
-import { Line } from 'react-chartjs-2';
+import { useTheme } from "@/shared/theme/theme";
+import { useMemo, useState } from "react";
+import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,13 +11,13 @@ import {
   Tooltip,
   Legend,
   Filler,
-} from 'chart.js';
+} from "chart.js";
 import {
   formatUtcDateLabel,
   getDateKeysInRange,
   getUtcTodayKey,
   shiftUtcDateKey,
-} from './statsUtils';
+} from "./statsUtils";
 
 ChartJS.register(
   CategoryScale,
@@ -27,40 +27,44 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 const QUICK_RANGES = [7, 14, 30, 90];
-const COMPLETED_COLOR = '#2F7D5A';
-const COMPLETED_FILL = 'rgba(47, 125, 90, 0.12)';
-const GIVEN_UP_COLOR = '#B25547';
-const GIVEN_UP_FILL = 'rgba(178, 85, 71, 0.08)';
+const COMPLETED_COLOR = "#2F7D5A";
+const COMPLETED_FILL = "rgba(47, 125, 90, 0.12)";
+const GIVEN_UP_COLOR = "#B25547";
+const GIVEN_UP_FILL = "rgba(178, 85, 71, 0.08)";
 
 const formatRangeLabel = (startDate, endDate) => {
   const startLabel = formatUtcDateLabel(startDate, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
   const endLabel = formatUtcDateLabel(endDate, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 
   return `${startLabel} to ${endLabel}`;
 };
 
 const isQuickRangeActive = (days, startDate, endDate, todayKey) => {
-  return endDate === todayKey && startDate === shiftUtcDateKey(todayKey, -(days - 1));
+  return (
+    endDate === todayKey && startDate === shiftUtcDateKey(todayKey, -(days - 1))
+  );
 };
 
 const LineChart = ({ dailyStats }) => {
   const { theme } = useTheme();
-  const axisText = theme === 'dark' ? '#a7b8cd' : '#667085';
-  const gridColor = theme === 'dark' ? '#344459' : 'rgba(31, 35, 40, 0.08)';
+  const axisText = theme === "dark" ? "#a7b8cd" : "#667085";
+  const gridColor = theme === "dark" ? "#344459" : "rgba(31, 35, 40, 0.08)";
   const todayKey = getUtcTodayKey();
-  const [startDate, setStartDate] = useState(() => shiftUtcDateKey(todayKey, -29));
+  const [startDate, setStartDate] = useState(() =>
+    shiftUtcDateKey(todayKey, -29),
+  );
   const [endDate, setEndDate] = useState(todayKey);
 
   const chartData = useMemo(() => {
@@ -89,7 +93,9 @@ const LineChart = ({ dailyStats }) => {
       const stat = dataMap.get(dateKey);
 
       dateKeys.push(dateKey);
-      labels.push(formatUtcDateLabel(dateKey, { month: 'short', day: 'numeric' }));
+      labels.push(
+        formatUtcDateLabel(dateKey, { month: "short", day: "numeric" }),
+      );
       completed.push(stat?.completedTasks || 0);
       givenUp.push(stat?.givenUpTasks || 0);
     });
@@ -99,7 +105,7 @@ const LineChart = ({ dailyStats }) => {
       dateKeys,
       datasets: [
         {
-          label: 'Completed Tasks',
+          label: "Completed Tasks",
           data: completed,
           borderColor: COMPLETED_COLOR,
           backgroundColor: COMPLETED_FILL,
@@ -109,11 +115,11 @@ const LineChart = ({ dailyStats }) => {
           pointRadius: 0,
           pointHoverRadius: 4,
           pointBackgroundColor: COMPLETED_COLOR,
-          pointBorderColor: '#fff',
+          pointBorderColor: "#fff",
           pointBorderWidth: 1.5,
         },
         {
-          label: 'Given Up Tasks',
+          label: "Given Up Tasks",
           data: givenUp,
           borderColor: GIVEN_UP_COLOR,
           backgroundColor: GIVEN_UP_FILL,
@@ -123,94 +129,97 @@ const LineChart = ({ dailyStats }) => {
           pointRadius: 0,
           pointHoverRadius: 4,
           pointBackgroundColor: GIVEN_UP_COLOR,
-          pointBorderColor: '#fff',
+          pointBorderColor: "#fff",
           pointBorderWidth: 1.5,
         },
       ],
     };
   }, [dailyStats, startDate, endDate]);
 
-  const options = useMemo(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-        labels: {
-          usePointStyle: true,
-          boxWidth: 8,
-          boxHeight: 8,
-          padding: 18,
-          color: axisText,
-          font: {
-            size: 12,
-            weight: '600',
+  const options = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom",
+          labels: {
+            usePointStyle: true,
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 18,
+            color: axisText,
+            font: {
+              size: 12,
+              weight: "600",
+            },
           },
         },
-      },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-        backgroundColor: 'rgba(31, 35, 40, 0.92)',
-        padding: 10,
-        titleColor: '#fff',
-        bodyColor: '#fff',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        borderWidth: 1,
-        callbacks: {
-          title: (tooltipItems) => {
-            const item = tooltipItems[0];
-            const dateKey = chartData.dateKeys[item.dataIndex];
+        tooltip: {
+          mode: "index",
+          intersect: false,
+          backgroundColor: "rgba(31, 35, 40, 0.92)",
+          padding: 10,
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          borderColor: "rgba(255, 255, 255, 0.08)",
+          borderWidth: 1,
+          callbacks: {
+            title: (tooltipItems) => {
+              const item = tooltipItems[0];
+              const dateKey = chartData.dateKeys[item.dataIndex];
 
-            return dateKey
-              ? formatUtcDateLabel(dateKey, {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })
-              : item.label;
+              return dateKey
+                ? formatUtcDateLabel(dateKey, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : item.label;
+            },
           },
         },
       },
-    },
-    scales: {
-      x: {
-        grid: {
-          color: gridColor,
-          drawBorder: false,
-        },
-        ticks: {
-          color: axisText,
-          font: {
-            size: 11,
+      scales: {
+        x: {
+          grid: {
+            color: gridColor,
+            drawBorder: false,
           },
-          maxRotation: 0,
-          autoSkipPadding: 14,
+          ticks: {
+            color: axisText,
+            font: {
+              size: 11,
+            },
+            maxRotation: 0,
+            autoSkipPadding: 14,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: gridColor,
+            drawBorder: false,
+          },
+          ticks: {
+            color: axisText,
+            font: {
+              size: 11,
+            },
+            precision: 0,
+          },
         },
       },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: gridColor,
-          drawBorder: false,
-        },
-        ticks: {
-          color: axisText,
-          font: {
-            size: 11,
-          },
-          precision: 0,
-        },
+      interaction: {
+        mode: "nearest",
+        axis: "x",
+        intersect: false,
       },
-    },
-    interaction: {
-      mode: 'nearest',
-      axis: 'x',
-      intersect: false,
-    },
-  }), [chartData.dateKeys, axisText, gridColor]);
+    }),
+    [chartData.dateKeys, axisText, gridColor],
+  );
 
   const setQuickRange = (days) => {
     const nextEndDate = getUtcTodayKey();
@@ -225,7 +234,9 @@ const LineChart = ({ dailyStats }) => {
     <section className="ui-section-card ui-card-padding">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-[color:var(--color-text)]">Daily Completion Trend</h2>
+          <h2 className="text-lg font-semibold text-[color:var(--color-text)]">
+            Daily Completion Trend
+          </h2>
         </div>
         <span className="ui-chip ui-tabular">{rangeLabel}</span>
       </div>
@@ -261,7 +272,12 @@ const LineChart = ({ dailyStats }) => {
 
         <div className="flex flex-wrap gap-2">
           {QUICK_RANGES.map((days) => {
-            const isActive = isQuickRangeActive(days, startDate, endDate, todayKey);
+            const isActive = isQuickRangeActive(
+              days,
+              startDate,
+              endDate,
+              todayKey,
+            );
 
             return (
               <button
@@ -271,8 +287,8 @@ const LineChart = ({ dailyStats }) => {
                 aria-pressed={isActive}
                 className={`inline-flex min-h-[2.25rem] items-center justify-center rounded-full border px-3.5 text-xs font-semibold transition-[background-color,border-color,color] duration-150 ${
                   isActive
-                    ? 'border-transparent bg-[var(--color-accent-soft)] text-[color:var(--color-accent)]'
-                    : 'border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]'
+                    ? "border-transparent bg-[var(--color-accent-soft)] text-[color:var(--color-accent)]"
+                    : "border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
                 }`}
               >
                 {days}D

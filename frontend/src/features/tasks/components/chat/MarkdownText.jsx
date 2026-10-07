@@ -13,7 +13,7 @@ const MarkdownText = ({ text }) => {
       // Add text before bold
       if (match.index > lastIndex) {
         parts.push(
-          <span key={key++}>{text.slice(lastIndex, match.index)}</span>
+          <span key={key++}>{text.slice(lastIndex, match.index)}</span>,
         );
       }
 
@@ -21,7 +21,7 @@ const MarkdownText = ({ text }) => {
       parts.push(
         <strong key={key++} className="font-semibold">
           {match[1]}
-        </strong>
+        </strong>,
       );
 
       lastIndex = match.index + match[0].length;
@@ -36,7 +36,7 @@ const MarkdownText = ({ text }) => {
   };
 
   // Split by newlines and parse each line
-  const lines = text.split('\n');
+  const lines = text.split("\n");
 
   return (
     <>

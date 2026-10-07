@@ -15,11 +15,17 @@ const DeleteDialog = ({ isOpen, onClose, onConfirm }) => {
         aria-labelledby="delete-task-title"
       >
         <div className="ui-modal-header">
-          <h2 id="delete-task-title" className="text-xl font-semibold text-[var(--color-text)]">Delete Task</h2>
+          <h2
+            id="delete-task-title"
+            className="text-xl font-semibold text-[var(--color-text)]"
+          >
+            Delete Task
+          </h2>
         </div>
         <div className="ui-modal-body">
           <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-            Are you sure you want to delete this task? This action cannot be undone.
+            Are you sure you want to delete this task? This action cannot be
+            undone.
           </p>
           <div className="flex gap-3">
             <button

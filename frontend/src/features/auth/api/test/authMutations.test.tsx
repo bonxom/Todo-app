@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useLoginMutation, useLogoutMutation, useRegisterMutation } from "../authMutations";
+import {
+  useLoginMutation,
+  useLogoutMutation,
+  useRegisterMutation,
+} from "../authMutations";
 import { authService } from "@/shared/services/authService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { taskKeys } from "@/features/tasks/api/taskKeys";
@@ -30,7 +34,11 @@ describe("authMutations", () => {
     queryClient.setQueryData(taskKeys.list({}), [{ _id: "old-task" }]);
     expect(queryClient.getQueryData(taskKeys.list({}))).toBeDefined();
 
-    const user = { email: "test@example.com", name: "Test User", role: "USER" as const };
+    const user = {
+      email: "test@example.com",
+      name: "Test User",
+      role: "USER" as const,
+    };
     vi.spyOn(authService, "login").mockResolvedValueOnce({
       accessToken: "new-access",
       refreshToken: "new-refresh",
@@ -40,7 +48,10 @@ describe("authMutations", () => {
     const { result } = renderHook(() => useLoginMutation(), { wrapper });
 
     await act(async () => {
-      await result.current.mutateAsync({ email: "test@example.com", password: "password" });
+      await result.current.mutateAsync({
+        email: "test@example.com",
+        password: "password",
+      });
     });
 
     // Query cache must be cleared
@@ -54,7 +65,11 @@ describe("authMutations", () => {
     const wrapper = createWrapper();
     queryClient.setQueryData(taskKeys.list({}), [{ _id: "old-task" }]);
 
-    const user = { email: "new@example.com", name: "New", role: "USER" as const };
+    const user = {
+      email: "new@example.com",
+      name: "New",
+      role: "USER" as const,
+    };
     vi.spyOn(authService, "register").mockResolvedValueOnce({
       accessToken: "reg-access",
       refreshToken: "reg-refresh",
@@ -86,7 +101,9 @@ describe("authMutations", () => {
     });
     queryClient.setQueryData(taskKeys.list({}), [{ _id: "t1" }]);
 
-    const logoutSpy = vi.spyOn(authService, "logout").mockResolvedValueOnce({ success: true });
+    const logoutSpy = vi
+      .spyOn(authService, "logout")
+      .mockResolvedValueOnce({ success: true });
 
     const { result } = renderHook(() => useLogoutMutation(), { wrapper });
 

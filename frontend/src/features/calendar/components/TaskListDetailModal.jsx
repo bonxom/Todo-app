@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
-import { Calendar as CalendarIcon, X } from 'lucide-react';
-import TaskDetailButton from '@/features/tasks/components/TaskDetailButton';
-import DeleteDialog from '@/features/tasks/components/dialogs/DeleteDialog';
-import CalendarTaskDetailCard from './CalendarTaskDetailCard';
-import Pagination from '@/shared/components/Pagination';
-import { usePagination } from '@/shared/hooks/usePagination';
-import { formatDateTime } from '@/shared/utils/dateTime';
-import { sortTasksByDueTime } from './calendarUtils';
+import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { Calendar as CalendarIcon, X } from "lucide-react";
+import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
+import DeleteDialog from "@/features/tasks/components/dialogs/DeleteDialog";
+import CalendarTaskDetailCard from "./CalendarTaskDetailCard";
+import Pagination from "@/shared/components/Pagination";
+import { usePagination } from "@/shared/hooks/usePagination";
+import { formatDateTime } from "@/shared/utils/dateTime";
+import { sortTasksByDueTime } from "./calendarUtils";
 
 const TaskListDetailModal = ({
   isOpen,
@@ -27,16 +27,11 @@ const TaskListDetailModal = ({
 
   const sortedTasks = useMemo(() => sortTasksByDueTime(tasks), [tasks]);
 
-  const {
-    pageNo,
-    pageSize,
-    setPageNo,
-    setPageSize,
-    syncPageInfo,
-  } = usePagination({
-    initialPageSize: 5,
-    resetDeps: [selectedDate, tasks.length, isOpen],
-  });
+  const { pageNo, pageSize, setPageNo, setPageSize, syncPageInfo } =
+    usePagination({
+      initialPageSize: 5,
+      resetDeps: [selectedDate, tasks.length, isOpen],
+    });
 
   const totalTasksCount = sortedTasks.length;
   const totalPages = Math.ceil(totalTasksCount / pageSize) || 1;
@@ -77,8 +72,8 @@ const TaskListDetailModal = ({
         setTaskToDelete(null);
       }, 300);
     } catch (error) {
-      console.error('Failed to delete task:', error);
-      alert('Failed to delete task.');
+      console.error("Failed to delete task:", error);
+      alert("Failed to delete task.");
       setDeletingTaskId(null);
       setTaskToDelete(null);
     }
@@ -86,19 +81,22 @@ const TaskListDetailModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const isToday = selectedDate && selectedDate.toDateString() === new Date().toDateString();
-  const completedTasks = sortedTasks.filter(task => task.status === 'completed').length;
+  const isToday =
+    selectedDate && selectedDate.toDateString() === new Date().toDateString();
+  const completedTasks = sortedTasks.filter(
+    (task) => task.status === "completed",
+  ).length;
   const totalTasks = tasks.length;
 
   const modalContent = (
@@ -129,7 +127,7 @@ const TaskListDetailModal = ({
       >
         <div
           className="animate-fadeIn flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[18px] border border-[var(--color-line)] bg-[var(--color-surface)]"
-          style={{ boxShadow: 'var(--shadow-lg)' }}
+          style={{ boxShadow: "var(--shadow-lg)" }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="border-b border-[var(--color-line)] bg-[var(--color-surface)] p-6">
@@ -140,7 +138,7 @@ const TaskListDetailModal = ({
                 </div>
                 <div>
                   <h2 className="text-2xl font-semibold text-[var(--color-text)]">
-                    {isToday ? "Today's Tasks" : 'Day Tasks'}
+                    {isToday ? "Today's Tasks" : "Day Tasks"}
                   </h2>
                   {selectedDate && (
                     <p className="mt-1 text-sm text-[var(--color-text-muted)]">
@@ -160,8 +158,12 @@ const TaskListDetailModal = ({
             </div>
 
             <div className="flex flex-wrap gap-2 text-sm">
-              <span className="ui-chip ui-tabular">{completedTasks}/{totalTasks} completed</span>
-              <span className="ui-chip ui-tabular">{totalTasks} total tasks</span>
+              <span className="ui-chip ui-tabular">
+                {completedTasks}/{totalTasks} completed
+              </span>
+              <span className="ui-chip ui-tabular">
+                {totalTasks} total tasks
+              </span>
               <span className="ui-chip">In progress first</span>
             </div>
           </div>
@@ -174,8 +176,8 @@ const TaskListDetailModal = ({
                     key={task._id || task.id}
                     className={`transition-[opacity,transform] duration-300 ${
                       deletingTaskId === (task._id || task.id)
-                        ? 'pointer-events-none scale-95 opacity-0'
-                        : 'scale-100 opacity-100'
+                        ? "pointer-events-none scale-95 opacity-0"
+                        : "scale-100 opacity-100"
                     }`}
                   >
                     <CalendarTaskDetailCard
@@ -205,10 +207,17 @@ const TaskListDetailModal = ({
               </div>
             ) : (
               <div className="py-12 text-center text-[var(--color-text-muted)]">
-                <CalendarIcon className="mx-auto mb-3 h-16 w-16 opacity-50" aria-hidden="true" />
-                <p className="text-lg font-medium text-[var(--color-text)]">No tasks for this day</p>
+                <CalendarIcon
+                  className="mx-auto mb-3 h-16 w-16 opacity-50"
+                  aria-hidden="true"
+                />
+                <p className="text-lg font-medium text-[var(--color-text)]">
+                  No tasks for this day
+                </p>
                 <p className="mt-1 text-sm">
-                  {isToday ? "You're all caught up." : 'Select another date to view tasks'}
+                  {isToday
+                    ? "You're all caught up."
+                    : "Select another date to view tasks"}
                 </p>
               </div>
             )}

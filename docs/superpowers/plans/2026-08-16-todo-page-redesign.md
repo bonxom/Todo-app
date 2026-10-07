@@ -11,6 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-08-16-todo-page-redesign.md`
 
 ## Global Constraints
+
 - Desktop layout split: Task Workspace (`min-w-[36rem]`, ~65–70%) and Project Rail (`w-full max-w-[24rem] min-w-[20rem]`, ~30–35%).
 - Project rail sticky behavior: `position: sticky; top: calc(var(--topbar-height, 4rem) + 1rem);` with internal scrolling (`max-h-[calc(100dvh-6.5rem)]`).
 - Project statistics (counters, progress %, completion rates) must strictly compute from `allTasks` (`rawTasks`), completely independent of search/status filters.
@@ -23,13 +24,16 @@
 ### Task 1: Task Sort and Filter Pipeline Utilities & Unit Tests
 
 **Files:**
+
 - Create: `frontend/src/features/tasks/utils/taskFilterPipeline.ts`
 - Test: `frontend/src/features/tasks/utils/test/taskFilterPipeline.test.ts`
 
 **Interfaces:**
+
 - Produces:
+
   ```typescript
-  export type TaskSortOption = 'dueDate' | 'priority' | 'title';
+  export type TaskSortOption = "dueDate" | "priority" | "title";
 
   export interface TaskFilterParams {
     tasks: Task[];
@@ -40,63 +44,121 @@
   }
 
   export function filterAndSortTasks(params: TaskFilterParams): Task[];
-  export function calculateProjectMetrics(tasks: Task[], projectId: string | null): { total: number; completed: number; progress: number };
+  export function calculateProjectMetrics(
+    tasks: Task[],
+    projectId: string | null,
+  ): { total: number; completed: number; progress: number };
   ```
 
 - [ ] **Step 1: Write failing unit tests for filtering, sorting, and project metrics calculation**
 
 ```typescript
 // frontend/src/features/tasks/utils/test/taskFilterPipeline.test.ts
-import { describe, expect, it } from 'vitest';
-import { filterAndSortTasks, calculateProjectMetrics } from '../taskFilterPipeline';
-import type { Task } from '@/shared/types/domain';
+import { describe, expect, it } from "vitest";
+import {
+  filterAndSortTasks,
+  calculateProjectMetrics,
+} from "../taskFilterPipeline";
+import type { Task } from "@/shared/types/domain";
 
 const mockTasks: Task[] = [
-  { _id: '1', title: 'Task Alpha', status: 'pending', priority: 'High', dueDate: '2026-08-20', categoryId: null, projectId: 'p1', startDate: '' },
-  { _id: '2', title: 'Task Beta', status: 'in-progress', priority: 'Low', dueDate: '2026-08-18', categoryId: null, projectId: 'p1', startDate: '' },
-  { _id: '3', title: 'Task Gamma', status: 'completed', priority: 'Medium', dueDate: '2026-08-25', categoryId: null, projectId: null, startDate: '' },
-  { _id: '4', title: 'Task Delta', status: 'given-up', priority: 'High', dueDate: '', categoryId: null, projectId: 'p2', startDate: '' },
+  {
+    _id: "1",
+    title: "Task Alpha",
+    status: "pending",
+    priority: "High",
+    dueDate: "2026-08-20",
+    categoryId: null,
+    projectId: "p1",
+    startDate: "",
+  },
+  {
+    _id: "2",
+    title: "Task Beta",
+    status: "in-progress",
+    priority: "Low",
+    dueDate: "2026-08-18",
+    categoryId: null,
+    projectId: "p1",
+    startDate: "",
+  },
+  {
+    _id: "3",
+    title: "Task Gamma",
+    status: "completed",
+    priority: "Medium",
+    dueDate: "2026-08-25",
+    categoryId: null,
+    projectId: null,
+    startDate: "",
+  },
+  {
+    _id: "4",
+    title: "Task Delta",
+    status: "given-up",
+    priority: "High",
+    dueDate: "",
+    categoryId: null,
+    projectId: "p2",
+    startDate: "",
+  },
 ];
 
-describe('taskFilterPipeline', () => {
-  it('filters tasks by search term (case-insensitive)', () => {
-    const result = filterAndSortTasks({ tasks: mockTasks, searchTerm: 'alpha' });
+describe("taskFilterPipeline", () => {
+  it("filters tasks by search term (case-insensitive)", () => {
+    const result = filterAndSortTasks({
+      tasks: mockTasks,
+      searchTerm: "alpha",
+    });
     expect(result).toHaveLength(1);
-    expect(result[0]._id).toBe('1');
+    expect(result[0]._id).toBe("1");
   });
 
-  it('filters tasks by selected statuses array', () => {
-    const result = filterAndSortTasks({ tasks: mockTasks, selectedStatuses: ['pending', 'in-progress'] });
+  it("filters tasks by selected statuses array", () => {
+    const result = filterAndSortTasks({
+      tasks: mockTasks,
+      selectedStatuses: ["pending", "in-progress"],
+    });
     expect(result).toHaveLength(2);
-    expect(result.map(t => t._id)).toEqual(['1', '2']);
+    expect(result.map((t) => t._id)).toEqual(["1", "2"]);
   });
 
-  it('filters tasks by project ID or standalone', () => {
-    const p1Tasks = filterAndSortTasks({ tasks: mockTasks, selectedProjectId: 'p1' });
+  it("filters tasks by project ID or standalone", () => {
+    const p1Tasks = filterAndSortTasks({
+      tasks: mockTasks,
+      selectedProjectId: "p1",
+    });
     expect(p1Tasks).toHaveLength(2);
 
-    const standaloneTasks = filterAndSortTasks({ tasks: mockTasks, selectedProjectId: 'standalone-projects' });
+    const standaloneTasks = filterAndSortTasks({
+      tasks: mockTasks,
+      selectedProjectId: "standalone-projects",
+    });
     expect(standaloneTasks).toHaveLength(1);
-    expect(standaloneTasks[0]._id).toBe('3');
+    expect(standaloneTasks[0]._id).toBe("3");
   });
 
-  it('sorts by dueDate (earliest first, tasks without dueDate at the end)', () => {
-    const result = filterAndSortTasks({ tasks: mockTasks, sortBy: 'dueDate' });
-    expect(result.map(t => t._id)).toEqual(['2', '1', '3', '4']);
+  it("sorts by dueDate (earliest first, tasks without dueDate at the end)", () => {
+    const result = filterAndSortTasks({ tasks: mockTasks, sortBy: "dueDate" });
+    expect(result.map((t) => t._id)).toEqual(["2", "1", "3", "4"]);
   });
 
-  it('sorts by priority (High -> Medium -> Low)', () => {
-    const result = filterAndSortTasks({ tasks: mockTasks, sortBy: 'priority' });
-    expect(result[0].priority).toBe('High');
-    expect(result[result.length - 1].priority).toBe('Low');
+  it("sorts by priority (High -> Medium -> Low)", () => {
+    const result = filterAndSortTasks({ tasks: mockTasks, sortBy: "priority" });
+    expect(result[0].priority).toBe("High");
+    expect(result[result.length - 1].priority).toBe("Low");
   });
 
-  it('calculates stable project metrics correctly regardless of any filter', () => {
-    const metrics = calculateProjectMetrics(mockTasks, 'p1');
+  it("calculates stable project metrics correctly regardless of any filter", () => {
+    const metrics = calculateProjectMetrics(mockTasks, "p1");
     expect(metrics).toEqual({ total: 2, completed: 0, progress: 0 });
 
     const standaloneMetrics = calculateProjectMetrics(mockTasks, null);
-    expect(standaloneMetrics).toEqual({ total: 1, completed: 1, progress: 100 });
+    expect(standaloneMetrics).toEqual({
+      total: 1,
+      completed: 1,
+      progress: 100,
+    });
   });
 });
 ```
@@ -110,9 +172,9 @@ Expected: FAIL (module not found)
 
 ```typescript
 // frontend/src/features/tasks/utils/taskFilterPipeline.ts
-import type { Task } from '@/shared/types/domain';
+import type { Task } from "@/shared/types/domain";
 
-export type TaskSortOption = 'dueDate' | 'priority' | 'title';
+export type TaskSortOption = "dueDate" | "priority" | "title";
 
 export interface TaskFilterParams {
   tasks: Task[];
@@ -133,10 +195,10 @@ const PRIORITY_ORDER: Record<string, number> = {
 
 export function filterAndSortTasks({
   tasks,
-  searchTerm = '',
+  searchTerm = "",
   selectedStatuses = [],
-  selectedProjectId = 'all-projects',
-  sortBy = 'dueDate',
+  selectedProjectId = "all-projects",
+  sortBy = "dueDate",
 }: TaskFilterParams): Task[] {
   if (!Array.isArray(tasks)) return [];
 
@@ -145,8 +207,8 @@ export function filterAndSortTasks({
   const filtered = tasks.filter((task) => {
     // 1. Search filter
     if (query) {
-      const titleMatch = (task.title || '').toLowerCase().includes(query);
-      const descMatch = (task.description || '').toLowerCase().includes(query);
+      const titleMatch = (task.title || "").toLowerCase().includes(query);
+      const descMatch = (task.description || "").toLowerCase().includes(query);
       if (!titleMatch && !descMatch) return false;
     }
 
@@ -157,9 +219,9 @@ export function filterAndSortTasks({
 
     // 3. Project filter
     const taskProjectId = task.projectId?._id || task.projectId || null;
-    if (selectedProjectId === 'standalone-projects') {
+    if (selectedProjectId === "standalone-projects") {
       if (taskProjectId !== null) return false;
-    } else if (selectedProjectId !== 'all-projects') {
+    } else if (selectedProjectId !== "all-projects") {
       if (taskProjectId !== selectedProjectId) return false;
     }
 
@@ -167,12 +229,12 @@ export function filterAndSortTasks({
   });
 
   return filtered.sort((a, b) => {
-    if (sortBy === 'priority') {
-      const rankA = PRIORITY_ORDER[a.priority || 'Medium'] ?? 2;
-      const rankB = PRIORITY_ORDER[b.priority || 'Medium'] ?? 2;
+    if (sortBy === "priority") {
+      const rankA = PRIORITY_ORDER[a.priority || "Medium"] ?? 2;
+      const rankB = PRIORITY_ORDER[b.priority || "Medium"] ?? 2;
       if (rankA !== rankB) return rankA - rankB;
-    } else if (sortBy === 'title') {
-      return (a.title || '').localeCompare(b.title || '');
+    } else if (sortBy === "title") {
+      return (a.title || "").localeCompare(b.title || "");
     }
 
     // Default: sortBy === 'dueDate'
@@ -182,19 +244,22 @@ export function filterAndSortTasks({
   });
 }
 
-export function calculateProjectMetrics(tasks: Task[], projectId: string | null): { total: number; completed: number; progress: number } {
+export function calculateProjectMetrics(
+  tasks: Task[],
+  projectId: string | null,
+): { total: number; completed: number; progress: number } {
   if (!Array.isArray(tasks)) return { total: 0, completed: 0, progress: 0 };
 
   const projectTasks = tasks.filter((task) => {
     const taskProjectId = task.projectId?._id || task.projectId || null;
-    if (projectId === null || projectId === 'standalone-projects') {
+    if (projectId === null || projectId === "standalone-projects") {
       return !taskProjectId;
     }
     return taskProjectId === projectId;
   });
 
   const total = projectTasks.length;
-  const completed = projectTasks.filter((t) => t.status === 'completed').length;
+  const completed = projectTasks.filter((t) => t.status === "completed").length;
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return { total, completed, progress };
@@ -218,11 +283,13 @@ git commit -m "feat(tasks): add pure pipeline for task filtering, sorting, and p
 ### Task 2: Implement Calendar-Aligned `TodoTaskCard` Component
 
 **Files:**
+
 - Create: `frontend/src/features/tasks/components/TodoTaskCard.jsx`
 - Modify: `frontend/src/features/tasks/components/TaskList.jsx`
 - Modify: `frontend/src/styles/app.css`
 
 **Interfaces:**
+
 - Consumes:
   - `task: Task`
   - `onAccept: (taskId: string) => Promise<void>`
@@ -237,7 +304,7 @@ git commit -m "feat(tasks): add pure pipeline for task filtering, sorting, and p
 
 ```jsx
 // frontend/src/features/tasks/components/TodoTaskCard.jsx
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Check,
   CircleDot,
@@ -250,40 +317,46 @@ import {
   ThumbsDown,
   ThumbsUp,
   Trash2,
-} from 'lucide-react';
-import { formatDateTime } from '@/shared/utils/dateTime';
-import { getProjectColor } from '@/shared/utils/projectColor';
+} from "lucide-react";
+import { formatDateTime } from "@/shared/utils/dateTime";
+import { getProjectColor } from "@/shared/utils/projectColor";
 
 const STATUS_CONFIG = {
   pending: {
-    label: 'Pending',
-    badgeClass: 'bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-transparent',
-    borderStyle: 'dashed',
+    label: "Pending",
+    badgeClass:
+      "bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-transparent",
+    borderStyle: "dashed",
   },
-  'in-progress': {
-    label: 'In Progress',
-    badgeClass: 'bg-[var(--color-accent-soft)] text-[var(--color-accent)] border-transparent',
-    borderStyle: 'solid',
+  "in-progress": {
+    label: "In Progress",
+    badgeClass:
+      "bg-[var(--color-accent-soft)] text-[var(--color-accent)] border-transparent",
+    borderStyle: "solid",
   },
   completed: {
-    label: 'Completed',
-    badgeClass: 'bg-[var(--color-success-soft)] text-[var(--color-success)] border-transparent',
-    borderStyle: 'solid',
+    label: "Completed",
+    badgeClass:
+      "bg-[var(--color-success-soft)] text-[var(--color-success)] border-transparent",
+    borderStyle: "solid",
   },
-  'given-up': {
-    label: 'Given Up',
-    badgeClass: 'bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-transparent',
-    borderStyle: 'solid',
+  "given-up": {
+    label: "Given Up",
+    badgeClass:
+      "bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-transparent",
+    borderStyle: "solid",
   },
 };
 
 const PRIORITY_CONFIG = {
-  High: 'bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-transparent',
-  high: 'bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-transparent',
-  Medium: 'bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-transparent',
-  medium: 'bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-transparent',
-  Low: 'bg-[var(--color-success-soft)] text-[var(--color-success)] border-transparent',
-  low: 'bg-[var(--color-success-soft)] text-[var(--color-success)] border-transparent',
+  High: "bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-transparent",
+  high: "bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-transparent",
+  Medium:
+    "bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-transparent",
+  medium:
+    "bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-transparent",
+  Low: "bg-[var(--color-success-soft)] text-[var(--color-success)] border-transparent",
+  low: "bg-[var(--color-success-soft)] text-[var(--color-success)] border-transparent",
 };
 
 const getDaysLeft = (deadline) => {
@@ -307,15 +380,16 @@ const TodoTaskCard = ({
 }) => {
   const [isActionPending, setIsActionPending] = useState(false);
   const taskId = task._id || task.id;
-  const isPending = task.status === 'pending';
-  const isCompleted = task.status === 'completed';
-  const isGivenUp = task.status === 'given-up';
-  const isInProgress = task.status === 'in-progress';
+  const isPending = task.status === "pending";
+  const isCompleted = task.status === "completed";
+  const isGivenUp = task.status === "given-up";
+  const isInProgress = task.status === "in-progress";
   const isMuted = isCompleted || isGivenUp;
 
   const projectColor = task.projectId ? getProjectColor(task.projectId) : null;
   const statusCfg = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
-  const priorityClass = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.Medium;
+  const priorityClass =
+    PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.Medium;
   const daysLeft = getDaysLeft(task.dueDate);
 
   const handleAction = async (fn) => {
@@ -331,13 +405,15 @@ const TodoTaskCard = ({
   return (
     <article
       className={`ui-section-card relative p-4 transition-all duration-200 hover:shadow-sm ${
-        isMuted ? 'opacity-80 bg-[var(--color-surface-muted)]' : 'bg-[var(--color-surface)]'
+        isMuted
+          ? "opacity-80 bg-[var(--color-surface-muted)]"
+          : "bg-[var(--color-surface)]"
       }`}
       style={{
-        borderLeftColor: projectColor || 'var(--color-line)',
-        borderLeftWidth: '5px',
-        borderStyle: isPending ? 'dashed' : 'solid',
-        borderColor: isPending ? 'var(--color-line)' : undefined,
+        borderLeftColor: projectColor || "var(--color-line)",
+        borderLeftWidth: "5px",
+        borderStyle: isPending ? "dashed" : "solid",
+        borderColor: isPending ? "var(--color-line)" : undefined,
       }}
     >
       <div className="flex items-start gap-3">
@@ -353,7 +429,11 @@ const TodoTaskCard = ({
                 aria-label={`Accept ${task.title}`}
                 title="Accept task to in-progress"
               >
-                {isActionPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ThumbsUp className="h-3.5 w-3.5" />}
+                {isActionPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ThumbsUp className="h-3.5 w-3.5" />
+                )}
                 <span>Accept</span>
               </button>
               <button
@@ -379,7 +459,11 @@ const TodoTaskCard = ({
               aria-label={`Mark ${task.title} as completed`}
               title="Mark as completed"
             >
-              {isActionPending ? <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--color-accent)]" /> : <Check className="h-4 w-4" />}
+              {isActionPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--color-accent)]" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
             </button>
           )}
 
@@ -392,7 +476,11 @@ const TodoTaskCard = ({
               aria-label={`Restore ${task.title} to in-progress`}
               title="Click to restore to in-progress"
             >
-              {isActionPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-4 w-4" />}
+              {isActionPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
             </button>
           )}
 
@@ -405,7 +493,11 @@ const TodoTaskCard = ({
               aria-label={`Restore ${task.title} to in-progress`}
               title="Click to restore to in-progress"
             >
-              {isActionPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+              {isActionPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RotateCcw className="h-3.5 w-3.5" />
+              )}
             </button>
           )}
         </div>
@@ -414,7 +506,9 @@ const TodoTaskCard = ({
         <div className="min-w-0 flex-1">
           <h3
             className={`text-sm font-semibold leading-snug transition-colors ${
-              isMuted ? 'line-through text-[var(--color-text-muted)]' : 'text-[var(--color-text)]'
+              isMuted
+                ? "line-through text-[var(--color-text-muted)]"
+                : "text-[var(--color-text)]"
             }`}
           >
             {task.title}
@@ -461,18 +555,18 @@ const TodoTaskCard = ({
               <span
                 className={`ui-chip ui-tabular ${
                   daysLeft < 0
-                    ? 'ui-chip--danger'
+                    ? "ui-chip--danger"
                     : daysLeft <= 2
-                    ? 'ui-chip--warning'
-                    : ''
+                      ? "ui-chip--warning"
+                      : ""
                 }`}
               >
                 <Clock className="h-3 w-3" />
                 {daysLeft < 0
                   ? `${Math.abs(daysLeft)}d overdue`
                   : daysLeft === 0
-                  ? 'Due today'
-                  : `${daysLeft}d left`}
+                    ? "Due today"
+                    : `${daysLeft}d left`}
               </span>
             )}
 
@@ -532,7 +626,7 @@ export default TodoTaskCard;
 
 ```jsx
 // frontend/src/features/tasks/components/TaskList.jsx
-import TodoTaskCard from './TodoTaskCard';
+import TodoTaskCard from "./TodoTaskCard";
 
 const TaskList = ({
   tasks,
@@ -551,7 +645,10 @@ const TaskList = ({
     return (
       <div className="space-y-3" aria-live="polite" aria-label="Loading tasks">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="h-24 animate-pulse ui-section-card rounded-[14px]" />
+          <div
+            key={index}
+            className="h-24 animate-pulse ui-section-card rounded-[14px]"
+          />
         ))}
       </div>
     );
@@ -561,10 +658,10 @@ const TaskList = ({
     return (
       <div className="ui-section-card border-dashed px-6 py-12 text-center">
         <p className="text-base font-semibold text-[var(--color-text)]">
-          {emptyState?.title || 'No tasks found'}
+          {emptyState?.title || "No tasks found"}
         </p>
         <p className="mt-2 text-sm text-[var(--color-text-muted)] max-w-md mx-auto">
-          {emptyState?.description || 'Add a new task to get started.'}
+          {emptyState?.description || "Add a new task to get started."}
         </p>
         {emptyState?.isFiltered && onClearFilters && (
           <button
@@ -618,10 +715,12 @@ git commit -m "feat(tasks): create TodoTaskCard with 4-status interaction model 
 ### Task 3: Implement `TodoTaskToolbar` Component
 
 **Files:**
+
 - Create: `frontend/src/features/tasks/components/TodoTaskToolbar.jsx`
 - Modify: `frontend/src/styles/app.css`
 
 **Interfaces:**
+
 - Consumes:
   - `searchTerm: string`
   - `onSearchChange: (value: string) => void`
@@ -637,20 +736,28 @@ git commit -m "feat(tasks): create TodoTaskCard with 4-status interaction model 
 
 ```jsx
 // frontend/src/features/tasks/components/TodoTaskToolbar.jsx
-import { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown, Filter, ListFilter, RotateCcw, Search, X } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import {
+  Check,
+  ChevronDown,
+  Filter,
+  ListFilter,
+  RotateCcw,
+  Search,
+  X,
+} from "lucide-react";
 
 const STATUS_OPTIONS = [
-  { id: 'pending', label: 'Pending' },
-  { id: 'in-progress', label: 'In Progress' },
-  { id: 'completed', label: 'Completed' },
-  { id: 'given-up', label: 'Given Up' },
+  { id: "pending", label: "Pending" },
+  { id: "in-progress", label: "In Progress" },
+  { id: "completed", label: "Completed" },
+  { id: "given-up", label: "Given Up" },
 ];
 
 const SORT_OPTIONS = [
-  { id: 'dueDate', label: 'Due date (Earliest)' },
-  { id: 'priority', label: 'Priority (High to Low)' },
-  { id: 'title', label: 'Title (A-Z)' },
+  { id: "dueDate", label: "Due date (Earliest)" },
+  { id: "priority", label: "Priority (High to Low)" },
+  { id: "title", label: "Title (A-Z)" },
 ];
 
 const TodoTaskToolbar = ({
@@ -659,7 +766,7 @@ const TodoTaskToolbar = ({
   selectedStatuses = [],
   onStatusToggle,
   onClearStatuses,
-  sortBy = 'dueDate',
+  sortBy = "dueDate",
   onSortChange,
   activeProjectName,
   onClearProjectFilter,
@@ -673,17 +780,22 @@ const TodoTaskToolbar = ({
         setIsStatusOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const hasActiveFilters = Boolean(searchTerm.trim()) || selectedStatuses.length > 0 || Boolean(activeProjectName);
+  const hasActiveFilters =
+    Boolean(searchTerm.trim()) ||
+    selectedStatuses.length > 0 ||
+    Boolean(activeProjectName);
 
-  const statusLabel = selectedStatuses.length === 0
-    ? 'All statuses'
-    : selectedStatuses.length === 1
-    ? STATUS_OPTIONS.find((o) => o.id === selectedStatuses[0])?.label || '1 status'
-    : `${selectedStatuses.length} statuses`;
+  const statusLabel =
+    selectedStatuses.length === 0
+      ? "All statuses"
+      : selectedStatuses.length === 1
+        ? STATUS_OPTIONS.find((o) => o.id === selectedStatuses[0])?.label ||
+          "1 status"
+        : `${selectedStatuses.length} statuses`;
 
   return (
     <div className="space-y-3">
@@ -703,7 +815,7 @@ const TodoTaskToolbar = ({
           {searchTerm && (
             <button
               type="button"
-              onClick={() => onSearchChange('')}
+              onClick={() => onSearchChange("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
               aria-label="Clear search text"
             >
@@ -719,15 +831,17 @@ const TodoTaskToolbar = ({
             onClick={() => setIsStatusOpen((o) => !o)}
             className={`inline-flex min-h-[2.5rem] items-center gap-2 rounded-[var(--radius-md)] border px-3 text-xs font-semibold transition-colors ${
               selectedStatuses.length > 0
-                ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-                : 'border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]"
+                : "border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
             }`}
             aria-expanded={isStatusOpen}
             aria-haspopup="menu"
           >
             <ListFilter className="h-3.5 w-3.5" />
             <span>{statusLabel}</span>
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isStatusOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform ${isStatusOpen ? "rotate-180" : ""}`}
+            />
           </button>
 
           {isStatusOpen && (
@@ -754,13 +868,17 @@ const TodoTaskToolbar = ({
                       onClick={() => onStatusToggle(option.id)}
                       className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium transition-colors ${
                         isSelected
-                          ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-                          : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]'
+                          ? "bg-[var(--color-accent-soft)] text-[var(--color-accent)]"
+                          : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
                       }`}
                     >
-                      <span className={`inline-grid h-3.5 w-3.5 place-items-center rounded border ${
-                        isSelected ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-white' : 'border-[var(--color-line)] bg-[var(--color-surface)]'
-                      }`}>
+                      <span
+                        className={`inline-grid h-3.5 w-3.5 place-items-center rounded border ${
+                          isSelected
+                            ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
+                            : "border-[var(--color-line)] bg-[var(--color-surface)]"
+                        }`}
+                      >
                         {isSelected && <Check className="h-3 w-3" />}
                       </span>
                       <span>{option.label}</span>
@@ -790,7 +908,9 @@ const TodoTaskToolbar = ({
       {/* Active Filter Pills Bar */}
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-          <span className="text-[var(--color-text-muted)] font-medium">Active filters:</span>
+          <span className="text-[var(--color-text-muted)] font-medium">
+            Active filters:
+          </span>
 
           {activeProjectName && (
             <span className="ui-chip ui-chip--accent">
@@ -825,7 +945,7 @@ const TodoTaskToolbar = ({
               Keyword: "{searchTerm.trim()}"
               <button
                 type="button"
-                onClick={() => onSearchChange('')}
+                onClick={() => onSearchChange("")}
                 className="ml-1 hover:text-[var(--color-danger)]"
                 aria-label="Remove search keyword"
               >
@@ -837,7 +957,7 @@ const TodoTaskToolbar = ({
           <button
             type="button"
             onClick={() => {
-              onSearchChange('');
+              onSearchChange("");
               onClearStatuses();
               onClearProjectFilter?.();
             }}
@@ -867,10 +987,12 @@ git commit -m "feat(tasks): add TodoTaskToolbar with integrated search, multi-se
 ### Task 4: Implement Sticky `ProjectFocusRail` Component
 
 **Files:**
+
 - Create: `frontend/src/features/tasks/components/ProjectFocusRail.jsx`
 - Modify: `frontend/src/styles/app.css`
 
 **Interfaces:**
+
 - Consumes:
   - `projects: Project[]`
   - `rawTasks: Task[]` (100% full dataset for stable metrics)
@@ -889,15 +1011,19 @@ git commit -m "feat(tasks): add TodoTaskToolbar with integrated search, multi-se
 
 ```jsx
 // frontend/src/features/tasks/components/ProjectFocusRail.jsx
-import { useMemo } from 'react';
-import { Check, FolderPlus, Layers, Plus, RotateCcw } from 'lucide-react';
-import ProgressBar from './ProgressBar';
-import { calculateProjectMetrics } from '../utils/taskFilterPipeline';
-import { getProjectColor } from '@/shared/utils/projectColor';
-import { canCompleteProject, filterProjectsByVisibility, isCompletedProject } from '@/shared/utils/projectStatus';
+import { useMemo } from "react";
+import { Check, FolderPlus, Layers, Plus, RotateCcw } from "lucide-react";
+import ProgressBar from "./ProgressBar";
+import { calculateProjectMetrics } from "../utils/taskFilterPipeline";
+import { getProjectColor } from "@/shared/utils/projectColor";
+import {
+  canCompleteProject,
+  filterProjectsByVisibility,
+  isCompletedProject,
+} from "@/shared/utils/projectStatus";
 
-const ALL_PROJECT_FILTER = 'all-projects';
-const STANDALONE_PROJECT_FILTER = 'standalone-projects';
+const ALL_PROJECT_FILTER = "all-projects";
+const STANDALONE_PROJECT_FILTER = "standalone-projects";
 
 const ProjectFocusRail = ({
   projects = [],
@@ -916,7 +1042,7 @@ const ProjectFocusRail = ({
   // 1. Overall Workspace Metrics (Independent of any filter)
   const overallMetrics = useMemo(() => {
     const total = rawTasks.length;
-    const completed = rawTasks.filter((t) => t.status === 'completed').length;
+    const completed = rawTasks.filter((t) => t.status === "completed").length;
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { total, completed, progress };
   }, [rawTasks]);
@@ -941,12 +1067,17 @@ const ProjectFocusRail = ({
   }
 
   return (
-    <aside className="ui-project-focus-rail space-y-4" aria-label="Project focus rail">
+    <aside
+      className="ui-project-focus-rail space-y-4"
+      aria-label="Project focus rail"
+    >
       {/* Top Header Row */}
       <div className="flex items-center justify-between">
         <div>
           <p className="ui-page-kicker !text-[11px]">Workstreams</p>
-          <h2 className="text-base font-semibold text-[var(--color-text)]">Project Focus</h2>
+          <h2 className="text-base font-semibold text-[var(--color-text)]">
+            Project Focus
+          </h2>
         </div>
         <div className="flex items-center gap-1.5">
           <button
@@ -999,14 +1130,18 @@ const ProjectFocusRail = ({
           onClick={() => onSelectProject(ALL_PROJECT_FILTER)}
           className={`ui-section-card relative cursor-pointer p-3.5 transition-all duration-150 ${
             selectedProjectId === ALL_PROJECT_FILTER
-              ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-xs'
-              : 'hover:border-[var(--color-accent)]'
+              ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-xs"
+              : "hover:border-[var(--color-accent)]"
           }`}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-[var(--color-text)]">All Tasks</h3>
-              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Every task in your workspace</p>
+              <h3 className="text-sm font-semibold text-[var(--color-text)]">
+                All Tasks
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                Every task in your workspace
+              </p>
             </div>
             <span className="ui-chip ui-tabular !text-[11px] !min-h-[1.5rem]">
               {overallMetrics.completed}/{overallMetrics.total}
@@ -1019,14 +1154,18 @@ const ProjectFocusRail = ({
           onClick={() => onSelectProject(STANDALONE_PROJECT_FILTER)}
           className={`ui-section-card relative cursor-pointer p-3.5 transition-all duration-150 ${
             selectedProjectId === STANDALONE_PROJECT_FILTER
-              ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-xs'
-              : 'hover:border-[var(--color-accent)]'
+              ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-xs"
+              : "hover:border-[var(--color-accent)]"
           }`}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-[var(--color-text)]">No Project</h3>
-              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Standalone daily tasks</p>
+              <h3 className="text-sm font-semibold text-[var(--color-text)]">
+                No Project
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                Standalone daily tasks
+              </p>
             </div>
             <span className="ui-chip ui-tabular !text-[11px] !min-h-[1.5rem]">
               {standaloneMetrics.completed}/{standaloneMetrics.total}
@@ -1053,10 +1192,10 @@ const ProjectFocusRail = ({
               onClick={() => onSelectProject(project._id)}
               className={`ui-section-card relative cursor-pointer p-3.5 transition-all duration-150 ${
                 isSelected
-                  ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-xs'
-                  : 'hover:border-[var(--color-accent)]'
-              } ${isCompleted ? 'opacity-75' : ''}`}
-              style={{ borderLeftColor: projectColor, borderLeftWidth: '5px' }}
+                  ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)] shadow-xs"
+                  : "hover:border-[var(--color-accent)]"
+              } ${isCompleted ? "opacity-75" : ""}`}
+              style={{ borderLeftColor: projectColor, borderLeftWidth: "5px" }}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -1079,7 +1218,9 @@ const ProjectFocusRail = ({
               <div className="mt-3">
                 <div className="flex items-center justify-between text-[11px] text-[var(--color-text-muted)] mb-1">
                   <span>Progress</span>
-                  <span className="ui-tabular font-medium">{metrics.progress}%</span>
+                  <span className="ui-tabular font-medium">
+                    {metrics.progress}%
+                  </span>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-muted)]">
                   <div
@@ -1090,7 +1231,10 @@ const ProjectFocusRail = ({
               </div>
 
               {/* Project Action Row */}
-              <div className="mt-3 flex items-center justify-end gap-1.5 border-t border-[var(--color-line)] pt-2" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="mt-3 flex items-center justify-end gap-1.5 border-t border-[var(--color-line)] pt-2"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {canComplete && !isCompleted && (
                   <button
                     type="button"
@@ -1154,9 +1298,11 @@ git commit -m "feat(tasks): create sticky ProjectFocusRail with decoupled stable
 ### Task 5: Assemble Redesigned `TodoPage.jsx` & Wire All Mutations
 
 **Files:**
+
 - Modify: `frontend/src/features/tasks/TodoPage.jsx`
 
 **Interfaces:**
+
 - Combines:
   - `TodoTaskToolbar`
   - `TaskList` + `TodoTaskCard`
@@ -1168,17 +1314,17 @@ git commit -m "feat(tasks): create sticky ProjectFocusRail with decoupled stable
 
 ```jsx
 // frontend/src/features/tasks/TodoPage.jsx
-import { useEffect, useMemo, useState } from 'react';
-import ActionButtons from './components/GenTaskButton';
-import AddTaskButton from './components/AddTaskButton';
-import TaskDetailButton from './components/TaskDetailButton';
-import TodoTaskToolbar from './components/TodoTaskToolbar';
-import TaskList from './components/TaskList';
-import ProjectFocusRail from './components/ProjectFocusRail';
-import AddCategoryForm from './components/Form/AddCategoryForm';
-import AddProjectForm from './components/Form/AddProjectForm';
-import { useTasksQuery } from './api/taskQueries';
-import { useProjectsQuery } from './api/projectQueries';
+import { useEffect, useMemo, useState } from "react";
+import ActionButtons from "./components/GenTaskButton";
+import AddTaskButton from "./components/AddTaskButton";
+import TaskDetailButton from "./components/TaskDetailButton";
+import TodoTaskToolbar from "./components/TodoTaskToolbar";
+import TaskList from "./components/TaskList";
+import ProjectFocusRail from "./components/ProjectFocusRail";
+import AddCategoryForm from "./components/Form/AddCategoryForm";
+import AddProjectForm from "./components/Form/AddProjectForm";
+import { useTasksQuery } from "./api/taskQueries";
+import { useProjectsQuery } from "./api/projectQueries";
 import {
   useDeleteTaskMutation,
   useFinishTaskMutation,
@@ -1186,15 +1332,15 @@ import {
   useRestoreTaskMutation,
   useStartTaskMutation,
   useUpdateTaskMutation,
-} from './api/taskMutations';
-import { useUpdateProjectMutation } from './api/projectMutations';
-import { filterAndSortTasks } from './utils/taskFilterPipeline';
-import { PROJECT_STATUS } from '@/shared/utils/projectStatus';
-import { getApiErrorMessage } from '@/shared/services/apiError';
-import { X } from 'lucide-react';
+} from "./api/taskMutations";
+import { useUpdateProjectMutation } from "./api/projectMutations";
+import { filterAndSortTasks } from "./utils/taskFilterPipeline";
+import { PROJECT_STATUS } from "@/shared/utils/projectStatus";
+import { getApiErrorMessage } from "@/shared/services/apiError";
+import { X } from "lucide-react";
 
-const ALL_PROJECT_FILTER = 'all-projects';
-const STANDALONE_PROJECT_FILTER = 'standalone-projects';
+const ALL_PROJECT_FILTER = "all-projects";
+const STANDALONE_PROJECT_FILTER = "standalone-projects";
 
 const TodoPage = () => {
   // Modal states
@@ -1207,13 +1353,14 @@ const TodoPage = () => {
   const [taskToGiveUp, setTaskToGiveUp] = useState(null);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
-  const [initialTaskProjectId, setInitialTaskProjectId] = useState('');
+  const [initialTaskProjectId, setInitialTaskProjectId] = useState("");
 
   // Local filter & sort states
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState(ALL_PROJECT_FILTER);
-  const [sortBy, setSortBy] = useState('dueDate');
+  const [selectedProjectId, setSelectedProjectId] =
+    useState(ALL_PROJECT_FILTER);
+  const [sortBy, setSortBy] = useState("dueDate");
   const [showCompletedProjects, setShowCompletedProjects] = useState(false);
 
   // Queries & Mutations
@@ -1229,24 +1376,36 @@ const TodoPage = () => {
   const updateProjectMutation = useUpdateProjectMutation();
 
   const rawTasks = useMemo(() => tasksQuery.data || [], [tasksQuery.data]);
-  const projects = useMemo(() => projectsQuery.data || [], [projectsQuery.data]);
+  const projects = useMemo(
+    () => projectsQuery.data || [],
+    [projectsQuery.data],
+  );
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading;
   const isFetching = tasksQuery.isFetching || projectsQuery.isFetching;
   const errorMessage = tasksQuery.isError
-    ? getApiErrorMessage(tasksQuery.error, 'Failed to load tasks.')
+    ? getApiErrorMessage(tasksQuery.error, "Failed to load tasks.")
     : projectsQuery.isError
-    ? getApiErrorMessage(projectsQuery.error, 'Failed to load projects.')
-    : '';
+      ? getApiErrorMessage(projectsQuery.error, "Failed to load projects.")
+      : "";
 
   // Lock body scroll on modals
   useEffect(() => {
-    const isAnyModalOpen = isGiveUpModalOpen || isDeleteModalOpen || isAddCategoryModalOpen || isAddProjectModalOpen;
-    document.body.style.overflow = isAnyModalOpen ? 'hidden' : 'unset';
+    const isAnyModalOpen =
+      isGiveUpModalOpen ||
+      isDeleteModalOpen ||
+      isAddCategoryModalOpen ||
+      isAddProjectModalOpen;
+    document.body.style.overflow = isAnyModalOpen ? "hidden" : "unset";
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
-  }, [isGiveUpModalOpen, isDeleteModalOpen, isAddCategoryModalOpen, isAddProjectModalOpen]);
+  }, [
+    isGiveUpModalOpen,
+    isDeleteModalOpen,
+    isAddCategoryModalOpen,
+    isAddProjectModalOpen,
+  ]);
 
   // Pure filtering & sorting pipeline
   const filteredTasks = useMemo(() => {
@@ -1261,15 +1420,20 @@ const TodoPage = () => {
 
   // Overall workspace counters (pure and stable)
   const remainingCount = useMemo(() => {
-    return rawTasks.filter((t) => t.status === 'in-progress' || t.status === 'pending').length;
+    return rawTasks.filter(
+      (t) => t.status === "in-progress" || t.status === "pending",
+    ).length;
   }, [rawTasks]);
 
   const completedCount = useMemo(() => {
-    return rawTasks.filter((t) => t.status === 'completed').length;
+    return rawTasks.filter((t) => t.status === "completed").length;
   }, [rawTasks]);
 
   const selectedProject = useMemo(() => {
-    if (selectedProjectId === ALL_PROJECT_FILTER || selectedProjectId === STANDALONE_PROJECT_FILTER) {
+    if (
+      selectedProjectId === ALL_PROJECT_FILTER ||
+      selectedProjectId === STANDALONE_PROJECT_FILTER
+    ) {
       return null;
     }
     return projects.find((p) => p._id === selectedProjectId) || null;
@@ -1280,7 +1444,7 @@ const TodoPage = () => {
     try {
       await startTaskMutation.mutateAsync(taskId);
     } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to accept task.'));
+      alert(getApiErrorMessage(err, "Failed to accept task."));
     }
   };
 
@@ -1288,7 +1452,7 @@ const TodoPage = () => {
     try {
       await deleteTaskMutation.mutateAsync(taskId);
     } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to delete task.'));
+      alert(getApiErrorMessage(err, "Failed to delete task."));
     }
   };
 
@@ -1296,7 +1460,7 @@ const TodoPage = () => {
     try {
       await finishTaskMutation.mutateAsync(taskId);
     } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to complete task.'));
+      alert(getApiErrorMessage(err, "Failed to complete task."));
     }
   };
 
@@ -1304,7 +1468,7 @@ const TodoPage = () => {
     try {
       await restoreTaskMutation.mutateAsync(taskId);
     } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to restore task.'));
+      alert(getApiErrorMessage(err, "Failed to restore task."));
     }
   };
 
@@ -1319,7 +1483,7 @@ const TodoPage = () => {
       setIsGiveUpModalOpen(false);
       setTaskToGiveUp(null);
     } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to give up task.'));
+      alert(getApiErrorMessage(err, "Failed to give up task."));
     }
   };
 
@@ -1334,7 +1498,7 @@ const TodoPage = () => {
       setIsDeleteModalOpen(false);
       setTaskToDelete(null);
     } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to delete task.'));
+      alert(getApiErrorMessage(err, "Failed to delete task."));
     }
   };
 
@@ -1348,7 +1512,7 @@ const TodoPage = () => {
         setSelectedProjectId(ALL_PROJECT_FILTER);
       }
     } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to complete project.'));
+      alert(getApiErrorMessage(err, "Failed to complete project."));
     }
   };
 
@@ -1359,36 +1523,45 @@ const TodoPage = () => {
         payload: { status: PROJECT_STATUS.ACTIVE },
       });
     } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to restore project.'));
+      alert(getApiErrorMessage(err, "Failed to restore project."));
     }
   };
 
-  const openAddTask = (projectId = '') => {
+  const openAddTask = (projectId = "") => {
     const project = projects.find((p) => p._id === projectId);
-    setInitialTaskProjectId(project?.status === PROJECT_STATUS.COMPLETED ? '' : projectId);
+    setInitialTaskProjectId(
+      project?.status === PROJECT_STATUS.COMPLETED ? "" : projectId,
+    );
     setIsModalOpen(true);
   };
 
   // Status toggle handler
   const handleStatusToggle = (statusId) => {
     setSelectedStatuses((prev) =>
-      prev.includes(statusId) ? prev.filter((s) => s !== statusId) : [...prev, statusId]
+      prev.includes(statusId)
+        ? prev.filter((s) => s !== statusId)
+        : [...prev, statusId],
     );
   };
 
-  const isFiltered = Boolean(searchTerm.trim()) || selectedStatuses.length > 0 || selectedProjectId !== ALL_PROJECT_FILTER;
+  const isFiltered =
+    Boolean(searchTerm.trim()) ||
+    selectedStatuses.length > 0 ||
+    selectedProjectId !== ALL_PROJECT_FILTER;
 
   const emptyStateInfo = useMemo(() => {
     if (isFiltered) {
       return {
-        title: 'No tasks match current filters',
-        description: 'Try adjusting your search query, status filters, or project selection.',
+        title: "No tasks match current filters",
+        description:
+          "Try adjusting your search query, status filters, or project selection.",
         isFiltered: true,
       };
     }
     return {
-      title: 'No tasks in this workspace yet',
-      description: 'Add your first task to start building your daily list and project progress.',
+      title: "No tasks in this workspace yet",
+      description:
+        "Add your first task to start building your daily list and project progress.",
       isFiltered: false,
     };
   }, [isFiltered]);
@@ -1399,7 +1572,7 @@ const TodoPage = () => {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setInitialTaskProjectId('');
+          setInitialTaskProjectId("");
         }}
         initialProjectId={initialTaskProjectId}
       />
@@ -1452,8 +1625,12 @@ const TodoPage = () => {
           <section className="ui-section-card ui-card-padding">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-semibold text-[var(--color-warning)]">Unable to load latest todo data</p>
-                <p className="mt-1 text-sm text-[var(--color-text-muted)]">{errorMessage}</p>
+                <p className="text-sm font-semibold text-[var(--color-warning)]">
+                  Unable to load latest todo data
+                </p>
+                <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                  {errorMessage}
+                </p>
               </div>
               <button
                 type="button"
@@ -1482,7 +1659,9 @@ const TodoPage = () => {
               sortBy={sortBy}
               onSortChange={setSortBy}
               activeProjectName={selectedProject?.name}
-              onClearProjectFilter={() => setSelectedProjectId(ALL_PROJECT_FILTER)}
+              onClearProjectFilter={() =>
+                setSelectedProjectId(ALL_PROJECT_FILTER)
+              }
             />
 
             <TaskList
@@ -1500,7 +1679,7 @@ const TodoPage = () => {
               }}
               onDelete={handleDeleteClick}
               onClearFilters={() => {
-                setSearchTerm('');
+                setSearchTerm("");
                 setSelectedStatuses([]);
                 setSelectedProjectId(ALL_PROJECT_FILTER);
               }}
@@ -1531,7 +1710,10 @@ const TodoPage = () => {
       {isGiveUpModalOpen && (
         <div
           className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
-          onClick={() => { setIsGiveUpModalOpen(false); setTaskToGiveUp(null); }}
+          onClick={() => {
+            setIsGiveUpModalOpen(false);
+            setTaskToGiveUp(null);
+          }}
           role="presentation"
         >
           <div
@@ -1542,15 +1724,36 @@ const TodoPage = () => {
             aria-labelledby="giveup-dialog-title"
           >
             <div className="ui-modal-header">
-              <h2 id="giveup-dialog-title" className="text-xl font-semibold text-[var(--color-text)]">Give Up Task</h2>
+              <h2
+                id="giveup-dialog-title"
+                className="text-xl font-semibold text-[var(--color-text)]"
+              >
+                Give Up Task
+              </h2>
             </div>
             <div className="ui-modal-body">
               <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-                Are you sure you want to give up this task? You can restore it to in-progress at any time.
+                Are you sure you want to give up this task? You can restore it
+                to in-progress at any time.
               </p>
               <div className="flex gap-3">
-                <button type="button" onClick={() => { setIsGiveUpModalOpen(false); setTaskToGiveUp(null); }} className="ui-btn-secondary flex-1">Cancel</button>
-                <button type="button" onClick={confirmGiveUp} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-white hover:opacity-90">Give Up</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsGiveUpModalOpen(false);
+                    setTaskToGiveUp(null);
+                  }}
+                  className="ui-btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmGiveUp}
+                  className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-white hover:opacity-90"
+                >
+                  Give Up
+                </button>
               </div>
             </div>
           </div>
@@ -1561,7 +1764,10 @@ const TodoPage = () => {
       {isDeleteModalOpen && (
         <div
           className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
-          onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }}
+          onClick={() => {
+            setIsDeleteModalOpen(false);
+            setTaskToDelete(null);
+          }}
           role="presentation"
         >
           <div
@@ -1572,15 +1778,36 @@ const TodoPage = () => {
             aria-labelledby="delete-dialog-title"
           >
             <div className="ui-modal-header">
-              <h2 id="delete-dialog-title" className="text-xl font-semibold text-[var(--color-text)]">Delete Task</h2>
+              <h2
+                id="delete-dialog-title"
+                className="text-xl font-semibold text-[var(--color-text)]"
+              >
+                Delete Task
+              </h2>
             </div>
             <div className="ui-modal-body">
               <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-                Are you sure you want to delete this task? This action cannot be undone.
+                Are you sure you want to delete this task? This action cannot be
+                undone.
               </p>
               <div className="flex gap-3">
-                <button type="button" onClick={() => { setIsDeleteModalOpen(false); setTaskToDelete(null); }} className="ui-btn-secondary flex-1">Cancel</button>
-                <button type="button" onClick={confirmDelete} className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-white hover:opacity-90">Delete</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDeleteModalOpen(false);
+                    setTaskToDelete(null);
+                  }}
+                  className="ui-btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-white hover:opacity-90"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>
@@ -1604,7 +1831,12 @@ const TodoPage = () => {
             <div className="ui-modal-header flex items-start justify-between gap-4">
               <div>
                 <p className="ui-page-kicker">Create</p>
-                <h2 id="add-cat-title" className="text-xl font-semibold text-[var(--color-text)]">Add Category</h2>
+                <h2
+                  id="add-cat-title"
+                  className="text-xl font-semibold text-[var(--color-text)]"
+                >
+                  Add Category
+                </h2>
               </div>
               <button
                 type="button"
@@ -1642,7 +1874,12 @@ const TodoPage = () => {
             <div className="ui-modal-header flex items-start justify-between gap-4">
               <div>
                 <p className="ui-page-kicker">Create</p>
-                <h2 id="add-proj-title" className="text-xl font-semibold text-[var(--color-text)]">Add Project</h2>
+                <h2
+                  id="add-proj-title"
+                  className="text-xl font-semibold text-[var(--color-text)]"
+                >
+                  Add Project
+                </h2>
               </div>
               <button
                 type="button"
@@ -1689,11 +1926,13 @@ git commit -m "feat(tasks): assemble redesigned 2-column TodoPage with sticky pr
 ### Task 6: Full Verification & Responsive Polish
 
 **Files:**
+
 - Modify: `frontend/src/styles/app.css` (fine-tune responsive paddings, safe area for floating assistant)
 
 - [ ] **Step 1: Check CSS safe margins for Floating Assistant**
 
 Ensure `.ui-project-focus-rail` and main containers have sufficient bottom padding so the floating assistant button does not obscure buttons on smaller screens:
+
 ```css
 .ui-project-focus-rail {
   position: sticky;

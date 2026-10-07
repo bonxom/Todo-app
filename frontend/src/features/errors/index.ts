@@ -1,2 +1,2 @@
-export { default as ErrorPage } from './ErrorPage';
-export { default } from './ErrorPage';
+export { default as ErrorPage } from "./ErrorPage";
+export { default } from "./ErrorPage";

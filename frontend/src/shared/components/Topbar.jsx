@@ -1,15 +1,22 @@
-import ThemeToggle from './ThemeToggle';
-import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, ChevronDown, ListFilter, Menu, User } from 'lucide-react';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { useTaskFilterStore } from '@/stores/useTaskFilterStore';
+import ThemeToggle from "./ThemeToggle";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ListFilter,
+  Menu,
+  User,
+} from "lucide-react";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useTaskFilterStore } from "@/stores/useTaskFilterStore";
 
 const STATUS_OPTIONS = [
-  { id: 'pending', label: 'Pending' },
-  { id: 'in-progress', label: 'In Progress' },
-  { id: 'completed', label: 'Completed' },
-  { id: 'given-up', label: 'Given Up' },
+  { id: "pending", label: "Pending" },
+  { id: "in-progress", label: "In Progress" },
+  { id: "completed", label: "Completed" },
+  { id: "given-up", label: "Given Up" },
 ];
 
 const getAvatarUrl = (user) => {
@@ -21,48 +28,51 @@ const getAvatarUrl = (user) => {
     user?.profilePicture,
   ];
 
-  return avatarFields.find((value) => typeof value === 'string' && value.trim()) ?? '';
+  return (
+    avatarFields.find((value) => typeof value === "string" && value.trim()) ??
+    ""
+  );
 };
 
 const getTopbarContext = (pathname) => {
-  if (pathname.startsWith('/dashboard')) {
+  if (pathname.startsWith("/dashboard")) {
     return {
-      title: 'Todos',
-      subtitle: 'Tasks and focus for the day',
+      title: "Todos",
+      subtitle: "Tasks and focus for the day",
     };
   }
 
-  if (pathname.startsWith('/categories')) {
+  if (pathname.startsWith("/categories")) {
     return {
-      title: 'Categories',
-      subtitle: 'Categories and work streams',
+      title: "Categories",
+      subtitle: "Categories and work streams",
     };
   }
 
-  if (pathname.startsWith('/calendar')) {
+  if (pathname.startsWith("/calendar")) {
     return {
-      title: 'Calendar',
-      subtitle: 'Deadlines, plans, and schedule',
+      title: "Calendar",
+      subtitle: "Deadlines, plans, and schedule",
     };
   }
 
-  if (pathname.startsWith('/statistics')) {
+  if (pathname.startsWith("/statistics")) {
     return {
-      title: 'Statistics',
-      subtitle: 'Progress and completion trends',
+      title: "Statistics",
+      subtitle: "Progress and completion trends",
     };
   }
 
-  if (pathname.startsWith('/profile')) {
+  if (pathname.startsWith("/profile")) {
     return {
-      title: 'Account',
-      subtitle: 'Profile and settings',
+      title: "Account",
+      subtitle: "Profile and settings",
     };
   }
 
   return {
-    title: 'Workspace',
-    subtitle: 'Plan, review, and adjust',
+    title: "Workspace",
+    subtitle: "Plan, review, and adjust",
   };
 };
 
@@ -70,22 +80,27 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const selectedStatuses = useTaskFilterStore((state) => state.selectedStatuses);
-  const setSelectedStatuses = useTaskFilterStore((state) => state.setSelectedStatuses);
+  const selectedStatuses = useTaskFilterStore(
+    (state) => state.selectedStatuses,
+  );
+  const setSelectedStatuses = useTaskFilterStore(
+    (state) => state.setSelectedStatuses,
+  );
   const avatarUrl = getAvatarUrl(user);
-  const [brokenAvatarUrl, setBrokenAvatarUrl] = useState('');
+  const [brokenAvatarUrl, setBrokenAvatarUrl] = useState("");
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const statusMenuRef = useRef(null);
   const showAvatar = Boolean(avatarUrl) && brokenAvatarUrl !== avatarUrl;
   const pageContext = getTopbarContext(location.pathname);
-  const selectedStatusLabels = STATUS_OPTIONS
-    .filter((option) => selectedStatuses.includes(option.id))
-    .map((option) => option.label);
-  const statusFilterLabel = selectedStatusLabels.length === 0
-    ? 'All tasks'
-    : selectedStatusLabels.length === 1
-      ? selectedStatusLabels[0]
-      : `${selectedStatusLabels.length} statuses`;
+  const selectedStatusLabels = STATUS_OPTIONS.filter((option) =>
+    selectedStatuses.includes(option.id),
+  ).map((option) => option.label);
+  const statusFilterLabel =
+    selectedStatusLabels.length === 0
+      ? "All tasks"
+      : selectedStatusLabels.length === 1
+        ? selectedStatusLabels[0]
+        : `${selectedStatusLabels.length} statuses`;
 
   useEffect(() => {
     const handlePointerDown = (event) => {
@@ -95,17 +110,17 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
     };
 
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setIsStatusMenuOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -113,17 +128,17 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
     setSelectedStatuses(
       selectedStatuses.includes(status)
         ? selectedStatuses.filter((selectedStatus) => selectedStatus !== status)
-        : [...selectedStatuses, status]
+        : [...selectedStatuses, status],
     );
   };
 
   const handleClearStatuses = () => {
     setSelectedStatuses([]);
   };
-  const todayLabel = new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
+  const todayLabel = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
   }).format(new Date());
 
   const handleBack = () => {
@@ -132,13 +147,13 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
       return;
     }
 
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
 
   return (
     <header
       className="ui-topbar"
-      style={{ left: isDesktop ? 'var(--sidebar-w)' : 0 }}
+      style={{ left: isDesktop ? "var(--sidebar-w)" : 0 }}
     >
       <div className="flex min-w-0 items-center gap-3">
         {!isDesktop && (
@@ -171,7 +186,11 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
 
       <div className="ui-topbar-actions">
         <ThemeToggle />
-        <div className="ui-global-task-filter" ref={statusMenuRef} data-open={isStatusMenuOpen ? 'true' : 'false'}>
+        <div
+          className="ui-global-task-filter"
+          ref={statusMenuRef}
+          data-open={isStatusMenuOpen ? "true" : "false"}
+        >
           <button
             type="button"
             onClick={() => setIsStatusMenuOpen((isOpen) => !isOpen)}
@@ -181,11 +200,18 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
           >
             <ListFilter className="h-4 w-4" aria-hidden="true" />
             <span>{statusFilterLabel}</span>
-            <ChevronDown className="ui-global-task-filter__chevron h-4 w-4" aria-hidden="true" />
+            <ChevronDown
+              className="ui-global-task-filter__chevron h-4 w-4"
+              aria-hidden="true"
+            />
           </button>
 
           {isStatusMenuOpen ? (
-            <div className="ui-global-task-filter__menu" role="menu" aria-label="Filter tasks by status">
+            <div
+              className="ui-global-task-filter__menu"
+              role="menu"
+              aria-label="Filter tasks by status"
+            >
               <div className="ui-global-task-filter__menu-header">
                 <span>Task status</span>
                 {selectedStatuses.length > 0 ? (
@@ -210,9 +236,12 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
                       aria-checked={isSelected}
                       onClick={() => handleStatusToggle(option.id)}
                       className="ui-global-task-filter__option ui-focus-ring"
-                      data-selected={isSelected ? 'true' : 'false'}
+                      data-selected={isSelected ? "true" : "false"}
                     >
-                      <span className="ui-global-task-filter__check" aria-hidden="true">
+                      <span
+                        className="ui-global-task-filter__check"
+                        aria-hidden="true"
+                      >
                         {isSelected ? <Check className="h-3.5 w-3.5" /> : null}
                       </span>
                       <span>{option.label}</span>
@@ -226,14 +255,14 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
 
         <button
           type="button"
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate("/profile")}
           className="ui-avatar-button ui-focus-ring"
           aria-label="Go to profile"
         >
           {showAvatar ? (
             <img
               src={avatarUrl}
-              alt={user?.name ? `${user.name} avatar` : 'User avatar'}
+              alt={user?.name ? `${user.name} avatar` : "User avatar"}
               className="h-full w-full rounded-full object-cover"
               width={40}
               height={40}

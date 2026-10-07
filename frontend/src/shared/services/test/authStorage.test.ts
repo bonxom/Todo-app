@@ -24,7 +24,11 @@ describe("authStorage", () => {
 
     expect(getStoredToken()).toBe("tok-123");
     expect(getStoredRefreshToken()).toBe("ref-456");
-    expect(getStoredUser()).toEqual({ email: "u@example.com", name: "User", role: "USER" });
+    expect(getStoredUser()).toEqual({
+      email: "u@example.com",
+      name: "User",
+      role: "USER",
+    });
   });
 
   it("clears stored auth keys", () => {
@@ -53,7 +57,11 @@ describe("authStorage", () => {
     localStorage.setItem("token", "t1");
     localStorage.setItem("refreshToken", "r1");
 
-    updateStoredUser({ email: "updated@example.com", name: "Up", role: "USER" });
+    updateStoredUser({
+      email: "updated@example.com",
+      name: "Up",
+      role: "USER",
+    });
 
     expect(getStoredToken()).toBe("t1");
     expect(getStoredRefreshToken()).toBe("r1");

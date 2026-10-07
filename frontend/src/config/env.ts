@@ -3,7 +3,9 @@ export interface AppEnv {
   apiDebug: boolean;
 }
 
-type EnvSource = Partial<Pick<ImportMetaEnv, "VITE_SERVER_URL" | "VITE_API_DEBUG">>;
+type EnvSource = Partial<
+  Pick<ImportMetaEnv, "VITE_SERVER_URL" | "VITE_API_DEBUG">
+>;
 
 export const parseEnv = (source: EnvSource): AppEnv => ({
   serverUrl: source.VITE_SERVER_URL?.trim() || undefined,

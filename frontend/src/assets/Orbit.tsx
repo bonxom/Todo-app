@@ -1,4 +1,4 @@
-import { useId, type SVGProps } from 'react';
+import { useId, type SVGProps } from "react";
 
 type OrbitProps = SVGProps<SVGSVGElement> & {
   title?: string;
@@ -19,7 +19,7 @@ export default function Orbit({ title, ...props }: OrbitProps) {
       viewBox="0 0 371 302"
       width={371}
       height={302}
-      role={title ? 'img' : undefined}
+      role={title ? "img" : undefined}
       aria-labelledby={title ? titleId : undefined}
       aria-hidden={title ? undefined : true}
       focusable="false"
@@ -48,7 +48,13 @@ export default function Orbit({ title, ...props }: OrbitProps) {
           <feGaussianBlur stdDeviation="7" />
         </filter>
       </defs>
-      <circle cx="188" cy="173" r="48" fill={`url(#${glow})`} filter={`url(#${softGlow})`} />
+      <circle
+        cx="188"
+        cy="173"
+        r="48"
+        fill={`url(#${glow})`}
+        filter={`url(#${softGlow})`}
+      />
       <path
         d="M244 83 A90 90 0 1 0 286 128"
         fill="none"

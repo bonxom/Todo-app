@@ -1,24 +1,33 @@
-import { useState } from 'react';
-import { ChevronRight, Folder, Trash2 } from 'lucide-react';
-import TaskCard from '@/features/tasks/components/category/TaskCard';
-import CategoryDetailModal from './CategoryDetailModal';
-import TaskDetailButton from '@/features/tasks/components/TaskDetailButton';
-import DeleteCategoryDialog from '@/features/tasks/components/dialogs/DeleteCategoryDialog';
-import { useDeleteCategoryMutation } from '../api/categoryMutations';
-import { useUpdateTaskMutation } from '@/features/tasks/api/taskMutations';
-import { getTaskDragData } from '@/shared/utils/taskDrag';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+import { useState } from "react";
+import { ChevronRight, Folder, Trash2 } from "lucide-react";
+import TaskCard from "@/features/tasks/components/category/TaskCard";
+import CategoryDetailModal from "./CategoryDetailModal";
+import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
+import DeleteCategoryDialog from "@/features/tasks/components/dialogs/DeleteCategoryDialog";
+import { useDeleteCategoryMutation } from "../api/categoryMutations";
+import { useUpdateTaskMutation } from "@/features/tasks/api/taskMutations";
+import { getTaskDragData } from "@/shared/utils/taskDrag";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
-const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId }) => {
+const CategoryCard = ({
+  category,
+  description,
+  tasks,
+  onTaskUpdated,
+  categoryId,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const completedTasks = tasks.filter((task) => task.status === 'completed').length;
+  const completedTasks = tasks.filter(
+    (task) => task.status === "completed",
+  ).length;
   const totalTasks = tasks.length;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const completionRate =
+    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   const displayTasks = tasks.slice(0, 3);
   const hasMore = tasks.length > 3;
   const descriptionId = `category-${categoryId}-description`;
@@ -42,15 +51,20 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
       setIsDeleteDialogOpen(false);
       onTaskUpdated?.();
     } catch (error) {
-      console.error('Failed to delete category:', error);
-      alert(getApiErrorMessage(error, 'Failed to delete category. Please try again.'));
+      console.error("Failed to delete category:", error);
+      alert(
+        getApiErrorMessage(
+          error,
+          "Failed to delete category. Please try again.",
+        ),
+      );
     }
   };
 
   const handleDragOver = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = "move";
     setIsDragOver(true);
   };
 
@@ -87,8 +101,8 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
       });
       onTaskUpdated?.();
     } catch (error) {
-      console.error('Failed to move task:', error);
-      alert(getApiErrorMessage(error, 'Failed to move task to this category.'));
+      console.error("Failed to move task:", error);
+      alert(getApiErrorMessage(error, "Failed to move task to this category."));
     }
   };
 
@@ -118,10 +132,10 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
       <article
         className={`ui-drop-zone ui-section-card flex h-full flex-col overflow-hidden transition-[border-color,box-shadow,background-color,transform] duration-200 ${
           isDragOver
-            ? 'border-[color:var(--color-accent)] bg-[var(--color-accent-soft)]'
-            : 'hover:border-[color:var(--color-accent)]'
+            ? "border-[color:var(--color-accent)] bg-[var(--color-accent-soft)]"
+            : "hover:border-[color:var(--color-accent)]"
         }`}
-        data-drag-active={isDragOver ? 'true' : 'false'}
+        data-drag-active={isDragOver ? "true" : "false"}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -143,12 +157,14 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
                   <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[color:var(--color-text-muted)]">
                     Category
                   </p>
-                  <h3 className="truncate text-lg font-semibold text-[color:var(--color-text)]">{category}</h3>
+                  <h3 className="truncate text-lg font-semibold text-[color:var(--color-text)]">
+                    {category}
+                  </h3>
                 </div>
               </div>
             </button>
 
-            {category !== 'Uncategorized' ? (
+            {category !== "Uncategorized" ? (
               <button
                 type="button"
                 onClick={handleDeleteClick}
@@ -164,19 +180,25 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
             id={descriptionId}
             className="mt-4 min-h-[3rem] break-words text-sm leading-6 text-[color:var(--color-text-muted)]"
           >
-            {description || 'No category description yet.'}
+            {description || "No category description yet."}
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="ui-chip ui-tabular">{totalTasks} tasks</span>
-            <span className="ui-chip ui-chip--success ui-tabular">{completedTasks} completed</span>
-            <span className="ui-chip ui-tabular">{completionRate}% complete</span>
+            <span className="ui-chip ui-chip--success ui-tabular">
+              {completedTasks} completed
+            </span>
+            <span className="ui-chip ui-tabular">
+              {completionRate}% complete
+            </span>
           </div>
 
           <div className="mt-4">
             <div className="flex items-center justify-between text-xs text-[color:var(--color-text-muted)]">
               <span>Progress</span>
-              <span className="ui-tabular">{completedTasks}/{totalTasks}</span>
+              <span className="ui-tabular">
+                {completedTasks}/{totalTasks}
+              </span>
             </div>
             <div
               className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-surface-muted)]"
@@ -210,7 +232,9 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
             </div>
           ) : (
             <div className="rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-8 text-center">
-              <p className="text-sm font-medium text-[color:var(--color-text)]">No tasks in this category</p>
+              <p className="text-sm font-medium text-[color:var(--color-text)]">
+                No tasks in this category
+              </p>
               <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">
                 Drag a task here or assign one from a task form.
               </p>
@@ -219,14 +243,16 @@ const CategoryCard = ({ category, description, tasks, onTaskUpdated, categoryId 
 
           <div className="mt-4 flex items-center justify-between gap-3">
             <div className="text-xs text-[color:var(--color-text-muted)]">
-              {hasMore ? `${tasks.length - 3} more tasks available` : 'Recent tasks shown above'}
+              {hasMore
+                ? `${tasks.length - 3} more tasks available`
+                : "Recent tasks shown above"}
             </div>
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
               className="ui-btn-tertiary shrink-0 px-0"
             >
-              <span>{hasMore ? 'View All Tasks' : 'Open Details'}</span>
+              <span>{hasMore ? "View All Tasks" : "Open Details"}</span>
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>

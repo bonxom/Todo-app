@@ -23,12 +23,14 @@
 ### Task 1: Create directory structure and constants
 
 **Files:**
+
 - Create: `backend/constants/taskStatus.js`
 - Create: `backend/constants/priority.js`
 - Create: `backend/constants/projectStatus.js`
 - Create: `backend/constants/datePatterns.js`
 
 **Interfaces:**
+
 - Produces:
   - `TASK_STATUSES`, `FINISHED_STATUSES`, `ACTIVE_STATUSES` from `constants/taskStatus.js`
   - `PRIORITIES` from `constants/priority.js`
@@ -44,30 +46,38 @@ mkdir -p backend/constants backend/validations backend/repositories backend/serv
 - [ ] **Step 2: Write constants/taskStatus.js**
 
 ```js
-export const TASK_STATUSES = ['pending', 'in-progress', 'completed', 'given-up'];
-export const FINISHED_STATUSES = ['completed', 'given-up'];
-export const ACTIVE_STATUSES = ['pending', 'in-progress'];
+export const TASK_STATUSES = [
+  "pending",
+  "in-progress",
+  "completed",
+  "given-up",
+];
+export const FINISHED_STATUSES = ["completed", "given-up"];
+export const ACTIVE_STATUSES = ["pending", "in-progress"];
 ```
 
 - [ ] **Step 3: Write constants/priority.js**
 
 ```js
-export const PRIORITIES = ['Low', 'Medium', 'High'];
+export const PRIORITIES = ["Low", "Medium", "High"];
 ```
 
 - [ ] **Step 4: Write constants/projectStatus.js**
 
 ```js
-export const PROJECT_STATUSES = ['active', 'completed'];
+export const PROJECT_STATUSES = ["active", "completed"];
 ```
 
 - [ ] **Step 5: Write constants/datePatterns.js**
 
 ```js
 export const DATE_ONLY_PATTERN = /^(\d{4})[-/](\d{2})[-/](\d{2})$/;
-export const DATE_TIME_LOCAL_BARE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(:\d{2})?$/;
-export const DATE_TIME_WITH_TZ_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(:\d{2})?(Z|[+-]\d{2}:\d{2})$/;
-export const DISPLAY_DATE_TIME_PATTERN = /^(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})$/;
+export const DATE_TIME_LOCAL_BARE_PATTERN =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(:\d{2})?$/;
+export const DATE_TIME_WITH_TZ_PATTERN =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(:\d{2})?(Z|[+-]\d{2}:\d{2})$/;
+export const DISPLAY_DATE_TIME_PATTERN =
+  /^(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})$/;
 export const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 ```
 
@@ -91,9 +101,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 2: Create custom error classes
 
 **Files:**
+
 - Create: `backend/utils/errors.js`
 
 **Interfaces:**
+
 - Produces: `AppError`, `NotFoundError`, `ValidationError`, `ForbiddenError`, `UnauthorizedError`, `ConflictError`
 - Each has `message` (string) and `statusCode` (number) properties
 - `errorHandler` middleware (Task 4) and all services (Tasks 8-14) consume these
@@ -109,31 +121,31 @@ export class AppError extends Error {
 }
 
 export class NotFoundError extends AppError {
-  constructor(message = 'Resource not found') {
+  constructor(message = "Resource not found") {
     super(message, 404);
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message = 'Validation failed') {
+  constructor(message = "Validation failed") {
     super(message, 400);
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = 'Forbidden') {
+  constructor(message = "Forbidden") {
     super(message, 403);
   }
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message = 'Unauthorized') {
+  constructor(message = "Unauthorized") {
     super(message, 401);
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(message = 'Resource already exists') {
+  constructor(message = "Resource already exists") {
     super(message, 409);
   }
 }
@@ -159,6 +171,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 3: Create Zod validation schemas
 
 **Files:**
+
 - Create: `backend/validations/taskValidation.js`
 - Create: `backend/validations/authValidation.js`
 - Create: `backend/validations/categoryValidation.js`
@@ -167,6 +180,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Create: `backend/validations/aiValidation.js`
 
 **Interfaces:**
+
 - Consumes: `PRIORITIES`, `TASK_STATUSES` from `constants/priority.js`, `constants/taskStatus.js`; `PROJECT_STATUSES` from `constants/projectStatus.js`
 - Produces: `createTaskSchema`, `updateTaskSchema`; `registerSchema`, `loginSchema`, `changePasswordSchema`; `createCategorySchema`, `updateCategorySchema`; `createProjectSchema`, `updateProjectSchema`; `createUserSchema`, `updateUserSchema`; `generateTasksSchema`, `chatSchema`
 - Routes (Task 16) and `validate` middleware (Task 4) consume these
@@ -174,10 +188,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] **Step 1: Write validations/categoryValidation.js**
 
 ```js
-import { z } from 'zod';
+import { z } from "zod";
 
 export const createCategorySchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
+  name: z.string().min(1, "Name is required").max(100),
   description: z.string().max(500).optional(),
 });
 
@@ -190,19 +204,25 @@ export const updateCategorySchema = z.object({
 - [ ] **Step 2: Write validations/projectValidation.js**
 
 ```js
-import { z } from 'zod';
-import { PROJECT_STATUSES } from '../constants/projectStatus.js';
+import { z } from "zod";
+import { PROJECT_STATUSES } from "../constants/projectStatus.js";
 
 export const createProjectSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
+  name: z.string().min(1, "Name is required").max(100),
   description: z.string().max(500).optional(),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color must be a six-digit hex color').optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a six-digit hex color")
+    .optional(),
 });
 
 export const updateProjectSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color must be a six-digit hex color').optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a six-digit hex color")
+    .optional(),
   status: z.enum(PROJECT_STATUSES).optional(),
 });
 ```
@@ -210,12 +230,12 @@ export const updateProjectSchema = z.object({
 - [ ] **Step 3: Write validations/taskValidation.js**
 
 ```js
-import { z } from 'zod';
-import { PRIORITIES } from '../constants/priority.js';
-import { TASK_STATUSES } from '../constants/taskStatus.js';
+import { z } from "zod";
+import { PRIORITIES } from "../constants/priority.js";
+import { TASK_STATUSES } from "../constants/taskStatus.js";
 
 export const createTaskSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200),
+  title: z.string().min(1, "Title is required").max(200),
   description: z.string().max(1000).optional(),
   priority: z.enum(PRIORITIES).optional(),
   categoryId: z.string().optional(),
@@ -239,39 +259,39 @@ export const updateTaskSchema = z.object({
 - [ ] **Step 4: Write validations/authValidation.js**
 
 ```js
-import { z } from 'zod';
+import { z } from "zod";
 
 export const registerSchema = z.object({
-  email: z.string().email('Valid email is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  name: z.string().min(1, 'Name is required').max(100),
-  dob: z.string().min(1, 'Date of birth is required'),
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(1, "Name is required").max(100),
+  dob: z.string().min(1, "Date of birth is required"),
   nationality: z.string().max(100).optional(),
 });
 
 export const loginSchema = z.object({
-  email: z.string().email('Valid email is required'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
-  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
 });
 ```
 
 - [ ] **Step 5: Write validations/userValidation.js**
 
 ```js
-import { z } from 'zod';
+import { z } from "zod";
 
 export const createUserSchema = z.object({
-  email: z.string().email('Valid email is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  name: z.string().min(1, 'Name is required'),
-  dob: z.string().min(1, 'Date of birth is required'),
-  nationality: z.string().min(1, 'Nationality is required'),
-  role: z.enum(['USER', 'ADMIN']).optional(),
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(1, "Name is required"),
+  dob: z.string().min(1, "Date of birth is required"),
+  nationality: z.string().min(1, "Nationality is required"),
+  role: z.enum(["USER", "ADMIN"]).optional(),
 });
 
 export const updateUserSchema = z.object({
@@ -285,14 +305,14 @@ export const updateUserSchema = z.object({
 - [ ] **Step 6: Write validations/aiValidation.js**
 
 ```js
-import { z } from 'zod';
+import { z } from "zod";
 
 export const generateTasksSchema = z.object({
-  userRequirement: z.string().min(1, 'userRequirement is required').max(2000),
+  userRequirement: z.string().min(1, "userRequirement is required").max(2000),
 });
 
 export const chatSchema = z.object({
-  userInput: z.string().min(1, 'userInput is required').max(2000),
+  userInput: z.string().min(1, "userInput is required").max(2000),
 });
 ```
 
@@ -316,10 +336,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 4: Create new middlewares (validate, errorHandler)
 
 **Files:**
+
 - Create: `backend/middlewares/validate.js`
 - Create: `backend/middlewares/errorHandler.js`
 
 **Interfaces:**
+
 - Consumes: `AppError` from `utils/errors.js`
 - Produces:
   - `validate(schema)` — Express middleware that runs `schema.safeParse(req.body)`, sets `req.validatedBody` on success, returns 400 on failure
@@ -341,7 +363,7 @@ export const validate = (schema) => (req, res, next) => {
 - [ ] **Step 2: Write middlewares/errorHandler.js**
 
 ```js
-import { AppError } from '../utils/errors.js';
+import { AppError } from "../utils/errors.js";
 
 export const errorHandler = (err, req, res, next) => {
   if (res.headersSent) {
@@ -352,13 +374,15 @@ export const errorHandler = (err, req, res, next) => {
     return res.status(err.statusCode).json({ message: err.message });
   }
 
-  console.error('Unhandled error:', err);
+  console.error("Unhandled error:", err);
 
-  if (req.path.startsWith('/api/') || req.path === '/healthz') {
-    return res.status(500).json({ message: err.message || 'Internal server error' });
+  if (req.path.startsWith("/api/") || req.path === "/healthz") {
+    return res
+      .status(500)
+      .json({ message: err.message || "Internal server error" });
   }
 
-  res.status(500).send('Internal server error');
+  res.status(500).send("Internal server error");
 };
 ```
 
@@ -382,17 +406,19 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 5: Create libs/aiClient.js
 
 **Files:**
+
 - Create: `backend/libs/aiClient.js`
 
 **Interfaces:**
+
 - Consumes: `getAiApiKey`, `getAiBaseUrl` from `config/env.js`
 - Produces: `getAiClient()` — returns singleton OpenAI client instance, throws `Error` if API key or base URL is missing
 
 - [ ] **Step 1: Write libs/aiClient.js**
 
 ```js
-import OpenAI from 'openai';
-import { getAiApiKey, getAiBaseUrl } from '../config/env.js';
+import OpenAI from "openai";
+import { getAiApiKey, getAiBaseUrl } from "../config/env.js";
 
 let client;
 
@@ -402,11 +428,11 @@ export const getAiClient = () => {
     const baseURL = getAiBaseUrl();
 
     if (!apiKey) {
-      throw new Error('Missing required environment variable: AI_API_KEY');
+      throw new Error("Missing required environment variable: AI_API_KEY");
     }
 
     if (!baseURL) {
-      throw new Error('Missing required environment variable: AI_BASE_URL');
+      throw new Error("Missing required environment variable: AI_BASE_URL");
     }
 
     client = new OpenAI({ apiKey, baseURL, timeout: 60000 });
@@ -436,6 +462,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 6: Rename directories (model→models, middleware→middlewares, controller→controllers, route→routes)
 
 **Files:**
+
 - Rename: `backend/model/` → `backend/models/`
 - Rename: `backend/middleware/` → `backend/middlewares/`
 - Rename: `backend/controller/` → `backend/controllers/`
@@ -443,6 +470,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: ALL files that import from these directories
 
 **Interfaces:**
+
 - This is a mechanical rename — no logic changes
 - Every file that imports from `../model/`, `../middleware/`, `../controller/`, `../route/` must be updated
 - Files to update:
@@ -491,76 +519,81 @@ mv backend/route backend/routes
 - [ ] **Step 5: Update imports in config/initialize.js**
 
 Replace `../model/` with `../models/` in all 4 imports:
+
 ```js
-import User from '../models/User.js';
-import Category from '../models/Category.js';
-import Stat from '../models/Stat.js';
-import Task from '../models/Task.js';
+import User from "../models/User.js";
+import Category from "../models/Category.js";
+import Stat from "../models/Stat.js";
+import Task from "../models/Task.js";
 ```
 
 - [ ] **Step 6: Update imports in middlewares/auth.js**
 
 Replace `../model/User.js` with `../models/User.js`:
+
 ```js
-import User from '../models/User.js';
+import User from "../models/User.js";
 ```
 
 - [ ] **Step 7: Update imports in controllers/taskController.js**
 
 Replace `../model/` with `../models/`:
+
 ```js
-import Task from '../models/Task.js';
-import Category from '../models/Category.js';
-import Project from '../models/Project.js';
+import Task from "../models/Task.js";
+import Category from "../models/Category.js";
+import Project from "../models/Project.js";
 ```
+
 Keep `./statController.js`, `../utils/dateTime.js` unchanged.
 
 - [ ] **Step 8: Update imports in controllers/categoryController.js**
 
 ```js
-import Category from '../models/Category.js';
-import User from '../models/User.js';
+import Category from "../models/Category.js";
+import User from "../models/User.js";
 ```
 
 - [ ] **Step 9: Update imports in controllers/projectController.js**
 
 ```js
-import Project from '../models/Project.js';
-import Task from '../models/Task.js';
+import Project from "../models/Project.js";
+import Task from "../models/Task.js";
 ```
 
 - [ ] **Step 10: Update imports in controllers/statController.js**
 
 ```js
-import Stat from '../models/Stat.js';
-import Task from '../models/Task.js';
-import Category from '../models/Category.js';
-import Project from '../models/Project.js';
+import Stat from "../models/Stat.js";
+import Task from "../models/Task.js";
+import Category from "../models/Category.js";
+import Project from "../models/Project.js";
 ```
 
 - [ ] **Step 11: Update imports in controllers/userController.js**
 
 ```js
-import User from '../models/User.js';
+import User from "../models/User.js";
 ```
 
 - [ ] **Step 12: Update imports in controllers/authController.js**
 
 ```js
-import User from '../models/User.js';
-import generateToken from '../utils/generateToken.js';
+import User from "../models/User.js";
+import generateToken from "../utils/generateToken.js";
 ```
 
 - [ ] **Step 13: Update imports in controllers/aiController.js**
 
 ```js
-import Category from '../models/Category.js';
-import Task from '../models/Task.js';
+import Category from "../models/Category.js";
+import Task from "../models/Task.js";
 ```
 
 - [ ] **Step 14: Update imports in all route files (7 files)**
 
 Each route file has imports from `../controller/` and `../middleware/auth.js`. Update to:
+
 - `../controllers/` (controller imports)
 - `../middlewares/auth.js` (middleware import)
 
@@ -569,13 +602,13 @@ File list: `routes/taskRoute.js`, `routes/authRoute.js`, `routes/categoryRoute.j
 - [ ] **Step 15: Update imports in index.js**
 
 ```js
-import userRouter from './routes/userRoute.js';
-import categoryRouter from './routes/categoryRoute.js';
-import projectRouter from './routes/projectRoute.js';
-import taskRouter from './routes/taskRoute.js';
-import authRouter from './routes/authRoute.js';
-import aiRouter from './routes/aiRoutes.js';
-import statRouter from './routes/statRoute.js';
+import userRouter from "./routes/userRoute.js";
+import categoryRouter from "./routes/categoryRoute.js";
+import projectRouter from "./routes/projectRoute.js";
+import taskRouter from "./routes/taskRoute.js";
+import authRouter from "./routes/authRoute.js";
+import aiRouter from "./routes/aiRoutes.js";
+import statRouter from "./routes/statRoute.js";
 ```
 
 - [ ] **Step 16: Verify the app starts**
@@ -600,6 +633,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 7: Create all repositories (data access layer)
 
 **Files:**
+
 - Create: `backend/repositories/categoryRepository.js`
 - Create: `backend/repositories/userRepository.js`
 - Create: `backend/repositories/projectRepository.js`
@@ -607,6 +641,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Create: `backend/repositories/statRepository.js`
 
 **Interfaces:**
+
 - Consumes: Mongoose models from `../models/`
 - Produces: Repository objects with query methods (see each file for exact signatures)
 - All services (Tasks 8-14) consume these
@@ -614,7 +649,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] **Step 1: Write repositories/categoryRepository.js**
 
 ```js
-import Category from '../models/Category.js';
+import Category from "../models/Category.js";
 
 export const categoryRepository = {
   findById(id) {
@@ -622,15 +657,15 @@ export const categoryRepository = {
   },
 
   findByIdPopulated(id) {
-    return Category.findById(id).populate('userId', 'name email');
+    return Category.findById(id).populate("userId", "name email");
   },
 
   findByUser(userId) {
-    return Category.find({ userId }).populate('userId', 'name email');
+    return Category.find({ userId }).populate("userId", "name email");
   },
 
   findAll() {
-    return Category.find({}).populate('userId', 'name email');
+    return Category.find({}).populate("userId", "name email");
   },
 
   findByUserAndName(userId, name) {
@@ -642,7 +677,11 @@ export const categoryRepository = {
   },
 
   updateById(id, update) {
-    return Category.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true });
+    return Category.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    );
   },
 
   deleteById(id) {
@@ -654,7 +693,7 @@ export const categoryRepository = {
 - [ ] **Step 2: Write repositories/userRepository.js**
 
 ```js
-import User from '../models/User.js';
+import User from "../models/User.js";
 
 export const userRepository = {
   findById(id) {
@@ -662,11 +701,11 @@ export const userRepository = {
   },
 
   findByIdWithPassword(id) {
-    return User.findById(id).select('+password');
+    return User.findById(id).select("+password");
   },
 
   findByIdPopulated(id) {
-    return User.findById(id).populate('categories', 'name description');
+    return User.findById(id).populate("categories", "name description");
   },
 
   findByEmail(email) {
@@ -674,11 +713,13 @@ export const userRepository = {
   },
 
   findByEmailWithPassword(email) {
-    return User.findOne({ email }).select('+password');
+    return User.findOne({ email }).select("+password");
   },
 
   findAll() {
-    return User.find().select('-password').populate('categories', 'name description');
+    return User.find()
+      .select("-password")
+      .populate("categories", "name description");
   },
 
   create(data) {
@@ -686,7 +727,11 @@ export const userRepository = {
   },
 
   updateById(id, update) {
-    return User.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true }).select('-password');
+    return User.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    ).select("-password");
   },
 
   deleteById(id) {
@@ -694,11 +739,15 @@ export const userRepository = {
   },
 
   addCategory(userId, categoryId) {
-    return User.findByIdAndUpdate(userId, { $push: { categories: categoryId } });
+    return User.findByIdAndUpdate(userId, {
+      $push: { categories: categoryId },
+    });
   },
 
   removeCategory(userId, categoryId) {
-    return User.findByIdAndUpdate(userId, { $pull: { categories: categoryId } });
+    return User.findByIdAndUpdate(userId, {
+      $pull: { categories: categoryId },
+    });
   },
 };
 ```
@@ -706,7 +755,7 @@ export const userRepository = {
 - [ ] **Step 3: Write repositories/projectRepository.js**
 
 ```js
-import Project from '../models/Project.js';
+import Project from "../models/Project.js";
 
 export const projectRepository = {
   findById(id) {
@@ -714,7 +763,7 @@ export const projectRepository = {
   },
 
   findByIdPopulated(id) {
-    return Project.findById(id).populate('userId', 'name email');
+    return Project.findById(id).populate("userId", "name email");
   },
 
   findByUser(userId) {
@@ -722,11 +771,15 @@ export const projectRepository = {
   },
 
   findByUserPopulated(userId) {
-    return Project.find({ userId }).populate('userId', 'name email').sort({ createdAt: -1 });
+    return Project.find({ userId })
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 });
   },
 
   findAllPopulated() {
-    return Project.find().populate('userId', 'name email').sort({ createdAt: -1 });
+    return Project.find()
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 });
   },
 
   findByUserAndName(userId, name) {
@@ -738,11 +791,19 @@ export const projectRepository = {
   },
 
   updateById(id, update) {
-    return Project.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true });
+    return Project.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    );
   },
 
   updateByIdPopulated(id, update) {
-    return Project.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true }).populate('userId', 'name email');
+    return Project.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    ).populate("userId", "name email");
   },
 
   deleteById(id) {
@@ -754,18 +815,18 @@ export const projectRepository = {
 - [ ] **Step 4: Write repositories/taskRepository.js**
 
 ```js
-import Task from '../models/Task.js';
+import Task from "../models/Task.js";
 
 const TASK_POPULATE = [
   {
-    path: 'categoryId',
-    select: 'name userId',
-    populate: { path: 'userId', select: 'name email' },
+    path: "categoryId",
+    select: "name userId",
+    populate: { path: "userId", select: "name email" },
   },
   {
-    path: 'projectId',
-    select: 'name description color status userId',
-    populate: { path: 'userId', select: 'name email' },
+    path: "projectId",
+    select: "name description color status userId",
+    populate: { path: "userId", select: "name email" },
   },
 ];
 
@@ -793,12 +854,19 @@ export const taskRepository = {
   },
 
   updateById(id, update) {
-    return Task.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true });
+    return Task.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    );
   },
 
   updateByIdPopulated(id, update) {
-    return Task.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true })
-      .populate(TASK_POPULATE);
+    return Task.findByIdAndUpdate(
+      id,
+      { $set: update },
+      { new: true, runValidators: true },
+    ).populate(TASK_POPULATE);
   },
 
   deleteById(id) {
@@ -814,46 +882,52 @@ export const taskRepository = {
 - [ ] **Step 5: Write repositories/statRepository.js**
 
 ```js
-import Stat from '../models/Stat.js';
-import Task from '../models/Task.js';
-import Category from '../models/Category.js';
-import Project from '../models/Project.js';
+import Stat from "../models/Stat.js";
+import Task from "../models/Task.js";
+import Category from "../models/Category.js";
+import Project from "../models/Project.js";
 
 export const statRepository = {
   findByUser(userId) {
     return Stat.findOne({ userId });
   },
 
-
   async getTasksByUser(user) {
-    if (user.role === 'ADMIN') {
+    if (user.role === "ADMIN") {
       return Task.find({})
-        .populate('categoryId', 'name userId')
-        .populate('projectId', 'name userId');
+        .populate("categoryId", "name userId")
+        .populate("projectId", "name userId");
     }
 
     const [userCategories, userProjects] = await Promise.all([
-      Category.find({ userId: user._id }).select('_id name'),
-      Project.find({ userId: user._id }).select('_id'),
+      Category.find({ userId: user._id }).select("_id name"),
+      Project.find({ userId: user._id }).select("_id"),
     ]);
 
     const ownershipClauses = [];
     if (userCategories.length > 0) {
-      ownershipClauses.push({ categoryId: { $in: userCategories.map((c) => c._id) } });
+      ownershipClauses.push({
+        categoryId: { $in: userCategories.map((c) => c._id) },
+      });
     }
     if (userProjects.length > 0) {
-      ownershipClauses.push({ projectId: { $in: userProjects.map((p) => p._id) } });
+      ownershipClauses.push({
+        projectId: { $in: userProjects.map((p) => p._id) },
+      });
     }
 
     if (ownershipClauses.length === 0) {
       return [];
     }
 
-    const query = ownershipClauses.length === 1 ? ownershipClauses[0] : { $or: ownershipClauses };
+    const query =
+      ownershipClauses.length === 1
+        ? ownershipClauses[0]
+        : { $or: ownershipClauses };
 
     return Task.find(query)
-      .populate('categoryId', 'name userId')
-      .populate('projectId', 'name userId');
+      .populate("categoryId", "name userId")
+      .populate("projectId", "name userId");
   },
 };
 ```
@@ -878,9 +952,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 8: Create categoryService
 
 **Files:**
+
 - Create: `backend/services/categoryService.js`
 
 **Interfaces:**
+
 - Consumes: `categoryRepository` from `../repositories/categoryRepository.js`; `userRepository` from `../repositories/userRepository.js`; `NotFoundError`, `ValidationError`, `ForbiddenError` from `../utils/errors.js`
 - Produces: `categoryService` with methods: `create(data, userId)`, `getAll(user)`, `getById(id, user)`, `update(id, data, user)`, `delete(id, user)`
 - Task 15 (categoryController) consumes this
@@ -888,22 +964,31 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] **Step 1: Write services/categoryService.js**
 
 ```js
-import { categoryRepository } from '../repositories/categoryRepository.js';
-import { userRepository } from '../repositories/userRepository.js';
-import { NotFoundError, ValidationError, ForbiddenError } from '../utils/errors.js';
+import { categoryRepository } from "../repositories/categoryRepository.js";
+import { userRepository } from "../repositories/userRepository.js";
+import {
+  NotFoundError,
+  ValidationError,
+  ForbiddenError,
+} from "../utils/errors.js";
 
 const verifyOwnership = (category, user) => {
-  if (user.role === 'ADMIN') return;
+  if (user.role === "ADMIN") return;
   if (category.userId.toString() !== user._id.toString()) {
-    throw new ForbiddenError("You don't have permission to access this category");
+    throw new ForbiddenError(
+      "You don't have permission to access this category",
+    );
   }
 };
 
 export const categoryService = {
   async create(data, userId) {
-    const existing = await categoryRepository.findByUserAndName(userId, data.name);
+    const existing = await categoryRepository.findByUserAndName(
+      userId,
+      data.name,
+    );
     if (existing) {
-      throw new ValidationError('Category name already exists for this user');
+      throw new ValidationError("Category name already exists for this user");
     }
 
     const category = await categoryRepository.create({ ...data, userId });
@@ -912,7 +997,7 @@ export const categoryService = {
   },
 
   async getAll(user) {
-    if (user.role === 'ADMIN') {
+    if (user.role === "ADMIN") {
       return categoryRepository.findAll();
     }
     return categoryRepository.findByUser(user._id);
@@ -920,23 +1005,23 @@ export const categoryService = {
 
   async getById(id, user) {
     const category = await categoryRepository.findByIdPopulated(id);
-    if (!category) throw new NotFoundError('Category not found');
+    if (!category) throw new NotFoundError("Category not found");
     verifyOwnership(category, user);
     return category;
   },
 
   async update(id, data, user) {
     const category = await categoryRepository.findById(id);
-    if (!category) throw new NotFoundError('Category not found');
+    if (!category) throw new NotFoundError("Category not found");
 
-    if (category.name === 'Uncategorized') {
+    if (category.name === "Uncategorized") {
       throw new ValidationError("Cannot update the 'Uncategorized' category");
     }
 
     verifyOwnership(category, user);
 
     if (Object.keys(data).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new ValidationError("No fields to update");
     }
 
     return categoryRepository.updateById(id, data);
@@ -944,9 +1029,9 @@ export const categoryService = {
 
   async delete(id, user) {
     const category = await categoryRepository.findById(id);
-    if (!category) throw new NotFoundError('Category not found');
+    if (!category) throw new NotFoundError("Category not found");
 
-    if (category.name === 'Uncategorized') {
+    if (category.name === "Uncategorized") {
       throw new ValidationError("Cannot delete the 'Uncategorized' category");
     }
 
@@ -978,9 +1063,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 9: Create userService
 
 **Files:**
+
 - Create: `backend/services/userService.js`
 
 **Interfaces:**
+
 - Consumes: `userRepository` from `../repositories/userRepository.js`; `NotFoundError` from `../utils/errors.js`
 - Produces: `userService` with methods: `create(data)`, `getAll()`, `getById(id)`, `update(id, data)`, `delete(id)`
 - Task 15 (userController) consumes this
@@ -988,8 +1075,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] **Step 1: Write services/userService.js**
 
 ```js
-import { userRepository } from '../repositories/userRepository.js';
-import { NotFoundError } from '../utils/errors.js';
+import { userRepository } from "../repositories/userRepository.js";
+import { NotFoundError } from "../utils/errors.js";
 
 export const userService = {
   async create(data) {
@@ -1002,23 +1089,23 @@ export const userService = {
 
   async getById(id) {
     const user = await userRepository.findByIdPopulated(id);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
     return user;
   },
 
   async update(id, data) {
     if (Object.keys(data).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new ValidationError("No fields to update");
     }
 
     const user = await userRepository.updateById(id, data);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
     return user;
   },
 
   async delete(id) {
     const user = await userRepository.deleteById(id);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
   },
 };
 ```
@@ -1030,8 +1117,8 @@ Actually, let me correct that — `ValidationError` isn't imported. Let me add i
 - [ ] **Step 1 (corrected): Write services/userService.js**
 
 ```js
-import { userRepository } from '../repositories/userRepository.js';
-import { NotFoundError, ValidationError } from '../utils/errors.js';
+import { userRepository } from "../repositories/userRepository.js";
+import { NotFoundError, ValidationError } from "../utils/errors.js";
 
 export const userService = {
   async create(data) {
@@ -1044,23 +1131,23 @@ export const userService = {
 
   async getById(id) {
     const user = await userRepository.findByIdPopulated(id);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
     return user;
   },
 
   async update(id, data) {
     if (Object.keys(data).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new ValidationError("No fields to update");
     }
 
     const user = await userRepository.updateById(id, data);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
     return user;
   },
 
   async delete(id) {
     const user = await userRepository.deleteById(id);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
   },
 };
 ```
@@ -1079,9 +1166,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 10: Create statService
 
 **Files:**
+
 - Create: `backend/services/statService.js`
 
 **Interfaces:**
+
 - Consumes: `statRepository` from `../repositories/statRepository.js`; `DATE_KEY_PATTERN` from `../constants/datePatterns.js`
 - Produces:
   - HTTP-facing: `getStats(user)`, `getCompletedTasksByDate(user, date)`
@@ -1093,19 +1182,19 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 This file is large (~200 lines) because it consolidates all the incremental stat helpers currently in `controllers/statController.js`. Each helper is a thin wrapper around a Stat document update.
 
 ```js
-import Stat from '../models/Stat.js';
-import { statRepository } from '../repositories/statRepository.js';
-import { DATE_KEY_PATTERN } from '../constants/datePatterns.js';
-import { ValidationError } from '../utils/errors.js';
+import Stat from "../models/Stat.js";
+import { statRepository } from "../repositories/statRepository.js";
+import { DATE_KEY_PATTERN } from "../constants/datePatterns.js";
+import { ValidationError } from "../utils/errors.js";
 
 const toDateKey = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return [
     date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0'),
-  ].join('-');
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 };
 
 const ensureStat = async (userId) => {
@@ -1119,10 +1208,10 @@ const ensureStat = async (userId) => {
 
 const getTodayDailyStat = (stats) => {
   const today = new Date();
-  const dateStr = today.toISOString().split('T')[0];
+  const dateStr = today.toISOString().split("T")[0];
 
   let dailyStat = stats.dailyStats.find(
-    (ds) => ds.date.toISOString().split('T')[0] === dateStr
+    (ds) => ds.date.toISOString().split("T")[0] === dateStr,
   );
 
   if (!dailyStat) {
@@ -1141,7 +1230,7 @@ const getTodayDailyStat = (stats) => {
 
 const incrementCategoryCount = (collection, categoryId, categoryName) => {
   const existing = collection.find(
-    (c) => c.categoryId && c.categoryId.toString() === categoryId.toString()
+    (c) => c.categoryId && c.categoryId.toString() === categoryId.toString(),
   );
 
   if (existing) {
@@ -1153,7 +1242,7 @@ const incrementCategoryCount = (collection, categoryId, categoryName) => {
 
 const decrementCategoryCount = (collection, categoryId) => {
   const existing = collection.find(
-    (c) => c.categoryId && c.categoryId.toString() === categoryId.toString()
+    (c) => c.categoryId && c.categoryId.toString() === categoryId.toString(),
   );
 
   if (existing) {
@@ -1163,7 +1252,7 @@ const decrementCategoryCount = (collection, categoryId) => {
 
 const getCategoryStatPayload = (task) => ({
   categoryId: task.categoryId?._id || task.categoryId || null,
-  categoryName: task.categoryId?.name || 'Uncategorized',
+  categoryName: task.categoryId?.name || "Uncategorized",
 });
 
 const getTaskCompletionDate = (task) =>
@@ -1198,10 +1287,12 @@ async function rebuildStats(user) {
   }
 
   stats.totalTasks = tasks.length;
-  stats.pendingTasks = tasks.filter((t) => t.status === 'pending').length;
-  stats.inProgressTasks = tasks.filter((t) => t.status === 'in-progress').length;
-  stats.completedTasks = tasks.filter((t) => t.status === 'completed').length;
-  stats.givenUpTasks = tasks.filter((t) => t.status === 'given-up').length;
+  stats.pendingTasks = tasks.filter((t) => t.status === "pending").length;
+  stats.inProgressTasks = tasks.filter(
+    (t) => t.status === "in-progress",
+  ).length;
+  stats.completedTasks = tasks.filter((t) => t.status === "completed").length;
+  stats.givenUpTasks = tasks.filter((t) => t.status === "given-up").length;
 
   const dailyStatsMap = new Map();
 
@@ -1219,29 +1310,39 @@ async function rebuildStats(user) {
   };
 
   tasks.forEach((task) => {
-    if (task.status === 'completed') {
-      const dateKey = toDateKey(task.completedAt || task.updatedAt || task.createdAt);
+    if (task.status === "completed") {
+      const dateKey = toDateKey(
+        task.completedAt || task.updatedAt || task.createdAt,
+      );
       if (dateKey) {
         const ds = ensureDaily(dateKey);
         ds.completedTasks += 1;
         const { categoryId, categoryName } = getCategoryStatPayload(task);
-        incrementCategoryCount(ds.completedOfEachCategory, categoryId, categoryName);
+        incrementCategoryCount(
+          ds.completedOfEachCategory,
+          categoryId,
+          categoryName,
+        );
       }
     }
 
-    if (task.status === 'given-up') {
+    if (task.status === "given-up") {
       const dateKey = toDateKey(task.updatedAt || task.createdAt);
       if (dateKey) {
         const ds = ensureDaily(dateKey);
         ds.givenUpTasks += 1;
         const { categoryId, categoryName } = getCategoryStatPayload(task);
-        incrementCategoryCount(ds.givenUpOfEachCategory, categoryId, categoryName);
+        incrementCategoryCount(
+          ds.givenUpOfEachCategory,
+          categoryId,
+          categoryName,
+        );
       }
     }
   });
 
   stats.dailyStats = Array.from(dailyStatsMap.values()).sort(
-    (a, b) => a.date - b.date
+    (a, b) => a.date - b.date,
   );
 
   await stats.save();
@@ -1264,7 +1365,11 @@ const incrementCompleted = async (userId, categoryId, categoryName) => {
 
   const dailyStat = getTodayDailyStat(stats);
   dailyStat.completedTasks += 1;
-  incrementCategoryCount(dailyStat.completedOfEachCategory, categoryId, categoryName);
+  incrementCategoryCount(
+    dailyStat.completedOfEachCategory,
+    categoryId,
+    categoryName,
+  );
 
   await stats.save();
 };
@@ -1276,7 +1381,11 @@ const incrementGivenUp = async (userId, categoryId, categoryName) => {
 
   const dailyStat = getTodayDailyStat(stats);
   dailyStat.givenUpTasks += 1;
-  incrementCategoryCount(dailyStat.givenUpOfEachCategory, categoryId, categoryName);
+  incrementCategoryCount(
+    dailyStat.givenUpOfEachCategory,
+    categoryId,
+    categoryName,
+  );
 
   await stats.save();
 };
@@ -1322,9 +1431,9 @@ const decrementCompleted = async (userId, categoryId) => {
   stats.completedTasks = Math.max(0, stats.completedTasks - 1);
 
   const today = new Date();
-  const dateStr = today.toISOString().split('T')[0];
+  const dateStr = today.toISOString().split("T")[0];
   const dailyStat = stats.dailyStats.find(
-    (ds) => ds.date.toISOString().split('T')[0] === dateStr
+    (ds) => ds.date.toISOString().split("T")[0] === dateStr,
   );
 
   if (dailyStat) {
@@ -1342,9 +1451,9 @@ const decrementGivenUp = async (userId, categoryId) => {
   stats.givenUpTasks = Math.max(0, stats.givenUpTasks - 1);
 
   const today = new Date();
-  const dateStr = today.toISOString().split('T')[0];
+  const dateStr = today.toISOString().split("T")[0];
   const dailyStat = stats.dailyStats.find(
-    (ds) => ds.date.toISOString().split('T')[0] === dateStr
+    (ds) => ds.date.toISOString().split("T")[0] === dateStr,
   );
 
   if (dailyStat) {
@@ -1360,14 +1469,24 @@ export const statService = {
   getStats: (user) => rebuildStats(user),
 
   async getCompletedTasksByDate(user, date) {
-    if (!DATE_KEY_PATTERN.test(date || '')) {
-      throw new ValidationError('A valid date query in YYYY-MM-DD format is required.');
+    if (!DATE_KEY_PATTERN.test(date || "")) {
+      throw new ValidationError(
+        "A valid date query in YYYY-MM-DD format is required.",
+      );
     }
 
     const tasks = await statRepository.getTasksByUser(user);
     return tasks
-      .filter((task) => task.status === 'completed' && toDateKey(getTaskCompletionDate(task)) === date)
-      .sort((a, b) => new Date(getTaskCompletionDate(a)) - new Date(getTaskCompletionDate(b)))
+      .filter(
+        (task) =>
+          task.status === "completed" &&
+          toDateKey(getTaskCompletionDate(task)) === date,
+      )
+      .sort(
+        (a, b) =>
+          new Date(getTaskCompletionDate(a)) -
+          new Date(getTaskCompletionDate(b)),
+      )
       .map(serializeCompletedTask);
   },
 
@@ -1405,9 +1524,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 11: Create projectService
 
 **Files:**
+
 - Create: `backend/services/projectService.js`
 
 **Interfaces:**
+
 - Consumes: `projectRepository` from `../repositories/projectRepository.js`; `taskRepository` from `../repositories/taskRepository.js`; `NotFoundError`, `ValidationError`, `ForbiddenError` from `../utils/errors.js`; `PROJECT_STATUSES` from `../constants/projectStatus.js`; `FINISHED_STATUSES` from `../constants/taskStatus.js`
 - Produces: `projectService` with methods: `create(data, userId)`, `getAll(user)`, `getById(id, user)`, `update(id, data, user)`, `delete(id, user)`, `getProjectTasks(id, user)`
 - Task 15 (projectController) consumes this
@@ -1415,11 +1536,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] **Step 1: Write services/projectService.js**
 
 ```js
-import { projectRepository } from '../repositories/projectRepository.js';
-import { taskRepository } from '../repositories/taskRepository.js';
-import { NotFoundError, ValidationError, ForbiddenError } from '../utils/errors.js';
-import { PROJECT_STATUSES } from '../constants/projectStatus.js';
-import { FINISHED_STATUSES } from '../constants/taskStatus.js';
+import { projectRepository } from "../repositories/projectRepository.js";
+import { taskRepository } from "../repositories/taskRepository.js";
+import {
+  NotFoundError,
+  ValidationError,
+  ForbiddenError,
+} from "../utils/errors.js";
+import { PROJECT_STATUSES } from "../constants/projectStatus.js";
+import { FINISHED_STATUSES } from "../constants/taskStatus.js";
 
 const createEmptySummary = () => ({
   totalTasks: 0,
@@ -1441,7 +1566,8 @@ const addCompletionRate = (summary) => {
     ...rest,
     finishedTasks: finished,
     canComplete: total > 0 && finished === total,
-    completionRate: total > 0 ? Math.round((rest.completedTasks / total) * 100) : 0,
+    completionRate:
+      total > 0 ? Math.round((rest.completedTasks / total) * 100) : 0,
   };
 };
 
@@ -1452,19 +1578,29 @@ const computeSummaryMap = async (projectIds) => {
     { $match: { projectId: { $in: projectIds } } },
     {
       $group: {
-        _id: '$projectId',
+        _id: "$projectId",
         totalTasks: { $sum: 1 },
-        pendingTasks: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] } },
-        inProgressTasks: { $sum: { $cond: [{ $eq: ['$status', 'in-progress'] }, 1, 0] } },
-        completedTasks: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
-        givenUpTasks: { $sum: { $cond: [{ $eq: ['$status', 'given-up'] }, 1, 0] } },
-        scheduledTasks: { $sum: { $cond: [{ $ifNull: ['$dueDate', false] }, 1, 0] } },
+        pendingTasks: {
+          $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
+        },
+        inProgressTasks: {
+          $sum: { $cond: [{ $eq: ["$status", "in-progress"] }, 1, 0] },
+        },
+        completedTasks: {
+          $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] },
+        },
+        givenUpTasks: {
+          $sum: { $cond: [{ $eq: ["$status", "given-up"] }, 1, 0] },
+        },
+        scheduledTasks: {
+          $sum: { $cond: [{ $ifNull: ["$dueDate", false] }, 1, 0] },
+        },
       },
     },
   ]);
 
   return new Map(
-    summaries.map((s) => [s._id.toString(), addCompletionRate(s)])
+    summaries.map((s) => [s._id.toString(), addCompletionRate(s)]),
   );
 };
 
@@ -1482,12 +1618,12 @@ const getOwnerId = (project) =>
   project.userId?._id?.toString?.() || project.userId?.toString?.() || null;
 
 const canAccess = (project, user) =>
-  user.role === 'ADMIN' || getOwnerId(project) === user._id.toString();
+  user.role === "ADMIN" || getOwnerId(project) === user._id.toString();
 
 const normalizeColor = (color) => {
   if (color === undefined) return { value: undefined };
-  if (typeof color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(color.trim())) {
-    return { error: 'Project color must be a six-digit hex color' };
+  if (typeof color !== "string" || !/^#[0-9A-Fa-f]{6}$/.test(color.trim())) {
+    return { error: "Project color must be a six-digit hex color" };
   }
   return { value: color.trim().toUpperCase() };
 };
@@ -1497,10 +1633,10 @@ const getCompletionEligibility = async (projectId) => {
     { $match: { projectId } },
     {
       $group: {
-        _id: '$projectId',
+        _id: "$projectId",
         totalTasks: { $sum: 1 },
         unfinishedTasks: {
-          $sum: { $cond: [{ $in: ['$status', FINISHED_STATUSES] }, 0, 1] },
+          $sum: { $cond: [{ $in: ["$status", FINISHED_STATUSES] }, 0, 1] },
         },
       },
     },
@@ -1512,15 +1648,19 @@ const getCompletionEligibility = async (projectId) => {
 
 export const projectService = {
   async create(data, userId) {
-    if (typeof data.name !== 'string' || !data.name.trim()) {
-      throw new ValidationError('Name is required');
+    if (typeof data.name !== "string" || !data.name.trim()) {
+      throw new ValidationError("Name is required");
     }
 
     const normalizedColor = normalizeColor(data.color);
     if (normalizedColor.error) throw new ValidationError(normalizedColor.error);
 
-    const existing = await projectRepository.findByUserAndName(userId, data.name.trim());
-    if (existing) throw new ValidationError('Project name already exists for this user');
+    const existing = await projectRepository.findByUserAndName(
+      userId,
+      data.name.trim(),
+    );
+    if (existing)
+      throw new ValidationError("Project name already exists for this user");
 
     const project = await projectRepository.create({
       userId,
@@ -1533,21 +1673,28 @@ export const projectService = {
   },
 
   async getAll(user) {
-    const projects = user.role === 'ADMIN'
-      ? await projectRepository.findAllPopulated()
-      : await projectRepository.findByUserPopulated(user._id);
+    const projects =
+      user.role === "ADMIN"
+        ? await projectRepository.findAllPopulated()
+        : await projectRepository.findByUserPopulated(user._id);
 
     const summaryMap = await computeSummaryMap(projects.map((p) => p._id));
 
     return projects.map((project) =>
-      withSummary(project, summaryMap.get(project._id.toString()) || createEmptySummary())
+      withSummary(
+        project,
+        summaryMap.get(project._id.toString()) || createEmptySummary(),
+      ),
     );
   },
 
   async getById(id, user) {
     const project = await projectRepository.findByIdPopulated(id);
-    if (!project) throw new NotFoundError('Project not found');
-    if (!canAccess(project, user)) throw new ForbiddenError("You don't have permission to access this project");
+    if (!project) throw new NotFoundError("Project not found");
+    if (!canAccess(project, user))
+      throw new ForbiddenError(
+        "You don't have permission to access this project",
+      );
 
     const summary = await getSingleSummary(project._id);
     return withSummary(project, summary);
@@ -1555,14 +1702,17 @@ export const projectService = {
 
   async update(id, data, user) {
     const project = await projectRepository.findById(id);
-    if (!project) throw new NotFoundError('Project not found');
-    if (!canAccess(project, user)) throw new ForbiddenError("You don't have permission to update this project");
+    if (!project) throw new NotFoundError("Project not found");
+    if (!canAccess(project, user))
+      throw new ForbiddenError(
+        "You don't have permission to update this project",
+      );
 
     const update = {};
 
     if (data.name !== undefined) {
-      if (typeof data.name !== 'string' || !data.name.trim()) {
-        throw new ValidationError('Project name cannot be empty');
+      if (typeof data.name !== "string" || !data.name.trim()) {
+        throw new ValidationError("Project name cannot be empty");
       }
       update.name = data.name.trim();
     }
@@ -1571,16 +1721,18 @@ export const projectService = {
 
     const normalizedColor = normalizeColor(data.color);
     if (normalizedColor.error) throw new ValidationError(normalizedColor.error);
-    if (normalizedColor.value !== undefined) update.color = normalizedColor.value;
+    if (normalizedColor.value !== undefined)
+      update.color = normalizedColor.value;
 
     if (data.status !== undefined) {
-      if (!PROJECT_STATUSES.includes(data.status)) throw new ValidationError('Invalid project status');
+      if (!PROJECT_STATUSES.includes(data.status))
+        throw new ValidationError("Invalid project status");
 
-      if (data.status === 'completed') {
+      if (data.status === "completed") {
         const eligible = await getCompletionEligibility(project._id);
         if (!eligible) {
           throw new ValidationError(
-            'Project can only be completed when it has at least one task and every task is completed or given up'
+            "Project can only be completed when it has at least one task and every task is completed or given up",
           );
         }
       }
@@ -1589,7 +1741,7 @@ export const projectService = {
     }
 
     if (Object.keys(update).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new ValidationError("No fields to update");
     }
 
     const updated = await projectRepository.updateByIdPopulated(id, update);
@@ -1599,20 +1751,26 @@ export const projectService = {
 
   async delete(id, user) {
     const project = await projectRepository.findById(id);
-    if (!project) throw new NotFoundError('Project not found');
-    if (!canAccess(project, user)) throw new ForbiddenError("You don't have permission to delete this project");
+    if (!project) throw new NotFoundError("Project not found");
+    if (!canAccess(project, user))
+      throw new ForbiddenError(
+        "You don't have permission to delete this project",
+      );
 
     await projectRepository.deleteById(id);
   },
 
   async getProjectTasks(id, user) {
     const project = await projectRepository.findByIdPopulated(id);
-    if (!project) throw new NotFoundError('Project not found');
-    if (!canAccess(project, user)) throw new ForbiddenError("You don't have permission to access this project");
+    if (!project) throw new NotFoundError("Project not found");
+    if (!canAccess(project, user))
+      throw new ForbiddenError(
+        "You don't have permission to access this project",
+      );
 
     const tasks = await taskRepository.findPopulated(
       { projectId: project._id },
-      { sort: { dueDate: 1, createdAt: -1 } }
+      { sort: { dueDate: 1, createdAt: -1 } },
     );
 
     const summary = await getSingleSummary(project._id);
@@ -1636,9 +1794,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 12: Create taskService
 
 **Files:**
+
 - Create: `backend/services/taskService.js`
 
 **Interfaces:**
+
 - Consumes: `taskRepository`, `categoryRepository`, `projectRepository`; `statService` from `./statService.js`; `normalizeTaskDateInput` from `../utils/dateTime.js`; `NotFoundError`, `ValidationError`, `ForbiddenError` from `../utils/errors.js`; `TASK_STATUSES` from `../constants/taskStatus.js`
 - Produces: `taskService` with methods: `create(data, userId)`, `getAll(user, queryParams)`, `getById(id, user)`, `update(id, data, user)`, `finish(id, user)`, `start(id, user)`, `giveUp(id, user)`, `delete(id, user)`, `getTodayDeadlines(user)`, `getByStatus(user, status)`, `getByCategory(user, categoryId)`
 - Task 15 (taskController) consumes this
@@ -1648,13 +1808,17 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 This is the largest service (~230 lines) since taskController was the fattest controller (540 lines). All private helpers become module-level functions.
 
 ```js
-import { taskRepository } from '../repositories/taskRepository.js';
-import { categoryRepository } from '../repositories/categoryRepository.js';
-import { projectRepository } from '../repositories/projectRepository.js';
-import { statService } from './statService.js';
-import { normalizeTaskDateInput } from '../utils/dateTime.js';
-import { NotFoundError, ValidationError, ForbiddenError } from '../utils/errors.js';
-import { TASK_STATUSES } from '../constants/taskStatus.js';
+import { taskRepository } from "../repositories/taskRepository.js";
+import { categoryRepository } from "../repositories/categoryRepository.js";
+import { projectRepository } from "../repositories/projectRepository.js";
+import { statService } from "./statService.js";
+import { normalizeTaskDateInput } from "../utils/dateTime.js";
+import {
+  NotFoundError,
+  ValidationError,
+  ForbiddenError,
+} from "../utils/errors.js";
+import { TASK_STATUSES } from "../constants/taskStatus.js";
 
 // ─── Private helpers ────────────────────────────────────────────
 
@@ -1662,36 +1826,41 @@ const resolveCategory = async (categoryId, userId) => {
   if (categoryId) {
     const category = await categoryRepository.findById(categoryId);
     if (!category || category.userId.toString() !== userId.toString()) {
-      throw new ValidationError('Invalid categoryId');
+      throw new ValidationError("Invalid categoryId");
     }
     return categoryId;
   }
 
-  const uncategorized = await categoryRepository.findByUserAndName(userId, 'Uncategorized');
-  if (!uncategorized) throw new ValidationError('Uncategorized category not found');
+  const uncategorized = await categoryRepository.findByUserAndName(
+    userId,
+    "Uncategorized",
+  );
+  if (!uncategorized)
+    throw new ValidationError("Uncategorized category not found");
   return uncategorized._id;
 };
 
 const resolveProject = async (projectId, userId, currentProjectId = null) => {
   if (projectId === undefined) return { shouldUpdate: false };
-  if (projectId === '' || projectId === null) return { shouldUpdate: true, value: null };
+  if (projectId === "" || projectId === null)
+    return { shouldUpdate: true, value: null };
 
   const project = await projectRepository.findById(projectId);
   if (!project || project.userId.toString() !== userId.toString()) {
-    throw new ValidationError('Invalid projectId');
+    throw new ValidationError("Invalid projectId");
   }
 
   const normalizedCurrent = currentProjectId?.toString?.() || null;
   const normalizedNext = project._id.toString();
-  if (project.status === 'completed' && normalizedNext !== normalizedCurrent) {
-    throw new ValidationError('Completed projects cannot be assigned to tasks');
+  if (project.status === "completed" && normalizedNext !== normalizedCurrent) {
+    throw new ValidationError("Completed projects cannot be assigned to tasks");
   }
 
   return { shouldUpdate: true, value: project._id };
 };
 
 const buildTaskAccessQuery = async (user) => {
-  if (user.role === 'ADMIN') return {};
+  if (user.role === "ADMIN") return {};
 
   const [userCategories, userProjects] = await Promise.all([
     categoryRepository.findByUser(user._id),
@@ -1716,18 +1885,23 @@ const parseDateRangeQuery = (queryParams) => {
   if (startDate === undefined && endDate === undefined) return {};
 
   if (!startDate || !endDate) {
-    return { error: 'Both startDate and endDate are required for date range filtering' };
+    return {
+      error: "Both startDate and endDate are required for date range filtering",
+    };
   }
 
   const parsedStart = new Date(startDate);
   const parsedEnd = new Date(endDate);
 
-  if (Number.isNaN(parsedStart.getTime()) || Number.isNaN(parsedEnd.getTime())) {
-    return { error: 'Invalid date range' };
+  if (
+    Number.isNaN(parsedStart.getTime()) ||
+    Number.isNaN(parsedEnd.getTime())
+  ) {
+    return { error: "Invalid date range" };
   }
 
   if (parsedStart > parsedEnd) {
-    return { error: 'startDate must be before or equal to endDate' };
+    return { error: "startDate must be before or equal to endDate" };
   }
 
   return { filter: { dueDate: { $gte: parsedStart, $lte: parsedEnd } } };
@@ -1736,26 +1910,29 @@ const parseDateRangeQuery = (queryParams) => {
 const applyCompletionTimestamp = (update, currentStatus) => {
   if (update.status === undefined) return;
 
-  if (update.status === 'completed') {
-    if (currentStatus !== 'completed') {
+  if (update.status === "completed") {
+    if (currentStatus !== "completed") {
       update.completedAt = new Date();
     }
-  } else if (currentStatus === 'completed') {
+  } else if (currentStatus === "completed") {
     update.completedAt = null;
   }
 };
 
 const getOwnerId = (task) => {
-  const categoryOwner = task.categoryId?.userId?._id?.toString?.()
-    || task.categoryId?.userId?.toString?.();
+  const categoryOwner =
+    task.categoryId?.userId?._id?.toString?.() ||
+    task.categoryId?.userId?.toString?.();
   if (categoryOwner) return categoryOwner;
-  return task.projectId?.userId?._id?.toString?.()
-    || task.projectId?.userId?.toString?.()
-    || null;
+  return (
+    task.projectId?.userId?._id?.toString?.() ||
+    task.projectId?.userId?.toString?.() ||
+    null
+  );
 };
 
 const verifyOwnership = (task, user) => {
-  if (user.role === 'ADMIN') return;
+  if (user.role === "ADMIN") return;
   if (getOwnerId(task) !== user._id.toString()) {
     throw new ForbiddenError("You don't have permission to access this task");
   }
@@ -1778,7 +1955,7 @@ export const taskService = {
     const task = await taskRepository.create({
       title: data.title,
       description: data.description,
-      status: 'in-progress',
+      status: "in-progress",
       priority: data.priority,
       categoryId,
       projectId: projectUpdate.shouldUpdate ? projectUpdate.value : null,
@@ -1803,14 +1980,14 @@ export const taskService = {
 
   async getById(id, user) {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new NotFoundError("Task not found");
     verifyOwnership(task, user);
     return task;
   },
 
   async update(id, data, user) {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new NotFoundError("Task not found");
     verifyOwnership(task, user);
 
     const update = {};
@@ -1819,28 +1996,44 @@ export const taskService = {
     if (data.description !== undefined) update.description = data.description;
 
     if (data.status !== undefined) {
-      if (!TASK_STATUSES.includes(data.status)) throw new ValidationError('Invalid status');
+      if (!TASK_STATUSES.includes(data.status))
+        throw new ValidationError("Invalid status");
       update.status = data.status;
     }
 
     if (data.priority !== undefined) update.priority = data.priority;
 
     if (data.categoryId !== undefined) {
-      if (data.categoryId === 'uncategorized' || data.categoryId === '' || data.categoryId === null) {
-        const uncategorized = await categoryRepository.findByUserAndName(user._id, 'Uncategorized');
-        if (!uncategorized) throw new ValidationError('Uncategorized category not found');
+      if (
+        data.categoryId === "uncategorized" ||
+        data.categoryId === "" ||
+        data.categoryId === null
+      ) {
+        const uncategorized = await categoryRepository.findByUserAndName(
+          user._id,
+          "Uncategorized",
+        );
+        if (!uncategorized)
+          throw new ValidationError("Uncategorized category not found");
         update.categoryId = uncategorized._id;
       } else {
         const newCategory = await categoryRepository.findById(data.categoryId);
-        if (!newCategory || newCategory.userId.toString() !== user._id.toString()) {
-          throw new ValidationError('Invalid categoryId');
+        if (
+          !newCategory ||
+          newCategory.userId.toString() !== user._id.toString()
+        ) {
+          throw new ValidationError("Invalid categoryId");
         }
         update.categoryId = data.categoryId;
       }
     }
 
     const currentProjectId = task.projectId?._id || task.projectId || null;
-    const projectUpdate = await resolveProject(data.projectId, user._id, currentProjectId);
+    const projectUpdate = await resolveProject(
+      data.projectId,
+      user._id,
+      currentProjectId,
+    );
     if (projectUpdate.error) throw new ValidationError(projectUpdate.error);
     if (projectUpdate.shouldUpdate) update.projectId = projectUpdate.value;
 
@@ -1855,7 +2048,7 @@ export const taskService = {
     applyCompletionTimestamp(update, task.status);
 
     if (Object.keys(update).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new ValidationError("No fields to update");
     }
 
     return taskRepository.updateByIdPopulated(id, update);
@@ -1863,22 +2056,28 @@ export const taskService = {
 
   async finish(id, user) {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new NotFoundError("Task not found");
     verifyOwnership(task, user);
 
-    if (task.status === 'completed') throw new ValidationError('Task is already completed');
+    if (task.status === "completed")
+      throw new ValidationError("Task is already completed");
 
     const currentDate = new Date();
-    task.status = 'completed';
+    task.status = "completed";
     task.completedAt = currentDate;
     task.isOverDue = task.dueDate && currentDate > task.dueDate;
     await task.save();
 
-    const categoryName = task.categoryId?.name
-      || (await categoryRepository.findById(task.categoryId?._id))?.name;
+    const categoryName =
+      task.categoryId?.name ||
+      (await categoryRepository.findById(task.categoryId?._id))?.name;
 
     if (task.categoryId?._id && categoryName) {
-      await statService.incrementCompleted(user._id, task.categoryId._id, categoryName);
+      await statService.incrementCompleted(
+        user._id,
+        task.categoryId._id,
+        categoryName,
+      );
     }
 
     return taskRepository.findByIdPopulated(id);
@@ -1886,12 +2085,13 @@ export const taskService = {
 
   async start(id, user) {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new NotFoundError("Task not found");
     verifyOwnership(task, user);
 
-    if (task.status !== 'pending') throw new ValidationError('Only pending tasks can be started');
+    if (task.status !== "pending")
+      throw new ValidationError("Only pending tasks can be started");
 
-    task.status = 'in-progress';
+    task.status = "in-progress";
     await task.save();
 
     await statService.incrementStart(user._id);
@@ -1900,19 +2100,25 @@ export const taskService = {
 
   async giveUp(id, user) {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new NotFoundError("Task not found");
     verifyOwnership(task, user);
 
-    if (task.status !== 'in-progress') throw new ValidationError('Only in-progress tasks can be given up');
+    if (task.status !== "in-progress")
+      throw new ValidationError("Only in-progress tasks can be given up");
 
-    task.status = 'given-up';
+    task.status = "given-up";
     await task.save();
 
-    const categoryName = task.categoryId?.name
-      || (await categoryRepository.findById(task.categoryId?._id))?.name;
+    const categoryName =
+      task.categoryId?.name ||
+      (await categoryRepository.findById(task.categoryId?._id))?.name;
 
     if (task.categoryId?._id && categoryName) {
-      await statService.incrementGivenUp(user._id, task.categoryId._id, categoryName);
+      await statService.incrementGivenUp(
+        user._id,
+        task.categoryId._id,
+        categoryName,
+      );
     }
 
     return taskRepository.findByIdPopulated(id);
@@ -1920,7 +2126,7 @@ export const taskService = {
 
   async delete(id, user) {
     const task = await taskRepository.findByIdPopulated(id);
-    if (!task) throw new NotFoundError('Task not found');
+    if (!task) throw new NotFoundError("Task not found");
     verifyOwnership(task, user);
 
     await taskRepository.deleteById(id);
@@ -1939,7 +2145,7 @@ export const taskService = {
     return taskRepository.findPopulated({
       ...baseQuery,
       dueDate: { $gte: startOfDay, $lt: endOfDay },
-      status: { $nin: ['completed', 'given-up'] },
+      status: { $nin: ["completed", "given-up"] },
     });
   },
 
@@ -1969,9 +2175,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 13: Create authService
 
 **Files:**
+
 - Create: `backend/services/authService.js`
 
 **Interfaces:**
+
 - Consumes: `userRepository` from `../repositories/userRepository.js`; `ValidationError`, `UnauthorizedError`, `NotFoundError` from `../utils/errors.js`; `jsonwebtoken`
 - Produces: `authService` with methods: `register(data)`, `login(email, password)`, `getMe(userId)`, `changePassword(userId, currentPassword, newPassword)`, `updateInfo(userId, data)`, `selfDelete(userId)`
 - Note: `generateToken.js` logic is inlined here as a module-level `generateToken(id)` function
@@ -1980,9 +2188,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] **Step 1: Write services/authService.js**
 
 ```js
-import jwt from 'jsonwebtoken';
-import { userRepository } from '../repositories/userRepository.js';
-import { ValidationError, UnauthorizedError, NotFoundError } from '../utils/errors.js';
+import jwt from "jsonwebtoken";
+import { userRepository } from "../repositories/userRepository.js";
+import {
+  ValidationError,
+  UnauthorizedError,
+  NotFoundError,
+} from "../utils/errors.js";
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -1993,15 +2205,15 @@ const generateToken = (id) => {
 export const authService = {
   async register(data) {
     const existing = await userRepository.findByEmail(data.email);
-    if (existing) throw new ValidationError('Email already exists');
+    if (existing) throw new ValidationError("Email already exists");
 
     const user = await userRepository.create({
       email: data.email,
       password: data.password,
       name: data.name,
       dob: data.dob,
-      nationality: data.nationality || 'Vietnam',
-      role: 'USER',
+      nationality: data.nationality || "Vietnam",
+      role: "USER",
     });
 
     const token = generateToken(user._id);
@@ -2012,10 +2224,10 @@ export const authService = {
 
   async login(email, password) {
     const user = await userRepository.findByEmailWithPassword(email);
-    if (!user) throw new UnauthorizedError('Invalid email or password');
+    if (!user) throw new UnauthorizedError("Invalid email or password");
 
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) throw new UnauthorizedError('Invalid email or password');
+    if (!isMatch) throw new UnauthorizedError("Invalid email or password");
 
     const token = generateToken(user._id);
     user.password = undefined;
@@ -2025,43 +2237,46 @@ export const authService = {
 
   async getMe(userId) {
     const user = await userRepository.findByIdPopulated(userId);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
     return user;
   },
 
   async changePassword(userId, currentPassword, newPassword) {
     const user = await userRepository.findByIdWithPassword(userId);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
 
     const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) throw new UnauthorizedError('Current password is incorrect');
+    if (!isMatch) throw new UnauthorizedError("Current password is incorrect");
 
     const isSame = await user.comparePassword(newPassword);
-    if (isSame) throw new ValidationError('New password must be different from the current password');
+    if (isSame)
+      throw new ValidationError(
+        "New password must be different from the current password",
+      );
 
     user.password = newPassword;
     await user.save();
   },
 
   async updateInfo(userId, data) {
-    const ALLOWED_FIELDS = ['email', 'name', 'dob', 'nationality', 'avatarUrl'];
+    const ALLOWED_FIELDS = ["email", "name", "dob", "nationality", "avatarUrl"];
     const filtered = {};
     for (const key of ALLOWED_FIELDS) {
       if (data[key] !== undefined) filtered[key] = data[key];
     }
 
     if (Object.keys(filtered).length === 0) {
-      throw new ValidationError('No fields to update');
+      throw new ValidationError("No fields to update");
     }
 
     const user = await userRepository.updateById(userId, filtered);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
     return user;
   },
 
   async selfDelete(userId) {
     const user = await userRepository.deleteById(userId);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
   },
 };
 ```
@@ -2080,9 +2295,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 14: Create aiService
 
 **Files:**
+
 - Create: `backend/services/aiService.js`
 
 **Interfaces:**
+
 - Consumes: `getAiClient` from `../libs/aiClient.js`; `getAiModel` from `../config/env.js`; `categoryRepository` from `../repositories/categoryRepository.js`; `taskRepository` from `../repositories/taskRepository.js`; `statService` from `./statService.js`; `normalizeTaskDateInput` from `../utils/dateTime.js`; `z` from `zod`
 - Produces: `aiService` with methods: `generateTasks(userRequirement, userId)`, `chatResponse(userInput)`
 - Task 15 (aiController) consumes this
@@ -2090,14 +2307,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] **Step 1: Write services/aiService.js**
 
 ```js
-import { z } from 'zod';
-import { getAiClient } from '../libs/aiClient.js';
-import { getAiModel } from '../config/env.js';
-import { categoryRepository } from '../repositories/categoryRepository.js';
-import { taskRepository } from '../repositories/taskRepository.js';
-import { statService } from './statService.js';
-import { normalizeTaskDateInput } from '../utils/dateTime.js';
-import { ValidationError } from '../utils/errors.js';
+import { z } from "zod";
+import { getAiClient } from "../libs/aiClient.js";
+import { getAiModel } from "../config/env.js";
+import { categoryRepository } from "../repositories/categoryRepository.js";
+import { taskRepository } from "../repositories/taskRepository.js";
+import { statService } from "./statService.js";
+import { normalizeTaskDateInput } from "../utils/dateTime.js";
+import { ValidationError } from "../utils/errors.js";
 
 export const aiService = {
   async generateTasks(userRequirement, userId) {
@@ -2112,18 +2329,18 @@ export const aiService = {
     const taskSchema = z.object({
       title: z.string().min(1).max(100),
       description: z.string().max(500).optional(),
-      priority: z.enum(['Low', 'Medium', 'High']).optional(),
+      priority: z.enum(["Low", "Medium", "High"]).optional(),
       categoryName: z.string().optional().nullable(),
       dueDate: z.string().optional(),
     });
 
     const tasksArraySchema = z.array(taskSchema).length(3);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
     const prompt = `Generate EXACTLY 3 tasks (as an array) based on the following user requirement: "${userRequirement}".
 
 Available categories (choose ONE of these EXACT names for each task or pick the "Uncategorized" category if none fit):
-${categories.map((c) => `- "${c.name}"`).join('\n')}
+${categories.map((c) => `- "${c.name}"`).join("\n")}
 
 IMPORTANT:
 - Return an ARRAY of EXACTLY 3 TASK OBJECTS
@@ -2139,7 +2356,8 @@ Create 3 practical, actionable tasks with:
 - dueDate: YYYY-MM-DD format if applicable (based on today: ${today})`;
 
     const model = getAiModel();
-    if (!model) throw new Error('Missing required environment variable: AI_MODEL_NAME');
+    if (!model)
+      throw new Error("Missing required environment variable: AI_MODEL_NAME");
 
     const rawSchema = tasksArraySchema.toJSONSchema();
     const { $schema, ...jsonSchema } = rawSchema;
@@ -2148,16 +2366,16 @@ Create 3 practical, actionable tasks with:
       model,
       messages: [
         {
-          role: 'system',
+          role: "system",
           content: `You must respond with a JSON array of exactly 3 task objects. Follow this JSON Schema:\n${JSON.stringify(jsonSchema, null, 2)}`,
         },
-        { role: 'user', content: prompt },
+        { role: "user", content: prompt },
       ],
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
     });
 
     const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error('Empty response from AI');
+    if (!content) throw new Error("Empty response from AI");
 
     const generatedTasks = tasksArraySchema.parse(JSON.parse(content));
 
@@ -2170,11 +2388,13 @@ Create 3 practical, actionable tasks with:
           categoryId = categoryMap[generatedTask.categoryName];
         } else {
           const lower = generatedTask.categoryName.toLowerCase();
-          const matched = categories.find((c) => c.name.toLowerCase() === lower);
+          const matched = categories.find(
+            (c) => c.name.toLowerCase() === lower,
+          );
           if (matched) {
             categoryId = matched._id.toString();
-          } else if (categoryMap['Uncategorized']) {
-            categoryId = categoryMap['Uncategorized'];
+          } else if (categoryMap["Uncategorized"]) {
+            categoryId = categoryMap["Uncategorized"];
           }
         }
       }
@@ -2184,9 +2404,9 @@ Create 3 practical, actionable tasks with:
 
       const task = await taskRepository.create({
         title: generatedTask.title,
-        description: generatedTask.description || '',
-        priority: generatedTask.priority || 'Medium',
-        status: 'pending',
+        description: generatedTask.description || "",
+        priority: generatedTask.priority || "Medium",
+        status: "pending",
         categoryId,
         dueDate: dueDateUpdate.shouldUpdate ? dueDateUpdate.value : undefined,
       });
@@ -2208,18 +2428,19 @@ If user want to auto generate tasks, advise them to use the task generation mode
 Provide short, clear, concise, and friendly responses.`;
 
     const model = getAiModel();
-    if (!model) throw new Error('Missing required environment variable: AI_MODEL_NAME');
+    if (!model)
+      throw new Error("Missing required environment variable: AI_MODEL_NAME");
 
     const response = await ai.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: sysInstruction },
-        { role: 'user', content: userInput },
+        { role: "system", content: sysInstruction },
+        { role: "user", content: userInput },
       ],
     });
 
     const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error('Empty response from AI');
+    if (!content) throw new Error("Empty response from AI");
 
     return content;
   },
@@ -2240,6 +2461,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 15: Rewrite all controllers (thin HTTP handlers)
 
 **Files:**
+
 - Rewrite: `backend/controllers/categoryController.js`
 - Rewrite: `backend/controllers/userController.js`
 - Rewrite: `backend/controllers/statController.js`
@@ -2249,6 +2471,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Rewrite: `backend/controllers/aiController.js`
 
 **Interfaces:**
+
 - Each controller imports its corresponding service
 - Each method: `try { result = await service.method(...); res.status(code).json(result); } catch (error) { next(error); }`
 - No business logic, no DB calls, no validation
@@ -2256,12 +2479,17 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] **Step 1: Rewrite controllers/categoryController.js**
 
 ```js
-import { categoryService } from '../services/categoryService.js';
+import { categoryService } from "../services/categoryService.js";
 
 export const createCategory = async (req, res, next) => {
   try {
-    const category = await categoryService.create(req.validatedBody, req.user._id);
-    res.status(201).json({ message: 'Category created successfully', category });
+    const category = await categoryService.create(
+      req.validatedBody,
+      req.user._id,
+    );
+    res
+      .status(201)
+      .json({ message: "Category created successfully", category });
   } catch (error) {
     next(error);
   }
@@ -2287,8 +2515,14 @@ export const getCategoryById = async (req, res, next) => {
 
 export const updateCategory = async (req, res, next) => {
   try {
-    const category = await categoryService.update(req.params.id, req.validatedBody, req.user);
-    res.status(200).json({ message: 'Category updated successfully', category });
+    const category = await categoryService.update(
+      req.params.id,
+      req.validatedBody,
+      req.user,
+    );
+    res
+      .status(200)
+      .json({ message: "Category updated successfully", category });
   } catch (error) {
     next(error);
   }
@@ -2297,7 +2531,7 @@ export const updateCategory = async (req, res, next) => {
 export const deleteCategory = async (req, res, next) => {
   try {
     await categoryService.delete(req.params.id, req.user);
-    res.status(200).json({ message: 'Category deleted successfully' });
+    res.status(200).json({ message: "Category deleted successfully" });
   } catch (error) {
     next(error);
   }
@@ -2307,12 +2541,12 @@ export const deleteCategory = async (req, res, next) => {
 - [ ] **Step 2: Rewrite controllers/userController.js**
 
 ```js
-import { userService } from '../services/userService.js';
+import { userService } from "../services/userService.js";
 
 export const createUser = async (req, res, next) => {
   try {
     const user = await userService.create(req.validatedBody);
-    res.status(201).json({ message: 'User created successfully', user });
+    res.status(201).json({ message: "User created successfully", user });
   } catch (error) {
     next(error);
   }
@@ -2339,7 +2573,7 @@ export const getUserById = async (req, res, next) => {
 export const updateUser = async (req, res, next) => {
   try {
     const user = await userService.update(req.params.id, req.validatedBody);
-    res.status(200).json({ message: 'User updated successfully', user });
+    res.status(200).json({ message: "User updated successfully", user });
   } catch (error) {
     next(error);
   }
@@ -2348,19 +2582,17 @@ export const updateUser = async (req, res, next) => {
 export const deleteUser = async (req, res, next) => {
   try {
     await userService.delete(req.params.id);
-    res.status(200).json({ message: 'User deleted successfully' });
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     next(error);
   }
 };
-
-
 ```
 
 - [ ] **Step 3: Rewrite controllers/statController.js**
 
 ```js
-import { statService } from '../services/statService.js';
+import { statService } from "../services/statService.js";
 
 export const getStats = async (req, res, next) => {
   try {
@@ -2373,7 +2605,10 @@ export const getStats = async (req, res, next) => {
 
 export const getCompletedTasksByDate = async (req, res, next) => {
   try {
-    const tasks = await statService.getCompletedTasksByDate(req.user, req.query.date);
+    const tasks = await statService.getCompletedTasksByDate(
+      req.user,
+      req.query.date,
+    );
     res.status(200).json({ date: req.query.date, tasks });
   } catch (error) {
     next(error);
@@ -2384,12 +2619,15 @@ export const getCompletedTasksByDate = async (req, res, next) => {
 - [ ] **Step 4: Rewrite controllers/projectController.js**
 
 ```js
-import { projectService } from '../services/projectService.js';
+import { projectService } from "../services/projectService.js";
 
 export const createProject = async (req, res, next) => {
   try {
-    const project = await projectService.create(req.validatedBody, req.user._id);
-    res.status(201).json({ message: 'Project created successfully', project });
+    const project = await projectService.create(
+      req.validatedBody,
+      req.user._id,
+    );
+    res.status(201).json({ message: "Project created successfully", project });
   } catch (error) {
     next(error);
   }
@@ -2415,8 +2653,12 @@ export const getProjectById = async (req, res, next) => {
 
 export const updateProject = async (req, res, next) => {
   try {
-    const project = await projectService.update(req.params.id, req.validatedBody, req.user);
-    res.status(200).json({ message: 'Project updated successfully', project });
+    const project = await projectService.update(
+      req.params.id,
+      req.validatedBody,
+      req.user,
+    );
+    res.status(200).json({ message: "Project updated successfully", project });
   } catch (error) {
     next(error);
   }
@@ -2426,7 +2668,8 @@ export const deleteProject = async (req, res, next) => {
   try {
     await projectService.delete(req.params.id, req.user);
     res.status(200).json({
-      message: 'Project deleted successfully. Related tasks were kept and unassigned from the project.',
+      message:
+        "Project deleted successfully. Related tasks were kept and unassigned from the project.",
     });
   } catch (error) {
     next(error);
@@ -2435,7 +2678,10 @@ export const deleteProject = async (req, res, next) => {
 
 export const getProjectTasks = async (req, res, next) => {
   try {
-    const result = await projectService.getProjectTasks(req.params.id, req.user);
+    const result = await projectService.getProjectTasks(
+      req.params.id,
+      req.user,
+    );
     res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -2446,12 +2692,12 @@ export const getProjectTasks = async (req, res, next) => {
 - [ ] **Step 5: Rewrite controllers/taskController.js**
 
 ```js
-import { taskService } from '../services/taskService.js';
+import { taskService } from "../services/taskService.js";
 
 export const createTask = async (req, res, next) => {
   try {
     const task = await taskService.create(req.validatedBody, req.user._id);
-    res.status(201).json({ message: 'Task created successfully', task });
+    res.status(201).json({ message: "Task created successfully", task });
   } catch (error) {
     next(error);
   }
@@ -2477,8 +2723,12 @@ export const getTaskById = async (req, res, next) => {
 
 export const updateTask = async (req, res, next) => {
   try {
-    const task = await taskService.update(req.params.id, req.validatedBody, req.user);
-    res.status(200).json({ message: 'Task updated successfully', task });
+    const task = await taskService.update(
+      req.params.id,
+      req.validatedBody,
+      req.user,
+    );
+    res.status(200).json({ message: "Task updated successfully", task });
   } catch (error) {
     next(error);
   }
@@ -2487,7 +2737,7 @@ export const updateTask = async (req, res, next) => {
 export const finishTask = async (req, res, next) => {
   try {
     const task = await taskService.finish(req.params.id, req.user);
-    res.status(200).json({ message: 'Task marked as completed', task });
+    res.status(200).json({ message: "Task marked as completed", task });
   } catch (error) {
     next(error);
   }
@@ -2496,7 +2746,7 @@ export const finishTask = async (req, res, next) => {
 export const startTask = async (req, res, next) => {
   try {
     const task = await taskService.start(req.params.id, req.user);
-    res.status(200).json({ message: 'Task started successfully', task });
+    res.status(200).json({ message: "Task started successfully", task });
   } catch (error) {
     next(error);
   }
@@ -2505,7 +2755,7 @@ export const startTask = async (req, res, next) => {
 export const giveUpTask = async (req, res, next) => {
   try {
     const task = await taskService.giveUp(req.params.id, req.user);
-    res.status(200).json({ message: 'Task marked as given-up', task });
+    res.status(200).json({ message: "Task marked as given-up", task });
   } catch (error) {
     next(error);
   }
@@ -2514,7 +2764,7 @@ export const giveUpTask = async (req, res, next) => {
 export const deleteTask = async (req, res, next) => {
   try {
     await taskService.delete(req.params.id, req.user);
-    res.status(200).json({ message: 'Task deleted successfully' });
+    res.status(200).json({ message: "Task deleted successfully" });
   } catch (error) {
     next(error);
   }
@@ -2540,7 +2790,10 @@ export const getTaskByStatus = async (req, res, next) => {
 
 export const getTaskByCategory = async (req, res, next) => {
   try {
-    const tasks = await taskService.getByCategory(req.user, req.params.categoryId);
+    const tasks = await taskService.getByCategory(
+      req.user,
+      req.params.categoryId,
+    );
     res.status(200).json(tasks);
   } catch (error) {
     next(error);
@@ -2551,12 +2804,12 @@ export const getTaskByCategory = async (req, res, next) => {
 - [ ] **Step 6: Rewrite controllers/authController.js**
 
 ```js
-import { authService } from '../services/authService.js';
+import { authService } from "../services/authService.js";
 
 export const registerUser = async (req, res, next) => {
   try {
     const { user, token } = await authService.register(req.validatedBody);
-    res.status(201).json({ message: 'Registration successful', user, token });
+    res.status(201).json({ message: "Registration successful", user, token });
   } catch (error) {
     next(error);
   }
@@ -2564,15 +2817,18 @@ export const registerUser = async (req, res, next) => {
 
 export const loginUser = async (req, res, next) => {
   try {
-    const { user, token } = await authService.login(req.validatedBody.email, req.validatedBody.password);
-    res.status(200).json({ message: 'Login successful', user, token });
+    const { user, token } = await authService.login(
+      req.validatedBody.email,
+      req.validatedBody.password,
+    );
+    res.status(200).json({ message: "Login successful", user, token });
   } catch (error) {
     next(error);
   }
 };
 
 export const logoutUser = async (req, res) => {
-  res.status(200).json({ message: 'Logout successful' });
+  res.status(200).json({ message: "Logout successful" });
 };
 
 export const getMe = async (req, res, next) => {
@@ -2591,7 +2847,7 @@ export const changePassword = async (req, res, next) => {
       req.validatedBody.currentPassword,
       req.validatedBody.newPassword,
     );
-    res.status(200).json({ message: 'Password changed successfully' });
+    res.status(200).json({ message: "Password changed successfully" });
   } catch (error) {
     next(error);
   }
@@ -2600,7 +2856,7 @@ export const changePassword = async (req, res, next) => {
 export const updateInfo = async (req, res, next) => {
   try {
     const user = await authService.updateInfo(req.user._id, req.body);
-    res.status(200).json({ message: 'User info updated successfully', user });
+    res.status(200).json({ message: "User info updated successfully", user });
   } catch (error) {
     next(error);
   }
@@ -2609,7 +2865,7 @@ export const updateInfo = async (req, res, next) => {
 export const selfDelete = async (req, res, next) => {
   try {
     await authService.selfDelete(req.user._id);
-    res.status(200).json({ message: 'User deleted successfully' });
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     next(error);
   }
@@ -2619,14 +2875,17 @@ export const selfDelete = async (req, res, next) => {
 - [ ] **Step 7: Rewrite controllers/aiController.js**
 
 ```js
-import { aiService } from '../services/aiService.js';
+import { aiService } from "../services/aiService.js";
 
 export const generateTasksWithRequirement = async (req, res, next) => {
   try {
-    const tasks = await aiService.generateTasks(req.validatedBody.userRequirement, req.user._id);
+    const tasks = await aiService.generateTasks(
+      req.validatedBody.userRequirement,
+      req.user._id,
+    );
     res.status(201).json({
       success: true,
-      message: '3 tasks generated successfully',
+      message: "3 tasks generated successfully",
       data: tasks,
     });
   } catch (error) {
@@ -2639,7 +2898,7 @@ export const responseToUser = async (req, res, next) => {
     const content = await aiService.chatResponse(req.validatedBody.userInput);
     res.status(200).json({
       success: true,
-      message: 'Response generated successfully',
+      message: "Response generated successfully",
       data: content,
     });
   } catch (error) {
@@ -2662,6 +2921,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 16: Update all routes with validate middleware
 
 **Files:**
+
 - Modify: `backend/routes/taskRoute.js`
 - Modify: `backend/routes/authRoute.js`
 - Modify: `backend/routes/categoryRoute.js`
@@ -2671,6 +2931,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: `backend/routes/statRoute.js`
 
 **Interfaces:**
+
 - Consumes: `validate` from `../middlewares/validate.js`; Zod schemas from `../validations/`
 - Each route file adds `validate(schema)` after `protect` on POST/PUT routes
 - GET/DELETE routes remain unchanged
@@ -2678,19 +2939,28 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] **Step 1: Update routes/categoryRoute.js**
 
 ```js
-import express from 'express';
-import { createCategory, getAllCategories, getCategoryById, updateCategory, deleteCategory } from '../controllers/categoryController.js';
-import { protect } from '../middlewares/auth.js';
-import { validate } from '../middlewares/validate.js';
-import { createCategorySchema, updateCategorySchema } from '../validations/categoryValidation.js';
+import express from "express";
+import {
+  createCategory,
+  getAllCategories,
+  getCategoryById,
+  updateCategory,
+  deleteCategory,
+} from "../controllers/categoryController.js";
+import { protect } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import {
+  createCategorySchema,
+  updateCategorySchema,
+} from "../validations/categoryValidation.js";
 
 const router = express.Router();
 
-router.post('/', protect, validate(createCategorySchema), createCategory);
-router.get('/', protect, getAllCategories);
-router.get('/:id', protect, getCategoryById);
-router.put('/:id', protect, validate(updateCategorySchema), updateCategory);
-router.delete('/:id', protect, deleteCategory);
+router.post("/", protect, validate(createCategorySchema), createCategory);
+router.get("/", protect, getAllCategories);
+router.get("/:id", protect, getCategoryById);
+router.put("/:id", protect, validate(updateCategorySchema), updateCategory);
+router.delete("/:id", protect, deleteCategory);
 
 export default router;
 ```
@@ -2698,20 +2968,30 @@ export default router;
 - [ ] **Step 2: Update routes/projectRoute.js**
 
 ```js
-import express from 'express';
-import { createProject, deleteProject, getAllProjects, getProjectById, getProjectTasks, updateProject } from '../controllers/projectController.js';
-import { protect } from '../middlewares/auth.js';
-import { validate } from '../middlewares/validate.js';
-import { createProjectSchema, updateProjectSchema } from '../validations/projectValidation.js';
+import express from "express";
+import {
+  createProject,
+  deleteProject,
+  getAllProjects,
+  getProjectById,
+  getProjectTasks,
+  updateProject,
+} from "../controllers/projectController.js";
+import { protect } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import {
+  createProjectSchema,
+  updateProjectSchema,
+} from "../validations/projectValidation.js";
 
 const router = express.Router();
 
-router.post('/', protect, validate(createProjectSchema), createProject);
-router.get('/', protect, getAllProjects);
-router.get('/:id/tasks', protect, getProjectTasks);
-router.get('/:id', protect, getProjectById);
-router.put('/:id', protect, validate(updateProjectSchema), updateProject);
-router.delete('/:id', protect, deleteProject);
+router.post("/", protect, validate(createProjectSchema), createProject);
+router.get("/", protect, getAllProjects);
+router.get("/:id/tasks", protect, getProjectTasks);
+router.get("/:id", protect, getProjectById);
+router.put("/:id", protect, validate(updateProjectSchema), updateProject);
+router.delete("/:id", protect, deleteProject);
 
 export default router;
 ```
@@ -2719,25 +2999,40 @@ export default router;
 - [ ] **Step 3: Update routes/taskRoute.js**
 
 ```js
-import express from 'express';
-import { createTask, getAllTasks, getTaskById, updateTask, startTask, finishTask, giveUpTask, deleteTask, getTodayDeadlines, getTaskByStatus, getTaskByCategory } from '../controllers/taskController.js';
-import { protect } from '../middlewares/auth.js';
-import { validate } from '../middlewares/validate.js';
-import { createTaskSchema, updateTaskSchema } from '../validations/taskValidation.js';
+import express from "express";
+import {
+  createTask,
+  getAllTasks,
+  getTaskById,
+  updateTask,
+  startTask,
+  finishTask,
+  giveUpTask,
+  deleteTask,
+  getTodayDeadlines,
+  getTaskByStatus,
+  getTaskByCategory,
+} from "../controllers/taskController.js";
+import { protect } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import {
+  createTaskSchema,
+  updateTaskSchema,
+} from "../validations/taskValidation.js";
 
 const router = express.Router();
 
-router.post('/', protect, validate(createTaskSchema), createTask);
-router.get('/', protect, getAllTasks);
-router.get('/today-deadlines', protect, getTodayDeadlines);
-router.get('/status/:status', protect, getTaskByStatus);
-router.get('/category/:categoryId', protect, getTaskByCategory);
-router.get('/:id', protect, getTaskById);
-router.put('/:id', protect, validate(updateTaskSchema), updateTask);
-router.put('/:id/start', protect, startTask);
-router.put('/:id/finish', protect, finishTask);
-router.put('/:id/give-up', protect, giveUpTask);
-router.delete('/:id', protect, deleteTask);
+router.post("/", protect, validate(createTaskSchema), createTask);
+router.get("/", protect, getAllTasks);
+router.get("/today-deadlines", protect, getTodayDeadlines);
+router.get("/status/:status", protect, getTaskByStatus);
+router.get("/category/:categoryId", protect, getTaskByCategory);
+router.get("/:id", protect, getTaskById);
+router.put("/:id", protect, validate(updateTaskSchema), updateTask);
+router.put("/:id/start", protect, startTask);
+router.put("/:id/finish", protect, finishTask);
+router.put("/:id/give-up", protect, giveUpTask);
+router.delete("/:id", protect, deleteTask);
 
 export default router;
 ```
@@ -2745,21 +3040,38 @@ export default router;
 - [ ] **Step 4: Update routes/authRoute.js**
 
 ```js
-import express from 'express';
-import { registerUser, loginUser, getMe, changePassword, updateInfo, logoutUser, selfDelete } from '../controllers/authController.js';
-import { protect } from '../middlewares/auth.js';
-import { validate } from '../middlewares/validate.js';
-import { registerSchema, loginSchema, changePasswordSchema } from '../validations/authValidation.js';
+import express from "express";
+import {
+  registerUser,
+  loginUser,
+  getMe,
+  changePassword,
+  updateInfo,
+  logoutUser,
+  selfDelete,
+} from "../controllers/authController.js";
+import { protect } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import {
+  registerSchema,
+  loginSchema,
+  changePasswordSchema,
+} from "../validations/authValidation.js";
 
 const router = express.Router();
 
-router.post('/logout', logoutUser);
-router.post('/register', validate(registerSchema), registerUser);
-router.post('/login', validate(loginSchema), loginUser);
-router.get('/me', protect, getMe);
-router.put('/change-password', protect, validate(changePasswordSchema), changePassword);
-router.put('/update-info', protect, updateInfo);
-router.delete('/self-delete', protect, selfDelete);
+router.post("/logout", logoutUser);
+router.post("/register", validate(registerSchema), registerUser);
+router.post("/login", validate(loginSchema), loginUser);
+router.get("/me", protect, getMe);
+router.put(
+  "/change-password",
+  protect,
+  validate(changePasswordSchema),
+  changePassword,
+);
+router.put("/update-info", protect, updateInfo);
+router.delete("/self-delete", protect, selfDelete);
 
 export default router;
 ```
@@ -2767,19 +3079,40 @@ export default router;
 - [ ] **Step 5: Update routes/userRoute.js**
 
 ```js
-import express from 'express';
-import { createUser, getAllUsers, getUserById, updateUser, deleteUser } from '../controllers/userController.js';
-import { protect, authorize } from '../middlewares/auth.js';
-import { validate } from '../middlewares/validate.js';
-import { createUserSchema, updateUserSchema } from '../validations/userValidation.js';
+import express from "express";
+import {
+  createUser,
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+} from "../controllers/userController.js";
+import { protect, authorize } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import {
+  createUserSchema,
+  updateUserSchema,
+} from "../validations/userValidation.js";
 
 const router = express.Router();
 
-router.post('/', protect, authorize('ADMIN'), validate(createUserSchema), createUser);
-router.get('/', protect, authorize('ADMIN'), getAllUsers);
-router.get('/:id', protect, authorize('ADMIN'), getUserById);
-router.put('/:id', protect, authorize('ADMIN'), validate(updateUserSchema), updateUser);
-router.delete('/:id', protect, authorize('ADMIN'), deleteUser);
+router.post(
+  "/",
+  protect,
+  authorize("ADMIN"),
+  validate(createUserSchema),
+  createUser,
+);
+router.get("/", protect, authorize("ADMIN"), getAllUsers);
+router.get("/:id", protect, authorize("ADMIN"), getUserById);
+router.put(
+  "/:id",
+  protect,
+  authorize("ADMIN"),
+  validate(updateUserSchema),
+  updateUser,
+);
+router.delete("/:id", protect, authorize("ADMIN"), deleteUser);
 
 export default router;
 ```
@@ -2789,6 +3122,7 @@ Note: `uploadAvatar` route is removed from this rewrite — the current `userRou
 Wait — let me check the current userRoute.js. Actually, I read it earlier and it doesn't have an uploadAvatar route. The userController exports it but it may be unused or mounted elsewhere. I'll keep the route file minimal and not add it.
 
 Also let me check — the current userRoute.js actually... let me verify. I read it earlier. It has:
+
 - POST / (protect, authorize ADMIN, createUser)
 - GET / (protect, authorize ADMIN, getAllUsers)
 - GET /:id (protect, authorize ADMIN, getUserById)
@@ -2800,16 +3134,27 @@ Good, that matches.
 - [ ] **Step 6: Update routes/aiRoutes.js**
 
 ```js
-import express from 'express';
-import { generateTasksWithRequirement, responseToUser } from '../controllers/aiController.js';
-import { protect } from '../middlewares/auth.js';
-import { validate } from '../middlewares/validate.js';
-import { generateTasksSchema, chatSchema } from '../validations/aiValidation.js';
+import express from "express";
+import {
+  generateTasksWithRequirement,
+  responseToUser,
+} from "../controllers/aiController.js";
+import { protect } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import {
+  generateTasksSchema,
+  chatSchema,
+} from "../validations/aiValidation.js";
 
 const router = express.Router();
 
-router.post('/generate-tasks', protect, validate(generateTasksSchema), generateTasksWithRequirement);
-router.post('/chat', protect, validate(chatSchema), responseToUser);
+router.post(
+  "/generate-tasks",
+  protect,
+  validate(generateTasksSchema),
+  generateTasksWithRequirement,
+);
+router.post("/chat", protect, validate(chatSchema), responseToUser);
 
 export default router;
 ```
@@ -2817,14 +3162,17 @@ export default router;
 - [ ] **Step 7: Update routes/statRoute.js**
 
 ```js
-import express from 'express';
-import { getStats, getCompletedTasksByDate } from '../controllers/statController.js';
-import { protect } from '../middlewares/auth.js';
+import express from "express";
+import {
+  getStats,
+  getCompletedTasksByDate,
+} from "../controllers/statController.js";
+import { protect } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.get('/', protect, getStats);
-router.get('/completed-tasks', protect, getCompletedTasksByDate);
+router.get("/", protect, getStats);
+router.get("/completed-tasks", protect, getCompletedTasksByDate);
 
 export default router;
 ```
@@ -2843,11 +3191,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 17: Create app.js + server.js, delete old index.js
 
 **Files:**
+
 - Create: `backend/app.js`
 - Create: `backend/server.js`
 - Delete: `backend/index.js`
 
 **Interfaces:**
+
 - `app.js` exports `app` (Express instance) and `ensureAppReady` (for Vercel)
 - `server.js` imports `app`, validates env, connects DB, calls `app.listen()`
 - Vercel compatibility: `server.js` guards `app.listen()` behind `!process.env.VERCEL`
@@ -2855,24 +3205,28 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] **Step 1: Write app.js**
 
 ```js
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import { createCorsOptions, getServerConfig, validateServerEnv } from './config/env.js';
-import { connectDB } from './config/db.js';
-import { errorHandler } from './middlewares/errorHandler.js';
-import userRouter from './routes/userRoute.js';
-import categoryRouter from './routes/categoryRoute.js';
-import projectRouter from './routes/projectRoute.js';
-import taskRouter from './routes/taskRoute.js';
-import authRouter from './routes/authRoute.js';
-import aiRouter from './routes/aiRoutes.js';
-import statRouter from './routes/statRoute.js';
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import {
+  createCorsOptions,
+  getServerConfig,
+  validateServerEnv,
+} from "./config/env.js";
+import { connectDB } from "./config/db.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
+import userRouter from "./routes/userRoute.js";
+import categoryRouter from "./routes/categoryRoute.js";
+import projectRouter from "./routes/projectRoute.js";
+import taskRouter from "./routes/taskRoute.js";
+import authRouter from "./routes/authRoute.js";
+import aiRouter from "./routes/aiRoutes.js";
+import statRouter from "./routes/statRoute.js";
 
 const app = express();
 
 app.use(cors(createCorsOptions()));
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 app.use(express.json());
 
 let startupPromise;
@@ -2891,7 +3245,7 @@ const ensureAppReady = async () => {
   return startupPromise;
 };
 
-app.get('/healthz', async (req, res, next) => {
+app.get("/healthz", async (req, res, next) => {
   try {
     await ensureAppReady();
     res.status(200).json({ ok: true });
@@ -2909,17 +3263,17 @@ app.use(async (req, res, next) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('This is the Orbit backend');
+app.get("/", (req, res) => {
+  res.send("This is the Orbit backend");
 });
 
-app.use('/api/auth', authRouter);
-app.use('/api/users', userRouter);
-app.use('/api/categories', categoryRouter);
-app.use('/api/projects', projectRouter);
-app.use('/api/tasks', taskRouter);
-app.use('/api/ai', aiRouter);
-app.use('/api/stats', statRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
+app.use("/api/categories", categoryRouter);
+app.use("/api/projects", projectRouter);
+app.use("/api/tasks", taskRouter);
+app.use("/api/ai", aiRouter);
+app.use("/api/stats", statRouter);
 
 app.use(errorHandler);
 
@@ -2930,10 +3284,10 @@ export { ensureAppReady };
 - [ ] **Step 2: Write server.js**
 
 ```js
-import 'dotenv/config';
-import app from './app.js';
-import { connectDB } from './config/db.js';
-import { getServerConfig, validateServerEnv } from './config/env.js';
+import "dotenv/config";
+import app from "./app.js";
+import { connectDB } from "./config/db.js";
+import { getServerConfig, validateServerEnv } from "./config/env.js";
 
 const { host, port } = getServerConfig();
 
@@ -2947,7 +3301,7 @@ if (!process.env.VERCEL) {
   };
 
   start().catch((error) => {
-    console.error('Failed to start server:', error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   });
 }
@@ -3002,10 +3356,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 18: Cleanup and final verification
 
 **Files:**
+
 - Delete: `backend/utils/generateToken.js` (merged into authService)
 - Modify: `backend/utils/dateTime.js` (remove date patterns, import from constants instead — actually keep them, the patterns are still used by dateTime.js itself)
 
 **Verification:**
+
 - Check for any remaining imports from old paths
 - Confirm all route handlers work
 

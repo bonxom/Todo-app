@@ -1,24 +1,24 @@
 const ProfileStats = ({ stats }) => {
   const statItems = [
     {
-      label: 'Total Tasks',
+      label: "Total Tasks",
       value: stats?.totalTasks || 0,
-      tone: 'text-[var(--color-accent)]',
+      tone: "text-[var(--color-accent)]",
     },
     {
-      label: 'Completed',
+      label: "Completed",
       value: stats?.completedTasks || 0,
-      tone: 'text-[var(--color-success)]',
+      tone: "text-[var(--color-success)]",
     },
     {
-      label: 'In Progress',
+      label: "In Progress",
       value: stats?.inProgressTasks || 0,
-      tone: 'text-[var(--color-warning)]',
+      tone: "text-[var(--color-warning)]",
     },
     {
-      label: 'Categories',
+      label: "Categories",
       value: stats?.totalCategories || 0,
-      tone: 'text-[var(--color-text)]',
+      tone: "text-[var(--color-text)]",
     },
   ];
 

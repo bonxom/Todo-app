@@ -1,4 +1,4 @@
-import type { ErrorDefinition } from './ErrorDefinition.js';
+import type { ErrorDefinition } from "./ErrorDefinition.js";
 
 export interface AppErrorOptions {
   readonly params?: Readonly<Record<string, string | number>>;
@@ -9,10 +9,13 @@ export interface AppErrorOptions {
 
 const formatMessage = (
   template: string,
-  params: Readonly<Record<string, string | number>> = {}
-): string => template.replace(/\{([^{}]+)\}/g, (placeholder, key: string) =>
-  Object.prototype.hasOwnProperty.call(params, key) ? String(params[key]) : placeholder
-);
+  params: Readonly<Record<string, string | number>> = {},
+): string =>
+  template.replace(/\{([^{}]+)\}/g, (placeholder, key: string) =>
+    Object.prototype.hasOwnProperty.call(params, key)
+      ? String(params[key])
+      : placeholder,
+  );
 
 export class AppError extends Error {
   public readonly code: string;
@@ -20,9 +23,10 @@ export class AppError extends Error {
   public readonly details?: unknown;
 
   constructor(definition: ErrorDefinition, options: AppErrorOptions = {}) {
-    const message = options.message ?? formatMessage(definition.message, options.params);
+    const message =
+      options.message ?? formatMessage(definition.message, options.params);
     super(message, { cause: options.cause });
-    this.name = 'AppError';
+    this.name = "AppError";
     this.code = definition.code;
     this.statusCode = definition.statusCode;
     this.details = options.details;

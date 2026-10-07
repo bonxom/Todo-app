@@ -36,8 +36,10 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:
+    "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
 
   --ring-focus-outline: rgba(69, 107, 140, 0.42);
   --ring-focus-shadow: 0 0 0 3px rgba(69, 107, 140, 0.16);
@@ -133,7 +135,15 @@ a {
   accent-color: var(--color-accent);
 }
 
-:where(a, button, [role="button"], input, select, textarea, summary):focus-visible {
+:where(
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  summary
+):focus-visible {
   outline: 2px solid var(--ring-focus-outline);
   outline-offset: 2px;
 }

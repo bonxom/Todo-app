@@ -1,10 +1,10 @@
-import type { RouteObject } from 'react-router-dom';
+import type { RouteObject } from "react-router-dom";
 
 export const calendarRoutes: RouteObject[] = [
   {
-    path: 'calendar',
+    path: "calendar",
     lazy: async () => {
-      const Component = (await import('./CalendarPage')).default;
+      const Component = (await import("./CalendarPage")).default;
       return { Component };
     },
   },

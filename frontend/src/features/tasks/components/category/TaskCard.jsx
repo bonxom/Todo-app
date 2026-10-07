@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   AlarmClock,
   CircleCheckBig,
@@ -6,43 +6,46 @@ import {
   Pencil,
   Play,
   Trash2,
-} from 'lucide-react';
-import { useFinishTaskMutation, useStartTaskMutation } from '../../api/taskMutations';
-import { setTaskDragData } from '@/shared/utils/taskDrag';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+} from "lucide-react";
+import {
+  useFinishTaskMutation,
+  useStartTaskMutation,
+} from "../../api/taskMutations";
+import { setTaskDragData } from "@/shared/utils/taskDrag";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: 'numeric',
+  month: "short",
+  day: "numeric",
 });
 
 const STATUS_META = {
   pending: {
-    label: 'Pending',
-    tone: 'text-[color:var(--color-text-muted)]',
-    accent: 'var(--color-accent)',
+    label: "Pending",
+    tone: "text-[color:var(--color-text-muted)]",
+    accent: "var(--color-accent)",
   },
-  'in-progress': {
-    label: 'In Progress',
-    tone: 'text-[color:var(--color-accent)]',
-    accent: 'var(--color-accent)',
+  "in-progress": {
+    label: "In Progress",
+    tone: "text-[color:var(--color-accent)]",
+    accent: "var(--color-accent)",
   },
   completed: {
-    label: 'Completed',
-    tone: 'text-[color:var(--color-success)]',
-    accent: 'var(--color-success)',
+    label: "Completed",
+    tone: "text-[color:var(--color-success)]",
+    accent: "var(--color-success)",
   },
-  'given-up': {
-    label: 'Given Up',
-    tone: 'text-[color:var(--color-text-muted)]',
-    accent: 'var(--color-text-muted)',
+  "given-up": {
+    label: "Given Up",
+    tone: "text-[color:var(--color-text-muted)]",
+    accent: "var(--color-text-muted)",
   },
 };
 
 const PRIORITY_META = {
-  High: 'ui-badge ui-badge--danger',
-  Medium: 'ui-badge ui-badge--warning',
-  Low: 'ui-badge',
+  High: "ui-badge ui-badge--danger",
+  Medium: "ui-badge ui-badge--warning",
+  Low: "ui-badge",
 };
 
 const getDaysLeft = (deadline) => {
@@ -67,30 +70,30 @@ const getDeadlineMeta = (deadline) => {
   if (daysLeft < 0) {
     return {
       label: `Overdue · ${formattedDate}`,
-      badgeClassName: 'ui-badge ui-badge--danger',
-      accent: 'var(--color-danger)',
+      badgeClassName: "ui-badge ui-badge--danger",
+      accent: "var(--color-danger)",
     };
   }
 
   if (daysLeft === 0) {
     return {
       label: `Due Today · ${formattedDate}`,
-      badgeClassName: 'ui-badge ui-badge--warning',
-      accent: 'var(--color-warning)',
+      badgeClassName: "ui-badge ui-badge--warning",
+      accent: "var(--color-warning)",
     };
   }
 
   if (daysLeft === 1) {
     return {
       label: `Due Tomorrow · ${formattedDate}`,
-      badgeClassName: 'ui-badge ui-badge--warning',
-      accent: 'var(--color-warning)',
+      badgeClassName: "ui-badge ui-badge--warning",
+      accent: "var(--color-warning)",
     };
   }
 
   return {
     label: `Due ${formattedDate}`,
-    badgeClassName: 'ui-badge',
+    badgeClassName: "ui-badge",
     accent: null,
   };
 };
@@ -112,11 +115,11 @@ const TaskCard = ({
 
   const statusMeta = STATUS_META[task.status] || STATUS_META.pending;
   const deadlineMeta = getDeadlineMeta(task.dueDate);
-  const priorityClassName = PRIORITY_META[task.priority] || 'ui-badge';
+  const priorityClassName = PRIORITY_META[task.priority] || "ui-badge";
   const accentColor = deadlineMeta?.accent || statusMeta.accent;
-  const isCompleted = task.status === 'completed';
-  const isGivenUp = task.status === 'given-up';
-  const isPending = task.status === 'pending';
+  const isCompleted = task.status === "completed";
+  const isGivenUp = task.status === "given-up";
+  const isPending = task.status === "pending";
   const isSimpleInteractive = Boolean(onClick) && !showActions && !quickActions;
 
   const finishTaskMutation = useFinishTaskMutation();
@@ -135,8 +138,8 @@ const TaskCard = ({
         setIsFinishing(false);
       }, 500);
     } catch (error) {
-      console.error('Failed to finish task:', error);
-      alert(getApiErrorMessage(error, 'Failed to finish task.'));
+      console.error("Failed to finish task:", error);
+      alert(getApiErrorMessage(error, "Failed to finish task."));
       setIsFinishing(false);
     }
   };
@@ -148,8 +151,8 @@ const TaskCard = ({
       await startTaskMutation.mutateAsync(task._id || task.id);
       onTaskUpdated?.();
     } catch (error) {
-      console.error('Failed to start task:', error);
-      alert(getApiErrorMessage(error, 'Failed to start task.'));
+      console.error("Failed to start task:", error);
+      alert(getApiErrorMessage(error, "Failed to start task."));
     }
   };
 
@@ -163,16 +166,16 @@ const TaskCard = ({
   const handleKeyDown = (event) => {
     if (!onClick || showActions) return;
 
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       onClick(task);
     }
   };
 
-  const Wrapper = isSimpleInteractive ? 'button' : 'div';
+  const Wrapper = isSimpleInteractive ? "button" : "div";
   const wrapperProps = isSimpleInteractive
     ? {
-        type: 'button',
+        type: "button",
       }
     : {};
 
@@ -187,26 +190,32 @@ const TaskCard = ({
       onClick={!showActions && onClick ? () => onClick(task) : undefined}
       className={`group w-full rounded-[12px] border bg-[var(--color-surface)] px-3 py-3 text-left shadow-[var(--shadow-xs)] transition-[border-color,background-color,box-shadow,opacity] duration-200 ${
         isCompleted || isGivenUp
-          ? 'border-[color:var(--color-line)] bg-[var(--color-surface-muted)]'
-          : 'border-[color:var(--color-line)] hover:border-[color:var(--color-accent)]'
-      } ${enableDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${
-        !enableDrag && onClick && !showActions ? 'cursor-pointer' : ''
+          ? "border-[color:var(--color-line)] bg-[var(--color-surface-muted)]"
+          : "border-[color:var(--color-line)] hover:border-[color:var(--color-accent)]"
+      } ${enableDrag ? "cursor-grab active:cursor-grabbing" : ""} ${
+        !enableDrag && onClick && !showActions ? "cursor-pointer" : ""
       }`}
       style={{
-        borderLeftWidth: '3px',
+        borderLeftWidth: "3px",
         borderLeftColor: accentColor,
       }}
-      role={!isSimpleInteractive && onClick && !showActions ? 'button' : undefined}
+      role={
+        !isSimpleInteractive && onClick && !showActions ? "button" : undefined
+      }
       tabIndex={!isSimpleInteractive && onClick && !showActions ? 0 : undefined}
-      aria-label={!isSimpleInteractive && onClick && !showActions ? `Open task ${task.title}` : undefined}
+      aria-label={
+        !isSimpleInteractive && onClick && !showActions
+          ? `Open task ${task.title}`
+          : undefined
+      }
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p
             className={`truncate text-sm font-medium ${
               isCompleted || isGivenUp
-                ? 'text-[color:var(--color-text-muted)] line-through'
-                : 'text-[color:var(--color-text)]'
+                ? "text-[color:var(--color-text-muted)] line-through"
+                : "text-[color:var(--color-text)]"
             }`}
           >
             {task.title}
@@ -239,7 +248,7 @@ const TaskCard = ({
                 </button>
               ) : null}
 
-              {task.status === 'in-progress' && task.dueDate ? (
+              {task.status === "in-progress" && task.dueDate ? (
                 <button
                   type="button"
                   onClick={handleFinishTask}
@@ -248,11 +257,11 @@ const TaskCard = ({
                   disabled={isFinishing}
                   className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-[background-color,border-color,color,transform] duration-150 ${
                     isFinishing || isHovering
-                      ? 'border-[color:var(--color-success)] bg-[var(--color-success-soft)] text-[color:var(--color-success)]'
+                      ? "border-[color:var(--color-success)] bg-[var(--color-success-soft)] text-[color:var(--color-success)]"
                       : deadlineMeta?.accent
-                        ? 'border-transparent bg-[var(--color-warning-soft)] text-[color:var(--color-warning)]'
-                        : 'border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:border-[color:var(--color-accent)] hover:bg-[var(--color-accent-soft)] hover:text-[color:var(--color-accent)]'
-                  } ${isFinishing ? 'cursor-default' : ''}`}
+                        ? "border-transparent bg-[var(--color-warning-soft)] text-[color:var(--color-warning)]"
+                        : "border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:border-[color:var(--color-accent)] hover:bg-[var(--color-accent-soft)] hover:text-[color:var(--color-accent)]"
+                  } ${isFinishing ? "cursor-default" : ""}`}
                   aria-label="Finish task"
                 >
                   {isFinishing || isHovering ? (
@@ -279,7 +288,7 @@ const TaskCard = ({
                 </button>
               ) : null}
 
-              {task.status === 'in-progress' && task.dueDate ? (
+              {task.status === "in-progress" && task.dueDate ? (
                 <button
                   type="button"
                   onClick={handleFinishTask}
@@ -288,11 +297,11 @@ const TaskCard = ({
                   disabled={isFinishing}
                   className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-[background-color,border-color,color,transform] duration-150 ${
                     isFinishing || isHovering
-                      ? 'border-[color:var(--color-success)] bg-[var(--color-success-soft)] text-[color:var(--color-success)]'
+                      ? "border-[color:var(--color-success)] bg-[var(--color-success-soft)] text-[color:var(--color-success)]"
                       : deadlineMeta?.accent
-                        ? 'border-transparent bg-[var(--color-warning-soft)] text-[color:var(--color-warning)]'
-                        : 'border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:border-[color:var(--color-accent)] hover:bg-[var(--color-accent-soft)] hover:text-[color:var(--color-accent)]'
-                  } ${isFinishing ? 'cursor-default' : ''}`}
+                        ? "border-transparent bg-[var(--color-warning-soft)] text-[color:var(--color-warning)]"
+                        : "border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:border-[color:var(--color-accent)] hover:bg-[var(--color-accent-soft)] hover:text-[color:var(--color-accent)]"
+                  } ${isFinishing ? "cursor-default" : ""}`}
                   aria-label="Finish task"
                 >
                   {isFinishing || isHovering ? (
@@ -315,7 +324,7 @@ const TaskCard = ({
                 <Pencil className="h-4 w-4" />
               </button>
 
-              {task.status === 'in-progress' ? (
+              {task.status === "in-progress" ? (
                 <button
                   type="button"
                   onClick={(event) => {

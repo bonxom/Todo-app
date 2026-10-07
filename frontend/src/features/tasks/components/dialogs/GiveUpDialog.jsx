@@ -15,11 +15,17 @@ const GiveUpDialog = ({ isOpen, onClose, onConfirm }) => {
         aria-labelledby="giveup-task-title"
       >
         <div className="ui-modal-header">
-          <h2 id="giveup-task-title" className="text-xl font-semibold text-[var(--color-text)]">Give Up Task</h2>
+          <h2
+            id="giveup-task-title"
+            className="text-xl font-semibold text-[var(--color-text)]"
+          >
+            Give Up Task
+          </h2>
         </div>
         <div className="ui-modal-body">
           <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-            Are you sure you want to give up this task? You are choosing not to continue working on it.
+            Are you sure you want to give up this task? You are choosing not to
+            continue working on it.
           </p>
           <div className="flex gap-3">
             <button

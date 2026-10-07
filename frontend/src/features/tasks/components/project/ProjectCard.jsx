@@ -1,15 +1,30 @@
-import { useState } from 'react';
-import { Check, ChevronRight, FolderOpen, Pencil, RotateCcw, Trash2, X } from 'lucide-react';
-import ProjectDetailModal from './ProjectDetailModal';
-import AddProjectForm from '../Form/AddProjectForm';
-import DeleteProjectDialog from './DeleteProjectDialog';
-import TaskCard from '../category/TaskCard';
-import { useDeleteProjectMutation, useUpdateProjectMutation } from '../../api/projectMutations';
-import { useUpdateTaskMutation } from '../../api/taskMutations';
-import { getTaskDragData } from '@/shared/utils/taskDrag';
-import { getProjectColor } from '@/shared/utils/projectColor';
-import { PROJECT_STATUS, canCompleteProject, isCompletedProject } from '@/shared/utils/projectStatus';
-import { getApiErrorMessage } from '@/shared/services/apiError';
+import { useState } from "react";
+import {
+  Check,
+  ChevronRight,
+  FolderOpen,
+  Pencil,
+  RotateCcw,
+  Trash2,
+  X,
+} from "lucide-react";
+import ProjectDetailModal from "./ProjectDetailModal";
+import AddProjectForm from "../Form/AddProjectForm";
+import DeleteProjectDialog from "./DeleteProjectDialog";
+import TaskCard from "../category/TaskCard";
+import {
+  useDeleteProjectMutation,
+  useUpdateProjectMutation,
+} from "../../api/projectMutations";
+import { useUpdateTaskMutation } from "../../api/taskMutations";
+import { getTaskDragData } from "@/shared/utils/taskDrag";
+import { getProjectColor } from "@/shared/utils/projectColor";
+import {
+  PROJECT_STATUS,
+  canCompleteProject,
+  isCompletedProject,
+} from "@/shared/utils/projectStatus";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -20,16 +35,20 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
   const updateProjectMutation = useUpdateProjectMutation();
   const updateTaskMutation = useUpdateTaskMutation();
 
-  const completedTasks = tasks.filter((task) => task.status === 'completed').length;
-  const pendingTasks = tasks.filter((task) => task.status === 'pending').length;
+  const completedTasks = tasks.filter(
+    (task) => task.status === "completed",
+  ).length;
+  const pendingTasks = tasks.filter((task) => task.status === "pending").length;
   const totalTasks = tasks.length;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const completionRate =
+    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   const previewTasks = tasks.slice(0, 3);
   const descriptionId = `project-${project._id}-description`;
   const projectColor = getProjectColor(project);
   const isProjectCompleted = isCompletedProject(project);
   const completionTasks = project.completionTasks || tasks;
-  const isCompletionEligible = !isProjectCompleted && canCompleteProject(completionTasks);
+  const isCompletionEligible =
+    !isProjectCompleted && canCompleteProject(completionTasks);
 
   const handleConfirmDelete = async () => {
     try {
@@ -38,8 +57,13 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
       setIsDetailOpen(false);
       onProjectUpdated?.();
     } catch (error) {
-      console.error('Failed to delete project:', error);
-      alert(getApiErrorMessage(error, 'Failed to delete project. Please try again.'));
+      console.error("Failed to delete project:", error);
+      alert(
+        getApiErrorMessage(
+          error,
+          "Failed to delete project. Please try again.",
+        ),
+      );
     }
   };
 
@@ -47,7 +71,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
     event.preventDefault();
     event.stopPropagation();
     if (isProjectCompleted) {
-      event.dataTransfer.dropEffect = 'none';
+      event.dataTransfer.dropEffect = "none";
       return;
     }
     setIsDragOver(true);
@@ -57,10 +81,10 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
     event.preventDefault();
     event.stopPropagation();
     if (isProjectCompleted) {
-      event.dataTransfer.dropEffect = 'none';
+      event.dataTransfer.dropEffect = "none";
       return;
     }
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = "move";
     setIsDragOver(true);
   };
 
@@ -95,8 +119,8 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
       });
       onTaskUpdated?.();
     } catch (error) {
-      console.error('Failed to move task to project:', error);
-      alert(getApiErrorMessage(error, 'Failed to move task to this project.'));
+      console.error("Failed to move task to project:", error);
+      alert(getApiErrorMessage(error, "Failed to move task to this project."));
     }
   };
 
@@ -108,8 +132,8 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
       });
       onProjectUpdated?.();
     } catch (error) {
-      console.error('Failed to complete project:', error);
-      alert(getApiErrorMessage(error, 'Failed to complete project.'));
+      console.error("Failed to complete project:", error);
+      alert(getApiErrorMessage(error, "Failed to complete project."));
     }
   };
 
@@ -121,8 +145,8 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
       });
       onProjectUpdated?.();
     } catch (error) {
-      console.error('Failed to restore project:', error);
-      alert(getApiErrorMessage(error, 'Failed to restore project.'));
+      console.error("Failed to restore project:", error);
+      alert(getApiErrorMessage(error, "Failed to restore project."));
     }
   };
 
@@ -161,7 +185,10 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
             <div className="ui-modal-header flex items-start justify-between gap-4">
               <div>
                 <p className="ui-page-kicker">Edit</p>
-                <h2 id={`edit-project-${project._id}`} className="text-xl font-semibold text-[color:var(--color-text)]">
+                <h2
+                  id={`edit-project-${project._id}`}
+                  className="text-xl font-semibold text-[color:var(--color-text)]"
+                >
                   Edit Project
                 </h2>
               </div>
@@ -191,15 +218,15 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
       <article
         className={`ui-drop-zone ui-section-card flex h-full flex-col overflow-hidden transition-[border-color,box-shadow,background-color,transform] duration-200 ${
           isDragOver
-            ? 'border-[color:var(--color-accent)] bg-[var(--color-accent-soft)]'
-            : 'hover:border-[color:var(--color-accent)]'
-        } ${isProjectCompleted ? 'opacity-75' : ''}`}
-        data-drag-active={isDragOver ? 'true' : 'false'}
+            ? "border-[color:var(--color-accent)] bg-[var(--color-accent-soft)]"
+            : "hover:border-[color:var(--color-accent)]"
+        } ${isProjectCompleted ? "opacity-75" : ""}`}
+        data-drag-active={isDragOver ? "true" : "false"}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        style={{ borderLeftColor: projectColor, borderLeftWidth: '6px' }}
+        style={{ borderLeftColor: projectColor, borderLeftWidth: "6px" }}
       >
         <div className="p-5">
           <div className="flex items-start gap-3">
@@ -217,7 +244,9 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[color:var(--color-text-muted)]">
                     Project
                   </p>
-                  <h3 className="truncate text-lg font-semibold text-[color:var(--color-text)]">{project.name}</h3>
+                  <h3 className="truncate text-lg font-semibold text-[color:var(--color-text)]">
+                    {project.name}
+                  </h3>
                 </div>
               </div>
             </button>
@@ -266,12 +295,15 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
             id={descriptionId}
             className="mt-4 min-h-[3rem] break-words text-sm leading-6 text-[color:var(--color-text-muted)]"
           >
-            {project.description || 'No project description yet. Add one to clarify what belongs in this workstream.'}
+            {project.description ||
+              "No project description yet. Add one to clarify what belongs in this workstream."}
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="ui-chip ui-tabular">{totalTasks} tasks</span>
-            <span className="ui-chip ui-chip--success ui-tabular">{completedTasks} completed</span>
+            <span className="ui-chip ui-chip--success ui-tabular">
+              {completedTasks} completed
+            </span>
             <span className="ui-chip ui-tabular">{pendingTasks} pending</span>
           </div>
 
@@ -311,7 +343,9 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
             </div>
           ) : (
             <div className="rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-8 text-center">
-              <p className="text-sm font-medium text-[color:var(--color-text)]">No tasks match this view yet</p>
+              <p className="text-sm font-medium text-[color:var(--color-text)]">
+                No tasks match this view yet
+              </p>
               <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">
                 Drag a task here or assign one from a task form.
               </p>
@@ -320,14 +354,18 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
 
           <div className="mt-4 flex items-center justify-between gap-3">
             <div className="text-xs text-[color:var(--color-text-muted)]">
-              {tasks.length > 3 ? `${tasks.length - 3} more tasks available` : 'Recent tasks shown above'}
+              {tasks.length > 3
+                ? `${tasks.length - 3} more tasks available`
+                : "Recent tasks shown above"}
             </div>
             <button
               type="button"
               onClick={() => setIsDetailOpen(true)}
               className="ui-btn-tertiary shrink-0 px-0"
             >
-              <span>{tasks.length > 3 ? 'View All Tasks' : 'Open Details'}</span>
+              <span>
+                {tasks.length > 3 ? "View All Tasks" : "Open Details"}
+              </span>
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
