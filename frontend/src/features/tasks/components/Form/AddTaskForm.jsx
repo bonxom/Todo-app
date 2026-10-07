@@ -87,7 +87,6 @@ const AddTaskForm = ({
             placeholder="Enter task title…"
             className="ui-input"
             required
-            autoFocus
           />
       </div>
 

@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useModalKeyboard } from '@/shared/hooks/useModalKeyboard';
 import { createPortal } from 'react-dom';
 import { CircleDot, X } from 'lucide-react';
 import TaskDetailForm from './Form/TaskDetailForm';
@@ -22,7 +23,9 @@ const STATUS_CONFIG = {
   },
 };
 
-const TaskDetailButton = ({ isOpen, task, onClose, onTaskUpdated, onProjectCreated }) => {
+const TaskDetailButton = ({ isOpen, task, onClose, onTaskUpdated, onProjectCreated, themeClass = '' }) => {
+  const dialogRef = useRef(null);
+  useModalKeyboard(isOpen, dialogRef, onClose);
   useEffect(() => {
     if (!isOpen) return undefined;
 
@@ -57,11 +60,12 @@ const TaskDetailButton = ({ isOpen, task, onClose, onTaskUpdated, onProjectCreat
 
   return createPortal(
     <div 
-      className="ui-modal-overlay fixed inset-0 z-[80] flex items-center justify-center p-4"
+      className={`ui-modal-overlay fixed inset-0 z-[80] flex items-center justify-center p-4 ${themeClass}`}
       onClick={onClose}
       role="presentation"
     >
       <div 
+        ref={dialogRef}
         className="ui-modal-shell w-full max-w-xl animate-fadeIn"
         style={{ maxHeight: '90vh' }}
         onClick={(e) => e.stopPropagation()}

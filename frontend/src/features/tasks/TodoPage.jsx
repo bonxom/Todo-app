@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createElement, useEffect, useMemo, useState } from 'react';
 import AddTaskButton from './components/AddTaskButton';
 import TaskDetailButton from './components/TaskDetailButton';
 import TodoTaskToolbar from './components/TodoTaskToolbar';
@@ -21,7 +21,10 @@ import { useTaskFilter } from '@/stores/useTaskFilterStore';
 import { usePagination } from '@/shared/hooks/usePagination';
 import { PROJECT_STATUS } from '@/shared/utils/projectStatus';
 import { getApiErrorMessage } from '@/shared/services/apiError';
-import { X } from 'lucide-react';
+import { ArrowUpRight, Check, CircleDot, ListTodo, Plus, X } from 'lucide-react';
+import { useStatsQuery } from '@/features/statistics/api/statQueries';
+import { useAuthStore } from '@/stores/useAuthStore';
+import './todos.css';
 
 const ALL_PROJECT_FILTER = 'all-projects';
 const STANDALONE_PROJECT_FILTER = 'standalone-projects';
@@ -38,8 +41,8 @@ const TodoPage = () => {
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [initialTaskProjectId, setInitialTaskProjectId] = useState('');
-  const [taskListHeight, setTaskListHeight] = useState(null);
-  const taskListRef = useRef(null);
+  const user = useAuthStore((state) => state.user);
+  const statsQuery = useStatsQuery();
 
   // Global status filter from Topbar
   const { selectedStatuses, setSelectedStatuses } = useTaskFilter();
@@ -108,29 +111,6 @@ const TodoPage = () => {
     ? getApiErrorMessage(projectsQuery.error, 'Failed to load projects.')
     : '';
 
-  useLayoutEffect(() => {
-    const taskListElement = taskListRef.current;
-    if (!taskListElement) return undefined;
-
-    const syncTaskListHeight = () => {
-      const nextHeight = Math.ceil(taskListElement.getBoundingClientRect().height);
-      setTaskListHeight((currentHeight) => (
-        currentHeight === nextHeight ? currentHeight : nextHeight
-      ));
-    };
-
-    syncTaskListHeight();
-
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', syncTaskListHeight);
-      return () => window.removeEventListener('resize', syncTaskListHeight);
-    }
-
-    const resizeObserver = new ResizeObserver(syncTaskListHeight);
-    resizeObserver.observe(taskListElement);
-    return () => resizeObserver.disconnect();
-  }, []);
-
   // Lock body scroll on modals
   useEffect(() => {
     const isAnyModalOpen = isGiveUpModalOpen || isDeleteModalOpen || isAddCategoryModalOpen || isAddProjectModalOpen;
@@ -140,14 +120,9 @@ const TodoPage = () => {
     };
   }, [isGiveUpModalOpen, isDeleteModalOpen, isAddCategoryModalOpen, isAddProjectModalOpen]);
 
-  // Counters from server-side totalCount (current page tasks for per-status counts)
-  const remainingCount = useMemo(() => {
-    return rawTasks.filter((t) => t.status === 'in-progress' || t.status === 'pending').length;
-  }, [rawTasks]);
-
-  const completedCount = useMemo(() => {
-    return rawTasks.filter((t) => t.status === 'completed').length;
-  }, [rawTasks]);
+  const stats = statsQuery.data;
+  const completedCount = stats?.completedTasks ?? 0;
+  const completion = stats?.totalTasks ? Math.round(completedCount / stats.totalTasks * 100) : 0;
 
   const selectedProject = useMemo(() => {
     if (selectedProjectId === ALL_PROJECT_FILTER || selectedProjectId === STANDALONE_PROJECT_FILTER) {
@@ -162,14 +137,6 @@ const TodoPage = () => {
       await startTaskMutation.mutateAsync(taskId);
     } catch (err) {
       alert(getApiErrorMessage(err, 'Failed to accept task.'));
-    }
-  };
-
-  const handleDenyTask = async (taskId) => {
-    try {
-      await deleteTaskMutation.mutateAsync(taskId);
-    } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to delete task.'));
     }
   };
 
@@ -280,6 +247,7 @@ const TodoPage = () => {
       />
 
       <TaskDetailButton
+        themeClass="todo-shell"
         isOpen={isEditModalOpen}
         task={selectedTask}
         onClose={() => {
@@ -288,38 +256,34 @@ const TodoPage = () => {
         }}
       />
 
-      <div className="ui-page-shell">
-        {/* Main Page Header */}
-        <header className="ui-page-header">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="ui-page-title">Todos</h1>
-              <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
-                <span className="ui-task-summary ui-tabular">
-                  {remainingCount} remaining
-                </span>
-                <span className="ui-task-summary ui-tabular">
-                  {completedCount} completed
-                </span>
-                {selectedProject && (
-                  <span className="ui-chip ui-chip--accent font-medium">
-                    Focused on: {selectedProject.name}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => openAddTask()}
-                className="ui-btn-primary ui-btn-opposite-corners cursor-pointer"
-              >
-                + Add Task
-              </button>
-            </div>
+      <div className="ui-page-shell todo-page">
+        <header className="todo-heading">
+          <div>
+            <p className="todo-eyebrow"><span /> YOUR PERSONAL WORKSPACE</p>
+            <h1>Todos</h1>
+            <p>A little clarity, a little momentum. Let’s make it a good day{user?.name ? `, ${user.name.split(' ')[0]}` : ''}.</p>
           </div>
+          <button type="button" onClick={() => openAddTask(selectedProject?._id)} className="ui-btn-primary todo-add-button">
+            <Plus size={17} /> Add task
+          </button>
         </header>
+
+        <section className="todo-overview" aria-label="Workspace overview">
+          <div className="todo-overview-intro">
+            <div className="todo-orbit-art" aria-hidden="true"><i /><i /><i /><span>✦</span></div>
+            <div><p className="todo-eyebrow">ONE THING AT A TIME</p><h2>Small steps.<br /><em>Real progress.</em></h2></div>
+          </div>
+          {[
+            { label: 'Total tasks', value: stats?.totalTasks, icon: ListTodo, status: '', note: 'Everything in one place' },
+            { label: 'In progress', value: stats?.inProgressTasks, icon: CircleDot, status: 'in-progress', note: 'Keep the momentum going' },
+            { label: 'Completed', value: stats?.completedTasks, icon: Check, status: 'completed', note: 'A little closer to your goals' },
+          ].map(({ label, value, icon, status, note }) => (
+            <button className="todo-stat" key={label} onClick={() => setSelectedStatuses(status ? [status] : [])} aria-label={`Show ${label.toLowerCase()}`}>
+              <span className="todo-stat-label">{createElement(icon, { size: 15 })}{label}<ArrowUpRight size={14} /></span>
+              <strong>{value ?? '—'}</strong><span className="todo-stat-note">{note}</span>
+            </button>
+          ))}
+        </section>
 
         {/* Error Banner */}
         {errorMessage && (
@@ -344,25 +308,25 @@ const TodoPage = () => {
         )}
 
         {/* 2-Column Responsive Layout: Task Workspace (65-70%) vs Project Rail (30-35%, min 320px) */}
-        <div className="flex flex-col lg:flex-row items-start gap-6">
+        <div className="todo-workspace">
           {/* Left Column: Main Task Workspace (~65–70%) */}
-          <main className="w-full flex-1 min-w-0 space-y-4">
+          <section className="todo-task-panel" aria-label="Your tasks">
+            <div className="todo-panel-heading"><div><h2>{selectedProject?.name || (selectedProjectId === STANDALONE_PROJECT_FILTER ? 'Standalone tasks' : 'My tasks')}</h2><span>Your next steps, all in one place.</span></div><span className="todo-result-count" aria-live="polite">{isLoading ? 'Loading…' : `${totalCount} ${totalCount === 1 ? 'task' : 'tasks'}`}</span></div>
             <TodoTaskToolbar
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
               sortBy={sortBy}
               onSortChange={setSortBy}
-              activeProjectName={selectedProject?.name}
+              activeProjectName={selectedProject?.name || (selectedProjectId === STANDALONE_PROJECT_FILTER ? 'Standalone tasks' : '')}
               onClearProjectFilter={() => setSelectedProjectId(ALL_PROJECT_FILTER)}
             />
 
-            <div ref={taskListRef}>
+            <div className="todo-task-list-wrap" aria-busy={tasksQuery.isFetching}>
               <TaskList
                 tasks={filteredTasks}
                 isLoading={isLoading}
                 emptyState={emptyStateInfo}
                 onAccept={handleAcceptTask}
-                onDeny={handleDenyTask}
                 onComplete={handleCompleteTask}
                 onGiveUp={handleGiveUpClick}
                 onRestore={handleRestoreTask}
@@ -371,6 +335,7 @@ const TodoPage = () => {
                   setIsEditModalOpen(true);
                 }}
                 onDelete={handleDeleteClick}
+                onAddTask={() => openAddTask(selectedProject?._id)}
                 onClearFilters={() => {
                   setSearchTerm('');
                   setSelectedStatuses([]);
@@ -391,13 +356,12 @@ const TodoPage = () => {
                 className="mt-4"
               />
             )}
-          </main>
+          </section>
 
           {/* Right Column: Sticky Project Focus Rail (~30–35%, min 320px) */}
-          <div className="w-full lg:w-[22rem] xl:w-[24rem] shrink-0">
+          <div className="todo-right-column">
             <ProjectFocusRail
               projects={projects}
-              rawTasks={rawTasks}
               selectedProjectId={selectedProjectId}
               onSelectProject={setSelectedProjectId}
               showCompletedProjects={showCompletedProjects}
@@ -408,7 +372,9 @@ const TodoPage = () => {
               onCompleteProject={handleCompleteProject}
               onRestoreProject={handleRestoreProject}
               isLoading={isLoading}
-              projectListMaxHeight={taskListHeight - 98}
+              completion={stats ? completion : null}
+              completedCount={completedCount}
+              totalCount={stats?.totalTasks ?? 0}
             />
           </div>
         </div>

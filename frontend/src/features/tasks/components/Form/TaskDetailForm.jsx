@@ -80,7 +80,6 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
           placeholder="Enter task title…"
           className="ui-input"
           required
-          autoFocus
         />
       </div>
 

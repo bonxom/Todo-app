@@ -17,7 +17,7 @@ const TodoTaskToolbar = ({
   const hasActiveFilters = Boolean(searchTerm.trim()) || Boolean(activeProjectName);
 
   return (
-    <div className="space-y-3">
+    <div className="todo-toolbar space-y-3">
       {/* Main control row */}
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Search Box */}

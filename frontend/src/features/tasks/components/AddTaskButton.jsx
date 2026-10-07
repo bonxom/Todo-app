@@ -1,8 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useModalKeyboard } from '@/shared/hooks/useModalKeyboard';
 import { X } from 'lucide-react';
 import AddTaskForm from './Form/AddTaskForm';
 
 const AddTaskButton = ({ isOpen, onClose, onTaskCreated, onProjectCreated, initialProjectId = '' }) => {
+  const dialogRef = useRef(null);
+  useModalKeyboard(isOpen, dialogRef, onClose);
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -23,6 +26,7 @@ const AddTaskButton = ({ isOpen, onClose, onTaskCreated, onProjectCreated, initi
       role="presentation"
     >
       <div 
+        ref={dialogRef}
         className="ui-modal-shell w-full max-w-xl animate-fadeIn"
         style={{ maxHeight: '90vh' }}
         onClick={(e) => e.stopPropagation()}
