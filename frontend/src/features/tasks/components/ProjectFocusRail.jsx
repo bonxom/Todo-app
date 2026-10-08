@@ -212,16 +212,6 @@ const ProjectFocusRail = ({
           Show completed projects
         </label>
       </section>
-      <button
-        type="button"
-        className="todo-category-link"
-        onClick={onCreateCategory}
-      >
-        <Layers size={16} />
-        <span>Organize with categories</span>
-        <Plus size={15} />
-      </button>
-      <p className="todo-rail-note">Less noise. More headspace.</p>
     </aside>
   );
 };

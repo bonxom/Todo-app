@@ -22,7 +22,7 @@ const CategoryGrid = ({ items, onTaskUpdated, onCreateCategory }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="category-grid">
       {items.map((item) => (
         <CategoryCard
           key={item.categoryId}
@@ -33,6 +33,16 @@ const CategoryGrid = ({ items, onTaskUpdated, onCreateCategory }) => {
           onTaskUpdated={onTaskUpdated}
         />
       ))}
+      <button
+        type="button"
+        className="category-create-card"
+        onClick={onCreateCategory}
+      >
+        <span aria-hidden="true">+</span>
+        <strong>A place for your next idea</strong>
+        <p>Create a category and make it yours.</p>
+        <b>Add Category ↗</b>
+      </button>
     </div>
   );
 };

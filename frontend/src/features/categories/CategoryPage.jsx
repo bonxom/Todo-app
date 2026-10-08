@@ -1,5 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
-import { FolderOpen, LayoutGrid, Plus, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  FolderOpen,
+  LayoutGrid,
+  Plus,
+  Search,
+  ArrowUpDown,
+  Layers,
+  X,
+} from "lucide-react";
+import "./categories.css";
+import { useModalKeyboard } from "@/shared/hooks/useModalKeyboard";
 import CategoryGrid from "./components/CategoryGrid";
 import CategoryStats from "./components/CategoryStats";
 import ProjectGrid from "@/features/tasks/components/project/ProjectGrid";
@@ -7,7 +17,7 @@ import AddCategoryForm from "@/features/tasks/components/Form/AddCategoryForm";
 import AddProjectForm from "@/features/tasks/components/Form/AddProjectForm";
 import { useCategoriesQuery } from "./api/categoryQueries";
 import { useProjectsQuery } from "@/features/tasks/api/projectQueries";
-import { useTasksQuery } from "@/features/tasks/api/taskQueries";
+import { useWorkspaceTasksQuery } from "./api/workspaceTasksQuery";
 import { useVisibleTasks } from "@/stores/useTaskFilterStore";
 import { filterProjectsByVisibility } from "@/shared/utils/projectStatus";
 import { getApiErrorMessage } from "@/shared/services/apiError";
@@ -16,8 +26,6 @@ const VIEW_CONFIG = {
   categories: {
     label: "Categories",
     title: "Categories",
-    description:
-      "Group tasks by theme so related work stays easy to scan, review, and reorganize.",
     addLabel: "Add Category",
     loadingLabel: "Loading categories & tasks…",
     Icon: LayoutGrid,
@@ -25,8 +33,6 @@ const VIEW_CONFIG = {
   projects: {
     label: "Projects",
     title: "Projects",
-    description:
-      "Track outcome-based workstreams with their own progress, recent tasks, and next steps.",
     addLabel: "Add Project",
     loadingLabel: "Loading projects & tasks…",
     Icon: FolderOpen,
@@ -36,14 +42,32 @@ const VIEW_CONFIG = {
 const getRelationId = (value) => value?._id || value || null;
 
 const CategoryPage = () => {
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("name");
+  const [filter, setFilter] = useState("all");
   const [showCompletedProjects, setShowCompletedProjects] = useState(false);
   const [selectedView, setSelectedView] = useState("categories");
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
 
+  const createTriggerRef = useRef(null);
+  const closeCreateDialog = () => {
+    setIsAddCategoryModalOpen(false);
+    setIsAddProjectModalOpen(false);
+    requestAnimationFrame(() => createTriggerRef.current?.focus());
+  };
+  const categoryDialogRef = useRef(null);
+  const projectDialogRef = useRef(null);
+  useModalKeyboard(
+    isAddCategoryModalOpen,
+    categoryDialogRef,
+    closeCreateDialog,
+  );
+  useModalKeyboard(isAddProjectModalOpen, projectDialogRef, closeCreateDialog);
+
   const categoriesQuery = useCategoriesQuery();
   const projectsQuery = useProjectsQuery();
-  const tasksQuery = useTasksQuery({ pageSize: 100 });
+  const tasksQuery = useWorkspaceTasksQuery();
 
   const categories = useMemo(
     () => categoriesQuery.data || [],
@@ -161,7 +185,36 @@ const CategoryPage = () => {
   const activeItems =
     selectedView === "categories" ? categoryItems : projectItems;
   const activeConfig = VIEW_CONFIG[selectedView];
-  const ActiveIcon = activeConfig.Icon;
+  const visibleItems = useMemo(
+    () =>
+      activeItems
+        .filter((item) => {
+          const matches =
+            `${item.category || item.name} ${item.description || ""}`
+              .toLowerCase()
+              .includes(search.trim().toLowerCase());
+          return (
+            matches &&
+            (filter === "all" ||
+              (filter === "active"
+                ? item.tasks.some((task) =>
+                    ["pending", "in-progress"].includes(task.status),
+                  )
+                : item.tasks.length === 0))
+          );
+        })
+        .sort((a, b) =>
+          sort === "tasks"
+            ? b.tasks.length - a.tasks.length
+            : (a.category || a.name).localeCompare(b.category || b.name),
+        ),
+    [activeItems, search, filter, sort],
+  );
+  const openCreate = () => {
+    createTriggerRef.current = document.activeElement;
+    if (selectedView === "categories") setIsAddCategoryModalOpen(true);
+    else setIsAddProjectModalOpen(true);
+  };
 
   const stats = useMemo(() => {
     const visibleTaskItems = activeItems.flatMap((item) => item.tasks);
@@ -172,8 +225,6 @@ const CategoryPage = () => {
       completedTasks: visibleTaskItems.filter(
         (task) => task.status === "completed",
       ).length,
-      pendingTasks: visibleTaskItems.filter((task) => task.status === "pending")
-        .length,
     };
   }, [activeItems]);
 
@@ -191,107 +242,125 @@ const CategoryPage = () => {
 
   return (
     <>
-      <div className="ui-page-shell">
-        <header className="ui-page-header">
-          <p className="ui-page-kicker">Workspace</p>
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="min-w-0">
-              <h1 className="ui-page-title">{activeConfig.title}</h1>
-              <p className="ui-page-description">{activeConfig.description}</p>
-            </div>
-          </div>
+      <div className="ui-page-shell category-workspace">
+        <header className="ui-workspace-heading">
+          <h1 className="ui-page-title">{activeConfig.title}</h1>
+          <button
+            type="button"
+            onClick={openCreate}
+            className="ui-btn-primary ui-page-add-button"
+          >
+            <Plus size={17} />
+            {activeConfig.addLabel}
+          </button>
         </header>
 
-        <section className="ui-section-card ui-card-padding">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-            <div className="min-w-0 flex-1">
-              <div className="inline-flex flex-wrap gap-2 rounded-[14px] border border-[color:var(--color-line)] bg-[var(--color-surface)] p-1.5">
-                {Object.keys(VIEW_CONFIG).map((viewId) => {
-                  const isSelected = selectedView === viewId;
-                  const count =
-                    viewId === "categories"
-                      ? categories.length
-                      : projects.length;
-                  const { Icon, label } = VIEW_CONFIG[viewId];
+        <CategoryStats stats={stats} entityLabel={activeConfig.label} />
 
-                  return (
-                    <button
-                      key={viewId}
-                      type="button"
-                      onClick={() => setSelectedView(viewId)}
-                      className={`inline-flex items-center gap-3 rounded-[10px] border px-4 py-3 text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ${
-                        isSelected
-                          ? "border-transparent bg-[var(--color-accent-soft)] text-[color:var(--color-accent)] shadow-[var(--shadow-xs)]"
-                          : "border-transparent bg-transparent text-[color:var(--color-text-muted)] hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" aria-hidden="true" />
-                      <span>{label}</span>
-                      <span
-                        className={`ui-chip ui-tabular ${isSelected ? "ui-chip--accent" : ""}`}
-                      >
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[color:var(--color-text-muted)]">
-                <span className="ui-chip">
-                  <ActiveIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  {activeConfig.label} View
-                </span>
-                <span className="ui-chip ui-tabular">
-                  {activeItems.length} groups
-                </span>
-                <span className="ui-chip ui-tabular">
-                  {stats.totalTasks} visible tasks
-                </span>
-                {isLoading ? (
-                  <span className="ui-chip">Refreshing…</span>
-                ) : null}
-              </div>
+        <section
+          className="category-collection"
+          aria-label="Workspace collection"
+        >
+          <div className="category-collection-top">
+            <div className="category-tabs" aria-label="Workspace views">
+              {Object.entries(VIEW_CONFIG).map(([id, config]) => {
+                const { Icon, label } = config;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={selectedView === id}
+                    onClick={() => {
+                      setSelectedView(id);
+                      setSearch("");
+                      setFilter("all");
+                    }}
+                  >
+                    <Icon size={17} />
+                    {label}
+                    <span>
+                      {id === "categories"
+                        ? categories.length
+                        : projects.length}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-
-            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-              {selectedView === "projects" ? (
-                <label className="inline-flex min-h-[2.5rem] items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--color-line)] bg-[var(--color-surface)] px-3 text-sm font-medium text-[color:var(--color-text-muted)]">
-                  <input
-                    type="checkbox"
-                    checked={showCompletedProjects}
-                    onChange={(event) =>
-                      setShowCompletedProjects(event.target.checked)
-                    }
-                    className="h-4 w-4 rounded border-[color:var(--color-line)] accent-[var(--color-accent)]"
-                  />
-                  Show Completed Projects
-                </label>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedView === "categories") {
-                    setIsAddCategoryModalOpen(true);
-                  } else {
-                    setIsAddProjectModalOpen(true);
-                  }
-                }}
-                className="ui-btn-primary ui-btn-opposite-corners w-full sm:w-auto"
+            <span className="category-collection-note">
+              <Layers size={14} /> Everything in its place
+            </span>
+          </div>
+          <div className="category-toolbar">
+            <div className="category-search">
+              <Search size={17} aria-hidden="true" />
+              <input
+                aria-label={`Search ${activeConfig.label.toLowerCase()}`}
+                placeholder={`Find a ${selectedView === "categories" ? "category" : "project"}…`}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              {search && (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => setSearch("")}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            <div className="category-filters" aria-label="Filter groups">
+              {[
+                ["all", "All"],
+                ["active", "With active tasks"],
+                ["empty", "Empty"],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={filter === id}
+                  onClick={() => setFilter(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <label className="category-sort">
+              <ArrowUpDown size={15} />
+              <span className="sr-only">Sort groups</span>
+              <select
+                value={sort}
+                onChange={(event) => setSort(event.target.value)}
               >
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                <span>{activeConfig.addLabel}</span>
-              </button>
-            </div>
+                <option value="name">Name A–Z</option>
+                <option value="tasks">Most tasks</option>
+              </select>
+            </label>
+          </div>
+          <div className="category-results-meta">
+            <p role="status">
+              {visibleItems.length} {activeConfig.label.toLowerCase()}
+              {search || filter !== "all"
+                ? ` of ${activeItems.length}`
+                : " in your workspace"}
+            </p>
+            {selectedView === "projects" ? (
+              <label>
+                <input
+                  type="checkbox"
+                  checked={showCompletedProjects}
+                  onChange={(event) =>
+                    setShowCompletedProjects(event.target.checked)
+                  }
+                />{" "}
+                Include completed projects
+              </label>
+            ) : (
+              <span>Open a category to explore its tasks</span>
+            )}
           </div>
         </section>
-
-        <CategoryStats
-          stats={stats}
-          entityLabel={
-            selectedView === "categories" ? "Categories" : "Projects"
-          }
-        />
 
         {errorMessage ? (
           <section className="ui-section-card ui-card-padding text-center">
@@ -309,18 +378,34 @@ const CategoryPage = () => {
               Try Again
             </button>
           </section>
+        ) : visibleItems.length === 0 && (search || filter !== "all") ? (
+          <section className="category-no-results">
+            <Search size={28} />
+            <h2>No {activeConfig.label.toLowerCase()} found</h2>
+            <p>Try a different search or give your filters a fresh start.</p>
+            <button
+              type="button"
+              className="ui-btn-secondary"
+              onClick={() => {
+                setSearch("");
+                setFilter("all");
+              }}
+            >
+              Clear filters
+            </button>
+          </section>
         ) : selectedView === "categories" ? (
           <CategoryGrid
-            items={categoryItems}
+            items={visibleItems}
             onTaskUpdated={refetchAll}
-            onCreateCategory={() => setIsAddCategoryModalOpen(true)}
+            onCreateCategory={openCreate}
           />
         ) : (
           <ProjectGrid
-            items={projectItems}
+            items={visibleItems}
             onTaskUpdated={refetchAll}
             onProjectUpdated={refetchAll}
-            onCreateProject={() => setIsAddProjectModalOpen(true)}
+            onCreateProject={openCreate}
           />
         )}
       </div>
@@ -328,15 +413,16 @@ const CategoryPage = () => {
       {isAddCategoryModalOpen && (
         <div
           className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setIsAddCategoryModalOpen(false)}
+          onClick={closeCreateDialog}
           role="presentation"
         >
           <div
-            className="ui-modal-shell w-full max-w-lg animate-fadeIn"
+            className="ui-modal-shell w-full max-w-lg max-h-[90dvh] overflow-y-auto animate-fadeIn"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-category-title"
+            ref={categoryDialogRef}
           >
             <div className="ui-modal-header flex items-start justify-between gap-4">
               <div>
@@ -350,7 +436,7 @@ const CategoryPage = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setIsAddCategoryModalOpen(false)}
+                onClick={closeCreateDialog}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-[color:var(--color-text-muted)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
                 aria-label="Close add category dialog"
               >
@@ -359,7 +445,7 @@ const CategoryPage = () => {
             </div>
             <div className="ui-modal-body">
               <AddCategoryForm
-                onClose={() => setIsAddCategoryModalOpen(false)}
+                onClose={closeCreateDialog}
                 onCategoryCreated={() => {
                   setIsAddCategoryModalOpen(false);
                 }}
@@ -372,15 +458,16 @@ const CategoryPage = () => {
       {isAddProjectModalOpen && (
         <div
           className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setIsAddProjectModalOpen(false)}
+          onClick={closeCreateDialog}
           role="presentation"
         >
           <div
-            className="ui-modal-shell w-full max-w-lg animate-fadeIn"
+            className="ui-modal-shell w-full max-w-lg max-h-[90dvh] overflow-y-auto animate-fadeIn"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-project-title"
+            ref={projectDialogRef}
           >
             <div className="ui-modal-header flex items-start justify-between gap-4">
               <div>
@@ -394,7 +481,7 @@ const CategoryPage = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setIsAddProjectModalOpen(false)}
+                onClick={closeCreateDialog}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-[color:var(--color-text-muted)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
                 aria-label="Close add project dialog"
               >
@@ -403,7 +490,7 @@ const CategoryPage = () => {
             </div>
             <div className="ui-modal-body">
               <AddProjectForm
-                onClose={() => setIsAddProjectModalOpen(false)}
+                onClose={closeCreateDialog}
                 onProjectCreated={() => {
                   setIsAddProjectModalOpen(false);
                 }}

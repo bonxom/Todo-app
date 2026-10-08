@@ -1,10 +1,6 @@
 /* ── Todo Dashboard ── */
 /* All styles use base --color-* tokens from index.css (no scoped theme overrides). */
 
-.todo-page {
-  max-width: 1360px;
-  gap: var(--space-6);
-}
 .todo-page button {
   cursor: pointer;
 }
@@ -14,12 +10,6 @@
 }
 
 /* ── Heading ── */
-.todo-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-6);
-}
 .todo-eyebrow {
   display: flex;
   align-items: center;
@@ -29,42 +19,6 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.todo-heading .todo-eyebrow {
-  color: var(--color-accent);
-  margin-bottom: var(--space-3);
-}
-.todo-heading .todo-eyebrow > span {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.todo-heading h1 {
-  font-size: clamp(1.625rem, 2vw + 1rem, 2rem);
-  font-weight: 650;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  margin: 0 0 var(--space-3);
-}
-.todo-heading h1 em {
-  font-style: normal;
-  font-weight: 650;
-  color: var(--color-accent);
-}
-.todo-heading > div > p:last-child {
-  font-size: 0.8125rem;
-  color: var(--color-text-muted);
-  line-height: 1.6;
-}
-.todo-add-button {
-  border-radius: var(--radius-md);
-  min-height: 2.75rem;
-  font-size: 0.8125rem;
-  padding: 0 1rem;
-  box-shadow: var(--shadow-xs);
-  flex-shrink: 0;
-}
-
 /* ── Overview Stats Bar ── */
 .todo-overview {
   display: grid;
@@ -333,6 +287,12 @@
   width: 5px;
   height: 5px;
   border-radius: 2px;
+}
+.todo-task-category {
+  color: var(--color-text-muted);
+}
+.todo-task-category svg {
+  flex-shrink: 0;
 }
 .todo-task-priority {
   border-radius: 4px;
@@ -820,23 +780,6 @@
 }
 
 @media (max-width: 520px) {
-  .todo-heading {
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  .todo-heading h1 {
-    font-size: clamp(1.625rem, 2vw + 1rem, 2rem);
-  }
-  .todo-heading > div > p:last-child {
-    max-width: 300px;
-    font-size: 0.6875rem;
-  }
-  .todo-add-button {
-    min-height: 2.5rem;
-  }
-  .todo-page {
-    gap: var(--space-5);
-  }
   .todo-overview {
     padding-block: 1.125rem;
   }

@@ -41,6 +41,38 @@
   gap: var(--space-6);
 }
 
+/* Shared collection-page heading for Todos, Categories and Projects. */
+.ui-workspace-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.ui-workspace-heading .ui-page-title {
+  line-height: 1.15;
+}
+
+.ui-page-add-button {
+  border-radius: var(--radius-md);
+  min-height: 2.75rem;
+  font-size: 0.8125rem;
+  padding: 0 1rem;
+  box-shadow: var(--shadow-xs);
+  flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+  .ui-workspace-heading {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .ui-page-add-button {
+    min-height: 2.5rem;
+  }
+}
+
 .ui-page-header {
   display: flex;
   flex-direction: column;

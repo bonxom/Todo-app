@@ -1,54 +1,59 @@
-const STAT_STYLES = {
-  neutral: "text-[color:var(--color-text)]",
-  accent: "text-[color:var(--color-accent)]",
-  success: "text-[color:var(--color-success)]",
-  warning: "text-[color:var(--color-warning)]",
-};
+import { CheckCheck, Layers, ListTodo } from "lucide-react";
 
 const CategoryStats = ({ stats, entityLabel = "Categories" }) => {
-  const items = [
-    {
-      id: "groups",
-      label: entityLabel,
-      value: stats.totalGroups,
-      tone: "accent",
-    },
-    {
-      id: "tasks",
-      label: "Visible Tasks",
-      value: stats.totalTasks,
-      tone: "neutral",
-    },
-    {
-      id: "completed",
-      label: "Completed",
-      value: stats.completedTasks,
-      tone: "success",
-    },
-    {
-      id: "pending",
-      label: "Pending",
-      value: stats.pendingTasks,
-      tone: "warning",
-    },
-  ];
-
+  const rate = stats.totalTasks
+    ? Math.round((stats.completedTasks / stats.totalTasks) * 100)
+    : 0;
   return (
-    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-      {items.map((item) => (
-        <section key={item.id} className="ui-section-card p-4">
-          <p className="text-xs font-medium text-[color:var(--color-text-muted)]">
-            {item.label}
+    <section className="category-overview" aria-label="Workspace overview">
+      <div className="category-overview-intro">
+        <span className="category-eyebrow">THE BIG PICTURE</span>
+        <h2>
+          Small steps. <br />
+          Meaningful progress.
+        </h2>
+        <p>Your {entityLabel.toLowerCase()}, at a glance.</p>
+      </div>
+      <div className="category-metrics">
+        {[
+          { label: entityLabel, value: stats.totalGroups, Icon: Layers },
+          { label: "Visible tasks", value: stats.totalTasks, Icon: ListTodo },
+          { label: "Completed", value: stats.completedTasks, Icon: CheckCheck },
+        ].map((item) => {
+          const { label, value, Icon } = item;
+          return (
+            <div className="category-metric" key={label}>
+              <Icon size={18} />
+              <strong>{value}</strong>
+              <span>{label}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="category-overall-progress">
+        <div
+          className="category-progress-ring"
+          style={{ "--progress": `${rate}%` }}
+        >
+          <span>
+            {rate}
+            <small>%</small>
+          </span>
+        </div>
+        <div>
+          <strong>
+            {stats.totalTasks && rate === 100
+              ? "All caught up"
+              : "Making room for progress"}
+          </strong>
+          <p>
+            {stats.totalTasks
+              ? `${stats.totalTasks - stats.completedTasks} visible tasks not yet completed`
+              : "Your next chapter starts with a task"}
           </p>
-          <p
-            className={`ui-tabular mt-2 text-2xl font-semibold ${STAT_STYLES[item.tone]}`}
-          >
-            {item.value}
-          </p>
-        </section>
-      ))}
-    </div>
+        </div>
+      </div>
+    </section>
   );
 };
-
 export default CategoryStats;

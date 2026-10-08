@@ -1,4 +1,8 @@
+import { useRef } from "react";
+import { useModalKeyboard } from "@/shared/hooks/useModalKeyboard";
 const DeleteProjectDialog = ({ isOpen, onClose, onConfirm, projectName }) => {
+  const ref = useRef(null);
+  useModalKeyboard(isOpen, ref, onClose);
   if (!isOpen) return null;
 
   return (
@@ -13,6 +17,7 @@ const DeleteProjectDialog = ({ isOpen, onClose, onConfirm, projectName }) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-project-title"
+        ref={ref}
       >
         <div className="ui-modal-header">
           <h2

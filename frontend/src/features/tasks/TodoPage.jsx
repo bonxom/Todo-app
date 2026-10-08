@@ -30,7 +30,6 @@ import {
   X,
 } from "lucide-react";
 import { useStatsQuery } from "@/features/statistics/api/statQueries";
-import { useAuthStore } from "@/stores/useAuthStore";
 import "./todos.css";
 
 const ALL_PROJECT_FILTER = "all-projects";
@@ -48,7 +47,6 @@ const TodoPage = () => {
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [initialTaskProjectId, setInitialTaskProjectId] = useState("");
-  const user = useAuthStore((state) => state.user);
   const statsQuery = useStatsQuery();
 
   // Global status filter from Topbar
@@ -298,21 +296,12 @@ const TodoPage = () => {
       />
 
       <div className="ui-page-shell todo-page">
-        <header className="todo-heading">
-          <div>
-            <p className="todo-eyebrow">
-              <span /> YOUR PERSONAL WORKSPACE
-            </p>
-            <h1>Todos</h1>
-            <p>
-              A little clarity, a little momentum. Let’s make it a good day
-              {user?.name ? `, ${user.name.split(" ")[0]}` : ""}.
-            </p>
-          </div>
+        <header className="ui-workspace-heading">
+          <h1 className="ui-page-title">Todos</h1>
           <button
             type="button"
             onClick={() => openAddTask(selectedProject?._id)}
-            className="ui-btn-primary todo-add-button"
+            className="ui-btn-primary ui-page-add-button"
           >
             <Plus size={17} /> Add task
           </button>

@@ -4,3 +4,4 @@ deploy.sh
 .codex
 .vscode
 .vscode
+artifacts/

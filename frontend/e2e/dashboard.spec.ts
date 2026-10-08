@@ -71,7 +71,7 @@ test("task lifecycle: create, edit, complete, restore, accept and delete", async
 }) => {
   await dashboardFixture(page);
   await page.goto("/dashboard");
-  await page.locator(".todo-add-button").click();
+  await page.locator(".ui-page-add-button").click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByLabel("Task Title")).toBeFocused();
   await dialog.getByLabel("Task Title").fill("Prepare a thoughtful launch");
@@ -144,7 +144,7 @@ test("keyboard: dialog focus, Escape, and project-scoped creation", async ({
 }) => {
   await dashboardFixture(page);
   await page.goto("/dashboard");
-  const add = page.locator(".todo-add-button");
+  const add = page.locator(".ui-page-add-button");
   await add.click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByLabel("Task Title")).toBeFocused();
