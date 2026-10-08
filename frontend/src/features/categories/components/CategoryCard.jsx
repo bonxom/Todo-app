@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ChevronRight, Folder, Trash2 } from "lucide-react";
-import TaskCard from "@/features/tasks/components/category/TaskCard";
+import { ArrowUpRight, Folder, Trash2 } from "lucide-react";
+import CategoryTaskPreview from "./CategoryTaskPreview";
 import CategoryDetailModal from "./CategoryDetailModal";
 import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
 import DeleteCategoryDialog from "@/features/tasks/components/dialogs/DeleteCategoryDialog";
@@ -28,8 +28,13 @@ const CategoryCard = ({
   const totalTasks = tasks.length;
   const completionRate =
     totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const displayTasks = tasks.slice(0, 3);
-  const hasMore = tasks.length > 3;
+  const displayTasks = [...tasks]
+    .sort(
+      (a, b) =>
+        Number(a.status === "completed") - Number(b.status === "completed"),
+    )
+    .slice(0, 2);
+
   const descriptionId = `category-${categoryId}-description`;
 
   const deleteCategoryMutation = useDeleteCategoryMutation();
@@ -130,133 +135,93 @@ const CategoryCard = ({
       />
 
       <article
-        className={`ui-drop-zone ui-section-card flex h-full flex-col overflow-hidden transition-[border-color,box-shadow,background-color,transform] duration-200 ${
-          isDragOver
-            ? "border-[color:var(--color-accent)] bg-[var(--color-accent-soft)]"
-            : "hover:border-[color:var(--color-accent)]"
-        }`}
+        className={`category-card ui-drop-zone ${isDragOver ? "category-card--drag" : ""}`}
         data-drag-active={isDragOver ? "true" : "false"}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <div className="p-5">
-          <div className="flex items-start gap-3">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="ui-focus-ring min-w-0 flex-1 rounded-[10px] text-left"
-              aria-describedby={descriptionId}
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--color-line)] bg-[var(--color-surface-muted)] text-[color:var(--color-accent)]">
-                  <Folder className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[color:var(--color-text-muted)]">
-                    Category
-                  </p>
-                  <h3 className="truncate text-lg font-semibold text-[color:var(--color-text)]">
-                    {category}
-                  </h3>
-                </div>
-              </div>
-            </button>
-
-            {category !== "Uncategorized" ? (
+        <div className="category-card-body">
+          <div className="category-card-top">
+            <span className="category-folder">
+              <Folder size={22} />
+            </span>
+            <span className="category-task-count">
+              {totalTasks} {totalTasks === 1 ? "task" : "tasks"}
+            </span>
+            {category !== "Uncategorized" && (
               <button
                 type="button"
+                className="category-delete"
                 onClick={handleDeleteClick}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-danger)] transition-[background-color,border-color,color] duration-150 hover:border-[color:var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
                 aria-label={`Delete ${category}`}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 size={15} />
               </button>
-            ) : null}
+            )}
           </div>
-
-          <p
-            id={descriptionId}
-            className="mt-4 min-h-[3rem] break-words text-sm leading-6 text-[color:var(--color-text-muted)]"
+          <button
+            className="category-card-title"
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            aria-describedby={descriptionId}
           >
-            {description || "No category description yet."}
+            <h2>{category}</h2>
+            <ArrowUpRight size={19} />
+          </button>
+          <p id={descriptionId} className="category-card-description">
+            {description ||
+              (category === "Uncategorized"
+                ? "A home for tasks still finding their place."
+                : "Keep related tasks together and make space for what matters.")}
           </p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="ui-chip ui-tabular">{totalTasks} tasks</span>
-            <span className="ui-chip ui-chip--success ui-tabular">
-              {completedTasks} completed
+          <div className="category-progress-label">
+            <span>
+              {totalTasks
+                ? `${completedTasks} of ${totalTasks} completed`
+                : "Ready for a fresh start"}
             </span>
-            <span className="ui-chip ui-tabular">
-              {completionRate}% complete
-            </span>
+            <strong>{completionRate}%</strong>
           </div>
-
-          <div className="mt-4">
-            <div className="flex items-center justify-between text-xs text-[color:var(--color-text-muted)]">
-              <span>Progress</span>
-              <span className="ui-tabular">
-                {completedTasks}/{totalTasks}
-              </span>
-            </div>
-            <div
-              className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-surface-muted)]"
-              role="progressbar"
-              aria-label={`${category} progress`}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={completionRate}
-            >
-              <div
-                className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-200"
-                style={{ width: `${completionRate}%` }}
+          <div
+            className="category-progress"
+            role="progressbar"
+            aria-label={`${category} progress`}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={completionRate}
+          >
+            <div style={{ width: `${completionRate}%` }} />
+          </div>
+        </div>
+        <div className="category-task-preview">
+          <p className="category-preview-label">
+            {displayTasks.length ? "A LOOK INSIDE" : "ROOM FOR SOMETHING GOOD"}
+          </p>
+          {displayTasks.length ? (
+            displayTasks.map((task) => (
+              <CategoryTaskPreview
+                key={task._id || task.id}
+                task={task}
+                onOpen={handleTaskClick}
+                onTaskUpdated={onTaskUpdated}
               />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-1 flex-col border-t border-[color:var(--color-line)] px-5 pb-5 pt-4">
-          {displayTasks.length > 0 ? (
-            <div className="space-y-2.5">
-              {displayTasks.map((task) => (
-                <TaskCard
-                  key={task._id || task.id}
-                  task={task}
-                  onClick={handleTaskClick}
-                  quickActions
-                  enableDrag
-                  onTaskUpdated={onTaskUpdated}
-                />
-              ))}
-            </div>
+            ))
           ) : (
-            <div className="rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-8 text-center">
-              <p className="text-sm font-medium text-[color:var(--color-text)]">
-                No tasks in this category
-              </p>
-              <p className="mt-1 text-xs text-[color:var(--color-text-muted)]">
-                Drag a task here or assign one from a task form.
-              </p>
-            </div>
+            <p className="category-empty-hint">
+              Assign a task to this category, or drag one here.
+            </p>
           )}
-
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <div className="text-xs text-[color:var(--color-text-muted)]">
-              {hasMore
-                ? `${tasks.length - 3} more tasks available`
-                : "Recent tasks shown above"}
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="ui-btn-tertiary shrink-0 px-0"
-            >
-              <span>{hasMore ? "View All Tasks" : "Open Details"}</span>
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
         </div>
+        <button
+          className="category-card-footer"
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+        >
+          <span>Explore category</span>
+          <ArrowUpRight size={16} />
+        </button>
       </article>
 
       <DeleteCategoryDialog

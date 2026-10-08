@@ -8,6 +8,7 @@ import {
   Pencil,
   Play,
   RotateCcw,
+  Tag,
   Trash2,
 } from "lucide-react";
 import { differenceInCalendarDays, format, isValid } from "date-fns";
@@ -56,6 +57,10 @@ const TodoTaskCard = ({
       : pending
         ? Play
         : Check;
+  const categoryName =
+    task.categoryId?.name ||
+    task.category?.name ||
+    (typeof task.category === "string" ? task.category : null);
   useEffect(() => {
     if (!menuOpen) return;
     const onPointer = (e) => {
@@ -116,6 +121,12 @@ const TodoTaskCard = ({
                 }}
               />
               {task.projectId.name}
+            </span>
+          )}
+          {categoryName && (
+            <span className="todo-task-category">
+              <Tag size={11} />
+              {categoryName}
             </span>
           )}
           <span

@@ -28,7 +28,7 @@ const ProjectGrid = ({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+    <div className="category-grid">
       {items.map((item) => (
         <ProjectCard
           key={item._id}
@@ -38,6 +38,16 @@ const ProjectGrid = ({
           onProjectUpdated={onProjectUpdated}
         />
       ))}
+      <button
+        type="button"
+        className="category-create-card"
+        onClick={onCreateProject}
+      >
+        <span aria-hidden="true">+</span>
+        <strong>Make room for a bigger plan</strong>
+        <p>Bring your next project to life.</p>
+        <b>Add Project ↗</b>
+      </button>
     </div>
   );
 };
