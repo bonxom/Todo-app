@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import DonutChartCard from "./DonutChartCard";
 
 const CATEGORY_COLORS = [
-  "#456B8C",
-  "#2F7D5A",
-  "#A46A2A",
+  "var(--color-accent)",
+  "var(--color-success)",
+  "var(--color-warning)",
   "#7A7F87",
   "#6A7E93",
   "#8B9A74",
@@ -64,9 +64,10 @@ const CategoryPieChart = ({ dailyStats }) => {
 
   return (
     <DonutChartCard
-      title="Completed Tasks by Category"
+      title="Progress by category"
+      description="The areas you’ve been moving forward."
       total={chartData.total}
-      totalLabel="Done"
+      totalLabel="Completed"
       items={chartData.items}
       emptyMessage="No completed tasks yet."
     />

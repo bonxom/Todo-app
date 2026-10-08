@@ -1,3 +1,6 @@
+import { ArrowUpRight, ChartNoAxesCombined } from "lucide-react";
+import { Link } from "react-router-dom";
+import "./statistics.css";
 import { useMemo } from "react";
 import { useStatsQuery } from "./api/statQueries";
 import LineChart from "./components/LineChart";
@@ -26,7 +29,7 @@ const StatisticsPage = () => {
 
   if (loading) {
     return (
-      <div className="ui-page-shell">
+      <div className="ui-page-shell statistics-page">
         <section className="ui-section-card ui-card-padding text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-[color:var(--color-line)] border-t-[color:var(--color-accent)]" />
           <p className="text-lg font-semibold text-[color:var(--color-text)]">
@@ -42,7 +45,7 @@ const StatisticsPage = () => {
 
   if (error) {
     return (
-      <div className="ui-page-shell">
+      <div className="ui-page-shell statistics-page">
         <section className="ui-section-card ui-card-padding text-center">
           <p className="text-lg font-semibold text-[color:var(--color-danger)]">
             Unable to load statistics
@@ -64,7 +67,7 @@ const StatisticsPage = () => {
 
   if (!stats) {
     return (
-      <div className="ui-page-shell">
+      <div className="ui-page-shell statistics-page">
         <section className="ui-section-card ui-card-padding text-center">
           <p className="text-lg font-semibold text-[color:var(--color-text)]">
             No statistics available yet
@@ -78,19 +81,31 @@ const StatisticsPage = () => {
   }
 
   return (
-    <div className="ui-page-shell">
-      <header className="ui-page-header">
-        <p className="ui-page-kicker">Statistics</p>
-        <h1 className="ui-page-title">Statistics</h1>
+    <div className="ui-page-shell statistics-page">
+      <header className="ui-workspace-heading">
+        <div>
+          <h1 className="ui-page-title">Statistics</h1>
+          <p className="statistics-subtitle">
+            A little perspective on the progress you’re making.
+          </p>
+        </div>
+        <Link to="/todos" className="ui-btn-secondary statistics-tasks-link">
+          View tasks <ArrowUpRight size={15} />
+        </Link>
       </header>
 
       <StatsSummary stats={stats} />
 
+      <div className="statistics-section-label">
+        <span>
+          <ChartNoAxesCombined size={15} /> Your momentum
+        </span>
+        <span>Every completed task counts</span>
+      </div>
+      <LineChart dailyStats={normalizedDailyStats} />
       <ActivityHeatmap dailyStats={normalizedDailyStats} />
 
-      <LineChart dailyStats={normalizedDailyStats} />
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="statistics-breakdowns">
         <StatusPieChart stats={stats} />
         <CategoryPieChart dailyStats={normalizedDailyStats} />
       </div>
