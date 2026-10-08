@@ -89,9 +89,6 @@ const StatisticsPage = () => {
             A little perspective on the progress you’re making.
           </p>
         </div>
-        <Link to="/todos" className="ui-btn-secondary statistics-tasks-link">
-          View tasks <ArrowUpRight size={15} />
-        </Link>
       </header>
 
       <StatsSummary stats={stats} />
