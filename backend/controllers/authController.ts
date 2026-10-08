@@ -8,15 +8,13 @@ export const registerUser = async (
   const { user, accessToken, refreshToken, token } = await authService.register(
     req.validatedBody as Record<string, unknown>,
   );
-  res
-    .status(201)
-    .json({
-      message: "Registration successful",
-      user,
-      accessToken,
-      refreshToken,
-      token,
-    });
+  res.status(201).json({
+    message: "Registration successful",
+    user,
+    accessToken,
+    refreshToken,
+    token,
+  });
 };
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
@@ -25,15 +23,13 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     body.email as string,
     body.password as string,
   );
-  res
-    .status(200)
-    .json({
-      message: "Login successful",
-      user,
-      accessToken,
-      refreshToken,
-      token,
-    });
+  res.status(200).json({
+    message: "Login successful",
+    user,
+    accessToken,
+    refreshToken,
+    token,
+  });
 };
 
 export const refreshToken = async (
