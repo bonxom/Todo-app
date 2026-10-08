@@ -348,15 +348,6 @@ const CalendarTaskDetailCard = ({
             <Badge
               compact
               truncate
-              icon={CircleDot}
-              style={statusStyle}
-              className="min-w-0 max-w-full justify-self-start"
-            >
-              {formatLabel(task.status)}
-            </Badge>
-            <Badge
-              compact
-              truncate
               icon={FolderKanban}
               style={chipStyles.accent}
               className="min-w-0 max-w-full justify-self-end"
@@ -442,6 +433,8 @@ const CalendarTaskDetailCard = ({
 
   return (
     <article
+      data-status={task.status}
+      data-calendar-task-card
       draggable={Boolean(taskId) && !isFlushing}
       onDragStart={handleDragStart}
       className={`group relative cursor-grab rounded-[16px] border active:cursor-grabbing transition-all duration-350 ease-in-out ${
@@ -461,7 +454,22 @@ const CalendarTaskDetailCard = ({
           title={`Task level: ${taskLevel}`}
         />
       ) : null}
-      <div className={`flex items-start ${compact ? "gap-2" : "gap-3"}`}>
+      {compact ? (
+        <div
+          className="calendar-task-side-badges"
+          aria-label="Task level and status"
+        >
+          <Badge compact style={priorityStyle}>
+            {task.priority || "Medium"}
+          </Badge>
+          <Badge compact icon={CircleDot} style={statusStyle}>
+            {formatLabel(task.status)}
+          </Badge>
+        </div>
+      ) : null}
+      <div
+        className={`calendar-task-card-content flex items-start ${compact ? "gap-2" : "gap-3"}`}
+      >
         {!isPending ? (
           <div className="mt-0.5 flex w-6 shrink-0 flex-col items-center gap-1.5">
             <div className="relative">

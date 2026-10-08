@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import FormDialog from "@/shared/components/FormDialog";
+import { useEffect, useState } from "react";
 import {
   Check,
   ArrowUpRight,
@@ -13,7 +14,6 @@ import AddProjectForm from "../Form/AddProjectForm";
 import DeleteProjectDialog from "./DeleteProjectDialog";
 import CategoryTaskPreview from "@/features/categories/components/CategoryTaskPreview";
 import TaskDetailButton from "../TaskDetailButton";
-import { useModalKeyboard } from "@/shared/hooks/useModalKeyboard";
 import {
   useDeleteProjectMutation,
   useUpdateProjectMutation,
@@ -30,20 +30,18 @@ import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
   const [selectedTask, setSelectedTask] = useState(null);
-  const editRef = useRef(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
-  useModalKeyboard(isEditModalOpen, editRef, () => setIsEditModalOpen(false));
   useEffect(() => {
-    if (!isEditModalOpen && !isDeleteDialogOpen) return;
+    if (!isDeleteDialogOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [isEditModalOpen, isDeleteDialogOpen]);
+  }, [isDeleteDialogOpen]);
   const deleteProjectMutation = useDeleteProjectMutation();
   const updateProjectMutation = useUpdateProjectMutation();
   const updateTaskMutation = useUpdateTaskMutation();
@@ -202,52 +200,21 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
         projectName={project.name}
       />
 
-      {isEditModalOpen ? (
-        <div
-          className="ui-modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
-          onClick={() => setIsEditModalOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="ui-modal-shell w-full max-w-lg max-h-[90dvh] overflow-y-auto animate-fadeIn"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={`edit-project-${project._id}`}
-            ref={editRef}
-          >
-            <div className="ui-modal-header flex items-start justify-between gap-4">
-              <div>
-                <p className="ui-page-kicker">Edit</p>
-                <h2
-                  id={`edit-project-${project._id}`}
-                  className="text-xl font-semibold text-[color:var(--color-text)]"
-                >
-                  Edit Project
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsEditModalOpen(false)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-[color:var(--color-text-muted)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
-                aria-label="Close edit project dialog"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="ui-modal-body">
-              <AddProjectForm
-                project={project}
-                onClose={() => setIsEditModalOpen(false)}
-                onProjectSaved={() => {
-                  setIsEditModalOpen(false);
-                  onProjectUpdated?.();
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <FormDialog
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Project"
+        kind="project"
+      >
+        <AddProjectForm
+          project={project}
+          onClose={() => setIsEditModalOpen(false)}
+          onProjectSaved={() => {
+            setIsEditModalOpen(false);
+            onProjectUpdated?.();
+          }}
+        />
+      </FormDialog>
 
       <article
         className={`category-card project-collection-card ui-drop-zone ${isDragOver ? "category-card--drag" : ""}`}

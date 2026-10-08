@@ -3,41 +3,22 @@ import {
   useCreateProjectMutation,
   useUpdateProjectMutation,
 } from "../../api/projectMutations";
-import {
-  DEFAULT_PROJECT_COLOR,
-  getProjectColor,
-} from "@/shared/utils/projectColor";
+import { getProjectColor } from "@/shared/utils/projectColor";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const PROJECT_COLOR_SWATCHES = [
-  "#FFFFFF",
-  "#FECACA",
-  "#FED7AA",
-  "#FEF3C7",
-  "#D9F99D",
-  "#BBF7D0",
-  "#A7F3D0",
-  "#A5F3FC",
-  "#BAE6FD",
-  "#BFDBFE",
-  "#C7D2FE",
-  "#DDD6FE",
-  "#F5D0FE",
-  "#FBCFE8",
-  "#E5E7EB",
-  "#FCA5A5",
-  "#FB923C",
-  "#FACC15",
-  "#84CC16",
-  "#22C55E",
-  "#14B8A6",
+  "#456B8C",
+  "#6C8060",
+  "#BB8A60",
+  "#8C81A5",
+  "#B25547",
+  "#2F7D5A",
   "#06B6D4",
   "#3B82F6",
-  "#6366F1",
   "#8B5CF6",
-  "#D946EF",
   "#EC4899",
   "#64748B",
+  "#FFFFFF",
 ];
 
 const AddProjectForm = ({
@@ -51,6 +32,7 @@ const AddProjectForm = ({
   const projectDescription = project?.description || "";
   const projectColor = getProjectColor(project);
   const [name, setName] = useState(projectName);
+  const [submitError, setSubmitError] = useState("");
   const [description, setDescription] = useState(projectDescription);
   const [color, setColor] = useState(projectColor);
 
@@ -67,6 +49,7 @@ const AddProjectForm = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
 
     try {
       const payload = {
@@ -86,14 +69,14 @@ const AddProjectForm = ({
       onClose();
     } catch (error) {
       console.error("Failed to create project:", error);
-      alert(
+      setSubmitError(
         getApiErrorMessage(error, "Failed to save project. Please try again."),
       );
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="workspace-form">
       <div>
         <label
           htmlFor="project-name"
@@ -108,7 +91,7 @@ const AddProjectForm = ({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Enter project name…"
+          placeholder="e.g. Website refresh"
           className="ui-input"
           required
           autoComplete="off"
@@ -116,17 +99,41 @@ const AddProjectForm = ({
         />
       </div>
 
+      <div className="workspace-project-preview">
+        <i style={{ background: color }} />
+        <span>{name.trim() || "Your project"}</span>
+      </div>
       <fieldset>
         <legend className="mb-2 block text-sm font-medium text-[color:var(--color-text)]">
           Project Color
         </legend>
         <div
-          className="grid grid-cols-7 gap-2 rounded-[14px] border border-[color:var(--color-line)] bg-[var(--color-surface-muted)] p-3 sm:grid-cols-9"
+          className="workspace-color-options"
           role="radiogroup"
           aria-label="Project color"
+          onKeyDown={(event) => {
+            const buttons = [
+              ...event.currentTarget.querySelectorAll('[role="radio"]'),
+            ];
+            const index = buttons.indexOf(document.activeElement);
+            const next =
+              event.key === "Home"
+                ? 0
+                : event.key === "End"
+                  ? buttons.length - 1
+                  : ["ArrowRight", "ArrowDown"].includes(event.key)
+                    ? (index + 1) % buttons.length
+                    : ["ArrowLeft", "ArrowUp"].includes(event.key)
+                      ? (index - 1 + buttons.length) % buttons.length
+                      : null;
+            if (next === null) return;
+            event.preventDefault();
+            setColor(PROJECT_COLOR_SWATCHES[next]);
+            buttons[next].focus();
+          }}
         >
           {PROJECT_COLOR_SWATCHES.map((swatch) => {
-            const isSelected = color === swatch;
+            const isSelected = color.toUpperCase() === swatch;
             const isLight =
               swatch === "#FFFFFF" ||
               swatch === "#FEF3C7" ||
@@ -138,6 +145,13 @@ const AddProjectForm = ({
                 type="button"
                 role="radio"
                 aria-checked={isSelected}
+                tabIndex={
+                  isSelected ||
+                  (!PROJECT_COLOR_SWATCHES.includes(color.toUpperCase()) &&
+                    swatch === PROJECT_COLOR_SWATCHES[0])
+                    ? 0
+                    : -1
+                }
                 aria-label={`Select ${swatch} as project color`}
                 onClick={() => setColor(swatch)}
                 className="ui-focus-ring flex h-7 w-7 items-center justify-center rounded-full transition-[transform,box-shadow] duration-150 hover:scale-110"
@@ -196,21 +210,26 @@ const AddProjectForm = ({
         />
       </div>
 
-      <div className="flex gap-3 pt-3">
+      {submitError && (
+        <p className="workspace-form-error" role="alert">
+          {submitError}
+        </p>
+      )}
+      <div className="workspace-form-actions">
         <button
           type="button"
           onClick={() => {
             handleReset();
             onClose();
           }}
-          className="ui-btn-secondary flex-1"
+          className="ui-btn-secondary"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="ui-btn-primary ui-btn-opposite-corners flex-1 disabled:cursor-not-allowed disabled:opacity-60"
+          className="ui-btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting
             ? projectId

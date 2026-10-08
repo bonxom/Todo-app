@@ -154,11 +154,17 @@ const DayCell = memo(
       <button
         type="button"
         onClick={() => onClick(day)}
+        aria-label={`${day.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}, ${taskCount} ${taskCount === 1 ? "task" : "tasks"}`}
+        aria-pressed={isSelected}
+        aria-current={isToday ? "date" : undefined}
+        data-today={isToday}
+        data-selected={isSelected}
+        data-current-month={isCurrentMonth}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-        cursor-pointer rounded-[14px] border text-left transition-[background-color,border-color,box-shadow,transform] duration-150
+        calendar-day ui-focus-ring cursor-pointer rounded-[14px] border text-left transition-[background-color,border-color,box-shadow,transform] duration-150
         overflow-hidden ${viewMode === "week" ? "min-h-[132px] py-3" : "min-h-[96px] py-2.5"}
         ${!isCurrentMonth ? "bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]" : "text-[var(--color-text)]"}
         ${isSelected ? "shadow-[var(--shadow-xs)]" : ""}
@@ -188,7 +194,7 @@ const DayCell = memo(
             className={`mb-1 flex items-center justify-between ${viewMode === "week" ? "px-3" : "px-2.5"}`}
           >
             <span
-              className={`text-sm font-semibold ${isCurrentMonth ? "" : "opacity-75"}`}
+              className={`calendar-day-number text-sm font-semibold ${isCurrentMonth ? "" : "opacity-75"}`}
               style={{
                 color:
                   isToday || isSelected ? "var(--color-accent)" : undefined,
@@ -196,8 +202,14 @@ const DayCell = memo(
             >
               {day.getDate()}
             </span>
+            {taskCount > 0 && (
+              <span className="calendar-day-count">{taskCount}</span>
+            )}
           </div>
 
+          {taskCount === 0 && viewMode === "week" && (
+            <span className="calendar-day-free">No plans yet</span>
+          )}
           {taskCount > 0 && (
             <div
               className="flex flex-1 flex-col gap-1.5 px-1.5"
@@ -285,18 +297,6 @@ const DayCell = memo(
           )}
         </div>
       </button>
-    );
-  },
-  (prevProps, nextProps) => {
-    // Only re-render if these specific props change
-    return (
-      isSameDay(prevProps.day, nextProps.day) &&
-      prevProps.isToday === nextProps.isToday &&
-      prevProps.isSelected === nextProps.isSelected &&
-      prevProps.isCurrentMonth === nextProps.isCurrentMonth &&
-      prevProps.viewMode === nextProps.viewMode &&
-      prevProps.tasks?.length === nextProps.tasks?.length &&
-      JSON.stringify(prevProps.tasks) === JSON.stringify(nextProps.tasks)
     );
   },
 );

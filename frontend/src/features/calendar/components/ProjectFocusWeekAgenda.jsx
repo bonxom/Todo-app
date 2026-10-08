@@ -4,7 +4,6 @@ import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
 import CalendarTaskDetailCard from "./CalendarTaskDetailCard";
 import Pagination from "@/shared/components/Pagination";
 import { usePagination } from "@/shared/hooks/usePagination";
-import { formatDateTime } from "@/shared/utils/dateTime";
 import { sortTasksByDueTime } from "./calendarUtils";
 
 const ProjectFocusWeekAgenda = ({
@@ -15,6 +14,7 @@ const ProjectFocusWeekAgenda = ({
   onTaskStatusChange,
   onTaskDelete,
   compact = false,
+  onAddTask,
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -58,7 +58,7 @@ const ProjectFocusWeekAgenda = ({
   }, [sortedTasks, pageNo, pageSize]);
 
   return (
-    <section className="ui-section-card overflow-hidden">
+    <section className="ui-section-card calendar-agenda overflow-hidden">
       <TaskDetailButton
         isOpen={isEditModalOpen}
         task={selectedTask}
@@ -80,11 +80,17 @@ const ProjectFocusWeekAgenda = ({
             </div>
             <div>
               <p className="text-sm font-medium text-[var(--color-accent)]">
-                {selectedProjectCount > 0 ? "Filtered Day" : "All Tasks Day"}
+                {selectedProjectCount > 0
+                  ? "Your day · Filtered"
+                  : "Your day at a glance"}
               </p>
               <h3 className="mt-1 text-xl font-semibold text-[var(--color-text)]">
                 {selectedDate
-                  ? formatDateTime(selectedDate)
+                  ? selectedDate.toLocaleDateString("en-US", {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                    })
                   : "Pick a day from the week strip"}
               </h3>
             </div>
@@ -96,9 +102,15 @@ const ProjectFocusWeekAgenda = ({
             <span className="ui-chip ui-tabular">
               {summary.completed}/{summary.total} complete
             </span>
-            <span className="ui-chip ui-tabular">
-              {summary.completionRate}% completion
-            </span>
+            {onAddTask && (
+              <button
+                type="button"
+                className="ui-btn-tertiary ui-focus-ring"
+                onClick={onAddTask}
+              >
+                + Add task to this day
+              </button>
+            )}
             {selectedProjectCount > 0 ? (
               <span className="ui-chip ui-tabular">
                 {selectedProjectCount} filtered project
@@ -143,19 +155,28 @@ const ProjectFocusWeekAgenda = ({
             )}
           </>
         ) : (
-          <div className="rounded-[16px] border border-dashed border-[var(--color-line)] bg-[var(--color-surface-muted)] px-5 py-10 text-center">
+          <div className="calendar-agenda-empty">
             <CheckCircle2
               className="mx-auto h-10 w-10 text-[var(--color-text-muted)]"
               aria-hidden="true"
             />
             <p className="mt-4 text-lg font-semibold text-[var(--color-text)]">
-              No tasks scheduled for this day
+              A little breathing room
             </p>
             <p className="mt-2 text-sm text-[var(--color-text-muted)]">
               {selectedProjectCount > 0
                 ? "The selected projects have no due tasks on this exact day."
-                : "No standalone or project tasks are due on this exact day."}
+                : "Nothing scheduled. Leave some space, or make a plan."}
             </p>
+            {onAddTask && (
+              <button
+                type="button"
+                className="ui-btn-secondary ui-focus-ring mt-5"
+                onClick={onAddTask}
+              >
+                Plan a task
+              </button>
+            )}
           </div>
         )}
       </div>
