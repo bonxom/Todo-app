@@ -19,7 +19,6 @@ const ProjectFocusRail = ({
   showCompletedProjects,
   onShowCompletedProjectsChange,
   onCreateProject,
-  onCreateCategory,
   onAddTaskToProject,
   onCompleteProject,
   onRestoreProject,
