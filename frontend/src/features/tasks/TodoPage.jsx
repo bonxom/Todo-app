@@ -1,3 +1,4 @@
+import FormDialog from "@/shared/components/FormDialog";
 import { createElement, useEffect, useMemo, useState } from "react";
 import AddTaskButton from "./components/AddTaskButton";
 import TaskDetailButton from "./components/TaskDetailButton";
@@ -131,21 +132,13 @@ const TodoPage = () => {
 
   // Lock body scroll on modals
   useEffect(() => {
-    const isAnyModalOpen =
-      isGiveUpModalOpen ||
-      isDeleteModalOpen ||
-      isAddCategoryModalOpen ||
-      isAddProjectModalOpen;
-    document.body.style.overflow = isAnyModalOpen ? "hidden" : "unset";
+    if (!isGiveUpModalOpen && !isDeleteModalOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = previousOverflow;
     };
-  }, [
-    isGiveUpModalOpen,
-    isDeleteModalOpen,
-    isAddCategoryModalOpen,
-    isAddProjectModalOpen,
-  ]);
+  }, [isGiveUpModalOpen, isDeleteModalOpen]);
 
   const stats = statsQuery.data;
   const completedCount = stats?.completedTasks ?? 0;
@@ -597,93 +590,33 @@ const TodoPage = () => {
       )}
 
       {/* Add Category Modal */}
-      {isAddCategoryModalOpen && (
-        <div
-          className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setIsAddCategoryModalOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="ui-modal-shell w-full max-w-lg animate-fadeIn"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-cat-title"
-          >
-            <div className="ui-modal-header flex items-start justify-between gap-4">
-              <div>
-                <p className="ui-page-kicker">Create</p>
-                <h2
-                  id="add-cat-title"
-                  className="text-xl font-semibold text-[var(--color-text)]"
-                >
-                  Add Category
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddCategoryModalOpen(false)}
-                className="ui-modal-close-button cursor-pointer"
-                aria-label="Close add category dialog"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="ui-modal-body">
-              <AddCategoryForm
-                onClose={() => setIsAddCategoryModalOpen(false)}
-                onCategoryCreated={() => setIsAddCategoryModalOpen(false)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <FormDialog
+        isOpen={isAddCategoryModalOpen}
+        onClose={() => setIsAddCategoryModalOpen(false)}
+        title="Add Category"
+        kind="category"
+      >
+        <AddCategoryForm
+          onClose={() => setIsAddCategoryModalOpen(false)}
+          onCategoryCreated={() => setIsAddCategoryModalOpen(false)}
+        />
+      </FormDialog>
 
       {/* Add Project Modal */}
-      {isAddProjectModalOpen && (
-        <div
-          className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setIsAddProjectModalOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="ui-modal-shell w-full max-w-lg animate-fadeIn"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-proj-title"
-          >
-            <div className="ui-modal-header flex items-start justify-between gap-4">
-              <div>
-                <p className="ui-page-kicker">Create</p>
-                <h2
-                  id="add-proj-title"
-                  className="text-xl font-semibold text-[var(--color-text)]"
-                >
-                  Add Project
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddProjectModalOpen(false)}
-                className="ui-modal-close-button cursor-pointer"
-                aria-label="Close add project dialog"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="ui-modal-body">
-              <AddProjectForm
-                onClose={() => setIsAddProjectModalOpen(false)}
-                onProjectCreated={(project) => {
-                  setIsAddProjectModalOpen(false);
-                  setSelectedProjectId(project?._id || ALL_PROJECT_FILTER);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <FormDialog
+        isOpen={isAddProjectModalOpen}
+        onClose={() => setIsAddProjectModalOpen(false)}
+        title="Add Project"
+        kind="project"
+      >
+        <AddProjectForm
+          onClose={() => setIsAddProjectModalOpen(false)}
+          onProjectCreated={(project) => {
+            setIsAddProjectModalOpen(false);
+            setSelectedProjectId(project?._id || ALL_PROJECT_FILTER);
+          }}
+        />
+      </FormDialog>
     </>
   );
 };

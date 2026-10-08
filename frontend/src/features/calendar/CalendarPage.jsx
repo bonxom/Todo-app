@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import "./calendar.css";
 import CalendarView from "./components/CalendarView";
 import { useCalendarTasksQuery } from "@/features/tasks/api/taskQueries";
 import { useProjectsQuery } from "@/features/tasks/api/projectQueries";
@@ -101,9 +102,18 @@ const CalendarPage = () => {
 
   if (isLoading) {
     return (
-      <div className="ui-page-shell flex min-h-full items-center justify-center">
-        <div className="text-sm text-[var(--color-text-muted)]">
-          Loading calendar…
+      <div className="ui-page-shell calendar-page-shell" aria-busy="true">
+        <header className="ui-workspace-heading">
+          <h1 className="ui-page-title">Calendar</h1>
+        </header>
+        <div className="calendar-loading" role="status">
+          <div className="calendar-loading-summary" />
+          <p>Loading your schedule…</p>
+          <div className="calendar-loading-grid">
+            {Array.from({ length: 7 }, (_, index) => (
+              <div key={index} />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -111,15 +121,11 @@ const CalendarPage = () => {
 
   return (
     <div className="ui-page-shell calendar-page-shell">
-      <header className="ui-page-header">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="ui-page-kicker">Planning View</p>
-            <h1 className="ui-page-title">Calendar</h1>
-          </div>
-        </div>
-      </header>
-
+      {errorMessage && (
+        <header className="ui-workspace-heading">
+          <h1 className="ui-page-title">Calendar</h1>
+        </header>
+      )}
       {errorMessage ? (
         <div className="ui-section-card ui-card-padding text-center">
           <p className="text-lg font-semibold text-[var(--color-danger)]">

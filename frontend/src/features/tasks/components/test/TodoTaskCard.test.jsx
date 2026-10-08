@@ -62,7 +62,9 @@ describe("TodoTaskCard", () => {
     };
     const { container } = render(<TodoTaskCard task={taskWithoutCategory} />);
 
-    expect(container.querySelector(".todo-task-category")).not.toBeInTheDocument();
+    expect(
+      container.querySelector(".todo-task-category"),
+    ).not.toBeInTheDocument();
   });
 
   it("triggers onEdit when task title is clicked", async () => {

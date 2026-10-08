@@ -169,7 +169,10 @@ test("headings match dashboard and details work on mobile", async ({
   await page.mouse.move((page.viewportSize()?.width || 1440) - 20, 10);
   await page.goto("/dashboard");
   await page.locator(".ui-workspace-heading .ui-page-title").click();
-  await expect(page.locator(".ui-main-shell")).toHaveCSS("margin-left", page.viewportSize()?.width === 390 ? "0px" : "88px");
+  await expect(page.locator(".ui-main-shell")).toHaveCSS(
+    "margin-left",
+    page.viewportSize()?.width === 390 ? "0px" : "88px",
+  );
   const headingSize = await page
     .locator(".ui-workspace-heading .ui-page-title")
     .evaluate((el) => getComputedStyle(el).fontSize);
@@ -286,7 +289,10 @@ test("desktop headings match TodoPage for both collection views", async ({
   await page.mouse.move((page.viewportSize()?.width || 1440) - 20, 10);
   await page.goto("/dashboard");
   await page.locator(".ui-workspace-heading .ui-page-title").click();
-  await expect(page.locator(".ui-main-shell")).toHaveCSS("margin-left", page.viewportSize()?.width === 390 ? "0px" : "88px");
+  await expect(page.locator(".ui-main-shell")).toHaveCSS(
+    "margin-left",
+    page.viewportSize()?.width === 390 ? "0px" : "88px",
+  );
   const headingSize = await page
     .locator(".ui-workspace-heading .ui-page-title")
     .evaluate((el) => getComputedStyle(el).fontSize);

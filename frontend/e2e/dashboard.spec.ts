@@ -218,11 +218,9 @@ test("empty workspace has working first-task and project entry points", async ({
   await expect(page.getByText("No tasks in this workspace yet")).toBeVisible();
   await screenshot(page, "empty");
   await page.getByRole("button", { name: "Add your first task" }).click();
-  await expect(
-    page.getByRole("dialog", { name: "Add New Task" }),
-  ).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Add Task" })).toBeVisible();
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Create a project" }).click();
+  await page.getByRole("button", { name: "Add project", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Add Project" })).toBeVisible();
 });
 

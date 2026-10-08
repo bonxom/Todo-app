@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import FormDialog from "@/shared/components/FormDialog";
+import { useMemo, useRef, useState } from "react";
 import {
   FolderOpen,
   LayoutGrid,
@@ -9,7 +10,6 @@ import {
   X,
 } from "lucide-react";
 import "./categories.css";
-import { useModalKeyboard } from "@/shared/hooks/useModalKeyboard";
 import CategoryGrid from "./components/CategoryGrid";
 import CategoryStats from "./components/CategoryStats";
 import ProjectGrid from "@/features/tasks/components/project/ProjectGrid";
@@ -56,14 +56,6 @@ const CategoryPage = () => {
     setIsAddProjectModalOpen(false);
     requestAnimationFrame(() => createTriggerRef.current?.focus());
   };
-  const categoryDialogRef = useRef(null);
-  const projectDialogRef = useRef(null);
-  useModalKeyboard(
-    isAddCategoryModalOpen,
-    categoryDialogRef,
-    closeCreateDialog,
-  );
-  useModalKeyboard(isAddProjectModalOpen, projectDialogRef, closeCreateDialog);
 
   const categoriesQuery = useCategoriesQuery();
   const projectsQuery = useProjectsQuery();
@@ -102,18 +94,6 @@ const CategoryPage = () => {
     projectsQuery.refetch();
     tasksQuery.refetch();
   };
-
-  useEffect(() => {
-    if (isAddCategoryModalOpen || isAddProjectModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isAddCategoryModalOpen, isAddProjectModalOpen]);
 
   const globallyVisibleTasks = useVisibleTasks(tasks);
 
@@ -410,95 +390,33 @@ const CategoryPage = () => {
         )}
       </div>
 
-      {isAddCategoryModalOpen && (
-        <div
-          className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={closeCreateDialog}
-          role="presentation"
-        >
-          <div
-            className="ui-modal-shell w-full max-w-lg max-h-[90dvh] overflow-y-auto animate-fadeIn"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-category-title"
-            ref={categoryDialogRef}
-          >
-            <div className="ui-modal-header flex items-start justify-between gap-4">
-              <div>
-                <p className="ui-page-kicker">Create</p>
-                <h2
-                  id="add-category-title"
-                  className="text-xl font-semibold text-[color:var(--color-text)]"
-                >
-                  Add Category
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={closeCreateDialog}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-[color:var(--color-text-muted)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
-                aria-label="Close add category dialog"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="ui-modal-body">
-              <AddCategoryForm
-                onClose={closeCreateDialog}
-                onCategoryCreated={() => {
-                  setIsAddCategoryModalOpen(false);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <FormDialog
+        isOpen={isAddCategoryModalOpen}
+        onClose={closeCreateDialog}
+        title="Add Category"
+        kind="category"
+      >
+        <AddCategoryForm
+          onClose={closeCreateDialog}
+          onCategoryCreated={() => {
+            setIsAddCategoryModalOpen(false);
+          }}
+        />
+      </FormDialog>
 
-      {isAddProjectModalOpen && (
-        <div
-          className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={closeCreateDialog}
-          role="presentation"
-        >
-          <div
-            className="ui-modal-shell w-full max-w-lg max-h-[90dvh] overflow-y-auto animate-fadeIn"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-project-title"
-            ref={projectDialogRef}
-          >
-            <div className="ui-modal-header flex items-start justify-between gap-4">
-              <div>
-                <p className="ui-page-kicker">Create</p>
-                <h2
-                  id="add-project-title"
-                  className="text-xl font-semibold text-[color:var(--color-text)]"
-                >
-                  Add Project
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={closeCreateDialog}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-[color:var(--color-text-muted)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
-                aria-label="Close add project dialog"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="ui-modal-body">
-              <AddProjectForm
-                onClose={closeCreateDialog}
-                onProjectCreated={() => {
-                  setIsAddProjectModalOpen(false);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <FormDialog
+        isOpen={isAddProjectModalOpen}
+        onClose={closeCreateDialog}
+        title="Add Project"
+        kind="project"
+      >
+        <AddProjectForm
+          onClose={closeCreateDialog}
+          onProjectCreated={() => {
+            setIsAddProjectModalOpen(false);
+          }}
+        />
+      </FormDialog>
     </>
   );
 };

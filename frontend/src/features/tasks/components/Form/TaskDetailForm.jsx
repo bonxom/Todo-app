@@ -1,5 +1,5 @@
+import FormDialog from "@/shared/components/FormDialog";
 import { useMemo, useState } from "react";
-import { X } from "lucide-react";
 import AddCategoryForm from "./AddCategoryForm";
 import AddProjectForm from "./AddProjectForm";
 import { useUpdateTaskMutation } from "../../api/taskMutations";
@@ -31,6 +31,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
   const [dueDate, setDueDate] = useState(
     toDateTimeLocalValue(task?.dueDate || ""),
   );
+  const [submitError, setSubmitError] = useState("");
   const [description, setDescription] = useState(task?.description || "");
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
@@ -65,6 +66,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
 
     try {
       const updatedTask = {
@@ -89,7 +91,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
       onClose();
     } catch (error) {
       console.error("Failed to update task:", error);
-      alert(
+      setSubmitError(
         getApiErrorMessage(error, "Failed to update task. Please try again."),
       );
     }
@@ -97,7 +99,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="workspace-form">
         <div>
           <label
             htmlFor="edit-title"
@@ -116,7 +118,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="workspace-form-details">
           <div>
             <label
               htmlFor="edit-category"
@@ -199,7 +201,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="workspace-form-dates">
           <div>
             <label
               htmlFor="edit-startDate"
@@ -249,7 +251,12 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
           />
         </div>
 
-        <div className="flex gap-3 pt-3">
+        {submitError && (
+          <p className="workspace-form-error" role="alert">
+            {submitError}
+          </p>
+        )}
+        <div className="workspace-form-actions">
           <button
             type="button"
             onClick={onClose}
@@ -267,90 +274,34 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
         </div>
       </form>
 
-      {showAddCategory && (
-        <div
-          className="ui-modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
-          onClick={() => setShowAddCategory(false)}
-          role="presentation"
-        >
-          <div
-            className="ui-modal-shell w-full max-w-md animate-fadeIn"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-inline-add-cat-title"
-          >
-            <div className="ui-modal-header flex items-start justify-between gap-4">
-              <h2
-                id="edit-inline-add-cat-title"
-                className="text-xl font-semibold text-[var(--color-text)]"
-              >
-                Add Category
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowAddCategory(false)}
-                className="ui-modal-close-button"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="ui-modal-body">
-              <AddCategoryForm
-                onClose={() => setShowAddCategory(false)}
-                onCategoryCreated={(newCategory) => {
-                  setCategoryId(
-                    newCategory?._id || newCategory?.category?._id || "",
-                  );
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <FormDialog
+        isOpen={showAddCategory}
+        onClose={() => setShowAddCategory(false)}
+        title="Add Category"
+        kind="category"
+      >
+        <AddCategoryForm
+          onClose={() => setShowAddCategory(false)}
+          onCategoryCreated={(newCategory) => {
+            setCategoryId(newCategory?._id || newCategory?.category?._id || "");
+          }}
+        />
+      </FormDialog>
 
-      {showAddProject && (
-        <div
-          className="ui-modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
-          onClick={() => setShowAddProject(false)}
-          role="presentation"
-        >
-          <div
-            className="ui-modal-shell w-full max-w-md animate-fadeIn"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-inline-add-proj-title"
-          >
-            <div className="ui-modal-header flex items-start justify-between gap-4">
-              <h2
-                id="edit-inline-add-proj-title"
-                className="text-xl font-semibold text-[var(--color-text)]"
-              >
-                Add Project
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowAddProject(false)}
-                className="ui-modal-close-button"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="ui-modal-body">
-              <AddProjectForm
-                onClose={() => setShowAddProject(false)}
-                onProjectCreated={(newProject) => {
-                  setProjectId(newProject?._id || "");
-                  onProjectCreated?.(newProject);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <FormDialog
+        isOpen={showAddProject}
+        onClose={() => setShowAddProject(false)}
+        title="Add Project"
+        kind="project"
+      >
+        <AddProjectForm
+          onClose={() => setShowAddProject(false)}
+          onProjectCreated={(newProject) => {
+            setProjectId(newProject?._id || "");
+            onProjectCreated?.(newProject);
+          }}
+        />
+      </FormDialog>
     </>
   );
 };

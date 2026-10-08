@@ -1,5 +1,5 @@
+import FormDialog from "@/shared/components/FormDialog";
 import { useMemo, useState } from "react";
-import { X } from "lucide-react";
 import AddCategoryForm from "./AddCategoryForm";
 import AddProjectForm from "./AddProjectForm";
 import { useCreateTaskMutation } from "../../api/taskMutations";
@@ -27,6 +27,7 @@ const AddTaskForm = ({
   const [dueDate, setDueDate] = useState(
     initialDueDate || toMidnightDateTimeLocalValue(),
   );
+  const [submitError, setSubmitError] = useState("");
   const [description, setDescription] = useState("");
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
@@ -60,6 +61,7 @@ const AddTaskForm = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
 
     try {
       const newTask = {
@@ -82,7 +84,7 @@ const AddTaskForm = ({
       onClose();
     } catch (error) {
       console.error("Failed to create task:", error);
-      alert(
+      setSubmitError(
         getApiErrorMessage(error, "Failed to create task. Please try again."),
       );
     }
@@ -90,7 +92,7 @@ const AddTaskForm = ({
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="workspace-form">
         <div>
           <label
             htmlFor="title"
@@ -103,7 +105,7 @@ const AddTaskForm = ({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter task title…"
+            placeholder="What needs to get done?"
             className="ui-input"
             required
           />
@@ -166,7 +168,8 @@ const AddTaskForm = ({
               <option value="__add_project__">+ Add project</option>
             </select>
           </div>
-
+        </div>
+        <div className="workspace-form-schedule">
           <div>
             <label
               htmlFor="priority"
@@ -185,24 +188,22 @@ const AddTaskForm = ({
               <option value="High">High</option>
             </select>
           </div>
+          <div>
+            <label
+              htmlFor="dueDate"
+              className="mb-2 block text-sm font-medium text-[var(--color-text)]"
+            >
+              Due Date <span className="text-[var(--color-danger)]">*</span>
+            </label>
+            <DateTimeInput
+              id="dueDate"
+              value={dueDate}
+              onChange={(val) => setDueDate(val)}
+              className="ui-input"
+              required
+            />
+          </div>
         </div>
-
-        <div>
-          <label
-            htmlFor="dueDate"
-            className="mb-2 block text-sm font-medium text-[var(--color-text)]"
-          >
-            Due Date <span className="text-[var(--color-danger)]">*</span>
-          </label>
-          <DateTimeInput
-            id="dueDate"
-            value={dueDate}
-            onChange={(val) => setDueDate(val)}
-            className="ui-input"
-            required
-          />
-        </div>
-
         <div>
           <label
             htmlFor="description"
@@ -214,117 +215,66 @@ const AddTaskForm = ({
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter task description…"
+            placeholder="Add a few details, links, or a helpful reminder…"
             rows={3}
             className="ui-input"
           />
         </div>
 
-        <div className="flex gap-3 pt-3">
+        {submitError && (
+          <p className="workspace-form-error" role="alert">
+            {submitError}
+          </p>
+        )}
+        <div className="workspace-form-actions">
           <button
             type="button"
             onClick={() => {
               handleReset();
               onClose();
             }}
-            className="ui-btn-secondary flex-1"
+            className="ui-btn-secondary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="ui-btn-primary ui-btn-opposite-corners flex-1 disabled:cursor-not-allowed disabled:opacity-60"
+            className="ui-btn-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? "Adding…" : "Add Task"}
           </button>
         </div>
       </form>
 
-      {showAddCategory && (
-        <div
-          className="ui-modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
-          onClick={() => setShowAddCategory(false)}
-          role="presentation"
-        >
-          <div
-            className="ui-modal-shell w-full max-w-md animate-fadeIn"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="inline-add-category-title"
-          >
-            <div className="ui-modal-header flex items-start justify-between gap-4">
-              <h2
-                id="inline-add-category-title"
-                className="text-xl font-semibold text-[var(--color-text)]"
-              >
-                Add Category
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowAddCategory(false)}
-                className="ui-modal-close-button"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="ui-modal-body">
-              <AddCategoryForm
-                onClose={() => setShowAddCategory(false)}
-                onCategoryCreated={(newCategory) => {
-                  setCategoryId(
-                    newCategory?._id || newCategory?.category?._id || "",
-                  );
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <FormDialog
+        isOpen={showAddCategory}
+        onClose={() => setShowAddCategory(false)}
+        title="Add Category"
+        kind="category"
+      >
+        <AddCategoryForm
+          onClose={() => setShowAddCategory(false)}
+          onCategoryCreated={(newCategory) => {
+            setCategoryId(newCategory?._id || newCategory?.category?._id || "");
+          }}
+        />
+      </FormDialog>
 
-      {showAddProject && (
-        <div
-          className="ui-modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4"
-          onClick={() => setShowAddProject(false)}
-          role="presentation"
-        >
-          <div
-            className="ui-modal-shell w-full max-w-md animate-fadeIn"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="inline-add-project-title"
-          >
-            <div className="ui-modal-header flex items-start justify-between gap-4">
-              <h2
-                id="inline-add-project-title"
-                className="text-xl font-semibold text-[var(--color-text)]"
-              >
-                Add Project
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowAddProject(false)}
-                className="ui-modal-close-button"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="ui-modal-body">
-              <AddProjectForm
-                onClose={() => setShowAddProject(false)}
-                onProjectCreated={(newProject) => {
-                  setProjectId(newProject?._id || "");
-                  onProjectCreated?.(newProject);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <FormDialog
+        isOpen={showAddProject}
+        onClose={() => setShowAddProject(false)}
+        title="Add Project"
+        kind="project"
+      >
+        <AddProjectForm
+          onClose={() => setShowAddProject(false)}
+          onProjectCreated={(newProject) => {
+            setProjectId(newProject?._id || "");
+            onProjectCreated?.(newProject);
+          }}
+        />
+      </FormDialog>
     </>
   );
 };

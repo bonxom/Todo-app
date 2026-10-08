@@ -4,6 +4,7 @@ import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
   const [name, setName] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [description, setDescription] = useState("");
   const createCategoryMutation = useCreateCategoryMutation();
   const isSubmitting = createCategoryMutation.isPending;
@@ -15,6 +16,7 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
 
     try {
       const newCategory = {
@@ -32,7 +34,7 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
       onClose();
     } catch (error) {
       console.error("Failed to create category:", error);
-      alert(
+      setSubmitError(
         getApiErrorMessage(
           error,
           "Failed to create category. Please try again.",
@@ -42,7 +44,7 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="workspace-form">
       <div>
         <label
           htmlFor="category-name"
@@ -57,7 +59,7 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Enter category name…"
+          placeholder="e.g. Work, Personal, Learning"
           className="ui-input"
           required
           autoFocus
@@ -85,21 +87,26 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
         />
       </div>
 
-      <div className="flex gap-3 pt-3">
+      {submitError && (
+        <p className="workspace-form-error" role="alert">
+          {submitError}
+        </p>
+      )}
+      <div className="workspace-form-actions">
         <button
           type="button"
           onClick={() => {
             handleReset();
             onClose();
           }}
-          className="ui-btn-secondary flex-1"
+          className="ui-btn-secondary"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="ui-btn-primary ui-btn-opposite-corners flex-1 disabled:cursor-not-allowed disabled:opacity-60"
+          className="ui-btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? "Adding…" : "Add Category"}
         </button>
