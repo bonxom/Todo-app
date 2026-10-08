@@ -468,7 +468,6 @@ const TodoPage = () => {
               showCompletedProjects={showCompletedProjects}
               onShowCompletedProjectsChange={setShowCompletedProjects}
               onCreateProject={() => setIsAddProjectModalOpen(true)}
-              onCreateCategory={() => setIsAddCategoryModalOpen(true)}
               onAddTaskToProject={openAddTask}
               onCompleteProject={handleCompleteProject}
               onRestoreProject={handleRestoreProject}

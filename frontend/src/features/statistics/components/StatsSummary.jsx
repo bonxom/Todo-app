@@ -1,52 +1,77 @@
-const NUMBER_FORMATTER = new Intl.NumberFormat();
+import { createElement } from "react";
+import { Check, CircleDot, ListTodo, TrendingUp } from "lucide-react";
 
-const SUMMARY_ITEMS = [
-  {
-    key: "totalTasks",
-    label: "Total Tasks",
-    tone: "text-[color:var(--color-accent)]",
-  },
-  {
-    key: "completedTasks",
-    label: "Completed",
-    tone: "text-[color:var(--color-success)]",
-  },
-  {
-    key: "inProgressTasks",
-    label: "In Progress",
-    tone: "text-[color:var(--color-accent)]",
-  },
-  {
-    key: "pendingTasks",
-    label: "Pending",
-    tone: "text-[color:var(--color-warning)]",
-  },
-  {
-    key: "givenUpTasks",
-    label: "Given Up",
-    tone: "text-[color:var(--color-danger)]",
-  },
-];
-
+const number = new Intl.NumberFormat();
 const StatsSummary = ({ stats }) => {
-  if (!stats) {
-    return null;
-  }
-
+  if (!stats) return null;
+  const rate = stats.totalTasks
+    ? Math.round((stats.completedTasks / stats.totalTasks) * 100)
+    : 0;
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-      {SUMMARY_ITEMS.map((item) => (
-        <section key={item.key} className="ui-section-card p-4">
-          <p className="text-xs font-medium text-[color:var(--color-text-muted)]">
-            {item.label}
-          </p>
-          <p className={`ui-tabular mt-2 text-2xl font-semibold ${item.tone}`}>
-            {NUMBER_FORMATTER.format(stats[item.key] || 0)}
-          </p>
-        </section>
-      ))}
-    </div>
+    <section
+      className="statistics-overview"
+      aria-label="All-time task overview"
+    >
+      <div className="statistics-intro">
+        <p className="statistics-eyebrow">THE BIGGER PICTURE</p>
+        <h2>
+          Small efforts.
+          <br />
+          <em>Visible progress.</em>
+        </h2>
+        <p>A look at everything you’ve set in motion.</p>
+        <span className="statistics-scope">All time</span>
+      </div>
+      <div className="statistics-metrics">
+        {[
+          {
+            label: "Total tasks",
+            value: stats.totalTasks,
+            Icon: ListTodo,
+            note: "Ideas put into action",
+          },
+          {
+            label: "Completed",
+            value: stats.completedTasks,
+            Icon: Check,
+            note: "Steps in the right direction",
+          },
+          {
+            label: "In progress",
+            value: stats.inProgressTasks,
+            Icon: CircleDot,
+            note: "Good things in motion",
+          },
+        ].map(({ label, value, Icon, note }) => (
+          <div className="statistics-metric" key={label}>
+            <span>
+              {createElement(Icon, { size: 15 })}
+              {label}
+            </span>
+            <strong>{number.format(value || 0)}</strong>
+            <small>{note}</small>
+          </div>
+        ))}
+      </div>
+      <div className="statistics-progress">
+        <TrendingUp size={17} />
+        <strong>{rate}% complete</strong>
+        <div
+          className="statistics-progress-track"
+          role="progressbar"
+          aria-label="All-time completion"
+          aria-valuenow={rate}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <i style={{ width: `${rate}%` }} />
+        </div>
+        <span>
+          {number.format(stats.pendingTasks || 0)} pending <b>·</b>{" "}
+          {number.format(stats.givenUpTasks || 0)} given up
+        </span>
+      </div>
+    </section>
   );
 };
-
 export default StatsSummary;

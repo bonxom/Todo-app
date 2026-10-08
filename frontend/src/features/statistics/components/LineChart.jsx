@@ -31,9 +31,7 @@ ChartJS.register(
 );
 
 const QUICK_RANGES = [7, 14, 30, 90];
-const COMPLETED_COLOR = "#2F7D5A";
 const COMPLETED_FILL = "rgba(47, 125, 90, 0.12)";
-const GIVEN_UP_COLOR = "#B25547";
 const GIVEN_UP_FILL = "rgba(178, 85, 71, 0.08)";
 
 const formatRangeLabel = (startDate, endDate) => {
@@ -59,6 +57,8 @@ const isQuickRangeActive = (days, startDate, endDate, todayKey) => {
 
 const LineChart = ({ dailyStats }) => {
   const { theme } = useTheme();
+  const completedColor = theme === "dark" ? "#8ad3ac" : "#2f7d5a";
+  const givenUpColor = theme === "dark" ? "#f0a99e" : "#b25547";
   const axisText = theme === "dark" ? "#a7b8cd" : "#667085";
   const gridColor = theme === "dark" ? "#344459" : "rgba(31, 35, 40, 0.08)";
   const todayKey = getUtcTodayKey();
@@ -107,34 +107,34 @@ const LineChart = ({ dailyStats }) => {
         {
           label: "Completed Tasks",
           data: completed,
-          borderColor: COMPLETED_COLOR,
+          borderColor: completedColor,
           backgroundColor: COMPLETED_FILL,
           borderWidth: 2,
           tension: 0.3,
           fill: true,
           pointRadius: 0,
           pointHoverRadius: 4,
-          pointBackgroundColor: COMPLETED_COLOR,
+          pointBackgroundColor: completedColor,
           pointBorderColor: "#fff",
           pointBorderWidth: 1.5,
         },
         {
           label: "Given Up Tasks",
           data: givenUp,
-          borderColor: GIVEN_UP_COLOR,
+          borderColor: givenUpColor,
           backgroundColor: GIVEN_UP_FILL,
           borderWidth: 2,
           tension: 0.3,
           fill: true,
           pointRadius: 0,
           pointHoverRadius: 4,
-          pointBackgroundColor: GIVEN_UP_COLOR,
+          pointBackgroundColor: givenUpColor,
           pointBorderColor: "#fff",
           pointBorderWidth: 1.5,
         },
       ],
     };
-  }, [dailyStats, startDate, endDate]);
+  }, [dailyStats, startDate, endDate, completedColor, givenUpColor]);
 
   const options = useMemo(
     () => ({
@@ -185,7 +185,7 @@ const LineChart = ({ dailyStats }) => {
       scales: {
         x: {
           grid: {
-            color: gridColor,
+            display: false,
             drawBorder: false,
           },
           ticks: {
@@ -231,19 +231,22 @@ const LineChart = ({ dailyStats }) => {
   const hasNoData = chartData.labels.length === 0;
 
   return (
-    <section className="ui-section-card ui-card-padding">
+    <section className="statistics-card statistics-trend">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-[color:var(--color-text)]">
-            Daily Completion Trend
+            Completion trend
           </h2>
+          <p className="statistics-card-description">
+            See how your daily effort adds up over time.
+          </p>
         </div>
-        <span className="ui-chip ui-tabular">{rangeLabel}</span>
+        <span className="statistics-range-label">{rangeLabel}</span>
       </div>
 
-      <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-2 text-sm font-medium text-[color:var(--color-text)]">
+      <div className="statistics-trend-controls">
+        <div className="statistics-date-inputs">
+          <label className="statistics-date-field">
             <span>From</span>
             <input
               type="date"
@@ -251,12 +254,12 @@ const LineChart = ({ dailyStats }) => {
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
               max={endDate}
-              className="ui-input min-w-[11rem]"
+              className="statistics-date-input"
               autoComplete="off"
             />
           </label>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-[color:var(--color-text)]">
+          <label className="statistics-date-field">
             <span>To</span>
             <input
               type="date"
@@ -264,7 +267,8 @@ const LineChart = ({ dailyStats }) => {
               value={endDate}
               onChange={(event) => setEndDate(event.target.value)}
               min={startDate}
-              className="ui-input min-w-[11rem]"
+              max={todayKey}
+              className="statistics-date-input"
               autoComplete="off"
             />
           </label>
@@ -291,7 +295,7 @@ const LineChart = ({ dailyStats }) => {
                     : "border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
                 }`}
               >
-                {days}D
+                {days} days
               </button>
             );
           })}
@@ -300,12 +304,17 @@ const LineChart = ({ dailyStats }) => {
 
       <div className="mt-6">
         {hasNoData ? (
-          <div className="flex h-80 items-center justify-center rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 text-sm text-[color:var(--color-text-muted)]">
+          <div className="flex h-[245px] items-center justify-center rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 text-sm text-[color:var(--color-text-muted)]">
             No trend data available for this date range.
           </div>
         ) : (
-          <div className="relative h-80 rounded-[12px] border border-[color:var(--color-line)] bg-[var(--color-surface)] p-3">
-            <Line data={chartData} options={options} />
+          <div className="statistics-chart">
+            <Line
+              data={chartData}
+              options={options}
+              role="img"
+              aria-label={`Daily completed and given-up tasks, ${rangeLabel}`}
+            />
           </div>
         )}
       </div>

@@ -2,10 +2,10 @@ import { useMemo } from "react";
 import DonutChartCard from "./DonutChartCard";
 
 const STATUS_COLORS = {
-  Pending: "#A46A2A",
-  "In Progress": "#456B8C",
-  Completed: "#2F7D5A",
-  "Given Up": "#7A7F87",
+  Pending: "var(--color-warning)",
+  "In Progress": "var(--color-accent)",
+  Completed: "var(--color-success)",
+  "Given Up": "var(--color-text-muted)",
 };
 
 const StatusPieChart = ({ stats }) => {
@@ -36,7 +36,8 @@ const StatusPieChart = ({ stats }) => {
 
   return (
     <DonutChartCard
-      title="Task Status Mix"
+      title="Where things stand"
+      description="A snapshot of your task collection."
       total={chartData.total}
       totalLabel="Tasks"
       items={chartData.items}
