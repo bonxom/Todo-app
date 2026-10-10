@@ -20,7 +20,6 @@ const StatsSummary = ({ stats }) => {
           <em>Visible progress.</em>
         </h2>
         <p>A look at everything you’ve set in motion.</p>
-        <span className="statistics-scope">All time</span>
       </div>
       <div className="statistics-metrics">
         {[

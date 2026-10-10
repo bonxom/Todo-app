@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, CheckCircle2 } from "lucide-react";
 import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
-import CalendarTaskDetailCard from "./CalendarTaskDetailCard";
+import TodoTaskCard from "@/features/tasks/components/TodoTaskCard";
+import { setTaskDragData } from "@/shared/utils/taskDrag";
 import Pagination from "@/shared/components/Pagination";
 import { usePagination } from "@/shared/hooks/usePagination";
 import { sortTasksByDueTime } from "./calendarUtils";
@@ -58,7 +59,7 @@ const ProjectFocusWeekAgenda = ({
   }, [sortedTasks, pageNo, pageSize]);
 
   return (
-    <section className="ui-section-card calendar-agenda overflow-hidden">
+    <section className="ui-section-card calendar-agenda">
       <TaskDetailButton
         isOpen={isEditModalOpen}
         task={selectedTask}
@@ -121,22 +122,25 @@ const ProjectFocusWeekAgenda = ({
         </div>
       </div>
 
-      <div className="space-y-3 px-4 py-4">
+      <div className="calendar-agenda-list">
         {displayTasks.length > 0 ? (
           <>
             {displayTasks.map((task) => (
-              <CalendarTaskDetailCard
+              <TodoTaskCard
                 key={task._id || task.id}
                 task={task}
-                mode="panel"
-                compact={compact}
-                onClick={(clickedTask) => {
+                showDueTime
+                onDragStart={(event) => setTaskDragData(event, task)}
+                onEdit={(clickedTask) => {
                   setSelectedTask(clickedTask);
                   setIsEditModalOpen(true);
                 }}
-                onTaskUpdated={onTaskUpdated}
-                onTaskStatusChange={onTaskStatusChange}
-                onTaskDelete={onTaskDelete}
+                onComplete={() => onTaskStatusChange?.(task, "completed")}
+                onAccept={() => onTaskStatusChange?.(task, "in-progress")}
+                onRestore={() => onTaskStatusChange?.(task, "in-progress")}
+                onGiveUp={() => onTaskStatusChange?.(task, "given-up")}
+                onDelete={onTaskDelete}
+                onReject={onTaskDelete}
               />
             ))}
 

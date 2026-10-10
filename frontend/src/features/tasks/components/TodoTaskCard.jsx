@@ -10,7 +10,10 @@ import {
   RotateCcw,
   Tag,
   Trash2,
+  X,
 } from "lucide-react";
+import "../todos.css";
+import { getApiErrorMessage } from "@/shared/services/apiError";
 import { differenceInCalendarDays, format, isValid } from "date-fns";
 
 const TodoTaskCard = ({
@@ -21,6 +24,9 @@ const TodoTaskCard = ({
   onRestore,
   onEdit,
   onDelete,
+  onDragStart,
+  onReject,
+  showDueTime = false,
 }) => {
   const [busy, setBusy] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -80,7 +86,13 @@ const TodoTaskCard = ({
     };
   }, [menuOpen]);
   return (
-    <article className="todo-task" data-status={task.status}>
+    <article
+      className="todo-task"
+      data-status={task.status}
+      draggable={Boolean(onDragStart)}
+      onDragStart={onDragStart}
+    >
+      <div className="todo-task-controls">
       <button
         type="button"
         className="todo-check"
@@ -101,6 +113,30 @@ const TodoTaskCard = ({
       >
         <ActionIcon size={14} className={busy ? "animate-spin" : ""} />
       </button>
+      {pending && onReject && (
+        <button
+          type="button"
+          className="todo-reject"
+          disabled={busy}
+          aria-label={`Reject ${task.title}`}
+          title="Reject task"
+          onClick={async (event) => {
+            event.stopPropagation();
+            if (busy) return;
+            setBusy(true);
+            try {
+              await onReject(taskId);
+            } catch (error) {
+              alert(getApiErrorMessage(error, "Unable to reject task. Please try again."));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <X size={14} aria-hidden="true" />
+        </button>
+      )}
+      </div>
       <div className="todo-task-content">
         <button
           type="button"
@@ -147,7 +183,11 @@ const TodoTaskCard = ({
         title={date && isValid(date) ? format(date, "PPP") : undefined}
       >
         <CalendarDays size={13} />
-        {closed ? (completed ? "Done" : "Paused") : dateLabel}
+        {showDueTime && date && isValid(date)
+          ? format(date, "HH:mm")
+          : closed
+            ? completed ? "Done" : "Paused"
+            : dateLabel}
       </span>
       <div className="todo-task-menu" ref={menuRef}>
         <button
@@ -163,6 +203,7 @@ const TodoTaskCard = ({
         {menuOpen && (
           <div
             className="todo-action-popover"
+            data-escape-boundary
             aria-label={`Task actions for ${task.title}`}
           >
             <button

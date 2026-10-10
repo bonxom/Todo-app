@@ -249,3 +249,16 @@ test("pagination preserves full project and workspace totals", async ({
     page.getByRole("button", { name: "Page 1", exact: true }),
   ).toHaveAttribute("aria-current", "page");
 });
+
+ test("shared pending card rejects immediately on Dashboard", async ({ page }) => {
+  await dashboardFixture(page);
+  await page.goto("/dashboard");
+  const dashboardReject = page.getByRole("button", { name: /^Reject / }).first();
+  await expect(dashboardReject).toBeVisible();
+  const dashboardTitle = (await dashboardReject.getAttribute("aria-label"))!.replace("Reject ", "");
+  const dashboardDelete = page.waitForRequest(req => req.method() === "DELETE" && req.url().includes("/api/tasks/"));
+  await dashboardReject.click();
+  await dashboardDelete;
+  await expect(page.getByRole("button", { name: `Reject ${dashboardTitle}`, exact: true })).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});

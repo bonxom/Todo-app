@@ -85,9 +85,6 @@ const StatisticsPage = () => {
       <header className="ui-workspace-heading">
         <div>
           <h1 className="ui-page-title">Statistics</h1>
-          <p className="statistics-subtitle">
-            A little perspective on the progress you’re making.
-          </p>
         </div>
       </header>
 
@@ -97,7 +94,6 @@ const StatisticsPage = () => {
         <span>
           <ChartNoAxesCombined size={15} /> Your momentum
         </span>
-        <span>Every completed task counts</span>
       </div>
       <LineChart dailyStats={normalizedDailyStats} />
       <ActivityHeatmap dailyStats={normalizedDailyStats} />

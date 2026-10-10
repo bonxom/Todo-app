@@ -41,7 +41,7 @@ test("category detail uses complete totals, filters, pages and task actions", as
   await dialog
     .getByRole("textbox", { name: "Search tasks in Health" })
     .fill("annual checkup");
-  await expect(dialog.locator(".group-task-row")).toHaveCount(2);
+  await expect(dialog.locator(".todo-task")).toHaveCount(2);
   await dialog
     .getByRole("textbox", { name: "Search tasks in Health" })
     .fill("zzzz");
@@ -51,7 +51,7 @@ test("category detail uses complete totals, filters, pages and task actions", as
   await dialog.getByRole("button", { name: "Clear task filters" }).click();
   await dialog
     .getByRole("button", {
-      name: "Complete Go for a swim · Week 2",
+      name: "Mark Go for a swim · Week 2 as completed",
       exact: true,
     })
     .click();
@@ -61,7 +61,7 @@ test("category detail uses complete totals, filters, pages and task actions", as
   );
   await dialog
     .getByRole("button", {
-      name: "Edit Stretch before bed · Week 2",
+      name: "Stretch before bed · Week 2",
       exact: true,
     })
     .click();
@@ -69,12 +69,8 @@ test("category detail uses complete totals, filters, pages and task actions", as
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(1);
   await expect(page.locator("body")).toHaveCSS("overflow", "hidden");
-  await dialog
-    .getByRole("button", {
-      name: "Delete Stretch before bed · Week 2",
-      exact: true,
-    })
-    .click();
+  await dialog.getByRole("button", { name: "Actions for Stretch before bed · Week 2", exact: true }).click();
+  await dialog.getByRole("button", { name: "Delete task", exact: true }).click();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(1);
   await page.keyboard.press("Escape");
@@ -244,12 +240,8 @@ test("task confirmations update details and preserve the underlying dialog", asy
   await workspaceDetailsFixture(page);
   await page.goto("/categories");
   await page.getByRole("button", { name: "Health", exact: true }).click();
-  await page
-    .getByRole("button", {
-      name: "Give up Go for a swim · Week 2",
-      exact: true,
-    })
-    .click();
+  await page.getByRole("button", { name: "Actions for Go for a swim · Week 2", exact: true }).click();
+  await page.getByRole("button", { name: "Give up task", exact: true }).click();
   const confirmation = page.getByRole("dialog", {
     name: "Give Up Task",
     exact: true,
@@ -259,9 +251,8 @@ test("task confirmations update details and preserve the underlying dialog", asy
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(1);
   await page.getByRole("button", { name: "Given up 3", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Delete Go for a swim · Week 2", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Actions for Go for a swim · Week 2", exact: true }).click();
+  await page.getByRole("button", { name: "Delete task", exact: true }).click();
   await page
     .getByRole("dialog", { name: "Delete Task", exact: true })
     .getByRole("button", { name: "Delete", exact: true })
@@ -336,4 +327,25 @@ test("desktop headings match TodoPage for both collection views", async ({
     "font-size",
     headingSize,
   );
+});
+
+test("shared pending card rejects immediately in Categories", async ({ page }) => {
+  await workspaceDetailsFixture(page);
+  await page.goto("/categories");
+  await page.getByRole("button", { name: "Health", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("textbox", { name: "Search tasks in Health" }).fill("Practice ten minutes of mindfulness · Week 3");
+  const row = dialog.locator('.todo-task[data-status="pending"]');
+  await expect(row).toHaveCount(1);
+  await row.screenshot({ path: "artifacts/category-pending-shared.png" });
+  const menu = row.getByRole("button", { name: /^Actions for / });
+  await menu.click();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeVisible();
+  await expect(menu).toBeFocused();
+  const categoryDelete = page.waitForRequest(req => req.method() === "DELETE" && req.url().includes("/api/tasks/detail-20"));
+  await row.getByRole("button", { name: /^Reject / }).click();
+  await categoryDelete;
+  await expect(dialog.getByRole("heading", { name: "No matching tasks" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(1);
 });

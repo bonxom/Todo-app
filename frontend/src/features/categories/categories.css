@@ -777,96 +777,8 @@
   padding: 0 30px;
   scrollbar-gutter: stable;
 }
-.group-task-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 0;
+.group-detail-list > ul > li:not(:last-child) {
   border-bottom: 1px solid var(--color-line);
-}
-.group-task-row:last-child {
-  border-bottom: 0;
-}
-.group-task-state {
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-}
-.group-task-row[data-status="completed"] .group-task-state {
-  color: var(--color-success);
-}
-.group-task-row[data-status="in-progress"] .group-task-state {
-  color: var(--color-accent);
-}
-.group-task-content {
-  min-width: 0;
-  flex: 1;
-}
-.group-task-title {
-  display: block;
-  text-align: left;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.5;
-  cursor: pointer;
-  overflow-wrap: anywhere;
-}
-.group-task-title:hover {
-  color: var(--color-accent);
-}
-.group-task-row[data-status="completed"] .group-task-title,
-.group-task-row[data-status="given-up"] .group-task-title {
-  color: var(--color-text-muted);
-}
-.group-task-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  font-size: 11px;
-  color: var(--color-text-muted);
-  margin-top: 4px;
-}
-.group-task-meta .group-task-overdue {
-  color: var(--color-danger);
-}
-.group-task-priority {
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 5px;
-  background: var(--color-surface-muted);
-  color: var(--color-text-muted);
-}
-.group-task-priority--high {
-  color: var(--color-danger);
-  background: var(--color-danger-soft);
-}
-.group-task-priority--medium {
-  color: var(--color-warning);
-  background: var(--color-warning-soft);
-}
-.group-task-actions {
-  display: flex;
-  gap: 2px;
-}
-.group-task-actions button {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 32px;
-  border-radius: 6px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-.group-task-actions button:hover {
-  color: var(--color-accent);
-  background: var(--color-accent-soft);
-}
-.group-task-actions .group-task-delete:hover {
-  color: var(--color-danger);
-  background: var(--color-danger-soft);
-}
-.group-task-actions button:disabled {
-  opacity: 0.4;
-  cursor: wait;
 }
 .group-detail-footer {
   display: flex;
@@ -961,21 +873,6 @@
   }
   .group-detail-list {
     padding-inline: 18px;
-  }
-  .group-task-row {
-    display: grid;
-    grid-template-columns: 18px 1fr auto;
-    gap: 8px 10px;
-    padding: 15px 0;
-  }
-  .group-task-actions {
-    grid-column: 2 / -1;
-    justify-content: flex-end;
-  }
-  .group-task-actions button {
-    width: 36px;
-    height: 34px;
-    background: var(--color-surface-muted);
   }
   .group-detail-footer {
     padding: 10px 14px;

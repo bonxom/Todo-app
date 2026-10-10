@@ -199,10 +199,6 @@ export default function GroupDetailModal({
                 <X size={20} />
               </button>
             </div>
-            <p className="group-detail-description">
-              {description ||
-                `A place for everything that belongs to this ${kind}.`}
-            </p>
             <div className="group-detail-summary">
               <div>
                 <strong>{tasks.length}</strong>

@@ -428,6 +428,7 @@ const TodoPage = () => {
                 isLoading={isLoading}
                 emptyState={emptyStateInfo}
                 onAccept={handleAcceptTask}
+                onReject={deleteTaskMutation.mutateAsync}
                 onComplete={handleCompleteTask}
                 onGiveUp={handleGiveUpClick}
                 onRestore={handleRestoreTask}

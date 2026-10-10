@@ -170,12 +170,6 @@ const CategoryCard = ({
             <h2>{category}</h2>
             <ArrowUpRight size={19} />
           </button>
-          <p id={descriptionId} className="category-card-description">
-            {description ||
-              (category === "Uncategorized"
-                ? "A home for tasks still finding their place."
-                : "Keep related tasks together and make space for what matters.")}
-          </p>
           <div className="category-progress-label">
             <span>
               {totalTasks
@@ -214,14 +208,6 @@ const CategoryCard = ({
             </p>
           )}
         </div>
-        <button
-          className="category-card-footer"
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <span>Explore category</span>
-          <ArrowUpRight size={16} />
-        </button>
       </article>
 
       <DeleteCategoryDialog

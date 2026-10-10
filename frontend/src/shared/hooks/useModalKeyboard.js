@@ -26,6 +26,8 @@ export function useModalKeyboard(isOpen, dialogRef, onClose) {
       );
       if (!dialog || dialogs[dialogs.length - 1] !== dialog) return;
       if (event.key === "Escape") {
+        // Let an open nested popover consume Escape before closing the dialog.
+        if (dialog.querySelector("[data-escape-boundary]")) return;
         event.preventDefault();
         event.stopImmediatePropagation();
         closeRef.current?.();

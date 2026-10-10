@@ -190,3 +190,51 @@ test("populated calendar stays usable on small screens", async ({ page }) => {
   await page.getByRole("button", { name: "Switch to dark mode" }).click();
   await screenshot(page, "calendar-mobile-dark");
 });
+
+test("agenda shared rows support completion, restore, editing and menus", async ({ page }) => {
+  await dashboardFixture(page);
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.goto("/calendar");
+  const agenda = page.locator(".calendar-agenda");
+  const title = "Explore directions for the homepage";
+  await agenda.getByRole("button", { name: `Mark ${title} as completed`, exact: true }).click();
+  await expect(agenda.getByText("1/2 complete", { exact: true })).toBeVisible();
+  await agenda.screenshot({ path: "artifacts/calendar-agenda-completed.png" });
+  await agenda.getByRole("button", { name: `Restore ${title} to in-progress`, exact: true }).click();
+  await expect(agenda.getByText("0/2 complete", { exact: true })).toBeVisible();
+  await agenda.getByRole("button", { name: title, exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  const menu = agenda.getByRole("button", { name: `Actions for ${title}` });
+  await menu.click();
+  await expect(agenda.getByRole("button", { name: "Edit task", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeFocused();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const lastMenu = agenda.getByRole("button", { name: "Actions for Send the first round of design feedback" });
+  await lastMenu.click();
+  await agenda.getByRole("button", { name: "Edit task", exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+});
+
+test("pending agenda task can be rejected directly", async ({ page }) => {
+  await dashboardFixture(page);
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.goto("/calendar");
+  await page.getByRole("button", { name: "Month", exact: true }).click();
+  const title = "Plan next week’s studio priorities";
+  await page.locator(".calendar-day").filter({ hasText: title }).click();
+  const agenda = page.locator(".calendar-agenda");
+  const reject = agenda.getByRole("button", { name: `Reject ${title}`, exact: true });
+  await expect(reject).toBeVisible();
+  await agenda.screenshot({ path: "artifacts/calendar-pending-reject.png" });
+  const deleted = page.waitForRequest((req) => req.method() === "DELETE" && req.url().includes("/api/tasks/3"));
+  await reject.click();
+  await deleted;
+  await expect(agenda.getByText(title, { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.reload();
+  await expect(page.locator(".calendar-board")).toBeVisible();
+  await expect(page.locator("[data-cal-task-name]").filter({ hasText: title })).toHaveCount(0);
+});

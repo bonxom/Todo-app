@@ -6,7 +6,7 @@ const TaskList = ({
   isLoading = false,
   emptyState = null,
   onAccept,
-  onDeny,
+  onReject,
   onComplete,
   onGiveUp,
   onRestore,
@@ -74,7 +74,7 @@ const TaskList = ({
           key={task._id || task.id}
           task={task}
           onAccept={onAccept}
-          onDeny={onDeny}
+          onReject={onReject}
           onComplete={onComplete}
           onGiveUp={onGiveUp}
           onRestore={onRestore}

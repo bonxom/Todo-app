@@ -237,9 +237,6 @@ const LineChart = ({ dailyStats }) => {
           <h2 className="text-lg font-semibold text-[color:var(--color-text)]">
             Completion trend
           </h2>
-          <p className="statistics-card-description">
-            See how your daily effort adds up over time.
-          </p>
         </div>
         <span className="statistics-range-label">{rangeLabel}</span>
       </div>

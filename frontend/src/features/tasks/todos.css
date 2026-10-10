@@ -871,3 +871,26 @@
     padding-inline: 1.125rem;
   }
 }
+
+.todo-task-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.todo-reject {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-inline: -2.5px;
+  border-radius: 5px;
+  color: var(--color-text-muted);
+  transition: color 0.15s, background 0.15s;
+}
+.todo-reject:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+.todo-reject:disabled { opacity: 0.5; }
