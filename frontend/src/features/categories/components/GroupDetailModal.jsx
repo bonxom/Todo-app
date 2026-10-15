@@ -85,7 +85,6 @@ function TaskConfirmation({ kind, busy, onClose, onConfirm }) {
 
 export default function GroupDetailModal({
   name,
-  description,
   kind,
   tasks = [],
   onClose,
