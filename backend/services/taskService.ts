@@ -274,6 +274,20 @@ export const taskService = {
     return buildResponsePage(data, totalCount, pageNo, pageSize);
   },
 
+  // MCP read semantics match getAll; REST ownership/mutation rules stay separate.
+  async getReadableById(
+    id: mongoose.Types.ObjectId | string,
+    user: IUserDocument,
+  ): Promise<ITaskDocument> {
+    const access = await buildTaskAccessQuery(user);
+    const { data } = await taskRepository.findPaginated(
+      { $and: [access, { _id: id }] },
+      { skip: 0, limit: 1, sort: { _id: 1 } },
+    );
+    if (!data[0]) throw new AppError(TASK_ERROR.NOT_FOUND);
+    return data[0];
+  },
+
   async getById(
     id: mongoose.Types.ObjectId | string,
     user: IUserDocument,

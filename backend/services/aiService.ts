@@ -2,8 +2,14 @@ import { z } from "zod";
 import type { ZodType } from "zod";
 import mongoose from "mongoose";
 import OpenAI from "openai";
+import type {
+  ChatCompletionMessageParam,
+  ChatCompletionTool,
+} from "openai/resources/chat/completions.js";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { getAiClient } from "../libs/aiClient.js";
-import { getAiModel } from "../config/env.js";
+import { getAiModel, getServerConfig } from "../config/env.js";
 import { categoryRepository } from "../repositories/categoryRepository.js";
 import { taskRepository } from "../repositories/taskRepository.js";
 import { statService } from "./statService.js";
@@ -163,5 +169,99 @@ Provide short, clear, concise, and friendly responses.`;
     if (!content) throw new AppError(AI_ERROR.EMPTY_RESPONSE);
 
     return content;
+  },
+
+  async chatWithMcp(userInput: string, accessToken: string): Promise<string> {
+    const ai = getAiClient();
+    const model = getAiModel();
+    if (!model) throw new AppError(AI_ERROR.CONFIG_MISSING);
+
+    const { port } = getServerConfig();
+    const serverUrl =
+      process.env.MCP_SERVER_URL || `http://127.0.0.1:${port}/mcp`;
+
+    const transport = new StreamableHTTPClientTransport(new URL(serverUrl), {
+      requestInit: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    });
+
+    const mcpClient = new Client(
+      { name: "orbit-ai-agent", version: "1.0.0" },
+      { capabilities: {} },
+    );
+
+    await mcpClient.connect(transport);
+
+    try {
+      const { tools: mcpTools } = await mcpClient.listTools();
+      const openAiTools: ChatCompletionTool[] = mcpTools.map((t) => ({
+        type: "function",
+        function: {
+          name: t.name,
+          description: t.description,
+          parameters: t.inputSchema as Record<string, unknown>,
+        },
+      }));
+
+      const messages: ChatCompletionMessageParam[] = [
+        {
+          role: "system",
+          content: `You are Orbit AI Assistant; your name is Đạt. You have access to user's tasks, projects, and categories via tools.
+Always use tools when user asks for information about their tasks, categories, or projects.
+Respond in a helpful, concise, and friendly manner in the user's language (default Vietnamese).`,
+        },
+        { role: "user", content: userInput },
+      ];
+
+      const MAX_STEPS = 5;
+      for (let step = 0; step < MAX_STEPS; step++) {
+        const response = await callAiProvider(() =>
+          ai.chat.completions.create({
+            model,
+            messages,
+            tools: openAiTools.length > 0 ? openAiTools : undefined,
+            tool_choice: "auto",
+          }),
+        );
+
+        const choice = response.choices[0];
+        const message = choice?.message;
+        if (!message) throw new AppError(AI_ERROR.EMPTY_RESPONSE);
+
+        messages.push(message);
+
+        if (!message.tool_calls || message.tool_calls.length === 0) {
+          return message.content || "";
+        }
+
+        for (const toolCall of message.tool_calls) {
+          if (toolCall.type === "function") {
+            const args = toolCall.function.arguments
+              ? JSON.parse(toolCall.function.arguments)
+              : {};
+
+            const toolResult = await mcpClient.callTool({
+              name: toolCall.function.name,
+              arguments: args,
+            });
+
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify(toolResult),
+            });
+          }
+        }
+      }
+
+      throw new AppError(AI_ERROR.PROVIDER_ERROR, {
+        cause: new Error("Exceeded maximum tool calling steps"),
+      });
+    } finally {
+      await mcpClient.close();
+    }
   },
 };

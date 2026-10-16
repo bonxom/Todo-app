@@ -6,6 +6,7 @@ import { CATEGORY_ERROR } from "./definitions/categoryErrors.js";
 import { PROJECT_ERROR } from "./definitions/projectErrors.js";
 import { TASK_ERROR } from "./definitions/taskErrors.js";
 import { AI_ERROR } from "./definitions/aiErrors.js";
+import { MCP_ERROR } from "./definitions/mcpErrors.js";
 
 export const ERROR_DEFINITION_GROUPS = {
   COMMON_ERROR,
@@ -15,6 +16,7 @@ export const ERROR_DEFINITION_GROUPS = {
   PROJECT_ERROR,
   TASK_ERROR,
   AI_ERROR,
+  MCP_ERROR,
 } as const satisfies Record<string, Record<string, ErrorDefinition>>;
 
 export {
@@ -25,4 +27,5 @@ export {
   PROJECT_ERROR,
   TASK_ERROR,
   AI_ERROR,
+  MCP_ERROR,
 };

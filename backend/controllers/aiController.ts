@@ -29,3 +29,24 @@ export const responseToUser = async (
     data: content,
   });
 };
+
+export const chatWithMcp = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const body = req.validatedBody as Record<string, unknown>;
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : "";
+
+  const content = await aiService.chatWithMcp(
+    body.userInput as string,
+    token,
+  );
+  res.status(200).json({
+    success: true,
+    message: "Response generated successfully with MCP",
+    data: content,
+  });
+};

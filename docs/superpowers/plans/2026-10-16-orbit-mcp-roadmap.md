@@ -1,6 +1,6 @@
 # Orbit MCP — Roadmap theo phase
 
-Ngày: 2026-10-16. Trạng thái: phase 1 hoàn thành ngày 2026-10-16; phase 2–5 chưa triển khai, chưa có endpoint MCP.
+Ngày: 2026-10-16. Trạng thái: phase 1–2 hoàn thành ngày 2026-10-16; `/mcp` chỉ local, mặc định tắt; phase 3–5 chưa triển khai.
 
 Mục tiêu: cho AI client truy cập công việc của đúng người dùng trong Orbit qua MCP, tái sử dụng nghiệp vụ backend hiện có.
 
@@ -59,6 +59,13 @@ Thứ tự phụ thuộc: **1 → 2 → 3 → 4 → 5**. Mỗi phase có spec v�
 
 - [Spec phase 1](../specs/2026-10-16-orbit-mcp-phase-1-design.md)
 - [Implementation plan phase 1](2026-10-16-orbit-mcp-phase-1.md)
+
+## Tài liệu phase 2
+
+Phase 2 đã triển khai và nghiệm thu ngày 2026-10-16: SDK 1.32.1/protocol 2025-11-25; 142 backend tests pass với MongoDB integration thật và Inspector 2.11.0 Web UI smoke pass. ADMIN bị từ chối trong MCP; không mở public hoặc OAuth. [Hướng dẫn local](../../mcp/local-development.md).
+
+- [Spec phase 2](../specs/2026-10-16-orbit-mcp-phase-2-design.md)
+- [Implementation plan phase 2](2026-10-16-orbit-mcp-phase-2.md)
 
 ## Nguồn kỹ thuật
 

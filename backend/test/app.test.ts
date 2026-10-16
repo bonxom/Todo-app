@@ -15,6 +15,17 @@ beforeAll(() => {
 });
 
 describe("application error integration", () => {
+  it("keeps disabled MCP outside readiness and REST middleware", async () => {
+    const { default: app } = await import("../app.js");
+    const { connectDB } = await import("../config/db.js");
+    vi.mocked(connectDB).mockClear();
+    const response = await request(app)
+      .post("/mcp")
+      .set("Origin", "https://untrusted.invalid")
+      .send({});
+    expect(response.status).toBe(404);
+    expect(connectDB).not.toHaveBeenCalled();
+  });
   it("keeps the root success response unchanged", async () => {
     const { default: app } = await import("../app.js");
     const response = await request(app).get("/");
