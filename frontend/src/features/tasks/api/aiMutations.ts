@@ -39,3 +39,13 @@ export const useChatMutation = (
     ...options,
   });
 };
+
+export const useAgenticChatMutation = (
+  options?: UseMutationOptions<ChatResponse, Error, ChatPayload>,
+) => {
+  return useMutation({
+    mutationFn: (payload: ChatPayload) =>
+      aiService.getAgenticChatResponse(payload),
+    ...options,
+  });
+}

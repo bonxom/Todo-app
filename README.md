@@ -1,314 +1,183 @@
-# 🪐 Orbit - AI-Powered Task Management System
+# Orbit
 
-A modern, full-stack task management application with AI-powered task generation, comprehensive analytics, and an intuitive user interface. Built with the MERN stack and enhanced with Google's Gemini AI.
+Orbit is a task management application with a React frontend and a TypeScript/Express backend. Users can organize tasks into categories and projects, track due dates and progress, view statistics, and generate tasks through an OpenAI-compatible AI provider.
 
----
+## Features
 
-## 🌟 Introduction
+- JWT authentication, user profiles, and avatar uploads
+- Tasks with status, priority, category, project, dates, search, and filters
+- Category and project management
+- Calendar and productivity statistics
+- Optional AI task generation
+- Local read-only MCP server for AI clients
 
-Orbit is a feature-rich personal task management system designed to help users organize their tasks efficiently. The application combines traditional task management features with cutting-edge AI capabilities, allowing users to generate tasks based on natural language requirements. With a clean, responsive interface built with React and Tailwind CSS, users can manage tasks across multiple categories, track progress with detailed statistics, and visualize deadlines through an interactive calendar view.
+## Stack
 
----
+- **Backend:** Node.js 22, Express 5, TypeScript, MongoDB, Mongoose, Zod
+- **MCP:** `@modelcontextprotocol/sdk` with Streamable HTTP
+- **Frontend:** React 19, Vite, Tailwind CSS
+- **Package manager:** pnpm 11.21.0; backend and frontend are separate packages
 
-## ✨ Features
+## Repository layout
 
-### 🔐 Authentication & User Management
+```text
+backend/
+  config/          Runtime configuration and MongoDB connection
+  controllers/     REST controllers
+  error/           Application and MCP errors
+  libs/            AI client and shared libraries
+  middlewares/     Authentication and request middleware
+  mcp/             MCP HTTP routes, tools, schemas, and DTO mappers
+  models/          Mongoose models
+  repositories/    Database queries
+  routes/          REST API routes
+  services/        Business logic and authorization
+  test/            Backend tests
+  scripts/         Local utilities, including the MCP smoke client
+frontend/
+  src/             React application
+  public/          Static files
+```
 
-- **Secure Authentication**: JWT-based authentication system with bcrypt password hashing
-- **User Registration & Login**: Secure user account creation and login
-- **Profile Management**: Users can update their profile information and change passwords
-- **Avatar Upload**: Custom profile picture support
+## Requirements
 
-### 📋 Task Management
+- Node.js 22
+- pnpm 11.21.0, available through Corepack
+- MongoDB (local or Atlas)
 
-- **CRUD Operations**: Create, read, update, and delete tasks
-- **Task Status Tracking**: Four status types - Pending, In Progress, Completed, and Given Up
-- **Priority Levels**: Organize tasks by Low, Medium, or High priority
-- **Task Categories**: Group tasks into custom categories
-- **Due Dates**: Set and track task deadlines
-- **Task Search & Filter**: Search tasks by title and filter by status
-- **Quick Actions**: Start, finish, or give up on tasks with one click
+Enable pnpm if needed:
 
-### 🤖 AI-Powered Task Generation
+```bash
+corepack enable
+```
 
-- **Natural Language Task Creation**: Generate tasks using Google Gemini AI by describing your requirements
-- **Smart Categorization**: AI automatically assigns tasks to appropriate categories
-- **Batch Generation**: Generate multiple related tasks at once
-- **Interactive AI Chat**: Built-in chat interface for task generation and management
-
-### 📊 Categories
-
-- **Custom Categories**: Create and manage custom task categories
-- **Category Statistics**: View task distribution and completion rates per category
-- **Default Category**: Auto-assigned "Uncategorized" category for tasks
-- **Category-based Task View**: Filter and view tasks by category
-
-### 📅 Calendar View
-
-- **Visual Timeline**: Interactive calendar displaying tasks with due dates
-- **Monthly Overview**: View all deadlines at a glance
-- **Task Details**: Click on calendar dates to view task details
-- **Deadline Management**: Track upcoming and overdue tasks
-
-### 📈 Statistics & Analytics
-
-- **Progress Tracking**: Visual progress bars showing task completion
-- **Status Distribution**: Pie charts showing tasks by status
-- **Category Distribution**: Pie charts showing tasks by category
-- **Historical Data**: Line charts tracking task completion over time
-- **Summary Statistics**: Total tasks, completion rate, and category breakdown
-
-### 🎨 User Interface
-
-- **Responsive Design**: Mobile-first design that works on all devices
-- **Dark Theme**: Modern dark-themed interface for comfortable viewing
-- **Smooth Animations**: Polished animations and transitions
-- **Intuitive Navigation**: Easy-to-use sidebar navigation
-- **Landing Page**: Attractive landing page with feature highlights
-
----
-
-## 🛠️ Tech Stack
+## Run locally
 
 ### Backend
 
-![Node.js](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
-![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
-![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens)
+```bash
+cd backend
+pnpm install --frozen-lockfile
+cp .env.example .env
+```
 
-- **Node.js**: JavaScript runtime environment
-- **Express.js**: Web application framework
-- **MongoDB**: NoSQL database with Mongoose ODM
-- **JWT**: JSON Web Tokens for authentication
-- **bcryptjs**: Password hashing
-- **Google Gemini AI**: AI-powered task generation
-- **Multer**: File upload handling
-- **Zod**: Schema validation
+Edit `backend/.env` and set `MONGO_URI`, a strong `JWT_SECRET`, and a different strong `JWT_REFRESH_SECRET`. The sample file includes the other required authentication settings. AI generation is optional; set `AI_API_KEY`, `AI_BASE_URL`, and `AI_MODEL_NAME` when you configure a compatible provider.
+
+Start the API:
+
+```bash
+pnpm run dev
+```
+
+The default backend address is `http://localhost:3001`. Check `http://localhost:3001/healthz` after MongoDB connects.
 
 ### Frontend
 
-![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
-![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
-
-- **React.js**: UI library with hooks
-- **React Router**: Client-side routing
-- **Tailwind CSS**: Utility-first CSS framework
-- **Vite**: Fast build tool and dev server
-- **Axios**: HTTP client
-- **Chart.js**: Data visualization
-
-### DevOps
-
-![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![Vercel](https://img.shields.io/badge/vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
-![Postman](https://img.shields.io/badge/postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
-
-- **Docker**: Containerization and local development
-- **Vercel**: Frontend deployment and hosting
-- **Postman**: API testing and documentation
-
----
-
-## 📁 Project Structure
-
-```
-Orbit/
-├── backend/
-│   ├── config/          # Database and initialization config
-│   ├── controller/      # Route controllers (auth, task, AI, stats)
-│   ├── middleware/      # Authentication middleware
-│   ├── model/          # Mongoose models (User, Task, Category, Stat)
-│   ├── route/          # API routes
-│   ├── utils/          # Utility functions (token generation)
-│   └── index.js        # Main server file
-│
-└── frontend/
-    ├── public/         # Static assets
-    └── src/
-        ├── api/        # API service layer
-        ├── component/  # Reusable components (Sidebar, Topbar, Chat)
-        ├── context/    # React context (TaskRefresh)
-        ├── feature/    # Feature-specific components
-        │   ├── Auth/       # Authentication components
-        │   ├── Calendar/   # Calendar view components
-        │   ├── Category/   # Category management
-        │   ├── Dialog/     # Modal dialogs
-        │   ├── Landing/    # Landing page sections
-        │   ├── Profile/    # User profile
-        │   ├── Statics/    # Statistics charts
-        │   └── Todo/       # Todo list components
-        ├── hook/       # Custom React hooks
-        ├── layout/     # Layout components
-        ├── page/       # Page components
-        ├── route/      # Route configuration
-        └── styles/     # Global styles
-```
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js (v14 or higher)
-- MongoDB (local or Atlas)
-- Google Gemini API key
-
-### Run with Docker (Fast)
-
-1. **Create backend env file**
+In another terminal:
 
 ```bash
-cd backend
-cp .env.example .env
-# Or create .env manually if you do not have .env.example
+cd frontend
+pnpm install --frozen-lockfile
+VITE_SERVER_URL=http://localhost:3001 pnpm run dev
 ```
 
-Example `.env`:
+Vite serves the app at `http://localhost:5000` by default.
 
-```env
-PORT=4000
-HOST=0.0.0.0
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-API_KEY=your_google_gemini_api_key
-```
+### Docker Compose
 
-2. **Run with Docker Compose (build + up)**
+Create and configure `backend/.env` as described above, then run from the repository root:
 
 ```bash
-cd ..
 docker compose up --build
 ```
 
-3. **Access the app**
-
-- `http://localhost:3636`
-
-Stop containers:
+The app is available at `http://localhost:3636`; the backend API is exposed at `http://localhost:4000`.
 
 ```bash
 docker compose down
 ```
 
-### Installation
+## MCP server (local, read-only)
 
-1. **Clone the repository**
+The MCP endpoint is **disabled by default** and intended for local development. It uses Orbit access tokens and only accepts direct loopback connections. It does not provide OAuth, stdio transport, write tools, or public deployment support.
 
-```bash
-git clone <repository-url>
-cd Orbit
-```
-
-2. **Backend Setup**
+Run the backend directly on the host with a `USER` account and separate access and refresh token secrets:
 
 ```bash
 cd backend
-pnpm install
-
-# Create .env file
-echo "PORT=3001
-HOST=localhost
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-API_KEY=your_google_gemini_api_key" > .env
-
-# Start the backend server
 pnpm run dev
 ```
 
-3. **Frontend Setup**
+This development script sets `MCP_ENABLED=true`, `HOST=127.0.0.1`, and `NODE_ENV=development` before starting the watcher. The Inspector is still a separate client application: start it separately and connect it to the MCP URL below.
+
+The `dev` script enables MCP automatically and binds the backend to `127.0.0.1`; REST and MCP run in the same backend process. The endpoint is `http://127.0.0.1:3001/mcp`. `pnpm start` and Docker Compose do not enable MCP automatically. Docker Compose binds the backend inside its container and is not the supported way to expose this local MCP endpoint.
+
+MCP tools:
+
+| Tool | Purpose |
+| --- | --- |
+| `orbit_list_tasks` | List accessible tasks with search, filters, and pagination |
+| `orbit_get_task` | Read one accessible task by ID |
+| `orbit_list_projects` | List the current user's projects |
+| `orbit_list_categories` | List the current user's categories |
+
+MCP does not allow `ADMIN` accounts. Task access follows the existing category-or-project ownership rule. Results use a small DTO and omit owner details. Project and category pagination currently happens after loading the user's records, so use a small local dataset.
+
+### Connect with MCP Inspector
+
+Start the backend with MCP enabled, then run:
 
 ```bash
-cd frontend
-pnpm install
-
-# Start the development server
-pnpm run dev
+cd backend
+pnpm dlx @modelcontextprotocol/inspector@2.11.0
 ```
 
-The application will be available at:
+Select Streamable HTTP and enter `http://127.0.0.1:3001/mcp`. Configure the `Authorization` header as `Bearer <Orbit access token>` using the Inspector authentication controls. Use an access token, not a refresh token. If Inspector sends an `Origin` header, add its exact HTTP loopback origin to `MCP_ALLOWED_ORIGINS` in `backend/.env` and restart the backend. Do not use a wildcard or public origin.
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:3001`
+For the full local setup, token handling, and smoke test instructions, see [docs/mcp/local-development.md](docs/mcp/local-development.md).
 
----
+## API overview
 
-## 📡 API Endpoints
+REST endpoints are mounted under `/api`:
 
-### Authentication
+- `/api/auth` — register, login, refresh, and logout
+- `/api/tasks` — task lifecycle, search, and filters
+- `/api/categories` and `/api/projects` — organize tasks
+- `/api/users` — profile management
+- `/api/stats` — productivity statistics
+- `/api/ai` — optional AI task generation
 
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
+The MCP HTTP endpoint also exposes read-only JSON routes:
 
-### Tasks
+- `GET /mcp/tasks`
+- `GET /mcp/tasks/:taskId`
+- `GET /mcp/projects`
+- `GET /mcp/categories`
 
-- `GET /api/tasks` - Get all user tasks
-- `POST /api/tasks` - Create new task
-- `GET /api/tasks/:id` - Get task by ID
-- `PUT /api/tasks/:id` - Update task
-- `DELETE /api/tasks/:id` - Delete task
-- `PUT /api/tasks/:id/start` - Start task
-- `PUT /api/tasks/:id/finish` - Complete task
-- `PUT /api/tasks/:id/give-up` - Give up on task
-- `GET /api/tasks/today-deadlines` - Get today's deadlines
-- `GET /api/tasks/status/:status` - Get tasks by status
-- `GET /api/tasks/category/:categoryId` - Get tasks by category
+These routes use the same local-only checks and Bearer authentication as the MCP transport.
 
-### Categories
+## Checks
 
-- `GET /api/categories` - Get all categories
-- `POST /api/categories` - Create category
-- `PUT /api/categories/:id` - Update category
-- `DELETE /api/categories/:id` - Delete category
+Run backend checks from `backend/`:
 
-### AI
+```bash
+pnpm run build
+pnpm test
+```
 
-- `POST /api/ai/generate-tasks` - Generate tasks with AI
+The MCP MongoDB integration suite requires a disposable MongoDB instance on loopback. It creates and drops a uniquely named test database:
 
-### Statistics
+```bash
+ORBIT_MCP_TEST_MONGO_URI=mongodb://127.0.0.1:27028/ pnpm run test:mcp:integration
+```
 
-- `GET /api/stats/user` - Get user statistics
+Run frontend checks from `frontend/`:
 
-### Users
+```bash
+pnpm run lint
+pnpm run build
+```
 
-- `GET /api/users/profile` - Get user profile
-- `PUT /api/users/profile` - Update profile
-- `PUT /api/users/change-password` - Change password
+## License
 
----
-
-## 🎯 Usage
-
-1. **Register/Login**: Create an account or login to access the application
-2. **Create Tasks**: Add tasks manually or use AI generation
-3. **Organize**: Assign categories and set priorities
-4. **Track Progress**: Monitor tasks through the calendar and statistics views
-5. **AI Assistant**: Use the chat bubble to generate tasks with natural language
-6. **Analyze**: View detailed statistics about your productivity
-
----
-
-## 👥 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
----
-
-## 📄 License
-
-This project is licensed under the ISC License.
-
----
-
-## 🙏 Acknowledgments
-
-- Google Gemini AI for task generation capabilities
-- The MERN stack community for excellent documentation and support
-- Tailwind CSS for the amazing styling framework
-
----
-
-**Built with HMD deep try**
+ISC

@@ -4,29 +4,27 @@ import SmallChat from "./SmallChat";
 
 const ChatBubble = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [hasUnread, setHasUnread] = useState(false);
 
   const handleOpenChat = () => {
     setIsChatOpen(true);
-    setHasUnread(false);
   };
 
   const handleCloseChat = () => {
     setIsChatOpen(false);
   };
 
-  const handleMinimizeChat = () => {
-    setIsChatOpen(false);
-    setHasUnread(true);
-  };
-
   return (
     <>
-      {!isChatOpen && <Bubble onClick={handleOpenChat} hasUnread={hasUnread} />}
+      {!isChatOpen && <Bubble onClick={handleOpenChat} />}
 
-      {isChatOpen && (
-        <SmallChat onClose={handleCloseChat} onMinimize={handleMinimizeChat} />
-      )}
+      <div
+        className="ui-assistant-presence"
+        data-open={isChatOpen}
+        inert={!isChatOpen}
+        aria-hidden={!isChatOpen}
+      >
+        <SmallChat onClose={handleCloseChat} />
+      </div>
     </>
   );
 };

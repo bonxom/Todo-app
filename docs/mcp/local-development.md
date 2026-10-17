@@ -10,10 +10,10 @@ Từ `backend/`:
 
 ```bash
 pnpm install --frozen-lockfile
-MCP_ENABLED=true HOST=127.0.0.1 NODE_ENV=development pnpm run dev
+pnpm run dev
 ```
 
-Endpoint: `http://127.0.0.1:3001/mcp` (đổi port nếu cấu hình PORT). Chỉ USER; ADMIN trả403. Không sửa role để dùng tài khoản admin. Dùng tài khoản USER local có ít nhất một task để smoke đủ bốn tools.
+Script `dev` tự đặt `MCP_ENABLED=true`, `HOST=127.0.0.1`, `NODE_ENV=development`; REST và MCP cùng chạy trong một Express process. Inspector là MCP client nên khởi chạy riêng và kết nối tới `http://127.0.0.1:3001/mcp` (đổi port nếu cấu hình PORT). `pnpm start` và Docker Compose không tự bật MCP. Chỉ USER; ADMIN trả403. Không sửa role để dùng tài khoản admin. Dùng tài khoản USER local có ít nhất một task để smoke đủ bốn tools.
 
 Đăng nhập bằng UI/API Orbit hiện có để lấy access token ngắn hạn. Không dùng refresh token. Token không có expiry bị từ chối. Server kiểm tra chữ ký/expiry và user hiện hành mỗi request; khi401, đăng nhập lại, cập nhật token ở client và reconnect. MCP không tự refresh token.
 

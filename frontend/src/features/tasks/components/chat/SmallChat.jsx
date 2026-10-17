@@ -1,14 +1,17 @@
 import { useState } from "react";
-import { X, Minimize2, MessageSquare, Sparkles } from "lucide-react";
+import { X, Maximize2, Minimize2, MessageSquare, Sparkles } from "lucide-react";
 import ChatField from "./ChatField";
 import {
-  useChatMutation,
+  useAgenticChatMutation,
+  // useChatMutation,
   useGenerateTasksMutation,
 } from "../../api/aiMutations";
 import { formatDateTime } from "@/shared/utils/dateTime";
 
-const SmallChat = ({ onClose, onMinimize }) => {
-  const chatMutation = useChatMutation();
+const SmallChat = ({ onClose }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  // const chatMutation = useChatMutation();
+  const agenticChatMutation = useAgenticChatMutation();
   const generateTasksMutation = useGenerateTasksMutation();
   const [mode, setMode] = useState("chat"); // 'chat' or 'taskAssistant'
   const [messages, setMessages] = useState([
@@ -53,8 +56,10 @@ const SmallChat = ({ onClose, onMinimize }) => {
     try {
       if (mode === "chat") {
         // Chat mode - normal conversation
-        const response = await chatMutation.mutateAsync({ userInput: text });
+        // const response = await chatMutation.mutateAsync({ userInput: text });
 
+        // Use the agentic chat mutation for the new chat mode
+        const response = await agenticChatMutation.mutateAsync({ userInput: text });
         // Check if response exists and has data
         if (
           response &&
@@ -163,7 +168,11 @@ const SmallChat = ({ onClose, onMinimize }) => {
   };
 
   return (
-    <div className="ui-assistant-panel animate-fadeIn">
+    <div
+      className={`ui-assistant-panel${isExpanded ? " ui-assistant-panel--expanded" : ""}`}
+      role="region"
+      aria-label="Assistant chat"
+    >
       <div className="ui-assistant-header">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="ui-assistant-status">
@@ -179,14 +188,16 @@ const SmallChat = ({ onClose, onMinimize }) => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              onClick={onMinimize}
+              onClick={() => setIsExpanded((expanded) => !expanded)}
               className="ui-icon-button ui-focus-ring h-8 w-8"
-              aria-label="Minimize chat"
+              aria-label={isExpanded ? "Restore chat size" : "Expand chat"}
+              title={isExpanded ? "Restore chat size" : "Expand chat"}
+              aria-pressed={isExpanded}
             >
-              <Minimize2 className="h-4 w-4" />
+              {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
             <button
               type="button"
