@@ -7,9 +7,11 @@ import type {
   ChatCompletionTool,
 } from "openai/resources/chat/completions.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { createOrbitMcpServer } from "../mcp/server.js";
+import type { McpContext } from "../mcp/context.js";
 import { getAiClient } from "../libs/aiClient.js";
-import { getAiModel, getServerConfig } from "../config/env.js";
+import { getAiModel } from "../config/env.js";
 import { categoryRepository } from "../repositories/categoryRepository.js";
 import { taskRepository } from "../repositories/taskRepository.js";
 import { statService } from "./statService.js";
@@ -171,31 +173,23 @@ Provide short, clear, concise, and friendly responses.`;
     return content;
   },
 
-  async chatWithMcp(userInput: string, accessToken: string): Promise<string> {
+  async chatWithMcp(userInput: string, context: McpContext): Promise<string> {
     const ai = getAiClient();
     const model = getAiModel();
     if (!model) throw new AppError(AI_ERROR.CONFIG_MISSING);
 
-    const { port } = getServerConfig();
-    const serverUrl =
-      process.env.MCP_SERVER_URL || `http://127.0.0.1:${port}/mcp`;
-
-    const transport = new StreamableHTTPClientTransport(new URL(serverUrl), {
-      requestInit: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    });
+    // Each request owns its server and authenticated user context.
+    const server = createOrbitMcpServer(context);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 
     const mcpClient = new Client(
       { name: "orbit-ai-agent", version: "1.0.0" },
       { capabilities: {} },
     );
 
-    await mcpClient.connect(transport);
-
     try {
+      await server.connect(serverTransport);
+      await mcpClient.connect(clientTransport);
       const { tools: mcpTools } = await mcpClient.listTools();
       const openAiTools: ChatCompletionTool[] = mcpTools.map((t) => ({
         type: "function",
@@ -261,7 +255,7 @@ Respond in a helpful, concise, and friendly manner in the user's language (defau
         cause: new Error("Exceeded maximum tool calling steps"),
       });
     } finally {
-      await mcpClient.close();
+      await Promise.allSettled([mcpClient.close(), server.close()]);
     }
   },
 };

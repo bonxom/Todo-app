@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { createMcpContext } from "../mcp/context.js";
 import { aiService } from "../services/aiService.js";
 
 export const generateTasksWithRequirement = async (
@@ -35,14 +36,9 @@ export const chatWithMcp = async (
   res: Response,
 ): Promise<void> => {
   const body = req.validatedBody as Record<string, unknown>;
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith("Bearer ")
-    ? authHeader.slice(7)
-    : "";
-
   const content = await aiService.chatWithMcp(
     body.userInput as string,
-    token,
+    createMcpContext(req),
   );
   res.status(200).json({
     success: true,
