@@ -114,12 +114,12 @@ The `dev` script enables MCP automatically and binds the backend to `127.0.0.1`;
 
 MCP tools:
 
-| Tool | Purpose |
-| --- | --- |
-| `orbit_list_tasks` | List accessible tasks with search, filters, and pagination |
-| `orbit_get_task` | Read one accessible task by ID |
-| `orbit_list_projects` | List the current user's projects |
-| `orbit_list_categories` | List the current user's categories |
+| Tool                    | Purpose                                                    |
+| ----------------------- | ---------------------------------------------------------- |
+| `orbit_list_tasks`      | List accessible tasks with search, filters, and pagination |
+| `orbit_get_task`        | Read one accessible task by ID                             |
+| `orbit_list_projects`   | List the current user's projects                           |
+| `orbit_list_categories` | List the current user's categories                         |
 
 MCP does not allow `ADMIN` accounts. Task access follows the existing category-or-project ownership rule. Results use a small DTO and omit owner details. Project and category pagination currently happens after loading the user's records, so use a small local dataset.
 

@@ -93,49 +93,54 @@ const TodoTaskCard = ({
       onDragStart={onDragStart}
     >
       <div className="todo-task-controls">
-      <button
-        type="button"
-        className="todo-check"
-        disabled={busy}
-        aria-label={actionLabel}
-        title={
-          pending ? "Start task" : closed ? "Restore task" : "Complete task"
-        }
-        onClick={async () => {
-          if (busy || !action) return;
-          setBusy(true);
-          try {
-            await action(taskId);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <ActionIcon size={14} className={busy ? "animate-spin" : ""} />
-      </button>
-      {pending && onReject && (
         <button
           type="button"
-          className="todo-reject"
+          className="todo-check"
           disabled={busy}
-          aria-label={`Reject ${task.title}`}
-          title="Reject task"
-          onClick={async (event) => {
-            event.stopPropagation();
-            if (busy) return;
+          aria-label={actionLabel}
+          title={
+            pending ? "Start task" : closed ? "Restore task" : "Complete task"
+          }
+          onClick={async () => {
+            if (busy || !action) return;
             setBusy(true);
             try {
-              await onReject(taskId);
-            } catch (error) {
-              alert(getApiErrorMessage(error, "Unable to reject task. Please try again."));
+              await action(taskId);
             } finally {
               setBusy(false);
             }
           }}
         >
-          <X size={14} aria-hidden="true" />
+          <ActionIcon size={14} className={busy ? "animate-spin" : ""} />
         </button>
-      )}
+        {pending && onReject && (
+          <button
+            type="button"
+            className="todo-reject"
+            disabled={busy}
+            aria-label={`Reject ${task.title}`}
+            title="Reject task"
+            onClick={async (event) => {
+              event.stopPropagation();
+              if (busy) return;
+              setBusy(true);
+              try {
+                await onReject(taskId);
+              } catch (error) {
+                alert(
+                  getApiErrorMessage(
+                    error,
+                    "Unable to reject task. Please try again.",
+                  ),
+                );
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            <X size={14} aria-hidden="true" />
+          </button>
+        )}
       </div>
       <div className="todo-task-content">
         <button
@@ -186,7 +191,9 @@ const TodoTaskCard = ({
         {showDueTime && date && isValid(date)
           ? format(date, "HH:mm")
           : closed
-            ? completed ? "Done" : "Paused"
+            ? completed
+              ? "Done"
+              : "Paused"
             : dateLabel}
       </span>
       <div className="todo-task-menu" ref={menuRef}>

@@ -20,11 +20,6 @@ router.post(
   generateTasksWithRequirement,
 );
 router.post("/chat", protect, validate({ body: chatSchema }), responseToUser);
-router.post(
-  "/chat-mcp",
-  protect,
-  validate({ body: chatSchema }),
-  chatWithMcp,
-);
+router.post("/chat-mcp", protect, validate({ body: chatSchema }), chatWithMcp);
 
 export default router;

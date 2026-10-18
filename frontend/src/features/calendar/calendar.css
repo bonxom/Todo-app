@@ -318,18 +318,28 @@
 }
 
 /* The agenda shares Dashboard task rows, with due times for the selected day. */
-.calendar-agenda .todo-task[draggable="true"] { cursor: grab; }
-.calendar-agenda .todo-task:active { cursor: grabbing; }
+.calendar-agenda .todo-task[draggable="true"] {
+  cursor: grab;
+}
+.calendar-agenda .todo-task:active {
+  cursor: grabbing;
+}
 .calendar-agenda .todo-task:last-child {
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
-.calendar-agenda .todo-task-meta > span { overflow-wrap: anywhere; }
-.calendar-agenda .todo-task-project i { flex-shrink: 0; }
+.calendar-agenda .todo-task-meta > span {
+  overflow-wrap: anywhere;
+}
+.calendar-agenda .todo-task-project i {
+  flex-shrink: 0;
+}
 .calendar-agenda .todo-task button:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
 }
-.calendar-agenda-list > .mt-4 { padding: 16px; }
+.calendar-agenda-list > .mt-4 {
+  padding: 16px;
+}
 @media (max-width: 1200px) {
   .calendar-layout[data-filters-open="true"] {
     grid-template-columns: minmax(0, 1fr);

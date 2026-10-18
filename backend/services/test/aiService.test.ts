@@ -72,7 +72,6 @@ describe("AI service error mapping", () => {
   });
 });
 
-
 describe("in-memory MCP chat", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -84,32 +83,55 @@ describe("in-memory MCP chat", () => {
   it("calls real MCP tools with the request user on Vercel without HTTP", async () => {
     vi.stubEnv("VERCEL", "1");
     vi.stubEnv("MCP_ENABLED", "false");
-    const fetchSpy = vi.fn(() => { throw new Error("Unexpected HTTP request"); });
+    const fetchSpy = vi.fn(() => {
+      throw new Error("Unexpected HTTP request");
+    });
     vi.stubGlobal("fetch", fetchSpy);
     const context = {
       user: { _id: "507f1f77bcf86cd799439011", role: "USER" },
       requestId: "chat-test",
     } as unknown as McpContext;
-    const categories = vi.spyOn(categoryService, "getAll").mockResolvedValue([]);
-    completionCreate.mockResolvedValueOnce({
-      choices: [{ message: {
-        role: "assistant", content: null,
-        tool_calls: [{ id: "call-1", type: "function", function: {
-          name: "orbit_list_categories", arguments: "{}",
-        } }],
-      } }],
-    }).mockResolvedValueOnce({
-      choices: [{ message: { role: "assistant", content: "No categories yet." } }],
-    });
+    const categories = vi
+      .spyOn(categoryService, "getAll")
+      .mockResolvedValue([]);
+    completionCreate
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: null,
+              tool_calls: [
+                {
+                  id: "call-1",
+                  type: "function",
+                  function: {
+                    name: "orbit_list_categories",
+                    arguments: "{}",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        choices: [
+          { message: { role: "assistant", content: "No categories yet." } },
+        ],
+      });
 
-    await expect(aiService.chatWithMcp("List categories", context))
-      .resolves.toBe("No categories yet.");
+    await expect(
+      aiService.chatWithMcp("List categories", context),
+    ).resolves.toBe("No categories yet.");
     expect(categories).toHaveBeenCalledWith(context.user);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(completionCreate).toHaveBeenCalledTimes(2);
     const messages = completionCreate.mock.calls[1][0].messages;
-    expect(messages).toEqual(expect.arrayContaining([
-      expect.objectContaining({ role: "tool", tool_call_id: "call-1" }),
-    ]));
+    expect(messages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ role: "tool", tool_call_id: "call-1" }),
+      ]),
+    );
   });
 });

@@ -43,9 +43,15 @@ export const useChatMutation = (
 export const useAgenticChatMutation = (
   options?: UseMutationOptions<ChatResponse, Error, ChatPayload>,
 ) => {
+  const queryClient = useQueryClient();
   return useMutation({
+    ...options,
     mutationFn: (payload: ChatPayload) =>
       aiService.getAgenticChatResponse(payload),
-    ...options,
+    // A tool may commit even if the provider subsequently fails to reply.
+    onSettled: async (...args) => {
+      await invalidateWorkspaceQueries(queryClient);
+      await options?.onSettled?.(...args);
+    },
   });
-}
+};

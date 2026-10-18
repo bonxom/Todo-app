@@ -17,14 +17,15 @@ export const statRepository = {
   async getTasksByUser(user: IUserDocument): Promise<ITaskDocument[]> {
     if (user.role === "ADMIN") {
       return Task.find({})
-        .populate("categoryId", "name userId")
-        .populate("projectId", "name userId");
+        .populate({ path: "categoryId", select: "name userId", ordered: true })
+        .populate({ path: "projectId", select: "name userId", ordered: true });
     }
 
-    const [userCategories, userProjects] = await Promise.all([
-      Category.find({ userId: user._id }).select("_id name"),
-      Project.find({ userId: user._id }).select("_id"),
-    ]);
+    // Sequential because MCP writes reconcile stats within a transaction.
+    const userCategories = await Category.find({ userId: user._id }).select(
+      "_id name",
+    );
+    const userProjects = await Project.find({ userId: user._id }).select("_id");
 
     const ownershipClauses: Array<Record<string, unknown>> = [];
     if (userCategories.length > 0) {
@@ -46,7 +47,7 @@ export const statRepository = {
         : { $or: ownershipClauses };
 
     return Task.find(query)
-      .populate("categoryId", "name userId")
-      .populate("projectId", "name userId");
+      .populate({ path: "categoryId", select: "name userId", ordered: true })
+      .populate({ path: "projectId", select: "name userId", ordered: true });
   },
 };

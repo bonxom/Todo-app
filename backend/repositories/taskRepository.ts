@@ -5,11 +5,13 @@ import { ITaskDocument } from "../types/ITask.js";
 const TASK_POPULATE = [
   {
     path: "categoryId",
+    ordered: true,
     select: "name userId",
     populate: { path: "userId", select: "name email" },
   },
   {
     path: "projectId",
+    ordered: true,
     select: "name description color status userId",
     populate: { path: "userId", select: "name email" },
   },

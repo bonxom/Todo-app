@@ -59,7 +59,9 @@ const SmallChat = ({ onClose }) => {
         // const response = await chatMutation.mutateAsync({ userInput: text });
 
         // Use the agentic chat mutation for the new chat mode
-        const response = await agenticChatMutation.mutateAsync({ userInput: text });
+        const response = await agenticChatMutation.mutateAsync({
+          userInput: text,
+        });
         // Check if response exists and has data
         if (
           response &&
@@ -197,7 +199,11 @@ const SmallChat = ({ onClose }) => {
               title={isExpanded ? "Restore chat size" : "Expand chat"}
               aria-pressed={isExpanded}
             >
-              {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              {isExpanded ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
             </button>
             <button
               type="button"

@@ -12,51 +12,68 @@ describe("taskService.getAll query boundaries", () => {
   const projectId = new mongoose.Types.ObjectId();
   const foreignProjectId = new mongoose.Types.ObjectId();
   const user = {
-    _id: new mongoose.Types.ObjectId(), role: "USER",
+    _id: new mongoose.Types.ObjectId(),
+    role: "USER",
   } as IUserDocument;
 
   beforeEach(() => {
-    vi.spyOn(categoryRepository, "findByUser")
-      .mockResolvedValue([{ _id: categoryId }] as never);
-    vi.spyOn(projectRepository, "findByUser")
-      .mockResolvedValue([{ _id: projectId }] as never);
-    vi.spyOn(taskRepository, "findPaginated")
-      .mockResolvedValue({ data: [], totalCount: 0 });
+    vi.spyOn(categoryRepository, "findByUser").mockResolvedValue([
+      { _id: categoryId },
+    ] as never);
+    vi.spyOn(projectRepository, "findByUser").mockResolvedValue([
+      { _id: projectId },
+    ] as never);
+    vi.spyOn(taskRepository, "findPaginated").mockResolvedValue({
+      data: [],
+      totalCount: 0,
+    });
   });
   afterEach(() => vi.restoreAllMocks());
 
   it("preserves access OR when search introduces its own OR", async () => {
     await taskService.getAll(user, { search: "report" });
-    expect(taskRepository.findPaginated).toHaveBeenCalledWith({
-      $and: [
-        { $or: [
-          { categoryId: { $in: [categoryId] } },
-          { projectId: { $in: [projectId] } },
-        ] },
-        { $or: [{ title: /report/i }, { description: /report/i }] },
-      ],
-    }, { skip: 0, limit: 20, sort: { dueDate: 1, createdAt: -1 } });
+    expect(taskRepository.findPaginated).toHaveBeenCalledWith(
+      {
+        $and: [
+          {
+            $or: [
+              { categoryId: { $in: [categoryId] } },
+              { projectId: { $in: [projectId] } },
+            ],
+          },
+          { $or: [{ title: /report/i }, { description: /report/i }] },
+        ],
+      },
+      { skip: 0, limit: 20, sort: { dueDate: 1, createdAt: -1 } },
+    );
   });
 
   it.each([foreignProjectId.toString(), "standalone"])(
-    "preserves project-only access when filtering %s", async (filter) => {
+    "preserves project-only access when filtering %s",
+    async (filter) => {
       vi.mocked(categoryRepository.findByUser).mockResolvedValue([]);
       await taskService.getAll(user, { projectId: filter });
-      expect(taskRepository.findPaginated).toHaveBeenCalledWith({
-        $and: [
-          { projectId: { $in: [projectId] } },
-          { projectId: filter === "standalone" ? null : filter },
-        ],
-      }, expect.any(Object));
+      expect(taskRepository.findPaginated).toHaveBeenCalledWith(
+        {
+          $and: [
+            { projectId: { $in: [projectId] } },
+            { projectId: filter === "standalone" ? null : filter },
+          ],
+        },
+        expect.any(Object),
+      );
     },
   );
 
   it("keeps paging shape, skip, limit and explicit sort", async () => {
     const result = await taskService.getAll(user, {
-      pageNo: 2, pageSize: 1, sort: "title:asc",
+      pageNo: 2,
+      pageSize: 1,
+      sort: "title:asc",
     });
     expect(taskRepository.findPaginated).toHaveBeenCalledWith(
-      expect.any(Object), { skip: 1, limit: 1, sort: { title: 1 } },
+      expect.any(Object),
+      { skip: 1, limit: 1, sort: { title: 1 } },
     );
     expect(result).toEqual({
       data: [],

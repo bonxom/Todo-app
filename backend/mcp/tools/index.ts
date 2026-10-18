@@ -1,4 +1,3 @@
-export { registerListTasksTool } from "./listTasks.js";
-export { registerGetTaskTool } from "./getTask.js";
-export { registerListProjectsTool } from "./listProjects.js";
-export { registerListCategoriesTool } from "./listCategories.js";
+export * from "./tasks/index.js";
+export * from "./projects/index.js";
+export * from "./categories/index.js";

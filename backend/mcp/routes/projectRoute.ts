@@ -3,7 +3,7 @@ import { projectService } from "../../services/projectService.js";
 import type { McpContext } from "../context.js";
 import { listPageInputSchema, projectPageOutputSchema } from "../schemas.js";
 import { toProjectDto } from "../mapper/projectMapper.js";
-import { page } from "../tools/shared.js";
+import { page } from "../tools/shared/common.js";
 
 const router = Router();
 

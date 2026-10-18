@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { toolFailure, toolSuccess } from "../tools/shared.js";
+import { toolFailure, toolSuccess } from "../tools/shared/common.js";
 import { AppError } from "../../error/AppError.js";
 import { TASK_ERROR } from "../../error/definitions/taskErrors.js";
 import { COMMON_ERROR } from "../../error/definitions/commonErrors.js";

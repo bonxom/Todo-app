@@ -366,6 +366,22 @@ export const taskService = {
     if (startDate.shouldUpdate) update.startDate = startDate.value;
     if (dueDate.shouldUpdate) update.dueDate = dueDate.value;
 
+    // Preserve historical event dates when metadata edits change updatedAt.
+    if (Object.keys(update).length > 0) {
+      if (
+        task.status === "completed" &&
+        !task.completedAt &&
+        (update.status === undefined || update.status === "completed")
+      ) {
+        update.completedAt = task.updatedAt || task.createdAt;
+      }
+      if (task.status === "given-up" && !task.givenUpAt) {
+        update.givenUpAt = task.updatedAt || task.createdAt;
+      }
+      if (update.status === "given-up" && task.status !== "given-up") {
+        update.givenUpAt = new Date();
+      }
+    }
     applyCompletionTimestamp(update, task.status);
 
     if (Object.keys(update).length === 0) {
@@ -438,6 +454,7 @@ export const taskService = {
       throw new AppError(TASK_ERROR.CANNOT_GIVE_UP);
 
     task.status = "given-up";
+    task.givenUpAt = new Date();
     await task.save();
 
     const cat = task.categoryId as unknown as PopulatedCategoryRef | null;

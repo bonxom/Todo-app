@@ -38,7 +38,7 @@ export const chatWithMcp = async (
   const body = req.validatedBody as Record<string, unknown>;
   const content = await aiService.chatWithMcp(
     body.userInput as string,
-    createMcpContext(req),
+    createMcpContext(req, ["tasks:write"]),
   );
   res.status(200).json({
     success: true,

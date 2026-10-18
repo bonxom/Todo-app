@@ -1,9 +1,9 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { buildResponsePage } from "../../utils/pagingUtils.js";
-import type { ListPageInput } from "../schemas.js";
-import { AppError } from "../../error/AppError.js";
-import { TASK_ERROR } from "../../error/definitions/taskErrors.js";
-import { COMMON_ERROR } from "../../error/definitions/commonErrors.js";
+import { buildResponsePage } from "../../../utils/pagingUtils.js";
+import type { ListPageInput } from "../../schemas.js";
+import { AppError } from "../../../error/AppError.js";
+import { TASK_ERROR } from "../../../error/definitions/taskErrors.js";
+import { COMMON_ERROR } from "../../../error/definitions/commonErrors.js";
 
 export function toolSuccess(output: Record<string, unknown>): CallToolResult {
   return {
@@ -14,7 +14,7 @@ export function toolSuccess(output: Record<string, unknown>): CallToolResult {
 
 export function toolFailure(error: unknown): CallToolResult {
   let code = "INTERNAL_ERROR",
-    message = "Unable to read data. Try again.",
+    message = "Unable to process the request. Try again.",
     retryable = true;
   if (
     error instanceof AppError &&

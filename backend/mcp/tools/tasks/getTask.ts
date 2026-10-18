@@ -1,9 +1,9 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { taskService } from "../../services/taskService.js";
-import type { McpContext } from "../context.js";
-import * as schemas from "../schemas.js";
-import { toTaskDto } from "../mapper/taskMapper.js";
-import { annotations, read } from "./shared.js";
+import { taskService } from "../../../services/taskService.js";
+import type { McpContext } from "../../context.js";
+import * as schemas from "../../schemas.js";
+import { toTaskDto } from "../../mapper/taskMapper.js";
+import { annotations, read } from "../shared/common.js";
 
 export function registerGetTaskTool(
   server: McpServer,

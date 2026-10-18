@@ -13,6 +13,7 @@ export interface ITask {
   startDate: Date;
   dueDate?: Date;
   completedAt?: Date;
+  givenUpAt?: Date;
   isOverDue: boolean;
   createdAt: Date;
   updatedAt: Date;

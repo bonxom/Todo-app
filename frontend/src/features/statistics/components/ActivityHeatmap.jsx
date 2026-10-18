@@ -22,7 +22,7 @@ const ActivityHeatmap = ({ dailyStats = [] }) => {
     <section className="statistics-card" aria-label="Activity calendar">
       <div className="statistics-card-header">
         <div>
-          <h2>Your consistency, day by day</h2>  
+          <h2>Your consistency, day by day</h2>
         </div>
         <span className="statistics-small-label">Last 365 days</span>
       </div>

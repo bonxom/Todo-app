@@ -17,7 +17,11 @@ describe("httpClient", () => {
     useAuthStore.getState().clearSession();
   });
 
-  afterEach(() => { mock.restore(); rootAxiosMock.restore(); vi.unstubAllGlobals(); });
+  afterEach(() => {
+    mock.restore();
+    rootAxiosMock.restore();
+    vi.unstubAllGlobals();
+  });
 
   it("injects Authorization header when token exists in store", async () => {
     useAuthStore.getState().setSession({ accessToken: "token-abc" });
@@ -124,9 +128,12 @@ describe("httpClient", () => {
   });
   it("refreshes an expired stored JWT before sending the first API request", async () => {
     const expired = `header.${btoa(JSON.stringify({ exp: 1 }))}.signature`;
-    useAuthStore.getState().setSession({ accessToken: expired, refreshToken: "refresh" });
+    useAuthStore
+      .getState()
+      .setSession({ accessToken: expired, refreshToken: "refresh" });
     rootAxiosMock.onPost("http://localhost:4000/api/auth/refresh").reply(200, {
-      accessToken: "renewed", refreshToken: "rotated",
+      accessToken: "renewed",
+      refreshToken: "rotated",
     });
     mock.onGet("/api/auth/me").reply((config) => {
       expect(config.headers?.Authorization).toBe("Bearer renewed");
@@ -138,9 +145,13 @@ describe("httpClient", () => {
   });
 
   it("retries a delayed old-token 401 using the already refreshed token", async () => {
-    useAuthStore.getState().setSession({ accessToken: "old", refreshToken: "refresh" });
+    useAuthStore
+      .getState()
+      .setSession({ accessToken: "old", refreshToken: "refresh" });
     mock.onGet("/api/late").replyOnce(() => {
-      useAuthStore.getState().updateTokens({ accessToken: "new", refreshToken: "rotated" });
+      useAuthStore
+        .getState()
+        .updateTokens({ accessToken: "new", refreshToken: "rotated" });
       return [401];
     });
     mock.onGet("/api/late").reply((config) => {
@@ -153,21 +164,31 @@ describe("httpClient", () => {
 
   it("keeps the saved session if proactive refresh temporarily fails", async () => {
     const expired = `header.${btoa(JSON.stringify({ exp: 1 }))}.signature`;
-    useAuthStore.getState().setSession({ accessToken: expired, refreshToken: "refresh" });
+    useAuthStore
+      .getState()
+      .setSession({ accessToken: expired, refreshToken: "refresh" });
     rootAxiosMock.onPost("http://localhost:4000/api/auth/refresh").reply(503);
-    await expect(axiosInstance.get("/api/auth/me")).rejects.toBeInstanceOf(ApiError);
+    await expect(axiosInstance.get("/api/auth/me")).rejects.toBeInstanceOf(
+      ApiError,
+    );
     expect(useAuthStore.getState().refreshToken).toBe("refresh");
     expect(mock.history.get).toHaveLength(0);
   });
 
   it("reuses tokens rotated by another tab while waiting for the browser lock", async () => {
     const expired = `header.${btoa(JSON.stringify({ exp: 1 }))}.signature`;
-    useAuthStore.getState().setSession({ accessToken: expired, refreshToken: "old-refresh" });
-    vi.stubGlobal("navigator", { locks: { request: async (_name: string, callback: () => Promise<string>) => {
-      localStorage.setItem("token", "other-tab-token");
-      localStorage.setItem("refreshToken", "other-tab-refresh");
-      return callback();
-    } } });
+    useAuthStore
+      .getState()
+      .setSession({ accessToken: expired, refreshToken: "old-refresh" });
+    vi.stubGlobal("navigator", {
+      locks: {
+        request: async (_name: string, callback: () => Promise<string>) => {
+          localStorage.setItem("token", "other-tab-token");
+          localStorage.setItem("refreshToken", "other-tab-refresh");
+          return callback();
+        },
+      },
+    });
     mock.onGet("/api/secure").reply((config) => {
       expect(config.headers?.Authorization).toBe("Bearer other-tab-token");
       return [200];
@@ -178,15 +199,18 @@ describe("httpClient", () => {
   });
 
   it("does not restore a session when logout happens during refresh", async () => {
-    useAuthStore.getState().setSession({ accessToken: "old", refreshToken: "refresh" });
+    useAuthStore
+      .getState()
+      .setSession({ accessToken: "old", refreshToken: "refresh" });
     mock.onGet("/api/secure").reply(401);
     rootAxiosMock.onPost("http://localhost:4000/api/auth/refresh").reply(() => {
       useAuthStore.getState().clearSession();
       return [200, { accessToken: "new", refreshToken: "rotated" }];
     });
-    await expect(axiosInstance.get("/api/secure")).rejects.toBeInstanceOf(ApiError);
+    await expect(axiosInstance.get("/api/secure")).rejects.toBeInstanceOf(
+      ApiError,
+    );
     expect(useAuthStore.getState().token).toBeNull();
     expect(localStorage.getItem("refreshToken")).toBeNull();
   });
-
 });

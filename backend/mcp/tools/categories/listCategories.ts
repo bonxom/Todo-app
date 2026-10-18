@@ -1,9 +1,9 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { categoryService } from "../../services/categoryService.js";
-import type { McpContext } from "../context.js";
-import * as schemas from "../schemas.js";
-import { toCategoryDto } from "../mapper/categoryMapper.js";
-import { annotations, read, page } from "./shared.js";
+import { categoryService } from "../../../services/categoryService.js";
+import type { McpContext } from "../../context.js";
+import * as schemas from "../../schemas.js";
+import { toCategoryDto } from "../../mapper/categoryMapper.js";
+import { annotations, read, page } from "../shared/common.js";
 
 export function registerListCategoriesTool(
   server: McpServer,

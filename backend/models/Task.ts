@@ -21,6 +21,7 @@ const taskSchema = new Schema<ITaskDocument, ITaskModel>(
     startDate: { type: Date, default: getStartOfToday },
     dueDate: { type: Date },
     completedAt: { type: Date },
+    givenUpAt: { type: Date },
     isOverDue: { type: Boolean, default: false },
   },
   { timestamps: true },

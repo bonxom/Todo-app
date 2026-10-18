@@ -1,12 +1,9 @@
 import { Router } from "express";
 import { categoryService } from "../../services/categoryService.js";
 import type { McpContext } from "../context.js";
-import {
-  listPageInputSchema,
-  categoryPageOutputSchema,
-} from "../schemas.js";
+import { listPageInputSchema, categoryPageOutputSchema } from "../schemas.js";
 import { toCategoryDto } from "../mapper/categoryMapper.js";
-import { page } from "../tools/shared.js";
+import { page } from "../tools/shared/common.js";
 
 const router = Router();
 

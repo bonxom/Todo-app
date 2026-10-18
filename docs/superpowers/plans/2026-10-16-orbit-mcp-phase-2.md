@@ -24,25 +24,25 @@ Ngày: 2026-10-16. Trạng thái: đã triển khai và nghiệm thu ngày 2026-
 
 ## File map
 
-| File | Trách nhiệm |
-| --- | --- |
-| Modify `backend/package.json`, `backend/pnpm-lock.yaml` | SDK exact, script test MCP integration và smoke |
-| Create `backend/mcp/config.ts` | Parse flag/origins, kiểm tra điều kiện local, exported McpConfig |
-| Create `backend/mcp/context.ts` | McpContext theo request, admin/no-exp guard sau protect |
-| Create `backend/mcp/schemas.ts` | Strict input, output schema và inferred DTO/input types |
-| Create `backend/mcp/dto.ts` | Whitelist document → DTO, date/reference normalization |
-| Create `backend/mcp/errors.ts` | Safe tool result/error mapping và HTTP error middleware riêng |
-| Create `backend/mcp/tools.ts` | Đăng ký bốn tools gọi service, paging project/category |
-| Create `backend/mcp/server.ts` | Factory McpServer với context |
-| Create `backend/mcp/router.ts` | HTTP guards/CORS/auth/parser/transport/cleanup |
-| Modify `backend/services/taskService.ts` | Thêm getReadableById; không thay getById/update |
-| Modify `backend/app.ts`, `backend/server.ts` | Mount route sớm, readiness injection, startup config validation |
-| Modify `backend/.env.example` | Cấu hình MCP comment rõ local; không đổi HOST REST mặc định |
-| Create `backend/mcp/test/{config,schemas,dto,errors,tools,router,compatibility}.test.ts` | Unit/HTTP/SDK compatibility tests không cần Mongo |
-| Create `backend/services/test/taskService.getReadableById.test.ts` | Service query và not-found unit tests |
-| Create `backend/mcp/test/mcp.integration.test.ts` | SDK + listener loopback + MongoDB thật |
-| Create `backend/scripts/mcp-smoke.ts` | Native client smoke trên backend local đã chạy |
-| Create `docs/mcp/local-development.md` | Runbook và compatibility evidence |
+| File                                                                                     | Trách nhiệm                                                      |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Modify `backend/package.json`, `backend/pnpm-lock.yaml`                                  | SDK exact, script test MCP integration và smoke                  |
+| Create `backend/mcp/config.ts`                                                           | Parse flag/origins, kiểm tra điều kiện local, exported McpConfig |
+| Create `backend/mcp/context.ts`                                                          | McpContext theo request, admin/no-exp guard sau protect          |
+| Create `backend/mcp/schemas.ts`                                                          | Strict input, output schema và inferred DTO/input types          |
+| Create `backend/mcp/dto.ts`                                                              | Whitelist document → DTO, date/reference normalization           |
+| Create `backend/mcp/errors.ts`                                                           | Safe tool result/error mapping và HTTP error middleware riêng    |
+| Create `backend/mcp/tools.ts`                                                            | Đăng ký bốn tools gọi service, paging project/category           |
+| Create `backend/mcp/server.ts`                                                           | Factory McpServer với context                                    |
+| Create `backend/mcp/router.ts`                                                           | HTTP guards/CORS/auth/parser/transport/cleanup                   |
+| Modify `backend/services/taskService.ts`                                                 | Thêm getReadableById; không thay getById/update                  |
+| Modify `backend/app.ts`, `backend/server.ts`                                             | Mount route sớm, readiness injection, startup config validation  |
+| Modify `backend/.env.example`                                                            | Cấu hình MCP comment rõ local; không đổi HOST REST mặc định      |
+| Create `backend/mcp/test/{config,schemas,dto,errors,tools,router,compatibility}.test.ts` | Unit/HTTP/SDK compatibility tests không cần Mongo                |
+| Create `backend/services/test/taskService.getReadableById.test.ts`                       | Service query và not-found unit tests                            |
+| Create `backend/mcp/test/mcp.integration.test.ts`                                        | SDK + listener loopback + MongoDB thật                           |
+| Create `backend/scripts/mcp-smoke.ts`                                                    | Native client smoke trên backend local đã chạy                   |
+| Create `docs/mcp/local-development.md`                                                   | Runbook và compatibility evidence                                |
 
 Không cần tạo repository hoặc model mới. Không thêm dependency supertest/Vitest/Zod vì đã có.
 
@@ -65,9 +65,18 @@ Nếu version không tồn tại/không tương thích, dừng phần dependent 
 
 ```typescript
 expect(readMcpConfig({}).enabled).toBe(false);
-expect(() => readMcpConfig({MCP_ENABLED: 'yes'})).toThrow();
-expect(() => readMcpConfig({MCP_ENABLED: 'true', HOST: '0.0.0.0', NODE_ENV: 'development'})).toThrow();
-expect(readMcpConfig({MCP_ENABLED: 'true', HOST: '127.0.0.1', NODE_ENV: 'test'}).enabled).toBe(true);
+expect(() => readMcpConfig({ MCP_ENABLED: "yes" })).toThrow();
+expect(() =>
+  readMcpConfig({
+    MCP_ENABLED: "true",
+    HOST: "0.0.0.0",
+    NODE_ENV: "development",
+  }),
+).toThrow();
+expect(
+  readMcpConfig({ MCP_ENABLED: "true", HOST: "127.0.0.1", NODE_ENV: "test" })
+    .enabled,
+).toBe(true);
 ```
 
 Thêm enabled + NODE_ENV unset/production, VERCEL, invalid port, origin wildcard/public/null/path/userinfo; valid empty origins và hai loopback origins. Kiểm tra URL origin chính xác, không dùng startsWith.
@@ -76,9 +85,11 @@ Thêm enabled + NODE_ENV unset/production, VERCEL, invalid port, origin wildcard
 - [x] Viết compatibility test minimal server/client bằng SDK InMemoryTransport: initialize, registerTool với strict Zod4 input và output, structuredContent, invalid argument, isError không success output. Test assertion ví dụ:
 
 ```typescript
-expect((await client.listTools()).tools.map(t => t.name)).toEqual(['compat_read']);
-const result = await client.callTool({name: 'compat_read', arguments: {}});
-expect(result.structuredContent).toEqual({ok: true});
+expect((await client.listTools()).tools.map((t) => t.name)).toEqual([
+  "compat_read",
+]);
+const result = await client.callTool({ name: "compat_read", arguments: {} });
+expect(result.structuredContent).toEqual({ ok: true });
 ```
 
 Trong fixture tạo `McpServer`, `Client`, `InMemoryTransport.createLinkedPair()`, nối server trước client, finally đóng cả hai. Tool test khai báo `inputSchema:z.strictObject({})`, `outputSchema:z.object({ok:z.boolean()})`. Chốt APIs từ installed typings, không lấy ví dụ v2 trộn vào v1.
@@ -98,11 +109,18 @@ await expect(taskService.getReadableById(taskId, userA)).rejects.toMatchObject({
   code: TASK_ERROR.NOT_FOUND.code,
 });
 expect(findPaginatedSpy).toHaveBeenCalledWith(
-  {$and: [{$or: [
-    {categoryId: {$in: [categoryAId]}},
-    {projectId: {$in: [projectAId]}},
-  ]}, {_id: taskId}]},
-  {skip: 0, limit: 1, sort: {_id: 1}},
+  {
+    $and: [
+      {
+        $or: [
+          { categoryId: { $in: [categoryAId] } },
+          { projectId: { $in: [projectAId] } },
+        ],
+      },
+      { _id: taskId },
+    ],
+  },
+  { skip: 0, limit: 1, sort: { _id: 1 } },
 );
 ```
 
@@ -134,10 +152,17 @@ async getReadableById(id: mongoose.Types.ObjectId | string, user: IUserDocument)
 - [x] Viết schema tests trước: pageSize0/101, pageNo fraction/string, invalid status/ID/operator, unknown userId, datetime missing offset/one endpoint/reverse; hợp lệ offset tương đương UTC. Chạy RED `pnpm exec vitest run mcp/test/schemas.test.ts`.
 
 ```typescript
-expect(listTasksInputSchema.safeParse({userId: 'attacker'}).success).toBe(false);
-expect(listTasksInputSchema.safeParse({pageSize: 101}).success).toBe(false);
-expect(listTasksInputSchema.parse({})).toMatchObject({pageNo: 1, pageSize: 20});
-expect(listTasksInputSchema.safeParse({startDate: '2026-10-16'}).success).toBe(false);
+expect(listTasksInputSchema.safeParse({ userId: "attacker" }).success).toBe(
+  false,
+);
+expect(listTasksInputSchema.safeParse({ pageSize: 101 }).success).toBe(false);
+expect(listTasksInputSchema.parse({})).toMatchObject({
+  pageNo: 1,
+  pageSize: 20,
+});
+expect(
+  listTasksInputSchema.safeParse({ startDate: "2026-10-16" }).success,
+).toBe(false);
 ```
 
 - [x] Implement strict schemas; shared paging shape dùng number.int.min.max.default; datetime `z.iso.datetime({offset:true})`; cross-field superRefine cả cặp và thứ tự. Enum sort chính xác trong spec; không dùng generic REST sort regex. Output schema mọi key required, nullable chỉ field spec cho phép.
@@ -148,7 +173,7 @@ const pageShape = {
   pageNo: z.number().int().min(1).max(100000).default(1),
   pageSize: z.number().int().min(1).max(100).default(20),
 };
-export const getTaskInputSchema = z.strictObject({taskId: idSchema});
+export const getTaskInputSchema = z.strictObject({ taskId: idSchema });
 export const listPageInputSchema = z.strictObject(pageShape);
 ```
 
@@ -157,9 +182,9 @@ export const listPageInputSchema = z.strictObject(pageShape);
 ```typescript
 const dto = toTaskDto(taskWithPopulatedOwners);
 expect(dto.categoryId).toBe(categoryId.toString());
-expect(JSON.stringify(dto)).not.toContain('private-owner@example.test');
-expect(dto).not.toHaveProperty('userId');
-expect(dto).not.toHaveProperty('__v');
+expect(JSON.stringify(dto)).not.toContain("private-owner@example.test");
+expect(dto).not.toHaveProperty("userId");
+expect(dto).not.toHaveProperty("__v");
 ```
 
 - [x] Implement explicit property mapping, parse thành output schema trước trả. Không spread document/toObject vào DTO. Reference helper kiểm tra ObjectId trước object có `_id`; optional date null, required date invalid throw. Không JSON stringify document toàn bộ để normalize.
@@ -167,8 +192,10 @@ expect(dto).not.toHaveProperty('__v');
 - [x] Implement result helpers; chỉ nhận diện DB connectivity qua class/name allowlist xác định (`MongoNetworkError`, `MongoServerSelectionError`, `MongooseServerSelectionError`), không match arbitrary message. Dùng literal messages spec; không return `error.message` cho unknown.
 
 ```typescript
-export const toolSuccess = (output: Record<string, unknown>): CallToolResult => ({
-  content: [{type: 'text', text: JSON.stringify(output)}],
+export const toolSuccess = (
+  output: Record<string, unknown>,
+): CallToolResult => ({
+  content: [{ type: "text", text: JSON.stringify(output) }],
   structuredContent: output,
 });
 // toolFailure trả isError:true + text JSON {error:{code,message,retryable}};
@@ -190,11 +217,11 @@ export const toolSuccess = (output: Record<string, unknown>): CallToolResult => 
 async ({ taskId }: { taskId: string }) => {
   try {
     const task = await taskService.getReadableById(taskId, context.user);
-    return toolSuccess({task: toTaskDto(task)});
+    return toolSuccess({ task: toTaskDto(task) });
   } catch (error) {
     return toolFailure(error);
   }
-}
+};
 ```
 
 `orbit_list_tasks`: getAll(context.user, parsedInput), giữ pageInfo và map toTaskDto. `orbit_list_projects/categories`: getAll(context.user), copy array, sort `_id.toString()` lexical tăng dần, slice `(pageNo-1)*pageSize` đến `pageNo*pageSize`, buildResponsePage; map DTO cho page. Không sort/mutate array gốc. Không thêm status/search chưa có contract cho hai list này.
@@ -225,8 +252,12 @@ const cleanup = async () => {
   closed = true;
   await Promise.allSettled([transport.close(), server.close()]);
 };
-res.once('finish', () => { void cleanup(); });
-res.once('close', () => { void cleanup(); });
+res.once("finish", () => {
+  void cleanup();
+});
+res.once("close", () => {
+  void cleanup();
+});
 try {
   await server.connect(transport);
   await transport.handleRequest(req, res, req.body);
@@ -253,15 +284,20 @@ MCP error middleware không ghi response nếu headersSent; terminate response n
 - [x] Chạy Express app với router trên loopback port0, lấy actual port và inject vào config trước request. SDK clients dùng StreamableHTTPClientTransport với Authorization header và Client. Handshake phải negotiate 2025-11-25; sau initialized, tools/list đúng4 và call đủ4. Không mock auth/services/repositories trong các test dữ liệu.
 
 ```typescript
-const client = new Client({name: 'orbit-phase2-test', version: '1.0.0'});
+const client = new Client({ name: "orbit-phase2-test", version: "1.0.0" });
 const transport = new StreamableHTTPClientTransport(new URL(mcpUrl), {
-  requestInit: {headers: {Authorization: `Bearer ${tokenA}`}},
+  requestInit: { headers: { Authorization: `Bearer ${tokenA}` } },
 });
 await client.connect(transport);
 try {
-  const result = await client.callTool({name: 'orbit_list_tasks', arguments: {search: 'report'}});
+  const result = await client.callTool({
+    name: "orbit_list_tasks",
+    arguments: { search: "report" },
+  });
   expect(result.isError).not.toBe(true);
-  expect(result.structuredContent).toMatchObject({pageInfo: {totalCount: expectedCountA}});
+  expect(result.structuredContent).toMatchObject({
+    pageInfo: { totalCount: expectedCountA },
+  });
 } finally {
   await client.close();
 }

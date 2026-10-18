@@ -1,9 +1,9 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { projectService } from "../../services/projectService.js";
-import type { McpContext } from "../context.js";
-import * as schemas from "../schemas.js";
-import { toProjectDto } from "../mapper/projectMapper.js";
-import { annotations, read, page } from "./shared.js";
+import { projectService } from "../../../services/projectService.js";
+import type { McpContext } from "../../context.js";
+import * as schemas from "../../schemas.js";
+import { toProjectDto } from "../../mapper/projectMapper.js";
+import { annotations, read, page } from "../shared/common.js";
 
 export function registerListProjectsTool(
   server: McpServer,
