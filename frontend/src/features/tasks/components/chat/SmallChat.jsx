@@ -194,16 +194,7 @@ const SmallChat = ({ onClose }) => {
           </button>
         </div>
       </div>
-
-      {mode === "chat" && (chat.loading || chat.error || chat.pending || chat.before) && (
-        <div className="border-b border-[var(--color-line)] p-3 text-sm" aria-live="polite">
-          {chat.loading && <p>Loading conversation…</p>}
-          {chat.error && <p role="alert">{chat.error}</p>}
-          {chat.pending && <button type="button" disabled={chat.sending || chat.loading} onClick={() => chat.send()} className="ui-focus-ring underline">Check reply / Retry</button>}
-          {chat.error && !chat.pending && <button type="button" disabled={chat.loading} onClick={chat.reload} className="ui-focus-ring underline">Reload conversation</button>}
-          {chat.before && <button type="button" disabled={chat.loading || chat.sending} onClick={chat.loadEarlier} className="ui-focus-ring ml-2 underline">Load earlier messages</button>}
-        </div>
-      )}
+      
       <div className="flex-1 overflow-hidden bg-[var(--color-canvas)]">
         <ChatField
           key={mode === "chat" ? chat.conversationId ?? "new" : "tasks"}

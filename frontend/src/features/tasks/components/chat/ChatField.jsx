@@ -64,13 +64,13 @@ const ChatField = ({ messages, onSendMessage, isTyping = false, disabled = false
                   message.sender === "user" ? userMessageStyle : botMessageStyle
                 }
               >
-                <p className="text-sm whitespace-pre-wrap break-words">
+                <div className="text-sm whitespace-pre-wrap break-words">
                   {message.sender === "bot" ? (
                     <MarkdownText text={message.text} />
                   ) : (
                     message.text
                   )}
-                </p>
+                </div>
                 <span className="text-xs opacity-70 mt-1 block">
                   {formatDateTime(message.timestamp)}
                 </span>
