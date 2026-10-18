@@ -6,6 +6,7 @@ import axios, {
 import { env } from "../../config/env";
 import { useAuthStore } from "../../stores/useAuthStore";
 import { ApiError } from "./apiError";
+import { readAuthSnapshot } from "./authStorage";
 import { resetUserCache } from "./sessionCache";
 
 export type RequestOptions = Pick<
@@ -21,22 +22,15 @@ const axiosInstance = axios.create({
   },
 });
 
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (error: ApiError) => void;
-}> = [];
+let refreshPromise: Promise<string> | null = null;
 
-const processQueue = (error: ApiError | null, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else if (token) {
-      prom.resolve(token);
-    }
-  });
-
-  failedQueue = [];
+const isExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof payload.exp === "number" && payload.exp * 1000 <= Date.now() + 30_000;
+  } catch {
+    return false;
+  }
 };
 
 const handleTerminalAuthFailure = async () => {
@@ -115,9 +109,55 @@ const normalizeToApiError = (error: unknown): ApiError => {
   );
 };
 
+// Serialize rotation within a tab and, where supported, across browser tabs.
+const refreshAccessToken = (): Promise<string> => {
+  if (refreshPromise) return refreshPromise;
+  const revision = useAuthStore.getState().sessionRevision;
+  const previousToken = useAuthStore.getState().token;
+  const rotate = async (): Promise<string> => {
+    const stored = readAuthSnapshot();
+    if (useAuthStore.getState().sessionRevision !== revision || !stored.refreshToken) {
+      throw new ApiError("Session ended", 401, "http");
+    }
+    if (stored.token && stored.token !== previousToken && !isExpired(stored.token)) {
+      useAuthStore.getState().updateTokens({ accessToken: stored.token, refreshToken: stored.refreshToken });
+      return stored.token;
+    }
+    const response = await axios.post(`${env.serverUrl || ""}/api/auth/refresh`, {
+      refreshToken: stored.refreshToken,
+    }, { timeout: 30000 });
+    const accessToken = response.data.accessToken || response.data.token;
+    if (typeof accessToken !== "string" || !accessToken) {
+      throw new ApiError("Invalid refresh response", 502, "http");
+    }
+    if (useAuthStore.getState().sessionRevision !== revision ||
+        readAuthSnapshot().refreshToken !== stored.refreshToken) {
+      throw new ApiError("Session changed", 401, "http");
+    }
+    useAuthStore.getState().updateTokens({ accessToken, refreshToken: response.data.refreshToken });
+    return accessToken;
+  };
+  refreshPromise = Promise.resolve(typeof navigator !== "undefined" && navigator.locks
+    ? navigator.locks.request("orbit-auth-refresh", rotate)
+    : rotate()).then((token) => token)
+    .catch(async (error) => {
+      const normalized = normalizeToApiError(error);
+      if ([401, 403].includes(normalized.status ?? 0) &&
+          useAuthStore.getState().sessionRevision === revision) {
+        await handleTerminalAuthFailure();
+      }
+      throw normalized;
+    })
+    .finally(() => { refreshPromise = null; });
+  return refreshPromise;
+};
+
+const isPublicAuthEndpoint = (url: string) =>
+  ["login", "register", "refresh", "logout"].some((name) => url.includes(`/api/auth/${name}`));
+
 // Request interceptor
 axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
     if (env.apiDebug) {
       console.log("Request:", config.method?.toUpperCase(), config.url);
       console.log("Request data:", config.data);
@@ -129,9 +169,15 @@ axiosInstance.interceptors.request.use(
       config.timeout = 60000;
     }
 
-    const token = useAuthStore.getState().token;
+    let token = useAuthStore.getState().token;
+    if (!isPublicAuthEndpoint(config.url ?? "") &&
+        useAuthStore.getState().refreshToken && (!token || isExpired(token))) {
+      token = await refreshAccessToken();
+    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
     }
 
     return config;
@@ -168,106 +214,25 @@ axiosInstance.interceptors.response.use(
     const requestUrl = originalRequest?.url ?? "";
 
     if (status === 401) {
-      const isAuthEndpoint =
-        requestUrl.includes("/api/auth/login") ||
-        requestUrl.includes("/api/auth/register") ||
-        requestUrl.includes("/api/auth/refresh");
-
-      if (isAuthEndpoint || originalRequest?._retry) {
+      if (isPublicAuthEndpoint(requestUrl)) {
+        return Promise.reject(normalizeToApiError(error));
+      }
+      if (!originalRequest || originalRequest._retry) {
         await handleTerminalAuthFailure();
-        const message =
-          (error.response.data as { message?: string })?.message ||
-          "Authentication failed";
-        return Promise.reject(
-          new ApiError(message, 401, "http", error.code, error),
-        );
+        return Promise.reject(normalizeToApiError(error));
       }
-
-      const refreshToken = useAuthStore.getState().refreshToken;
-
-      if (!refreshToken) {
+      originalRequest._retry = true;
+      // A late 401 may belong to the token that another request already replaced.
+      const currentToken = useAuthStore.getState().token;
+      if (currentToken && originalRequest.headers.Authorization !== `Bearer ${currentToken}`) {
+        return axiosInstance(originalRequest);
+      }
+      if (!useAuthStore.getState().refreshToken) {
         await handleTerminalAuthFailure();
-        const message =
-          (error.response.data as { message?: string })?.message ||
-          "Session expired";
-        return Promise.reject(
-          new ApiError(message, 401, "http", error.code, error),
-        );
+        return Promise.reject(normalizeToApiError(error));
       }
-
-      if (isRefreshing) {
-        return new Promise<string>((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((newToken) => {
-            if (originalRequest) {
-              originalRequest.headers.Authorization = `Bearer ${newToken}`;
-              return axiosInstance(originalRequest);
-            }
-            return Promise.reject(
-              new ApiError(
-                "Original request missing configuration",
-                undefined,
-                "http",
-              ),
-            );
-          })
-          .catch((err) => Promise.reject(normalizeToApiError(err)));
-      }
-
-      if (originalRequest) {
-        originalRequest._retry = true;
-      }
-      isRefreshing = true;
-
-      try {
-        const refreshBaseUrl = env.serverUrl || "";
-        const refreshResponse = await axios.post(
-          `${refreshBaseUrl}/api/auth/refresh`,
-          {
-            refreshToken,
-          },
-        );
-
-        const {
-          accessToken: newAccessToken,
-          refreshToken: newRefreshToken,
-          token: fallbackToken,
-        } = refreshResponse.data;
-        const effectiveToken = newAccessToken || fallbackToken;
-
-        useAuthStore.getState().updateTokens({
-          accessToken: effectiveToken,
-          refreshToken: newRefreshToken,
-        });
-
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${effectiveToken}`;
-        if (originalRequest) {
-          originalRequest.headers.Authorization = `Bearer ${effectiveToken}`;
-        }
-
-        processQueue(null, effectiveToken);
-
-        if (originalRequest) {
-          return axiosInstance(originalRequest);
-        }
-        return refreshResponse;
-      } catch (refreshErr) {
-        const normalizedRefreshErr = normalizeToApiError(refreshErr);
-        processQueue(normalizedRefreshErr, null);
-
-        // Terminal auth failures on refresh are 401 or 403
-        if (
-          normalizedRefreshErr.status === 401 ||
-          normalizedRefreshErr.status === 403
-        ) {
-          await handleTerminalAuthFailure();
-        }
-
-        return Promise.reject(normalizedRefreshErr);
-      } finally {
-        isRefreshing = false;
-      }
+      await refreshAccessToken();
+      return axiosInstance(originalRequest);
     }
 
     return Promise.reject(normalizeToApiError(error));
