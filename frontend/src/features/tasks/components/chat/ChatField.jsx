@@ -3,7 +3,7 @@ import { Send } from "lucide-react";
 import MarkdownText from "./MarkdownText";
 import { formatDateTime } from "@/shared/utils/dateTime";
 
-const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
+const ChatField = ({ messages, onSendMessage, isTyping = false, disabled = false }) => {
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef(null);
   const userMessageStyle = {
@@ -28,7 +28,7 @@ const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (inputValue.trim()) {
+    if (inputValue.trim() && !disabled) {
       onSendMessage(inputValue.trim());
       setInputValue("");
     }
@@ -107,18 +107,26 @@ const ChatField = ({ messages, onSendMessage, isTyping = false }) => {
       </div>
 
       <div className="border-t border-[var(--color-line)] bg-[var(--color-surface)] p-4">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="text"
+        <form onSubmit={handleSubmit} className="flex items-end gap-2">
+          <textarea
+            rows={1}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a message…"
-            className="ui-input min-w-0 flex-1 rounded-full px-4 py-2 text-sm"
+            className="ui-input min-w-0 flex-1 resize-none rounded-2xl px-4 py-2 text-sm"
+            style={{
+              fieldSizing: "content",
+              minHeight: "2.75rem",
+              maxHeight: "calc(2lh + 1rem + 2px)",
+              paddingBlock: "0.5rem",
+              overflowY: "auto",
+              resize: "none",
+            }}
           />
           <button
             type="submit"
-            disabled={!inputValue.trim()}
+            disabled={disabled || !inputValue.trim()}
             className="ui-btn-primary ui-focus-ring h-11 w-11 flex-shrink-0 rounded-full p-0 disabled:cursor-not-allowed disabled:border-[var(--color-line)] disabled:bg-[var(--color-surface-muted)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
           >
             <Send className="h-4 w-4" />

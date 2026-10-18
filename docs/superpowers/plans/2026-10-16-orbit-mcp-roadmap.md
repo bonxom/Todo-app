@@ -1,6 +1,6 @@
 # Orbit MCP — Roadmap theo phase
 
-Ngày: 2026-10-16. Trạng thái: phase 1–2 hoàn thành ngày 2026-10-16; `/mcp` chỉ local, mặc định tắt; phase 3–5 chưa triển khai.
+Ngày: 2026-10-16. Cập nhật 2026-10-18: phase 1–2 hoàn thành; phase 4 đã triển khai cho bubble chat nội bộ. `/mcp` HTTP vẫn chỉ local, mặc định tắt và chỉ đọc. Phase 3 và 5 chưa triển khai; nghiệm thu phase 4 remote vẫn phụ thuộc phase 3.
 
 Mục tiêu: cho AI client truy cập công việc của đúng người dùng trong Orbit qua MCP, tái sử dụng nghiệp vụ backend hiện có.
 
@@ -20,23 +20,23 @@ flowchart LR
 
 Các phương án đã cân nhắc:
 
-| Phương án | Lợi ích | Chi phí | Quyết định |
-| --- | --- | --- | --- |
-| MCP cùng backend, gọi service | Dùng chung nghiệp vụ, một deployment | Scale chung với API | Chọn cho phiên bản đầu |
-| MCP riêng, gọi REST API | Độc lập deployment | Thêm hop mạng, quản lý credential upstream | Xem xét khi có yêu cầu vận hành riêng |
-| MCP riêng, truy cập MongoDB | Linh hoạt truy vấn | Dễ nhân đôi/bỏ qua nghiệp vụ và phân quyền | Không chọn |
+| Phương án                     | Lợi ích                              | Chi phí                                    | Quyết định                            |
+| ----------------------------- | ------------------------------------ | ------------------------------------------ | ------------------------------------- |
+| MCP cùng backend, gọi service | Dùng chung nghiệp vụ, một deployment | Scale chung với API                        | Chọn cho phiên bản đầu                |
+| MCP riêng, gọi REST API       | Độc lập deployment                   | Thêm hop mạng, quản lý credential upstream | Xem xét khi có yêu cầu vận hành riêng |
+| MCP riêng, truy cập MongoDB   | Linh hoạt truy vấn                   | Dễ nhân đôi/bỏ qua nghiệp vụ và phân quyền | Không chọn                            |
 
 ## Các phase và điều kiện chuyển tiếp
 
-| Phase | Phạm vi | Đầu ra | Điều kiện hoàn thành |
-| --- | --- | --- | --- |
-| 1 — Nền tảng phân quyền task | Sửa việc filter ghi đè quyền trong `getAll`; kiểm thử user A/B, admin, phân trang | Bản sửa service và test hồi quy; không thêm endpoint MCP | Không lộ task hoặc số lượng task ngoài quyền trong ma trận test; build và regression pass |
-| 2 — MCP chỉ đọc trong môi trường phát triển | SDK, transport, context theo request, validation, DTO và lỗi; `orbit_list_tasks`, `orbit_get_task`, `orbit_list_projects`, `orbit_list_categories` | `/mcp` bật bằng cấu hình; mặc định tắt; client thử nghiệm kết nối được | Khởi tạo, khám phá và gọi tool thành công; token sai/hết hạn bị từ chối; request đồng thời không lẫn người dùng |
-| 3 — Xác thực remote nhiều người dùng | OAuth-compatible authorization server, resource metadata, discovery, audience, issuer, expiry, scopes; ánh xạ subject sang Orbit user | Kết nối remote trên staging với đăng nhập từng người dùng | Client mục tiêu hoàn thành đăng nhập; thiếu quyền trả lỗi; không chấp nhận token cho resource khác |
-| 4 — Thao tác ghi | `orbit_create_task`, `orbit_update_task`, `orbit_start_task`, `orbit_complete_task`, `orbit_give_up_task`; scope ghi, audit và xử lý retry | Quản lý vòng đời task qua AI | Nghiệp vụ/stats đúng; retry tạo task không nhân đôi theo hợp đồng idempotency đã định; kiểm thử chéo người dùng |
-| 5 — Phát hành và vận hành | HTTPS/proxy `/mcp`, rate limit, giới hạn payload, timeout, metrics, deployment/rollback, đánh giá workflow | MCP production và hướng dẫn kết nối | Smoke test qua URL thực, kiểm thử tải theo ngân sách thống nhất, 10 tình huống đánh giá trên fixture ổn định đạt kỳ vọng |
+| Phase                                       | Phạm vi                                                                                                                                            | Đầu ra                                                                 | Điều kiện hoàn thành                                                                                                     |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 1 — Nền tảng phân quyền task                | Sửa việc filter ghi đè quyền trong `getAll`; kiểm thử user A/B, admin, phân trang                                                                  | Bản sửa service và test hồi quy; không thêm endpoint MCP               | Không lộ task hoặc số lượng task ngoài quyền trong ma trận test; build và regression pass                                |
+| 2 — MCP chỉ đọc trong môi trường phát triển | SDK, transport, context theo request, validation, DTO và lỗi; `orbit_list_tasks`, `orbit_get_task`, `orbit_list_projects`, `orbit_list_categories` | `/mcp` bật bằng cấu hình; mặc định tắt; client thử nghiệm kết nối được | Khởi tạo, khám phá và gọi tool thành công; token sai/hết hạn bị từ chối; request đồng thời không lẫn người dùng          |
+| 3 — Xác thực remote nhiều người dùng        | OAuth-compatible authorization server, resource metadata, discovery, audience, issuer, expiry, scopes; ánh xạ subject sang Orbit user              | Kết nối remote trên staging với đăng nhập từng người dùng              | Client mục tiêu hoàn thành đăng nhập; thiếu quyền trả lỗi; không chấp nhận token cho resource khác                       |
+| 4 — Thao tác ghi                            | `orbit_create_task`, `orbit_update_task` (bao gồm status); scope ghi, audit và xử lý retry         | Quản lý vòng đời task qua AI                                           | Nghiệp vụ/stats đúng; retry tạo task không nhân đôi theo hợp đồng idempotency đã định; kiểm thử chéo người dùng          |
+| 5 — Phát hành và vận hành                   | HTTPS/proxy `/mcp`, rate limit, giới hạn payload, timeout, metrics, deployment/rollback, đánh giá workflow                                         | MCP production và hướng dẫn kết nối                                    | Smoke test qua URL thực, kiểm thử tải theo ngân sách thống nhất, 10 tình huống đánh giá trên fixture ổn định đạt kỳ vọng |
 
-Thứ tự phụ thuộc: **1 → 2 → 3 → 4 → 5**. Mỗi phase có spec và plan riêng trước khi triển khai. Phase 1 là điều kiện bắt buộc trước khi mở dữ liệu qua MCP.
+Thứ tự phụ thuộc cho MCP remote: **1 → 2 → 3 → 4 → 5**. Theo yêu cầu ngày 2026-10-18, phần tool ghi của phase 4 được triển khai trước cho chat nội bộ với danh tính từ phiên Orbit đã xác thực; điều này không thay thế xác thực OAuth của phase 3. Mỗi phase có spec và plan riêng trước khi triển khai. Phase 1 là điều kiện bắt buộc trước khi mở dữ liệu qua MCP.
 
 ## Ranh giới xác thực và dữ liệu
 
@@ -67,6 +67,24 @@ Phase 2 đã triển khai và nghiệm thu ngày 2026-10-16: SDK 1.32.1/protocol
 - [Spec phase 2](../specs/2026-10-16-orbit-mcp-phase-2-design.md)
 - [Implementation plan phase 2](2026-10-16-orbit-mcp-phase-2.md)
 
+## Phase 4 nội bộ — triển khai ngày 2026-10-18
+
+- Bubble chat gọi MCP qua `InMemoryTransport`; controller cấp `tasks:write` sau xác thực. Đây là quyền từ backend, không phải OAuth scope do client tự gửi.
+- 2 tool ghi: `orbit_create_task`, `orbit_update_task`. `changes.status` hỗ trợ `in-progress`, `completed`, `given-up`; backend gọi service chuyển trạng thái chuyên biệt, không nhận `userId`. Có thể sửa nội dung và status cùng transaction.
+- Chat nội bộ có 6 tool; `/mcp` HTTP local vẫn chỉ có 4 tool đọc. Chưa mở endpoint ghi remote.
+- Mỗi tool ghi yêu cầu `idempotencyKey`: cùng user/key/payload trả kết quả đã lưu; đổi payload/tool với key cũ trả conflict. Ghi task, thống kê và receipt/audit trong cùng transaction; khóa DB theo user xử lý request đồng thời. Bảo đảm áp dụng cho retry tool với cùng key, không phải hai yêu cầu chat độc lập do LLM tự tạo key mới.
+- Tạo task theo nghiệp vụ hiện tại: `in-progress`; start dùng cho task `pending`. Hoàn thành/từ bỏ lại trạng thái đích không tăng bộ đếm thêm.
+- Thống kê được đồng bộ sau ghi; bổ sung `givenUpAt` và giữ ngày sự kiện lịch sử khi sửa nội dung để không dịch thống kê sang ngày sửa.
+- Frontend invalidate task/project/category/stats khi chat kết thúc, kể cả provider lỗi sau khi tool đã ghi.
+- **Yêu cầu triển khai:** MongoDB replica set hoặc Atlas hỗ trợ transaction; deploy cả backend và frontend. Trên Vercel giữ `MCP_ENABLED=false`. Không có fallback ghi không-transaction.
+- Kiểm tra: **163 backend tests pass, không skip**, gồm HTTP MCP phase 2 và ghi phase 4 trên MongoDB 7 replica set tạm; **4 frontend tests liên quan pass**; TypeScript hai bên và ESLint các file frontend thay đổi pass. Chưa smoke test bằng LLM thật hoặc trên Vercel.
+- Chưa bao gồm OAuth remote, audit retention production và bảo đảm tuần tự giữa REST writes với MCP writes; xem design.
+
+Tài liệu:
+
+- [Design phase 4 nội bộ](../specs/2026-10-18-orbit-mcp-phase-4-internal-design.md)
+- [Plan phase 4 nội bộ](2026-10-18-orbit-mcp-phase-4-internal.md)
+
 ## Nguồn kỹ thuật
 
 Tham chiếu phiên bản cụ thể để tránh trộn hợp đồng giữa các bản; kiểm tra lại khi thực hiện phase 2–3.
@@ -75,3 +93,5 @@ Tham chiếu phiên bản cụ thể để tránh trộn hợp đồng giữa c�
 - [MCP authorization, bản 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization): discovery, OAuth và xác thực token theo resource.
 
 Các lựa chọn chia phase, tool và cách dùng service ở trên là đề xuất riêng cho Orbit dựa trên code hiện tại.
+
+Cập nhật theo yêu cầu gộp tool: đã bỏ 3 tool lifecycle riêng; chuyển qua `orbit_update_task.changes.status`. Kiểm tra lại: 164 backend tests pass trên replica set, TypeScript pass. Không mở thêm luồng quay về pending hoặc mở lại task đã kết thúc.

@@ -887,10 +887,14 @@
   margin-inline: -2.5px;
   border-radius: 5px;
   color: var(--color-text-muted);
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
 .todo-reject:hover {
   color: var(--color-danger);
   background: var(--color-danger-soft);
 }
-.todo-reject:disabled { opacity: 0.5; }
+.todo-reject:disabled {
+  opacity: 0.5;
+}

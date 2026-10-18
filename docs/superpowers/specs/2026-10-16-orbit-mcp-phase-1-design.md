@@ -37,18 +37,18 @@ Result(user, filters) = Access(user) AND Filters(filters)
 
 Quyền ở đây giữ nguyên quy tắc OR hiện có; không đổi thành “cả category lẫn project đều phải thuộc user”. Task có tham chiếu lịch sử khác chủ sở hữu vẫn theo quy tắc này. Sự khác nhau với `getById` (ưu tiên category owner) cần rà soát riêng trước khi mở MCP; phase 1 không tuyên bố đã thống nhất toàn bộ authorization.
 
-| Đầu vào | Hành vi bắt buộc |
-| --- | --- |
-| Không filter | Trả đúng tập theo quyền hiện tại |
-| `search` | Trim, tìm title hoặc description, không phân biệt hoa thường, escape ký tự regex |
-| Search rỗng/toàn khoảng trắng | Không thêm điều kiện search |
-| `status` | AND với quyền và các filter khác |
-| `projectId` cụ thể | AND với quyền, không thay danh sách project được phép |
-| `projectId=standalone` | Chỉ task có project null/missing theo MongoDB và vẫn thuộc quyền |
-| `startDate` + `endDate` | Khoảng inclusive `$gte/$lte` trên `dueDate`, giữ validation hiện có |
-| Khoảng ngày thiếu một đầu, sai định dạng hoặc đảo ngược | `COMMON_ERROR.INVALID_PAYLOAD`, không gọi repository phân trang |
-| Không có category/project | `data=[]`, `totalCount=0` với mọi filter hợp lệ |
-| Admin | Quyền không hạn chế, nhưng filter vẫn được áp dụng |
+| Đầu vào                                                 | Hành vi bắt buộc                                                                 |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Không filter                                            | Trả đúng tập theo quyền hiện tại                                                 |
+| `search`                                                | Trim, tìm title hoặc description, không phân biệt hoa thường, escape ký tự regex |
+| Search rỗng/toàn khoảng trắng                           | Không thêm điều kiện search                                                      |
+| `status`                                                | AND với quyền và các filter khác                                                 |
+| `projectId` cụ thể                                      | AND với quyền, không thay danh sách project được phép                            |
+| `projectId=standalone`                                  | Chỉ task có project null/missing theo MongoDB và vẫn thuộc quyền                 |
+| `startDate` + `endDate`                                 | Khoảng inclusive `$gte/$lte` trên `dueDate`, giữ validation hiện có              |
+| Khoảng ngày thiếu một đầu, sai định dạng hoặc đảo ngược | `COMMON_ERROR.INVALID_PAYLOAD`, không gọi repository phân trang                  |
+| Không có category/project                               | `data=[]`, `totalCount=0` với mọi filter hợp lệ                                  |
+| Admin                                                   | Quyền không hạn chế, nhưng filter vẫn được áp dụng                               |
 
 Chỉ xét filter đã qua validation đối với REST; phase 2 có trách nhiệm validation tương đương trước khi gọi service từ MCP. Không thêm contract mới cho giá trị query tùy ý trong phase 1.
 
@@ -78,18 +78,18 @@ Giữ `pageNo=1`, `pageSize=20`, giới hạn HTTP hiện có là 100; giữ cá
 
 ## Ma trận nghiệm thu
 
-| ID | Kịch bản | Kết quả |
-| --- | --- | --- |
-| A1 | A có category + project, A/B có task cùng từ khóa | Search chỉ trả task trong quyền A |
-| A2 | User chỉ có project, lọc project của B | Không có dữ liệu và count bằng 0 |
-| A3 | User chỉ có project, lọc standalone | Không có dữ liệu và count bằng 0 |
-| A4 | User chỉ có category; user không có cả hai | Tương ứng chỉ task category của user; hoặc tập rỗng |
-| A5 | Task chỉ gắn project của A, không có category | A vẫn đọc được theo quyền project |
-| A6 | Search + status + project + khoảng ngày | Áp dụng giao của toàn bộ điều kiện và quyền |
-| A7 | Search literal `a+b`, khác hoa thường, chỉ trúng description; search trắng | Không mở rộng regex; tìm đúng field; trắng không lọc |
-| A8 | Admin có/không filter | Đọc xuyên user theo chính sách hiện tại; filter vẫn đúng |
-| A9 | Không filter; trang 2 kích thước 1, sort title | Giữ shape và paging; count chỉ tính các task hợp lệ |
-| A10 | Ngày thiếu/sai/đảo | Lỗi domain hiện có; repository không được gọi |
+| ID  | Kịch bản                                                                   | Kết quả                                                  |
+| --- | -------------------------------------------------------------------------- | -------------------------------------------------------- |
+| A1  | A có category + project, A/B có task cùng từ khóa                          | Search chỉ trả task trong quyền A                        |
+| A2  | User chỉ có project, lọc project của B                                     | Không có dữ liệu và count bằng 0                         |
+| A3  | User chỉ có project, lọc standalone                                        | Không có dữ liệu và count bằng 0                         |
+| A4  | User chỉ có category; user không có cả hai                                 | Tương ứng chỉ task category của user; hoặc tập rỗng      |
+| A5  | Task chỉ gắn project của A, không có category                              | A vẫn đọc được theo quyền project                        |
+| A6  | Search + status + project + khoảng ngày                                    | Áp dụng giao của toàn bộ điều kiện và quyền              |
+| A7  | Search literal `a+b`, khác hoa thường, chỉ trúng description; search trắng | Không mở rộng regex; tìm đúng field; trắng không lọc     |
+| A8  | Admin có/không filter                                                      | Đọc xuyên user theo chính sách hiện tại; filter vẫn đúng |
+| A9  | Không filter; trang 2 kích thước 1, sort title                             | Giữ shape và paging; count chỉ tính các task hợp lệ      |
+| A10 | Ngày thiếu/sai/đảo                                                         | Lỗi domain hiện có; repository không được gọi            |
 
 Unit test kiểm tra ranh giới hai nhóm query và paging options. Integration test chạy query thật trên MongoDB disposable với fixture A/B, xác minh task IDs và count; không dùng mock trả sẵn dữ liệu để tuyên bố đã chứng minh cách ly người dùng.
 

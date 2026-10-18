@@ -184,6 +184,7 @@ export const taskService = {
   async create(
     data: Record<string, unknown>,
     userId: mongoose.Types.ObjectId | string,
+    initialStatus: "pending" | "in-progress" = "in-progress",
   ): Promise<ITaskDocument | null> {
     const categoryId = await resolveCategory(
       data.categoryId as string | undefined,
@@ -204,7 +205,7 @@ export const taskService = {
     const task = await taskRepository.create({
       title: data.title,
       description: data.description,
-      status: "in-progress",
+      status: initialStatus,
       priority: data.priority,
       categoryId,
       projectId: projectUpdate.shouldUpdate ? projectUpdate.value : null,
@@ -212,7 +213,11 @@ export const taskService = {
       dueDate: dueDate.shouldUpdate ? dueDate.value : undefined,
     });
 
-    await statService.incrementInProgress(userId);
+    if (initialStatus === "pending") {
+      await statService.incrementPending(userId);
+    } else {
+      await statService.incrementInProgress(userId);
+    }
     return taskRepository.findByIdPopulated(task._id);
   },
 
@@ -366,6 +371,22 @@ export const taskService = {
     if (startDate.shouldUpdate) update.startDate = startDate.value;
     if (dueDate.shouldUpdate) update.dueDate = dueDate.value;
 
+    // Preserve historical event dates when metadata edits change updatedAt.
+    if (Object.keys(update).length > 0) {
+      if (
+        task.status === "completed" &&
+        !task.completedAt &&
+        (update.status === undefined || update.status === "completed")
+      ) {
+        update.completedAt = task.updatedAt || task.createdAt;
+      }
+      if (task.status === "given-up" && !task.givenUpAt) {
+        update.givenUpAt = task.updatedAt || task.createdAt;
+      }
+      if (update.status === "given-up" && task.status !== "given-up") {
+        update.givenUpAt = new Date();
+      }
+    }
     applyCompletionTimestamp(update, task.status);
 
     if (Object.keys(update).length === 0) {
@@ -438,6 +459,7 @@ export const taskService = {
       throw new AppError(TASK_ERROR.CANNOT_GIVE_UP);
 
     task.status = "given-up";
+    task.givenUpAt = new Date();
     await task.save();
 
     const cat = task.categoryId as unknown as PopulatedCategoryRef | null;

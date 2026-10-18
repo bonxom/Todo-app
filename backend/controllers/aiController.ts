@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { createMcpContext } from "../mcp/context.js";
+import { conversationService } from "../services/conversationService.js";
 import { aiService } from "../services/aiService.js";
 
 export const generateTasksWithRequirement = async (
@@ -36,13 +37,22 @@ export const chatWithMcp = async (
   res: Response,
 ): Promise<void> => {
   const body = req.validatedBody as Record<string, unknown>;
-  const content = await aiService.chatWithMcp(
-    body.userInput as string,
-    createMcpContext(req),
-  );
-  res.status(200).json({
-    success: true,
-    message: "Response generated successfully with MCP",
-    data: content,
-  });
+  const result = await conversationService.send({
+    userInput: body.userInput as string,
+    conversationId: body.conversationId as string,
+    requestId: body.requestId as string,
+  }, createMcpContext(req, ["tasks:write"]));
+  res.status(200).json({ success: result.status === "completed", message: "Chat response", ...result });
+};
+
+export const createConversation = async (req: Request, res: Response): Promise<void> => {
+  const id = req.validatedBody!.conversationId as string;
+  const conversation = await conversationService.create(String(req.user!._id), id);
+  res.status(201).json({ conversationId: conversation._id });
+};
+
+export const getConversation = async (req: Request, res: Response): Promise<void> => {
+  const conversation = await conversationService.get(String(req.user!._id),
+    req.validatedParams?.conversationId, req.validatedQuery?.before as number | undefined);
+  res.json({ data: conversation });
 };

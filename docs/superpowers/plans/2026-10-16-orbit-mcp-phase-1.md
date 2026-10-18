@@ -22,11 +22,11 @@ Trạng thái: hoàn thành ngày 2026-10-16; unit, integration MongoDB và các
 
 ## File map và interfaces
 
-| File | Thao tác | Trách nhiệm |
-| --- | --- | --- |
-| `backend/services/taskService.ts` | Sửa riêng `getAll` | Ghép quyền và filter |
-| `backend/services/test/taskService.getAll.test.ts` | Tạo | Query composition, options, ngày không hợp lệ |
-| `backend/services/test/taskService.getAll.integration.test.ts` | Tạo | Quyền A/B và count trên MongoDB thật |
+| File                                                           | Thao tác           | Trách nhiệm                                   |
+| -------------------------------------------------------------- | ------------------ | --------------------------------------------- |
+| `backend/services/taskService.ts`                              | Sửa riêng `getAll` | Ghép quyền và filter                          |
+| `backend/services/test/taskService.getAll.test.ts`             | Tạo                | Query composition, options, ngày không hợp lệ |
+| `backend/services/test/taskService.getAll.integration.test.ts` | Tạo                | Quyền A/B và count trên MongoDB thật          |
 
 Không cần sửa repository, routes, controller, frontend hoặc lockfile.
 
@@ -80,51 +80,68 @@ describe("taskService.getAll query boundaries", () => {
   const projectId = new mongoose.Types.ObjectId();
   const foreignProjectId = new mongoose.Types.ObjectId();
   const user = {
-    _id: new mongoose.Types.ObjectId(), role: "USER",
+    _id: new mongoose.Types.ObjectId(),
+    role: "USER",
   } as IUserDocument;
 
   beforeEach(() => {
-    vi.spyOn(categoryRepository, "findByUser")
-      .mockResolvedValue([{ _id: categoryId }] as never);
-    vi.spyOn(projectRepository, "findByUser")
-      .mockResolvedValue([{ _id: projectId }] as never);
-    vi.spyOn(taskRepository, "findPaginated")
-      .mockResolvedValue({ data: [], totalCount: 0 });
+    vi.spyOn(categoryRepository, "findByUser").mockResolvedValue([
+      { _id: categoryId },
+    ] as never);
+    vi.spyOn(projectRepository, "findByUser").mockResolvedValue([
+      { _id: projectId },
+    ] as never);
+    vi.spyOn(taskRepository, "findPaginated").mockResolvedValue({
+      data: [],
+      totalCount: 0,
+    });
   });
   afterEach(() => vi.restoreAllMocks());
 
   it("preserves access OR when search introduces its own OR", async () => {
     await taskService.getAll(user, { search: "report" });
-    expect(taskRepository.findPaginated).toHaveBeenCalledWith({
-      $and: [
-        { $or: [
-          { categoryId: { $in: [categoryId] } },
-          { projectId: { $in: [projectId] } },
-        ] },
-        { $or: [{ title: /report/i }, { description: /report/i }] },
-      ],
-    }, { skip: 0, limit: 20, sort: { dueDate: 1, createdAt: -1 } });
+    expect(taskRepository.findPaginated).toHaveBeenCalledWith(
+      {
+        $and: [
+          {
+            $or: [
+              { categoryId: { $in: [categoryId] } },
+              { projectId: { $in: [projectId] } },
+            ],
+          },
+          { $or: [{ title: /report/i }, { description: /report/i }] },
+        ],
+      },
+      { skip: 0, limit: 20, sort: { dueDate: 1, createdAt: -1 } },
+    );
   });
 
   it.each([foreignProjectId.toString(), "standalone"])(
-    "preserves project-only access when filtering %s", async (filter) => {
+    "preserves project-only access when filtering %s",
+    async (filter) => {
       vi.mocked(categoryRepository.findByUser).mockResolvedValue([]);
       await taskService.getAll(user, { projectId: filter });
-      expect(taskRepository.findPaginated).toHaveBeenCalledWith({
-        $and: [
-          { projectId: { $in: [projectId] } },
-          { projectId: filter === "standalone" ? null : filter },
-        ],
-      }, expect.any(Object));
+      expect(taskRepository.findPaginated).toHaveBeenCalledWith(
+        {
+          $and: [
+            { projectId: { $in: [projectId] } },
+            { projectId: filter === "standalone" ? null : filter },
+          ],
+        },
+        expect.any(Object),
+      );
     },
   );
 
   it("keeps paging shape, skip, limit and explicit sort", async () => {
     const result = await taskService.getAll(user, {
-      pageNo: 2, pageSize: 1, sort: "title:asc",
+      pageNo: 2,
+      pageSize: 1,
+      sort: "title:asc",
     });
     expect(taskRepository.findPaginated).toHaveBeenCalledWith(
-      expect.any(Object), { skip: 1, limit: 1, sort: { title: 1 } },
+      expect.any(Object),
+      { skip: 1, limit: 1, sort: { title: 1 } },
     );
     expect(result).toEqual({
       data: [],
@@ -178,9 +195,10 @@ if (queryParams.projectId && typeof queryParams.projectId === "string") {
   filters.projectId =
     queryParams.projectId === "standalone" ? null : queryParams.projectId;
 }
-const query: Record<string, unknown> = Object.keys(filters).length === 0
-  ? accessQuery
-  : { $and: [accessQuery, filters] };
+const query: Record<string, unknown> =
+  Object.keys(filters).length === 0
+    ? accessQuery
+    : { $and: [accessQuery, filters] };
 ```
 
 - [x] Chạy unit test mới, suite service hiện có và typecheck:
@@ -215,9 +233,11 @@ import { taskService } from "../taskService.js";
 
 const uri = process.env.ORBIT_MCP_TEST_MONGO_URI;
 const dbName = `orbit_mcp_phase1_test_${process.pid}_${Date.now()}`;
-const makeUser = (role = "USER") => ({
-  _id: new mongoose.Types.ObjectId(), role,
-}) as IUserDocument;
+const makeUser = (role = "USER") =>
+  ({
+    _id: new mongoose.Types.ObjectId(),
+    role,
+  }) as IUserDocument;
 
 describe.skipIf(!uri)("getAll MongoDB authorization", () => {
   const a = makeUser();
@@ -242,7 +262,9 @@ describe.skipIf(!uri)("getAll MongoDB authorization", () => {
     // Insert through collections to avoid signup hooks; IDs are fixture-only.
     await mongoose.connection.collection("users").insertMany(
       [a, b, categoryOnly, projectOnly, empty, admin].map((user, index) => ({
-        _id: user._id, role: user.role, name: `Fixture ${index}`,
+        _id: user._id,
+        role: user.role,
+        name: `Fixture ${index}`,
         email: `fixture-${index}@example.invalid`,
       })),
     );
@@ -254,7 +276,12 @@ describe.skipIf(!uri)("getAll MongoDB authorization", () => {
     await Project.collection.insertMany([
       { _id: pa, userId: a._id, name: "A", status: "active" },
       { _id: pb, userId: b._id, name: "B", status: "active" },
-      { _id: pp, userId: projectOnly._id, name: "Project only", status: "active" },
+      {
+        _id: pp,
+        userId: projectOnly._id,
+        name: "Project only",
+        status: "active",
+      },
     ]);
     await Task.create([
       { title: "A report", categoryId: ca, projectId: pa, dueDate: at },
@@ -266,8 +293,13 @@ describe.skipIf(!uri)("getAll MongoDB authorization", () => {
       { title: "P report", projectId: pp },
       { title: "Literal", description: "A+B", categoryId: ca },
       { title: "Regex decoy", description: "aaab", categoryId: ca },
-      { title: "Completed report", categoryId: ca, projectId: pa,
-        status: "completed", dueDate: at },
+      {
+        title: "Completed report",
+        categoryId: ca,
+        projectId: pa,
+        status: "completed",
+        dueDate: at,
+      },
     ]);
   }, 30000);
 
@@ -282,16 +314,23 @@ describe.skipIf(!uri)("getAll MongoDB authorization", () => {
   });
 
   async function expectTitles(
-    user: IUserDocument, filters: Record<string, unknown>, titles: string[],
+    user: IUserDocument,
+    filters: Record<string, unknown>,
+    titles: string[],
   ) {
     const result = await taskService.getAll(user, filters);
-    expect(result.data.map((task) => task.title).sort()).toEqual([...titles].sort());
+    expect(result.data.map((task) => task.title).sort()).toEqual(
+      [...titles].sort(),
+    );
     expect(result.pageInfo.totalCount).toBe(titles.length);
   }
 
   it("A1/A5: search preserves both access branches", async () => {
     await expectTitles(a, { search: "report" }, [
-      "A report", "A standalone report", "A project report", "Completed report",
+      "A report",
+      "A standalone report",
+      "A project report",
+      "Completed report",
     ]);
   });
   it("A2/A3: project-only user cannot override ownership", async () => {
@@ -302,13 +341,24 @@ describe.skipIf(!uri)("getAll MongoDB authorization", () => {
   it("A4: category-only and empty users stay isolated", async () => {
     await expectTitles(categoryOnly, { search: "report" }, ["C report"]);
     await expectTitles(empty, {}, []);
-    await expectTitles(empty, { search: "report", projectId: pb.toString() }, []);
+    await expectTitles(
+      empty,
+      { search: "report", projectId: pb.toString() },
+      [],
+    );
   });
   it("A6: combines filters including inclusive date bounds", async () => {
-    await expectTitles(a, {
-      search: "report", status: "pending", projectId: pa.toString(),
-      startDate: at.toISOString(), endDate: at.toISOString(),
-    }, ["A report", "A project report"]);
+    await expectTitles(
+      a,
+      {
+        search: "report",
+        status: "pending",
+        projectId: pa.toString(),
+        startDate: at.toISOString(),
+        endDate: at.toISOString(),
+      },
+      ["A report", "A project report"],
+    );
     await expectTitles(a, { search: "report", projectId: "standalone" }, [
       "A standalone report",
     ]);
@@ -317,8 +367,9 @@ describe.skipIf(!uri)("getAll MongoDB authorization", () => {
     await expectTitles(a, { search: " a+b " }, ["Literal"]);
     const unfiltered = await taskService.getAll(a, {});
     const whitespace = await taskService.getAll(a, { search: "   " });
-    expect(whitespace.data.map((t) => t._id.toString()).sort())
-      .toEqual(unfiltered.data.map((t) => t._id.toString()).sort());
+    expect(whitespace.data.map((t) => t._id.toString()).sort()).toEqual(
+      unfiltered.data.map((t) => t._id.toString()).sort(),
+    );
     expect(whitespace.pageInfo.totalCount).toBe(6);
   });
   it("A8: admin keeps global access but honors filters", async () => {
@@ -329,11 +380,17 @@ describe.skipIf(!uri)("getAll MongoDB authorization", () => {
   });
   it("A9: count and pagination apply after authorization", async () => {
     const result = await taskService.getAll(a, {
-      search: "report", pageNo: 2, pageSize: 1, sort: "title:asc",
+      search: "report",
+      pageNo: 2,
+      pageSize: 1,
+      sort: "title:asc",
     });
     expect(result.data.map((t) => t.title)).toEqual(["A report"]);
     expect(result.pageInfo).toEqual({
-      pageNo: 2, pageSize: 1, totalCount: 4, totalPage: 4,
+      pageNo: 2,
+      pageSize: 1,
+      totalCount: 4,
+      totalPage: 4,
     });
     expect((await taskService.getAll(a, {})).pageInfo.totalCount).toBe(6);
   });
@@ -413,7 +470,6 @@ Không đánh dấu phase 1 hoàn thành nếu chưa chạy MongoDB integration.
 - Code dự kiến giữ chữ ký `getAll`, dùng repository hiện hữu, không phát sinh interface phụ chưa định nghĩa.
 - Phase 1 độc lập với lựa chọn client, SDK và OAuth provider của các phase sau.
 - Các command trong tài liệu là hướng dẫn thực thi; việc soạn plan không có nghĩa là chúng đã được chạy.
-
 
 ## Nhật ký thực thi — 2026-10-16
 

@@ -5,6 +5,8 @@ import {
   registerGetTaskTool,
   registerListProjectsTool,
   registerListCategoriesTool,
+  registerCreateTaskTool,
+  registerUpdateTaskTool,
 } from "./tools/index.js";
 
 export function registerOrbitTools(
@@ -15,4 +17,8 @@ export function registerOrbitTools(
   registerGetTaskTool(server, context);
   registerListProjectsTool(server, context);
   registerListCategoriesTool(server, context);
+  if (context.user.role === "USER" && context.scopes?.includes("tasks:write")) {
+    registerCreateTaskTool(server, context);
+    registerUpdateTaskTool(server, context);
+  }
 }

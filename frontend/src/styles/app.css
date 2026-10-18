@@ -1137,7 +1137,10 @@ textarea.ui-input {
   }
 
   .ui-assistant-panel {
-    --assistant-width: calc(100vw - max(0.5rem, env(safe-area-inset-right)) - max(0.5rem, env(safe-area-inset-left)));
+    --assistant-width: calc(
+      100vw - max(0.5rem, env(safe-area-inset-right)) -
+        max(0.5rem, env(safe-area-inset-left))
+    );
     --assistant-height: min(34rem, calc(100dvh - 1rem));
     right: max(0.5rem, env(safe-area-inset-right));
   }

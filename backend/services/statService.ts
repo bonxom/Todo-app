@@ -209,7 +209,9 @@ async function rebuildStats(user: IUserDocument): Promise<IStatDocument> {
     }
 
     if (task.status === "given-up") {
-      const dateKey = toDateKey(task.updatedAt || task.createdAt);
+      const dateKey = toDateKey(
+        task.givenUpAt || task.updatedAt || task.createdAt,
+      );
       if (dateKey) {
         const ds = ensureDaily(dateKey);
         ds.givenUpTasks += 1;

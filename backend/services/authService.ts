@@ -33,7 +33,10 @@ const generateRefreshToken = (
 ): string => {
   const expiresIn = process.env
     .JWT_REFRESH_EXPIRES_IN as jwt.SignOptions["expiresIn"];
-  return jwt.sign({ id: userId }, getRefreshSecret(), { expiresIn, jwtid: randomUUID() });
+  return jwt.sign({ id: userId }, getRefreshSecret(), {
+    expiresIn,
+    jwtid: randomUUID(),
+  });
 };
 
 const addTokenToBlacklist = async (tokenString: string): Promise<void> => {

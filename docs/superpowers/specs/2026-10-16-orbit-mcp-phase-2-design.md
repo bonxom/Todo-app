@@ -12,13 +12,13 @@ AI client có thể khám phá và gọi bốn tool đọc dữ liệu của ng�
 
 ## Các quyết định
 
-| Lựa chọn | Quyết định và lý do |
-| --- | --- |
-| Adapter cùng backend hoặc process riêng gọi REST | Cùng backend, gọi service trực tiếp; tránh nhân đôi nghiệp vụ và HTTP nội bộ |
-| Streamable HTTP stateless hoặc session | Stateless, JSON response; mỗi POST có server/transport/context riêng; không cần kho session |
-| Admin đọc toàn hệ thống, giả lập USER, hoặc từ chối | Từ chối ADMIN bằng HTTP 403 trong phase 2; không sửa role hoặc document để giả lập user |
+| Lựa chọn                                             | Quyết định và lý do                                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Adapter cùng backend hoặc process riêng gọi REST     | Cùng backend, gọi service trực tiếp; tránh nhân đôi nghiệp vụ và HTTP nội bộ                                  |
+| Streamable HTTP stateless hoặc session               | Stateless, JSON response; mỗi POST có server/transport/context riêng; không cần kho session                   |
+| Admin đọc toàn hệ thống, giả lập USER, hoặc từ chối  | Từ chối ADMIN bằng HTTP 403 trong phase 2; không sửa role hoặc document để giả lập user                       |
 | `getById` hiện tại hoặc read method thống nhất quyền | Thêm `taskService.getReadableById` dùng `buildTaskAccessQuery`; giữ `getById` và quyền mutation REST hiện tại |
-| Pagination project/category tại DB hoặc sau service | Paginate sau service cho local MVP; ghi rõ giới hạn bộ nhớ và aggregation bên dưới |
+| Pagination project/category tại DB hoặc sau service  | Paginate sau service cho local MVP; ghi rõ giới hạn bộ nhớ và aggregation bên dưới                            |
 
 Client nghiệm thu: MCP Inspector `2.11.0` qua Streamable HTTP và SDK Client trong integration test. Chưa cam kết mọi ứng dụng AI hỗ trợ custom Bearer header. Inspector dùng token test ngắn hạn; không đưa token vào URL, tài liệu, git hoặc command argument.
 
@@ -44,16 +44,16 @@ Chuỗi xử lý riêng: enabled check → Host/socket/forwarded-header/Origin g
 
 Origin vắng mặt được chấp nhận cho native client; có mặt phải trùng allowlist, nếu không trả 403. OPTIONS không cần Bearer, nhưng vẫn kiểm tra network/Origin; trả 204 với methods POST, GET, DELETE, OPTIONS và allowed headers Authorization, Content-Type, Accept, MCP-Protocol-Version, MCP-Session-Id. Echo đúng origin đã cho phép, `Vary: Origin`, không cookie credentials. Các response MCP không cache (`Cache-Control: no-store`).
 
-| Request sau các guard | Kết quả |
-| --- | --- |
-| POST initialize, notification, tools/list, tools/call | SDK xử lý JSON-RPC; notification hợp lệ 202; request hợp lệ JSON response |
-| GET hoặc DELETE có auth hợp lệ | 405, `Allow: POST, OPTIONS`; không SSE session |
-| Method khác | 405 sau guard/auth; HEAD không vô tình chạy GET handler |
-| Token thiếu/sai/hết hạn/user đã xóa | 401, `WWW-Authenticate: Bearer`; không tạo server/tool context |
-| ADMIN | 403 trên mọi protocol operation |
-| JSON sai hoặc payload quá lớn | 400 hoặc 413; không trả stack/body đầu vào |
-| Protocol/header/media không hợp lệ | SDK quyết định response chuẩn; kiểm thử version không hỗ trợ, Accept thiếu, Content-Type sai |
-| Readiness thất bại | 503 đã sanitize, không chạy tool |
+| Request sau các guard                                 | Kết quả                                                                                      |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| POST initialize, notification, tools/list, tools/call | SDK xử lý JSON-RPC; notification hợp lệ 202; request hợp lệ JSON response                    |
+| GET hoặc DELETE có auth hợp lệ                        | 405, `Allow: POST, OPTIONS`; không SSE session                                               |
+| Method khác                                           | 405 sau guard/auth; HEAD không vô tình chạy GET handler                                      |
+| Token thiếu/sai/hết hạn/user đã xóa                   | 401, `WWW-Authenticate: Bearer`; không tạo server/tool context                               |
+| ADMIN                                                 | 403 trên mọi protocol operation                                                              |
+| JSON sai hoặc payload quá lớn                         | 400 hoặc 413; không trả stack/body đầu vào                                                   |
+| Protocol/header/media không hợp lệ                    | SDK quyết định response chuẩn; kiểm thử version không hỗ trợ, Accept thiếu, Content-Type sai |
+| Readiness thất bại                                    | 503 đã sanitize, không chạy tool                                                             |
 
 Tái sử dụng `protect` trong MCP router, thêm kiểm tra token đã xác thực phải có `exp` hữu hạn trong tương lai (JWT decode chỉ sau protect, không dùng decode để xác thực). Chỉ Bearer header, không token query/body. Context đóng trong closure của từng request; không cache user/token hoặc dùng mutable singleton server. Token hết hạn giữa các request bị từ chối ở request kế tiếp; request đang thực thi dùng identity đã xác thực lúc nhận.
 
@@ -71,12 +71,12 @@ Project/category gọi `getAll(user)` rồi sắp xếp `_id` tăng dần, tính
 
 Input đều strict object: field lạ, `userId`, `role`, object chứa Mongo operator bị từ chối trước gọi service. Number JSON thực, không coerce chuỗi. ObjectId là 24 ký tự hex. Schema và description dùng tiếng Anh để client dễ khám phá; tài liệu hướng dẫn dùng tiếng Việt.
 
-| Tool | Input | Output thành công |
-| --- | --- | --- |
-| `orbit_list_tasks` | pageNo, pageSize, search, status, projectId, startDate, endDate, sort | `{pageInfo, data: TaskDto[]}` |
-| `orbit_get_task` | `{taskId: ObjectId}` | `{task: TaskDto}` |
-| `orbit_list_projects` | pageNo, pageSize | `{pageInfo, data: ProjectDto[]}` |
-| `orbit_list_categories` | pageNo, pageSize | `{pageInfo, data: CategoryDto[]}` |
+| Tool                    | Input                                                                 | Output thành công                 |
+| ----------------------- | --------------------------------------------------------------------- | --------------------------------- |
+| `orbit_list_tasks`      | pageNo, pageSize, search, status, projectId, startDate, endDate, sort | `{pageInfo, data: TaskDto[]}`     |
+| `orbit_get_task`        | `{taskId: ObjectId}`                                                  | `{task: TaskDto}`                 |
+| `orbit_list_projects`   | pageNo, pageSize                                                      | `{pageInfo, data: ProjectDto[]}`  |
+| `orbit_list_categories` | pageNo, pageSize                                                      | `{pageInfo, data: CategoryDto[]}` |
 
 - pageNo integer 1..100000, default 1; pageSize integer 1..100, default 20. pageInfo giữ `{pageNo,pageSize,totalCount,totalPage}`; rỗng totalCount/totalPage bằng 0, trang vượt giới hạn trả data rỗng và count thực.
 - search tối đa 200 ký tự, trim, tìm literal title/description không phân biệt hoa thường như service; search trắng không filter.
@@ -89,16 +89,25 @@ DTO whitelist (tất cả key bên dưới luôn có):
 
 ```typescript
 type TaskDto = {
-  id: string; title: string; description: string | null;
-  status: 'pending' | 'in-progress' | 'completed' | 'given-up';
-  priority: 'Low' | 'Medium' | 'High';
-  categoryId: string | null; projectId: string | null;
-  startDate: string | null; dueDate: string | null; completedAt: string | null;
-  createdAt: string; updatedAt: string;
+  id: string;
+  title: string;
+  description: string | null;
+  status: "pending" | "in-progress" | "completed" | "given-up";
+  priority: "Low" | "Medium" | "High";
+  categoryId: string | null;
+  projectId: string | null;
+  startDate: string | null;
+  dueDate: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 type ProjectDto = {
-  id: string; name: string; description: string | null;
-  color: string; status: 'active' | 'completed';
+  id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  status: "active" | "completed";
 };
 type CategoryDto = { id: string; name: string; description: string | null };
 ```
@@ -115,19 +124,19 @@ Lỗi lúc thực thi tool có `isError:true` và text JSON `{error:{code,messag
 
 ## Ma trận nghiệm thu
 
-| ID | Kiểm chứng bắt buộc |
-| --- | --- |
-| P2-01 | Disabled 404; enabled+HOST/public NODE_ENV/VERCEL sai fail startup; REST không đổi khi disabled |
-| P2-02 | Origin/Host/socket/forwarded guard, native không Origin, preflight và CORS actual response |
-| P2-03 | initialize → initialized → tools/list → tools/call trên SDK client thật; đúng 4 tools, protocol 2025-11-25, không session ID |
-| P2-04 | Thiếu/sai/hết hạn/no-exp/refresh token/user xóa → 401; admin → 403; JWT_SECRET và JWT_REFRESH_SECRET fixture khác nhau |
-| P2-05 | Hai client A/B gọi đồng thời có barrier để overlap; dữ liệu và totalCount chỉ trong quyền, không lẫn context |
+| ID    | Kiểm chứng bắt buộc                                                                                                                              |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P2-01 | Disabled 404; enabled+HOST/public NODE_ENV/VERCEL sai fail startup; REST không đổi khi disabled                                                  |
+| P2-02 | Origin/Host/socket/forwarded guard, native không Origin, preflight và CORS actual response                                                       |
+| P2-03 | initialize → initialized → tools/list → tools/call trên SDK client thật; đúng 4 tools, protocol 2025-11-25, không session ID                     |
+| P2-04 | Thiếu/sai/hết hạn/no-exp/refresh token/user xóa → 401; admin → 403; JWT_SECRET và JWT_REFRESH_SECRET fixture khác nhau                           |
+| P2-05 | Hai client A/B gọi đồng thời có barrier để overlap; dữ liệu và totalCount chỉ trong quyền, không lẫn context                                     |
 | P2-06 | getReadableById trên Mongo thật: own category, own project, cross-owner OR, foreign, orphan, dangling reference; REST getById/mutation không đổi |
-| P2-07 | Strict schema, ID/operator injection, paging giới hạn, ngày/offset, search literal, status/project/sort và trang rỗng |
-| P2-08 | DTO cả populated/raw/null; schema output; không owner email/name/summary; error sanitize cả text/structuredContent |
-| P2-09 | GET/DELETE/HEAD 405; JSON hỏng, oversized body, unsupported protocol, Accept/Content-Type sai; cleanup success/error/disconnect |
-| P2-10 | Project/category paging/count/không lẫn user; tool không ghi dữ liệu hoặc gọi stats mutation |
-| P2-11 | Inspector smoke cả bốn tools; ghi exact Inspector version và protocol negotiated, không ghi credential |
+| P2-07 | Strict schema, ID/operator injection, paging giới hạn, ngày/offset, search literal, status/project/sort và trang rỗng                            |
+| P2-08 | DTO cả populated/raw/null; schema output; không owner email/name/summary; error sanitize cả text/structuredContent                               |
+| P2-09 | GET/DELETE/HEAD 405; JSON hỏng, oversized body, unsupported protocol, Accept/Content-Type sai; cleanup success/error/disconnect                  |
+| P2-10 | Project/category paging/count/không lẫn user; tool không ghi dữ liệu hoặc gọi stats mutation                                                     |
+| P2-11 | Inspector smoke cả bốn tools; ghi exact Inspector version và protocol negotiated, không ghi credential                                           |
 
 Unit test kiểm tra schema/DTO/error/config, HTTP test dùng supertest, integration dùng SDK Client qua listener ephemeral trên loopback và MongoDB disposable. Không coi test mocked hoặc suite skipped là bằng chứng cách ly DB. Database tên riêng `orbit_mcp_phase2_test_<pid>_<timestamp>`, chỉ nhận URI loopback; teardown drop đúng DB test và đóng client/server/transport/Mongoose trong finally.
 

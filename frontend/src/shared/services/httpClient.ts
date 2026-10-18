@@ -26,8 +26,13 @@ let refreshPromise: Promise<string> | null = null;
 
 const isExpired = (token: string): boolean => {
   try {
-    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    return typeof payload.exp === "number" && payload.exp * 1000 <= Date.now() + 30_000;
+    const payload = JSON.parse(
+      atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
+    );
+    return (
+      typeof payload.exp === "number" &&
+      payload.exp * 1000 <= Date.now() + 30_000
+    );
   } catch {
     return false;
   }
@@ -116,44 +121,73 @@ const refreshAccessToken = (): Promise<string> => {
   const previousToken = useAuthStore.getState().token;
   const rotate = async (): Promise<string> => {
     const stored = readAuthSnapshot();
-    if (useAuthStore.getState().sessionRevision !== revision || !stored.refreshToken) {
+    if (
+      useAuthStore.getState().sessionRevision !== revision ||
+      !stored.refreshToken
+    ) {
       throw new ApiError("Session ended", 401, "http");
     }
-    if (stored.token && stored.token !== previousToken && !isExpired(stored.token)) {
-      useAuthStore.getState().updateTokens({ accessToken: stored.token, refreshToken: stored.refreshToken });
+    if (
+      stored.token &&
+      stored.token !== previousToken &&
+      !isExpired(stored.token)
+    ) {
+      useAuthStore
+        .getState()
+        .updateTokens({
+          accessToken: stored.token,
+          refreshToken: stored.refreshToken,
+        });
       return stored.token;
     }
-    const response = await axios.post(`${env.serverUrl || ""}/api/auth/refresh`, {
-      refreshToken: stored.refreshToken,
-    }, { timeout: 30000 });
+    const response = await axios.post(
+      `${env.serverUrl || ""}/api/auth/refresh`,
+      {
+        refreshToken: stored.refreshToken,
+      },
+      { timeout: 30000 },
+    );
     const accessToken = response.data.accessToken || response.data.token;
     if (typeof accessToken !== "string" || !accessToken) {
       throw new ApiError("Invalid refresh response", 502, "http");
     }
-    if (useAuthStore.getState().sessionRevision !== revision ||
-        readAuthSnapshot().refreshToken !== stored.refreshToken) {
+    if (
+      useAuthStore.getState().sessionRevision !== revision ||
+      readAuthSnapshot().refreshToken !== stored.refreshToken
+    ) {
       throw new ApiError("Session changed", 401, "http");
     }
-    useAuthStore.getState().updateTokens({ accessToken, refreshToken: response.data.refreshToken });
+    useAuthStore
+      .getState()
+      .updateTokens({ accessToken, refreshToken: response.data.refreshToken });
     return accessToken;
   };
-  refreshPromise = Promise.resolve(typeof navigator !== "undefined" && navigator.locks
-    ? navigator.locks.request("orbit-auth-refresh", rotate)
-    : rotate()).then((token) => token)
+  refreshPromise = Promise.resolve(
+    typeof navigator !== "undefined" && navigator.locks
+      ? navigator.locks.request("orbit-auth-refresh", rotate)
+      : rotate(),
+  )
+    .then((token) => token)
     .catch(async (error) => {
       const normalized = normalizeToApiError(error);
-      if ([401, 403].includes(normalized.status ?? 0) &&
-          useAuthStore.getState().sessionRevision === revision) {
+      if (
+        [401, 403].includes(normalized.status ?? 0) &&
+        useAuthStore.getState().sessionRevision === revision
+      ) {
         await handleTerminalAuthFailure();
       }
       throw normalized;
     })
-    .finally(() => { refreshPromise = null; });
+    .finally(() => {
+      refreshPromise = null;
+    });
   return refreshPromise;
 };
 
 const isPublicAuthEndpoint = (url: string) =>
-  ["login", "register", "refresh", "logout"].some((name) => url.includes(`/api/auth/${name}`));
+  ["login", "register", "refresh", "logout"].some((name) =>
+    url.includes(`/api/auth/${name}`),
+  );
 
 // Request interceptor
 axiosInstance.interceptors.request.use(
@@ -170,8 +204,11 @@ axiosInstance.interceptors.request.use(
     }
 
     let token = useAuthStore.getState().token;
-    if (!isPublicAuthEndpoint(config.url ?? "") &&
-        useAuthStore.getState().refreshToken && (!token || isExpired(token))) {
+    if (
+      !isPublicAuthEndpoint(config.url ?? "") &&
+      useAuthStore.getState().refreshToken &&
+      (!token || isExpired(token))
+    ) {
       token = await refreshAccessToken();
     }
     if (token) {
@@ -224,7 +261,10 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       // A late 401 may belong to the token that another request already replaced.
       const currentToken = useAuthStore.getState().token;
-      if (currentToken && originalRequest.headers.Authorization !== `Bearer ${currentToken}`) {
+      if (
+        currentToken &&
+        originalRequest.headers.Authorization !== `Bearer ${currentToken}`
+      ) {
         return axiosInstance(originalRequest);
       }
       if (!useAuthStore.getState().refreshToken) {
