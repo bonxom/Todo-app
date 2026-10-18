@@ -1,48 +1,33 @@
 import { useState } from "react";
 import { X, Maximize2, Minimize2, MessageSquare, Sparkles } from "lucide-react";
+import { useConversationChat } from "../../hooks/useConversationChat";
 import ChatField from "./ChatField";
-import {
-  useAgenticChatMutation,
-  // useChatMutation,
-  useGenerateTasksMutation,
-} from "../../api/aiMutations";
+import { useGenerateTasksMutation } from "../../api/aiMutations";
 import { formatDateTime } from "@/shared/utils/dateTime";
 
 const SmallChat = ({ onClose }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  // const chatMutation = useChatMutation();
-  const agenticChatMutation = useAgenticChatMutation();
+  const chat = useConversationChat();
   const generateTasksMutation = useGenerateTasksMutation();
   const [mode, setMode] = useState("chat"); // 'chat' or 'taskAssistant'
   const [messages, setMessages] = useState([
     {
       id: "1",
       sender: "bot",
-      text: "Hello! How can I help you today?",
+      text: "Hi! Describe a goal and I can generate tasks for you.",
       timestamp: new Date().toISOString(),
     },
   ]);
   const [isTyping, setIsTyping] = useState(false);
 
-  const handleModeChange = (newMode) => {
-    setMode(newMode);
-    // Reset messages with appropriate welcome message
-    const welcomeMessage =
-      newMode === "chat"
-        ? "Hello! How can I help you today?"
-        : "Hi! Tell me what you want to accomplish, and I'll generate 3 tasks for you!";
-
-    setMessages([
-      {
-        id: "1",
-        sender: "bot",
-        text: welcomeMessage,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-  };
+  const handleModeChange = (newMode) => setMode(newMode);
 
   const handleSendMessage = async (text) => {
+    if (mode === "chat") {
+      await chat.send(text);
+      return;
+    }
+    if (isTyping) return;
     const newMessage = {
       id: Date.now().toString(),
       sender: "user",
@@ -54,39 +39,6 @@ const SmallChat = ({ onClose }) => {
 
     setIsTyping(true);
     try {
-      if (mode === "chat") {
-        // Chat mode - normal conversation
-        // const response = await chatMutation.mutateAsync({ userInput: text });
-
-        // Use the agentic chat mutation for the new chat mode
-        const response = await agenticChatMutation.mutateAsync({
-          userInput: text,
-        });
-        // Check if response exists and has data
-        if (
-          response &&
-          response.data &&
-          typeof response.data === "string" &&
-          response.data.trim()
-        ) {
-          const botResponse = {
-            id: (Date.now() + 1).toString(),
-            sender: "bot",
-            text: response.data,
-            timestamp: new Date().toISOString(),
-          };
-          setMessages((prev) => [...prev, botResponse]);
-        } else {
-          // If no valid data, show a specific error message
-          const errorResponse = {
-            id: (Date.now() + 1).toString(),
-            sender: "bot",
-            text: "I received your message but couldn't generate a proper response. Please try rephrasing your question.",
-            timestamp: new Date().toISOString(),
-          };
-          setMessages((prev) => [...prev, errorResponse]);
-        }
-      } else {
         // Task Assistant mode - generate tasks
         const response = await generateTasksMutation.mutateAsync({
           userRequirement: text,
@@ -131,7 +83,6 @@ const SmallChat = ({ onClose }) => {
           };
           setMessages((prev) => [...prev, errorResponse]);
         }
-      }
     } catch (error) {
       console.error("Error getting AI response:", error);
 
@@ -244,11 +195,22 @@ const SmallChat = ({ onClose }) => {
         </div>
       </div>
 
+      {mode === "chat" && (chat.loading || chat.error || chat.pending || chat.before) && (
+        <div className="border-b border-[var(--color-line)] p-3 text-sm" aria-live="polite">
+          {chat.loading && <p>Loading conversation…</p>}
+          {chat.error && <p role="alert">{chat.error}</p>}
+          {chat.pending && <button type="button" disabled={chat.sending || chat.loading} onClick={() => chat.send()} className="ui-focus-ring underline">Check reply / Retry</button>}
+          {chat.error && !chat.pending && <button type="button" disabled={chat.loading} onClick={chat.reload} className="ui-focus-ring underline">Reload conversation</button>}
+          {chat.before && <button type="button" disabled={chat.loading || chat.sending} onClick={chat.loadEarlier} className="ui-focus-ring ml-2 underline">Load earlier messages</button>}
+        </div>
+      )}
       <div className="flex-1 overflow-hidden bg-[var(--color-canvas)]">
         <ChatField
-          messages={messages}
+          key={mode === "chat" ? chat.conversationId ?? "new" : "tasks"}
+          messages={mode === "chat" ? chat.messages : messages}
           onSendMessage={handleSendMessage}
-          isTyping={isTyping}
+          isTyping={mode === "chat" ? chat.sending : isTyping}
+          disabled={mode === "chat" ? chat.loading || chat.sending || Boolean(chat.pending) || Boolean(chat.error) : isTyping}
         />
       </div>
     </div>

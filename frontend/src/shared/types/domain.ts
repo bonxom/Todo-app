@@ -139,6 +139,8 @@ export interface GenerateTasksPayload {
   userRequirement: string;
 }
 export interface ChatPayload {
+  conversationId?: string;
+  requestId?: string;
   userInput: string;
 }
 
@@ -177,3 +179,17 @@ export interface ApiEnvelope<T> {
 }
 export type GenerateTasksResponse = ApiEnvelope<Task[]>;
 export type ChatResponse = ApiEnvelope<string>;
+
+export interface ConversationMessage {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: string;
+}
+export interface ConversationSnapshot {
+  conversationId: string;
+  title: string;
+  before: number | null;
+  messages: ConversationMessage[];
+  pending: Array<{ requestId: string; userInput: string }>;
+}

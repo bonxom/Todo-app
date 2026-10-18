@@ -31,6 +31,7 @@ it("denies absent write permission and ADMIN before touching the database", asyn
 it.each([
   ["create", { title: "   ", idempotencyKey: "unique-key-000001" }],
   ["create", { title: "test", idempotencyKey: "short" }],
+  ["create", { title: "test", idempotencyKey: "unique-key-000001", status: "in-progress" }],
   [
     "create",
     { title: "test", idempotencyKey: "unique-key-000001", userId: "injected" },

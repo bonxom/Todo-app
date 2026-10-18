@@ -184,6 +184,7 @@ export const taskService = {
   async create(
     data: Record<string, unknown>,
     userId: mongoose.Types.ObjectId | string,
+    initialStatus: "pending" | "in-progress" = "in-progress",
   ): Promise<ITaskDocument | null> {
     const categoryId = await resolveCategory(
       data.categoryId as string | undefined,
@@ -204,7 +205,7 @@ export const taskService = {
     const task = await taskRepository.create({
       title: data.title,
       description: data.description,
-      status: "in-progress",
+      status: initialStatus,
       priority: data.priority,
       categoryId,
       projectId: projectUpdate.shouldUpdate ? projectUpdate.value : null,
@@ -212,7 +213,11 @@ export const taskService = {
       dueDate: dueDate.shouldUpdate ? dueDate.value : undefined,
     });
 
-    await statService.incrementInProgress(userId);
+    if (initialStatus === "pending") {
+      await statService.incrementPending(userId);
+    } else {
+      await statService.incrementInProgress(userId);
+    }
     return taskRepository.findByIdPopulated(task._id);
   },
 

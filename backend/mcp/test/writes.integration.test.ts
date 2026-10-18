@@ -87,7 +87,7 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
       });
       expect(result.isError).not.toBe(true);
       expect(result.structuredContent).toMatchObject({
-        task: { title: "SDK task", status: "in-progress" },
+        task: { title: "SDK task", status: "pending" },
       });
       const taskId = (result.structuredContent as { task: { id: string } }).task
         .id;
@@ -102,6 +102,7 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
       expect(updated.structuredContent).toMatchObject({
         task: { title: "SDK edited" },
       });
+      await taskWriteService.update({ idempotencyKey: randomUUID(), taskId, changes: { status: "in-progress" } }, context(userB));
       const completed = await client.callTool({
         name: "orbit_update_task",
         arguments: {
@@ -164,6 +165,8 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
     );
     expect(new Set(results.map((r) => r.task.id)).size).toBe(1);
     expect(await Task.countDocuments({ title: input.title })).toBe(1);
+    expect(results.every((result) => result.task.status === "pending")).toBe(true);
+    expect((await Task.findById(results[0].task.id))?.status).toBe("pending");
     expect(
       await McpWriteReceipt.countDocuments({ taskId: results[0].task.id }),
     ).toBe(1);
@@ -194,7 +197,8 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
     expect(await Stat.countDocuments({ userId: user._id })).toBe(1);
     expect(await Stat.findOne({ userId: user._id })).toMatchObject({
       totalTasks: 3,
-      inProgressTasks: 3,
+      pendingTasks: 3,
+      inProgressTasks: 0,
     });
   });
 
@@ -322,6 +326,7 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
       { idempotencyKey: randomUUID(), title: "give up" },
       context(),
     );
+    await taskWriteService.update({ idempotencyKey: randomUUID(), taskId: other.task.id, changes: { status: "in-progress" } }, context());
     const givenUp = await taskWriteService.update({ ...({ idempotencyKey: randomUUID(), taskId: other.task.id }), changes: { status: "given-up" } },
       context(),
     );
@@ -331,6 +336,7 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
 
   it("updates metadata and status together and rolls both back on invalid transition", async () => {
     const created = await taskWriteService.create({ idempotencyKey: randomUUID(), title: "combined" }, context());
+    await taskWriteService.update({ idempotencyKey: randomUUID(), taskId: created.task.id, changes: { status: "in-progress" } }, context());
     const input = { idempotencyKey: randomUUID(), taskId: created.task.id,
       changes: { title: "combined finished", status: "completed" } };
     const finished = await taskWriteService.update(input, context());
@@ -412,6 +418,7 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
       { idempotencyKey: randomUUID(), title: "audit rollback" },
       context(),
     );
+    await taskWriteService.update({ idempotencyKey: randomUUID(), taskId: created.task.id, changes: { status: "in-progress" } }, context());
     const before = await Stat.findOne({ userId: userA._id }).lean();
     const spy = vi
       .spyOn(McpWriteReceipt, "create")

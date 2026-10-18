@@ -110,7 +110,7 @@ export const taskWriteService = {
           data.startDate === undefined ? getStartOfToday() : data.startDate,
           data.dueDate,
         );
-        return taskService.create(data, context.user._id);
+        return taskService.create(data, context.user._id, "pending");
       },
     );
   },
