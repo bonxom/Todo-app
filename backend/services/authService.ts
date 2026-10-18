@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { userRepository } from "../repositories/userRepository.js";
@@ -32,7 +33,7 @@ const generateRefreshToken = (
 ): string => {
   const expiresIn = process.env
     .JWT_REFRESH_EXPIRES_IN as jwt.SignOptions["expiresIn"];
-  return jwt.sign({ id: userId }, getRefreshSecret(), { expiresIn });
+  return jwt.sign({ id: userId }, getRefreshSecret(), { expiresIn, jwtid: randomUUID() });
 };
 
 const addTokenToBlacklist = async (tokenString: string): Promise<void> => {

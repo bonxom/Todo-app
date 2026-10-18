@@ -3,6 +3,9 @@ import app from "./app.js";
 import { connectDB } from "./config/db.js";
 import { getServerConfig, validateServerEnv } from "./config/env.js";
 
+import { readMcpConfig } from "./mcp/config.js";
+
+readMcpConfig(process.env);
 const { host, port } = getServerConfig();
 
 if (!process.env.VERCEL) {

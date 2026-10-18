@@ -220,10 +220,11 @@ export const taskService = {
     user: IUserDocument,
     queryParams: Record<string, unknown>,
   ): Promise<ResponsePage<ITaskDocument>> {
-    const query: Record<string, unknown> = await buildTaskAccessQuery(user);
+    const accessQuery = await buildTaskAccessQuery(user);
+    const filters: Record<string, unknown> = {};
     const dateRange = parseDateRangeQuery(queryParams);
     if (dateRange.error) throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
-    if (dateRange.filter) Object.assign(query, dateRange.filter);
+    if (dateRange.filter) Object.assign(filters, dateRange.filter);
 
     // Server-side search (title + description)
     if (
@@ -235,19 +236,25 @@ export const taskService = {
         .trim()
         .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const searchRegex = new RegExp(escaped, "i");
-      query.$or = [{ title: searchRegex }, { description: searchRegex }];
+      filters.$or = [{ title: searchRegex }, { description: searchRegex }];
     }
 
     // Server-side status filter
     if (queryParams.status && typeof queryParams.status === "string") {
-      query.status = queryParams.status;
+      filters.status = queryParams.status;
     }
 
     // Server-side project filter
     if (queryParams.projectId && typeof queryParams.projectId === "string") {
-      query.projectId =
+      filters.projectId =
         queryParams.projectId === "standalone" ? null : queryParams.projectId;
     }
+
+    // Keep user filters separate so they cannot overwrite access restrictions.
+    const query: Record<string, unknown> =
+      Object.keys(filters).length === 0
+        ? accessQuery
+        : { $and: [accessQuery, filters] };
 
     // Pagination
     const pageNo = Number(queryParams.pageNo) || DEFAULT_PAGE_NO;
@@ -265,6 +272,20 @@ export const taskService = {
     });
 
     return buildResponsePage(data, totalCount, pageNo, pageSize);
+  },
+
+  // MCP read semantics match getAll; REST ownership/mutation rules stay separate.
+  async getReadableById(
+    id: mongoose.Types.ObjectId | string,
+    user: IUserDocument,
+  ): Promise<ITaskDocument> {
+    const access = await buildTaskAccessQuery(user);
+    const { data } = await taskRepository.findPaginated(
+      { $and: [access, { _id: id }] },
+      { skip: 0, limit: 1, sort: { _id: 1 } },
+    );
+    if (!data[0]) throw new AppError(TASK_ERROR.NOT_FOUND);
+    return data[0];
   },
 
   async getById(

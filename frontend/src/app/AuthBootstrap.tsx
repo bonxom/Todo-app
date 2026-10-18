@@ -11,17 +11,18 @@ export interface AuthBootstrapProps {
 
 export const AuthBootstrap: React.FC<AuthBootstrapProps> = ({ children }) => {
   const token = useAuthStore((state) => state.token);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
   const isAuthReady = useAuthStore((state) => state.isAuthReady);
   const syncUser = useAuthStore((state) => state.syncUser);
   const clearSession = useAuthStore((state) => state.clearSession);
   const setAuthReady = useAuthStore((state) => state.setAuthReady);
 
-  const initialTokenRef = useRef(token);
+  const initialTokenRef = useRef(token || refreshToken);
 
   const userQuery = useQuery({
     queryKey: userKeys.current(),
     queryFn: () => authService.getMe(),
-    enabled: Boolean(token),
+    enabled: Boolean(token || refreshToken),
     retry: (failureCount, error) =>
       error instanceof ApiError &&
       ![401, 403].includes(error.status ?? 0) &&

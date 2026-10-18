@@ -3,17 +3,19 @@ import { AppError } from "../error/AppError.js";
 import { COMMON_ERROR } from "../error/definitions/commonErrors.js";
 
 const DEFAULT_ALLOWED_ORIGINS: string[] = [
-  "https://fetodo-six.vercel.app",
-  "https://fetodo.vercel.app",
-  "http://localhost:5000",
-  "http://127.0.0.1:5000",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:3636",
-  "http://127.0.0.1:3636",
-  "http://180.93.34.142:3636",
-  "https://todo.onrender.com",
-  "http://todo.onrender.com",
+  // "https://fetodo-six.vercel.app",
+  // "https://fetodo.vercel.app",
+  // "http://localhost:5000",
+  // "http://127.0.0.1:5000",
+  // "http://localhost:5173",
+  // "http://127.0.0.1:5173",
+  // "http://localhost:3636",
+  // "http://127.0.0.1:3636",
+  // "http://180.93.34.142:3636",
+  // "https://todo.onrender.com",
+  // "http://todo.onrender.com",
+  // allow all origins
+  "*",
 ];
 
 const normalizeOrigin = (origin: string): string => origin.replace(/\/+$/, "");
@@ -36,13 +38,14 @@ export const getAllowedOrigins = (): string[] => {
 
 export const createCorsOptions = (): CorsOptions => {
   const allowedOrigins = new Set(getAllowedOrigins());
+  const allowAll = allowedOrigins.has("*");
 
   return {
     origin(
       origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void,
     ) {
-      if (!origin) {
+      if (!origin || allowAll) {
         callback(null, true);
         return;
       }

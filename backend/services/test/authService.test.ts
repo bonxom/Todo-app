@@ -137,6 +137,21 @@ describe("refresh-token service", () => {
     vi.restoreAllMocks();
   });
 
+  it("rotates to a unique refresh token even within the same second", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
+    const token = jwt.sign({ id: USER_ID }, REFRESH_SECRET, { expiresIn: "7d" });
+    vi.spyOn(invalidatedTokenRepository, "findByToken").mockResolvedValue(null);
+    vi.spyOn(userRepository, "findById").mockResolvedValue({} as IUserDocument);
+    vi.spyOn(invalidatedTokenRepository, "create").mockResolvedValue({} as IInvalidatedTokenDocument);
+    const first = await authService.refreshToken(token);
+    const second = await authService.refreshToken(first.refreshToken);
+    expect(first.refreshToken).not.toBe(token);
+    expect(second.refreshToken).not.toBe(first.refreshToken);
+    expect(jwt.verify(second.refreshToken, REFRESH_SECRET)).toMatchObject({
+      id: USER_ID, jti: expect.any(String),
+    });
+  });
+
   it("distinguishes a missing refresh token", async () => {
     await expect(authService.refreshToken()).rejects.toMatchObject({
       code: AUTH_ERROR.REFRESH_TOKEN_MISSING.code,

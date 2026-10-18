@@ -26,4 +26,13 @@ export const aiService = {
     );
     return response.data;
   },
+
+  // Agentic AI chat response (MCP Server)
+  getAgenticChatResponse: async (userInput: ChatPayload): Promise<ChatResponse> => {
+    const response = await axiosInstance.post<ChatResponse>(
+      "/api/ai/chat-mcp",
+      userInput,
+    );
+    return response.data;
+  },
 };

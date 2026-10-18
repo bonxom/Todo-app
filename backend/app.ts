@@ -2,11 +2,7 @@ import express from "express";
 import type { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import morgan from "morgan";
-import {
-  createCorsOptions,
-  getServerConfig,
-  validateServerEnv,
-} from "./config/env.js";
+import { createCorsOptions, validateServerEnv } from "./config/env.js";
 import { connectDB } from "./config/db.js";
 import { AppError } from "./error/AppError.js";
 import { COMMON_ERROR } from "./error/definitions/commonErrors.js";
@@ -23,13 +19,12 @@ import authRouter from "./routes/authRoute.js";
 import aiRouter from "./routes/aiRoutes.js";
 import statRouter from "./routes/statRoute.js";
 
+import { readMcpConfig } from "./mcp/config.js";
+import { createMcpRouter } from "./mcp/router.js";
+
 const app = express();
 
 app.use(requestContext);
-
-app.use(cors(createCorsOptions()));
-app.use(morgan("dev"));
-app.use(express.json());
 
 let startupPromise: Promise<void> | undefined;
 
@@ -46,6 +41,11 @@ const ensureAppReady = async (): Promise<void> => {
 
   return startupPromise;
 };
+
+app.use("/mcp", createMcpRouter(readMcpConfig(process.env), ensureAppReady));
+app.use(cors(createCorsOptions()));
+app.use(morgan("dev"));
+app.use(express.json());
 
 app.get("/healthz", async (_req: Request, res: Response) => {
   await ensureAppReady().catch((error: unknown) => {
