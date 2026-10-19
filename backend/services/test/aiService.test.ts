@@ -135,3 +135,91 @@ describe("in-memory MCP chat", () => {
     );
   });
 });
+
+import { taskWriteService } from "../../mcp/services/taskWriteService.js";
+import { closePendingCalls, publicInteraction, grillUserSchema } from "../agentInteraction.js";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
+
+const askContext = { user: { _id: "507f1f77bcf86cd799439011", role: "USER" }, scopes: ["tasks:write"], requestId: "ask-test" } as unknown as McpContext;
+const call = (id: string, name: string, args: unknown) => ({ id, type: "function", function: { name, arguments: JSON.stringify(args) } });
+const response = (...calls: unknown[]) => ({ choices: [{ message: { role: "assistant", content: null, tool_calls: calls } }] });
+const done = { choices: [{message: { role: "assistant", content: "Done" }}] };
+const createArgs = { title: "Test", categoryId: "507f1f77bcf86cd799439012", idempotencyKey: "1234567890abcdef" };
+
+describe("Ask runner", () => {
+  afterEach(() => { vi.restoreAllMocks(); completionCreate.mockReset(); });
+  it("pauses a batched clarification and resumes only unresolved calls", async () => {
+    const read = vi.spyOn(categoryService, "getAll").mockResolvedValue([]);
+    completionCreate.mockResolvedValueOnce(response(
+      call("read1", "orbit_list_categories", {}),
+      call("ask1", "grill_user", { question: "Which?", options: [{ id: "a", label: "A" }, { id: "b", label: "B" }] }),
+      call("read2", "orbit_list_categories", {}),
+    )).mockResolvedValueOnce(done);
+    let saved: ChatCompletionMessageParam[] = [];
+    const first = await aiService.chatWithMcp("Help", askContext, {mode: "ask", checkpoint: async m => { saved = structuredClone(m); }});
+    expect(typeof first).toBe("object");
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(completionCreate).toHaveBeenCalledTimes(1);
+    saved.push({role: "tool", tool_call_id: "ask1", content: '{"optionId":"a"}'});
+    expect(await aiService.chatWithMcp("Help", askContext, {mode: "ask", resumeMessages: saved})).toBe("Done");
+    expect(read).toHaveBeenCalledTimes(2);
+  });
+  it("blocks writes and executes only frozen approved arguments before requesting the model", async () => {
+    vi.spyOn(categoryService, "getAll").mockResolvedValue([{_id: createArgs.categoryId, name: "Uncategorized"}] as never);
+    const write = vi.spyOn(taskWriteService, "create").mockResolvedValue({task: {}} as never);
+    completionCreate.mockResolvedValueOnce(response(call("write1", "orbit_create_task", createArgs))).mockResolvedValueOnce(done);
+    let saved: ChatCompletionMessageParam[] = [];
+    const first = await aiService.chatWithMcp("Create", askContext, {mode: "ask", checkpoint: async m => { saved = structuredClone(m); }});
+    if (typeof first === "string") throw new Error("Expected confirmation");
+    expect(write).not.toHaveBeenCalled();
+    expect(first.interaction.approval?.args).toMatchObject({priority: "Medium", dueDate: null, projectId: null});
+    expect(publicInteraction(first.interaction)).not.toHaveProperty("approval");
+    const approved = {...first.interaction, status: "answered" as const, answer: {optionId: "confirm"}};
+    await aiService.chatWithMcp("Create", askContext, {mode: "ask", resumeMessages: saved, interactions: [approved], approvedInteraction: approved});
+    expect(write).toHaveBeenCalledOnce();
+    expect(write.mock.calls[0][0]).toEqual(approved.approval?.args);
+  });
+  it("requires a fresh confirmation if the displayed reference changes", async () => {
+    const categories = vi.spyOn(categoryService, "getAll").mockResolvedValue([{_id: createArgs.categoryId, name: "Before"}] as never);
+    const write = vi.spyOn(taskWriteService, "create").mockResolvedValue({task: {}} as never);
+    completionCreate.mockResolvedValueOnce(response(call("write1", "orbit_create_task", createArgs)));
+    let saved: ChatCompletionMessageParam[] = [];
+    const first = await aiService.chatWithMcp("Create", askContext, {mode: "ask", checkpoint: async m => { saved = structuredClone(m); }});
+    if (typeof first === "string") throw new Error("Expected confirmation");
+    categories.mockResolvedValue([{_id: createArgs.categoryId, name: "After"}] as never);
+    const approved = {...first.interaction, status: "answered" as const, answer: {optionId: "confirm"}};
+    const next = await aiService.chatWithMcp("Create", askContext, {mode: "ask", resumeMessages: saved, interactions: [approved], approvedInteraction: approved});
+    expect(typeof next).toBe("object");
+    expect(write).not.toHaveBeenCalled();
+    expect(completionCreate).toHaveBeenCalledTimes(1);
+  });
+  it("closes every unanswered call when cancelling and rejects duplicate menu IDs", () => {
+    const messages = [{role: "assistant", tool_calls: [call("a", "orbit_list_categories", {}), call("b", "orbit_list_categories", {})]}, {role: "tool", tool_call_id: "a", content: "ok"}] as ChatCompletionMessageParam[];
+    expect(closePendingCalls(messages)).toHaveLength(3);
+    expect(closePendingCalls(messages)[2]).toMatchObject({tool_call_id: "b"});
+    expect(grillUserSchema.safeParse({question: "Choose", options: [{id: "a", label: "A"}, {id: "a", label: "B"}]}).success).toBe(false);
+  });
+});
+
+import { writeRepository } from "../../mcp/repositories/writeRepository.js";
+import { taskService } from "../taskService.js";
+
+it("rechecks approval inside the write transaction and prevents mutation when stale", async () => {
+  let inside = false;
+  const tx = vi.spyOn(writeRepository, "transaction").mockImplementation(async (_user, run) => {
+    inside = true;
+    try { return await run(); } finally { inside = false; }
+  });
+  vi.spyOn(writeRepository, "findReceipt").mockResolvedValue(null);
+  const create = vi.spyOn(taskService, "create");
+  const beforeWrite = vi.fn(async () => {
+    expect(inside).toBe(true);
+    throw new Error("Stale approval");
+  });
+  try {
+    await expect(taskWriteService.create(createArgs, {...askContext, beforeWrite})).rejects.toThrow("Stale approval");
+    expect(tx).toHaveBeenCalledOnce();
+    expect(beforeWrite).toHaveBeenCalledOnce();
+    expect(create).not.toHaveBeenCalled();
+  } finally { vi.restoreAllMocks(); }
+});

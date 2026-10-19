@@ -1,14 +1,18 @@
 import mongoose, { Schema } from "mongoose";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
+import type { AgentInteraction, AgentMode } from "../services/agentInteraction.js";
 
-interface ChatTurn {
+export interface ChatTurn {
   _id: string;
   conversationId: string;
   userId: mongoose.Types.ObjectId;
   requestId: string;
   sequence: number;
   userInput: string;
-  status: "processing" | "completed" | "failed";
+  status: "processing" | "awaiting_user" | "completed" | "failed" | "cancelled";
+  mode: AgentMode;
+  executionToken: string;
+  interactions: AgentInteraction[];
   response: string;
   messages: ChatCompletionMessageParam[];
   expiresAt: Date;
@@ -24,7 +28,10 @@ const schema = new Schema<ChatTurn>({
   requestId: { type: String, required: true },
   sequence: { type: Number, required: true },
   userInput: { type: String, required: true, maxlength: 2000 },
-  status: { type: String, enum: ["processing", "completed", "failed"], default: "processing" },
+  status: { type: String, enum: ["processing", "awaiting_user", "completed", "failed", "cancelled"], default: "processing" },
+  mode: { type: String, enum: ["auto", "ask"], default: "auto" },
+  executionToken: { type: String, default: "" },
+  interactions: { type: Schema.Types.Mixed, default: [] },
   response: { type: String, default: "" },
   messages: { type: Schema.Types.Mixed, default: [] },
   expiresAt: { type: Date, required: true },

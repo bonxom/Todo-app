@@ -4,13 +4,18 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createOrbitMcpServer } from "../server.js";
 import { categoryService } from "../../services/categoryService.js";
+import { authService } from "../../services/authService.js";
 import { taskService } from "../../services/taskService.js";
 import type { IUserDocument } from "../../types/IUser.js";
 afterEach(() => vi.restoreAllMocks());
-it("discovers four tools, rejects extra arguments, keeps concurrent contexts separate and sanitizes failures", async () => {
+it("discovers five tools, rejects extra arguments, keeps concurrent contexts separate and sanitizes failures", async () => {
   const users = [0, 1].map(
     () => ({ _id: new Types.ObjectId(), role: "USER" }) as IUserDocument,
   );
+  const profile = vi.spyOn(authService, "getMe").mockImplementation(async (id) => ({
+    _id: id, name: "Test user", email: "test@example.com", role: "USER",
+    password: "private-password",
+  }) as IUserDocument);
   const get = vi
     .spyOn(categoryService, "getAll")
     .mockImplementation(
@@ -33,6 +38,7 @@ it("discovers four tools, rejects extra arguments, keeps concurrent contexts sep
     }
     const tools = (await clients[0].listTools()).tools;
     expect(tools.map((t) => t.name).sort()).toEqual([
+      "orbit_get_me",
       "orbit_get_task",
       "orbit_list_categories",
       "orbit_list_projects",
@@ -41,6 +47,27 @@ it("discovers four tools, rejects extra arguments, keeps concurrent contexts sep
     expect(
       tools.every((t) => t.annotations?.readOnlyHint && t.outputSchema),
     ).toBe(true);
+    const invalidProfile = await clients[0].callTool({
+      name: "orbit_get_me", arguments: { userId: String(users[1]._id) },
+    });
+    expect(invalidProfile.isError).toBe(true);
+    expect(profile).not.toHaveBeenCalled();
+    const profiles = await Promise.all(clients.map((client) =>
+      client.callTool({ name: "orbit_get_me", arguments: {} }),
+    ));
+    profiles.forEach((result, index) => {
+      expect(result.isError).not.toBe(true);
+      expect(result.structuredContent).toEqual({
+        id: String(users[index]._id), name: "Test user", email: "test@example.com",
+        role: "USER", dob: null, nationality: null, avatarUrl: null,
+      });
+      expect(JSON.stringify(result)).not.toContain("password");
+      expect(profile).toHaveBeenCalledWith(users[index]._id);
+    });
+    profile.mockRejectedValueOnce(new Error("private database details"));
+    const profileFailure = await clients[0].callTool({ name: "orbit_get_me", arguments: {} });
+    expect(profileFailure.isError).toBe(true);
+    expect(JSON.stringify(profileFailure)).not.toContain("private database details");
     const invalid = await clients[0].callTool({
       name: "orbit_list_categories",
       arguments: { userId: "fake" },

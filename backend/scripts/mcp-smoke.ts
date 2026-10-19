@@ -28,6 +28,7 @@ try {
   await client.connect(transport);
   const names = (await client.listTools()).tools.map((t) => t.name).sort();
   const expected = [
+    "orbit_get_me",
     "orbit_get_task",
     "orbit_list_categories",
     "orbit_list_projects",
@@ -35,7 +36,7 @@ try {
   ];
   if (JSON.stringify(names) !== JSON.stringify(expected))
     throw new Error("Unexpected tool catalog.");
-  console.log(`Protocol ${transport.protocolVersion}; four tools discovered.`);
+  console.log(`Protocol ${transport.protocolVersion}; five tools discovered.`);
   let taskId: string | undefined;
   for (const name of [
     "orbit_list_tasks",

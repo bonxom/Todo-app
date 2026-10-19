@@ -6,6 +6,7 @@ import {
 import { aiService } from "../../../shared/services/aiService";
 import type {
   ChatPayload,
+  InteractionPayload,
   ChatResponse,
   GenerateTasksPayload,
   GenerateTasksResponse,
@@ -53,5 +54,13 @@ export const useAgenticChatMutation = (
       await invalidateWorkspaceQueries(queryClient);
       await options?.onSettled?.(...args);
     },
+  });
+};
+
+export const useInteractionMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: InteractionPayload) => aiService.respondToInteraction(payload),
+    onSettled: () => invalidateWorkspaceQueries(queryClient),
   });
 };

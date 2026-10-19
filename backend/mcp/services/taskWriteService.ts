@@ -79,6 +79,7 @@ async function executeWrite<T extends { idempotencyKey: string }>(
       await taskService.getById(previous.taskId, context.user);
       return previous.output;
     }
+    await context.beforeWrite?.();
     const task = await mutate(input);
     if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     // Keep category totals accurate after content/category changes, too.

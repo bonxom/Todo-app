@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { McpContext } from "./context.js";
 import {
+  registerGetMeTool,
   registerListTasksTool,
   registerGetTaskTool,
   registerListProjectsTool,
@@ -13,6 +14,7 @@ export function registerOrbitTools(
   server: McpServer,
   context: McpContext,
 ): void {
+  registerGetMeTool(server, context);
   registerListTasksTool(server, context);
   registerGetTaskTool(server, context);
   registerListProjectsTool(server, context);

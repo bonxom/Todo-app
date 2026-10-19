@@ -74,7 +74,7 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
       await server.connect(s);
       await client.connect(c);
       const tools = (await client.listTools()).tools;
-      expect(tools).toHaveLength(6);
+      expect(tools).toHaveLength(7);
       expect(tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining(["orbit_start_task"]));
       expect(tools.map((tool) => tool.name)).not.toContain("orbit_complete_task");
       expect(tools.map((tool) => tool.name)).not.toContain("orbit_give_up_task");

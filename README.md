@@ -9,6 +9,7 @@ Orbit is a task management application with a React frontend and a TypeScript/Ex
 - Category and project management
 - Calendar and productivity statistics
 - Optional AI task generation
+- Agent chat modes: Auto keeps the normal tool workflow; Ask offers choices through `grill_user` and requires confirmation before creating or changing tasks. Pending questions survive reloads and can be answered or cancelled in chat.
 - Local read-only MCP server for AI clients
 
 ## Stack

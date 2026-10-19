@@ -1,6 +1,7 @@
 import axiosInstance from "./httpClient";
 import type {
   ChatPayload,
+  InteractionPayload,
   ConversationSnapshot,
   ChatResponse,
   GenerateTasksPayload,
@@ -8,6 +9,12 @@ import type {
 } from "../types/domain";
 
 export const aiService = {
+  respondToInteraction: async ({ conversationId, interactionId, cancel, ...answer }: InteractionPayload): Promise<ChatResponse> => {
+    const response = await axiosInstance.post<ChatResponse>(
+      `/api/ai/conversations/${conversationId}/interactions/${interactionId}/${cancel ? "cancel" : "answer"}`, answer,
+    );
+    return response.data;
+  },
   getConversation: async (id?: string, before?: number): Promise<ConversationSnapshot | null> => {
     const response = await axiosInstance.get<{ data: ConversationSnapshot | null }>(
       id ? `/api/ai/conversations/${id}` : "/api/ai/conversations/latest",

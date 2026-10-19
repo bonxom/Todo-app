@@ -1,15 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "@/shared/services/apiError";
 import { aiService } from "@/shared/services/aiService";
-import type { ChatPayload, ConversationMessage } from "@/shared/types/domain";
-import { useAgenticChatMutation } from "../api/aiMutations";
+import { useAuthStore } from "@/stores/useAuthStore";
+import type { AgentMode, AgentInteraction, ChatPayload, ChatResponse, ConversationMessage, InteractionAnswer, InteractionPayload } from "@/shared/types/domain";
+import { useAgenticChatMutation, useInteractionMutation } from "../api/aiMutations";
 
 export function useConversationChat() {
   const mutation = useAgenticChatMutation();
+  const interactionMutation = useInteractionMutation();
+  const sessionRevision = useAuthStore((state) => state.sessionRevision);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [conversationId, setConversationId] = useState<string>();
+  const [mode, setMode] = useState<AgentMode>("auto");
+  const [interaction, setInteraction] = useState<AgentInteraction>();
+  const [answerPending, setAnswerPending] = useState<InteractionPayload | null>(null);
   const [before, setBefore] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<ChatPayload | null>(null);
@@ -17,35 +23,50 @@ export function useConversationChat() {
   const busy = useRef(false);
   const loadVersion = useRef(0);
   const initialConversationId = useRef<string | null>(null);
+  const isCurrent = useCallback(() => active.current && useAuthStore.getState().sessionRevision === sessionRevision, [sessionRevision]);
 
-  const load = useCallback(async (id: string) => {
+  const load = useCallback(async (id?: string) => {
     const version = ++loadVersion.current;
     const result = await aiService.getConversation(id);
-    if (!active.current || version !== loadVersion.current) return;
+    if (!isCurrent() || version !== loadVersion.current) return;
     setConversationId(result?.conversationId);
     setMessages(result?.messages ?? []);
     setBefore(result?.before ?? null);
+    setMode(result?.mode ?? "auto");
+    setInteraction(result?.interaction);
     const turn = result?.pending[0];
     setPending(turn ? { ...turn, conversationId: result!.conversationId } : null);
-  }, []);
+    setAnswerPending((previous) => (result?.interaction?.id === previous?.interactionId || (!result?.interaction && result?.pending.length)) ? previous : null);
+  }, [isCurrent]);
 
   useEffect(() => {
     active.current = true;
+    busy.current = true;
+    void load().catch(() => {
+      if (isCurrent()) setError("Could not load your conversation. Please try again.");
+    }).finally(() => { busy.current = false; if (isCurrent()) setLoading(false); });
     return () => { active.current = false; };
-  }, []);
+  }, [load, isCurrent]);
 
   const reload = async () => {
     if (busy.current) return;
-    if (!conversationId) { setError(null); return; }
     busy.current = true;
     setLoading(true);
-    try { await load(conversationId); if (active.current) setError(null); }
-    catch { if (active.current) setError("Could not load your conversation. Please try again."); }
-    finally { busy.current = false; if (active.current) setLoading(false); }
+    try { await load(conversationId); if (isCurrent()) setError(null); }
+    catch { if (isCurrent()) setError("Could not load your conversation. Please try again."); }
+    finally { busy.current = false; if (isCurrent()) setLoading(false); }
+  };
+
+  const receive = (result: ChatResponse, requestId?: string) => {
+    setInteraction(result.interaction);
+    if (result.status !== "processing") setPending(null);
+    if (result.data) setMessages((previous) => [...previous.filter((message) => message.id !== `${requestId}:bot`), {
+      id: `${requestId}:bot`, sender: "bot", text: result.data, timestamp: new Date().toISOString(),
+    }]);
   };
 
   const send = async (text?: string) => {
-    if (busy.current || loading) return;
+    if (busy.current || loading || interaction || answerPending || (!pending && !text?.trim())) return;
     busy.current = true;
     setSending(true);
     setError(null);
@@ -55,30 +76,46 @@ export function useConversationChat() {
       if (!id) {
         initialConversationId.current ??= crypto.randomUUID();
         id = await aiService.createConversation(initialConversationId.current);
-        if (!active.current) return;
+        if (!isCurrent()) return;
         setConversationId(id);
       }
       if (!payload) {
-        payload = { conversationId: id, requestId: crypto.randomUUID(), userInput: text! };
+        payload = { conversationId: id, requestId: crypto.randomUUID(), userInput: text!, mode };
         setPending(payload);
         setMessages((previous) => [...previous, { id: payload!.requestId!, sender: "user", text: text!, timestamp: new Date().toISOString() }]);
       }
       const result = await mutation.mutateAsync(payload);
-      if (!active.current) return;
-      // Render the reply even if refreshing the saved history subsequently fails.
-      setMessages((previous) => [...previous.filter((message) => message.id !== `${payload!.requestId}:bot`), { id: `${payload!.requestId}:bot`, sender: "bot", text: result.data, timestamp: new Date().toISOString() }]);
+      if (!isCurrent()) return;
+      receive(result, payload.requestId);
       await load(id);
-      if (active.current) setError(null);
     } catch (err) {
-      if (active.current && err instanceof ApiError && [400, 404, 422].includes(err.status ?? 0)) {
-        // Validation/ownership failures never started a turn; allow reload and correction.
-        setPending(null);
-      }
-      if (active.current) setError(err instanceof Error ? err.message : "Could not get the reply. Check again using the same request.");
-      // Keep the same request ID for a retry, including an HTTP timeout after a tool committed.
+      if (isCurrent() && err instanceof ApiError && [400, 404, 422].includes(err.status ?? 0)) setPending(null);
+      if (isCurrent()) setError(err instanceof Error ? err.message : "Could not get the reply. Retry using the same request.");
     } finally {
       busy.current = false;
-      if (active.current) setSending(false);
+      if (isCurrent()) setSending(false);
+    }
+  };
+
+  const answer = async (selection?: InteractionAnswer, cancel = false) => {
+    if (busy.current || !conversationId || (!interaction && !answerPending)) return;
+    const payload = answerPending ?? { conversationId, interactionId: interaction!.id, requestId: crypto.randomUUID(), ...selection, ...(cancel ? { cancel: true } : {}) };
+    busy.current = true;
+    setAnswerPending(payload);
+    setSending(true);
+    setError(null);
+    try {
+      const result = await interactionMutation.mutateAsync(payload);
+      if (!isCurrent()) return;
+      receive(result, payload.requestId);
+      if (result.status !== "processing") setAnswerPending(null);
+      await load(conversationId);
+    } catch (err) {
+      if (isCurrent() && err instanceof ApiError && [400, 422].includes(err.status ?? 0)) setAnswerPending(null);
+      if (isCurrent()) setError(err instanceof Error ? err.message : "Could not submit your answer. Retry using the same request.");
+    } finally {
+      busy.current = false;
+      if (isCurrent()) setSending(false);
     }
   };
 
@@ -88,13 +125,15 @@ export function useConversationChat() {
     setLoading(true);
     try {
       const result = await aiService.getConversation(conversationId, before);
-      if (active.current && result) {
+      if (isCurrent() && result) {
         setMessages((previous) => [...result.messages, ...previous]);
         setBefore(result.before);
       }
-    } catch { if (active.current) setError("Could not load earlier messages."); }
-    finally { busy.current = false; if (active.current) setLoading(false); }
+    } catch { if (isCurrent()) setError("Could not load earlier messages."); }
+    finally { busy.current = false; if (isCurrent()) setLoading(false); }
   };
 
-  return { messages, conversationId, loading, sending, error, pending, before, send, reload, loadEarlier };
+  const locked = loading || sending || Boolean(error) || Boolean(pending) || Boolean(interaction) || Boolean(answerPending);
+  return { messages, conversationId, mode, setMode: (value: AgentMode) => { if (!locked) setMode(value); }, interaction, answerPending,
+    loading, sending, error, pending, before, send, answer, reload, loadEarlier, locked };
 }

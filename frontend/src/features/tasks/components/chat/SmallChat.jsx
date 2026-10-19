@@ -197,11 +197,12 @@ const SmallChat = ({ onClose }) => {
       
       <div className="flex-1 overflow-hidden bg-[var(--color-canvas)]">
         <ChatField
-          key={mode === "chat" ? chat.conversationId ?? "new" : "tasks"}
+          key={mode}
+          chat={mode === "chat" ? chat : undefined}
           messages={mode === "chat" ? chat.messages : messages}
           onSendMessage={handleSendMessage}
           isTyping={mode === "chat" ? chat.sending : isTyping}
-          disabled={mode === "chat" ? chat.loading || chat.sending || Boolean(chat.pending) || Boolean(chat.error) : isTyping}
+          disabled={mode === "chat" ? chat.locked || Boolean(chat.error) : isTyping}
         />
       </div>
     </div>
