@@ -60,7 +60,6 @@ Interfaces: snapshot { mode, interaction, pending, messages }; response { status
 - [x] Run backend `pnpm run build` and `pnpm test`; frontend `pnpm test`, `pnpm run lint`, `pnpm run build`.
 - [x] Record tested behavior and any environmental limitation; do not include unrelated user changes in commits.
 
-
 ## Verification completed
 
 - Backend: `pnpm run build` passed; `ORBIT_MCP_TEST_MONGO_URI=mongodb://127.0.0.1:27028/ pnpm test` passed, 183 tests across 22 files. Used a disposable localhost MongoDB 7 replica set.

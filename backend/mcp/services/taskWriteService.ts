@@ -15,8 +15,7 @@ import {
 } from "../models/TaskWrite.js";
 import { getStartOfToday } from "../../utils/dateTime.js";
 
-export type WriteOperation =
-  "create" | "update";
+export type WriteOperation = "create" | "update";
 export class WriteError extends Error {
   constructor(
     public readonly code: string,
@@ -130,7 +129,11 @@ export const taskWriteService = {
             fields.startDate === undefined ? task.startDate : fields.startDate,
             fields.dueDate === undefined ? task.dueDate : fields.dueDate,
           );
-          const updated = await taskService.update(taskId, fields, context.user);
+          const updated = await taskService.update(
+            taskId,
+            fields,
+            context.user,
+          );
           if (!updated) throw new AppError(TASK_ERROR.NOT_FOUND);
           task = updated;
         }
@@ -138,9 +141,12 @@ export const taskWriteService = {
         // Both metadata and status changes are covered by executeWrite's transaction.
         if (!status || task.status === status) return task;
         switch (status) {
-          case "in-progress": return taskService.start(taskId, context.user);
-          case "completed": return taskService.finish(taskId, context.user);
-          case "given-up": return taskService.giveUp(taskId, context.user);
+          case "in-progress":
+            return taskService.start(taskId, context.user);
+          case "completed":
+            return taskService.finish(taskId, context.user);
+          case "given-up":
+            return taskService.giveUp(taskId, context.user);
         }
       },
     );

@@ -15,7 +15,10 @@ const profileSchema = z.strictObject({
   avatarUrl: z.string().nullable(),
 });
 
-export function registerGetMeTool(server: McpServer, context: McpContext): void {
+export function registerGetMeTool(
+  server: McpServer,
+  context: McpContext,
+): void {
   server.registerTool(
     "orbit_get_me",
     {
@@ -26,17 +29,18 @@ export function registerGetMeTool(server: McpServer, context: McpContext): void 
       outputSchema: profileSchema,
       annotations,
     },
-    async () => read(async () => {
-      const user = await authService.getMe(context.user._id);
-      return profileSchema.parse({
-        id: String(user._id),
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        dob: user.dob?.toISOString() ?? null,
-        nationality: user.nationality ?? null,
-        avatarUrl: user.avatarUrl ?? null,
-      });
-    }),
+    async () =>
+      read(async () => {
+        const user = await authService.getMe(context.user._id);
+        return profileSchema.parse({
+          id: String(user._id),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          dob: user.dob?.toISOString() ?? null,
+          nationality: user.nationality ?? null,
+          avatarUrl: user.avatarUrl ?? null,
+        });
+      }),
   );
 }

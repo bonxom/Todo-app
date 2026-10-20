@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Maximize2, Minimize2, MessageSquare, Sparkles } from "lucide-react";
+import { X, Maximize2, Minimize2, MessageSquare, Sparkles, Plus } from "lucide-react";
 import { useConversationChat } from "../../hooks/useConversationChat";
 import ChatField from "./ChatField";
 import { useGenerateTasksMutation } from "../../api/aiMutations";
@@ -8,6 +8,14 @@ import { formatDateTime } from "@/shared/utils/dateTime";
 const SmallChat = ({ onClose }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const chat = useConversationChat();
+  const [chatRevision, setChatRevision] = useState(0);
+
+  const handleNewChat = async () => {
+    if (await chat.newConversation()) {
+      setMode("chat");
+      setChatRevision((revision) => revision + 1);
+    }
+  };
   const generateTasksMutation = useGenerateTasksMutation();
   const [mode, setMode] = useState("chat"); // 'chat' or 'taskAssistant'
   const [messages, setMessages] = useState([
@@ -39,50 +47,50 @@ const SmallChat = ({ onClose }) => {
 
     setIsTyping(true);
     try {
-        // Task Assistant mode - generate tasks
-        const response = await generateTasksMutation.mutateAsync({
-          userRequirement: text,
-        });
+      // Task Assistant mode - generate tasks
+      const response = await generateTasksMutation.mutateAsync({
+        userRequirement: text,
+      });
 
-        console.log("AI generateTasks response:", response);
+      console.log("AI generateTasks response:", response);
 
-        // Validate response structure before processing
-        if (
-          response &&
-          response.success === true &&
-          Array.isArray(response.data) &&
-          response.data.length > 0
-        ) {
-          const tasksText = `Great! I've created **${response.data.length} task${response.data.length > 1 ? "s" : ""}** for you:\n\n${response.data
-            .map(
-              (task, index) =>
-                `**${index + 1}. ${task.title}**\n${task.description || ""}\nPriority: ${task.priority || "Medium"}${task.dueDate ? `\nDue: ${formatDateTime(task.dueDate)}` : ""}`,
-            )
-            .join("\n\n")}\n\nCheck your todo list to see them!`;
+      // Validate response structure before processing
+      if (
+        response &&
+        response.success === true &&
+        Array.isArray(response.data) &&
+        response.data.length > 0
+      ) {
+        const tasksText = `Great! I've created **${response.data.length} task${response.data.length > 1 ? "s" : ""}** for you:\n\n${response.data
+          .map(
+            (task, index) =>
+              `**${index + 1}. ${task.title}**\n${task.description || ""}\nPriority: ${task.priority || "Medium"}${task.dueDate ? `\nDue: ${formatDateTime(task.dueDate)}` : ""}`,
+          )
+          .join("\n\n")}\n\nCheck your todo list to see them!`;
 
-          const botResponse = {
-            id: (Date.now() + 1).toString(),
-            sender: "bot",
-            text: tasksText,
-            timestamp: new Date().toISOString(),
-          };
-          setMessages((prev) => [...prev, botResponse]);
-        } else {
-          // More specific error message for task generation
-          console.log("Task generation failed. Response:", response);
-          const errorMessage =
-            response && response.message
-              ? response.message
-              : "Sorry, I couldn't generate tasks from your description. Please try to be more specific about what you want to accomplish.";
+        const botResponse = {
+          id: (Date.now() + 1).toString(),
+          sender: "bot",
+          text: tasksText,
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      } else {
+        // More specific error message for task generation
+        console.log("Task generation failed. Response:", response);
+        const errorMessage =
+          response && response.message
+            ? response.message
+            : "Sorry, I couldn't generate tasks from your description. Please try to be more specific about what you want to accomplish.";
 
-          const errorResponse = {
-            id: (Date.now() + 1).toString(),
-            sender: "bot",
-            text: errorMessage,
-            timestamp: new Date().toISOString(),
-          };
-          setMessages((prev) => [...prev, errorResponse]);
-        }
+        const errorResponse = {
+          id: (Date.now() + 1).toString(),
+          sender: "bot",
+          text: errorMessage,
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, errorResponse]);
+      }
     } catch (error) {
       console.error("Error getting AI response:", error);
 
@@ -144,6 +152,16 @@ const SmallChat = ({ onClose }) => {
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
+              onClick={handleNewChat}
+              disabled={chat.loading || chat.sending || isTyping}
+              className="ui-icon-button ui-focus-ring h-8 w-8 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="New chat"
+              title="New chat"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
               onClick={() => setIsExpanded((expanded) => !expanded)}
               className="ui-icon-button ui-focus-ring h-8 w-8"
               aria-label={isExpanded ? "Restore chat size" : "Expand chat"}
@@ -194,15 +212,17 @@ const SmallChat = ({ onClose }) => {
           </button>
         </div>
       </div>
-      
+
       <div className="flex-1 overflow-hidden bg-[var(--color-canvas)]">
         <ChatField
-          key={mode}
+          key={`${mode}-${chatRevision}`}
           chat={mode === "chat" ? chat : undefined}
           messages={mode === "chat" ? chat.messages : messages}
           onSendMessage={handleSendMessage}
           isTyping={mode === "chat" ? chat.sending : isTyping}
-          disabled={mode === "chat" ? chat.locked || Boolean(chat.error) : isTyping}
+          disabled={
+            mode === "chat" ? chat.locked || Boolean(chat.error) : isTyping
+          }
         />
       </div>
     </div>

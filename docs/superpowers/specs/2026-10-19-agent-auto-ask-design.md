@@ -1,3 +1,5 @@
+> Updated 2026-10-20: the separate interaction endpoints and pause/resume lifecycle described below are superseded by [the single-chat menu flow](../../agent-chat-architecture.md#menu-lifecycle).
+
 # Agent Auto/Ask và grill_user
 
 Ngày: 2026-10-19. Trạng thái: thiết kế chi tiết để review trước khi triển khai.

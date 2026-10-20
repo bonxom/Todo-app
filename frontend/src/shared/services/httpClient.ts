@@ -132,12 +132,10 @@ const refreshAccessToken = (): Promise<string> => {
       stored.token !== previousToken &&
       !isExpired(stored.token)
     ) {
-      useAuthStore
-        .getState()
-        .updateTokens({
-          accessToken: stored.token,
-          refreshToken: stored.refreshToken,
-        });
+      useAuthStore.getState().updateTokens({
+        accessToken: stored.token,
+        refreshToken: stored.refreshToken,
+      });
       return stored.token;
     }
     const response = await axios.post(
