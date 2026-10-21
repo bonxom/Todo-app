@@ -1,7 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Check, ChevronDown, ChevronUp, Send, Terminal, X } from "lucide-react";
 
-export default function InteractionCard({
+export default function InteractionCard(props) {
+  const { interaction } = props;
+  // Remount local draft state only when the question or saved answer changes.
+  const stateKey = JSON.stringify([
+    interaction.id,
+    interaction.answer?.optionId,
+    interaction.answer?.customAnswer,
+    interaction.answer?.cancelled,
+  ]);
+  return <InteractionCardContent key={stateKey} {...props} />;
+}
+
+function InteractionCardContent({
   interaction,
   onAnswer,
   onCancel,
@@ -16,14 +28,6 @@ export default function InteractionCard({
   );
   const [localSubmission, setLocalSubmission] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
-
-  // Reset local state when interaction changes
-  useEffect(() => {
-    setOptionId(interaction.answer?.optionId ?? "");
-    setCustomAnswer(interaction.answer?.customAnswer ?? "");
-    setLocalSubmission(null);
-    setShowDetails(false);
-  }, [interaction.id, interaction.answer]);
 
   const isServerResolved = interaction.status !== "pending";
   const effectiveAnswer = localSubmission || interaction.answer;
@@ -270,7 +274,7 @@ export default function InteractionCard({
 
         {/* Options list */}
         <div className="space-y-2">
-          {visibleOptions.map((option, index) => {
+          {visibleOptions.map((option) => {
             const isSelected = optionId === option.id && !customAnswer;
             return (
               <label

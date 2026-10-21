@@ -12,15 +12,12 @@ const ChatField = ({
   chat,
 }) => {
   const [inputValue, setInputValue] = useState("");
-  const [showChatInput, setShowChatInput] = useState(false);
+  const [messageInteractionId, setMessageInteractionId] = useState(null);
+  const interactionId = chat?.interaction?.id;
+  const showChatInput = Boolean(interactionId) && messageInteractionId === interactionId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
-    if (!chat?.interaction) {
-      setShowChatInput(false);
-    }
-  }, [chat?.interaction?.id]);
   const userMessageStyle = {
     borderColor: "var(--color-accent)",
     background: "var(--color-accent)",
@@ -175,7 +172,7 @@ const ChatField = ({
           <div className="mb-2 flex items-center justify-end text-sm">
             <button
               type="button"
-              onClick={() => setShowChatInput((prev) => !prev)}
+              onClick={() => setMessageInteractionId(showChatInput ? null : interactionId)}
               className="ui-focus-ring text-xs text-[var(--color-accent)] hover:underline cursor-pointer"
             >
               {showChatInput ? "← Quay lại câu hỏi" : "Nhắn tin thay vì chọn →"}
@@ -191,7 +188,7 @@ const ChatField = ({
             onCancel={() => chat.answer(undefined, true)}
             disabled={chat.loading || chat.sending || Boolean(chat.pending)}
             docked
-            onSwitchToMessage={() => setShowChatInput(true)}
+            onSwitchToMessage={() => setMessageInteractionId(interactionId)}
           />
         )}
 
