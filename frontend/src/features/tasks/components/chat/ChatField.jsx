@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send } from "lucide-react";
+import { Send, Bot, ChevronRight, Image as ImageIcon, Paperclip } from "lucide-react";
 import InteractionCard from "./InteractionCard";
 import MarkdownText from "./MarkdownText";
 import { formatDateTime } from "@/shared/utils/dateTime";
@@ -12,7 +12,15 @@ const ChatField = ({
   chat,
 }) => {
   const [inputValue, setInputValue] = useState("");
+  const [showChatInput, setShowChatInput] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (!chat?.interaction) {
+      setShowChatInput(false);
+    }
+  }, [chat?.interaction?.id]);
   const userMessageStyle = {
     borderColor: "var(--color-accent)",
     background: "var(--color-accent)",
@@ -26,7 +34,7 @@ const ChatField = ({
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView?.({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -94,6 +102,7 @@ const ChatField = ({
                       <InteractionCard
                         interaction={message.interaction}
                         disabled
+                        embedded
                       />
                     ) : message.sender === "bot" ? (
                       <MarkdownText text={message.text} />
@@ -109,20 +118,6 @@ const ChatField = ({
             ))
         )}
 
-        {chat?.interaction && (
-          <InteractionCard
-            key={chat.interaction.id}
-            interaction={chat.interaction}
-            onAnswer={chat.answer}
-            onCancel={() => chat.answer(undefined, true)}
-            disabled={chat.loading || chat.sending || Boolean(chat.pending)}
-          />
-        )}
-        {chat?.interaction && !chat.sending && !chat.pending && (
-          <p role="status" className="text-sm">
-            Waiting for your answer
-          </p>
-        )}
         {chat?.error && (
           <div role="alert" className="text-sm text-red-600">
             {chat.error}
@@ -175,31 +170,147 @@ const ChatField = ({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-[var(--color-line)] bg-[var(--color-surface)] p-4">
-        {chat && (
-          <label className="mb-2 flex items-center gap-2 text-sm">
-            Agent mode
-            <select
-              aria-label="Agent mode"
-              className="ui-input"
-              value={chat.mode}
-              disabled={chat.locked}
-              onChange={(event) => chat.setMode(event.target.value)}
+      <div className="border-t border-[var(--color-line)] bg-[var(--color-surface)] p-3 sm:p-4">
+        {chat?.interaction && (
+          <div className="mb-2 flex items-center justify-end text-sm">
+            <button
+              type="button"
+              onClick={() => setShowChatInput((prev) => !prev)}
+              className="ui-focus-ring text-xs text-[var(--color-accent)] hover:underline cursor-pointer"
             >
-              <option value="auto">Auto</option>
-              <option value="ask">Ask</option>
-            </select>
-          </label>
+              {showChatInput ? "← Quay lại câu hỏi" : "Nhắn tin thay vì chọn →"}
+            </button>
+          </div>
         )}
-        <form onSubmit={handleSubmit} className="flex items-end gap-2">
+
+        {chat?.interaction && !showChatInput && (
+          <InteractionCard
+            key={chat.interaction.id}
+            interaction={chat.interaction}
+            onAnswer={chat.answer}
+            onCancel={() => chat.answer(undefined, true)}
+            disabled={chat.loading || chat.sending || Boolean(chat.pending)}
+            docked
+            onSwitchToMessage={() => setShowChatInput(true)}
+          />
+        )}
+
+        <form
+          onSubmit={handleSubmit}
+          className={
+            chat?.interaction && !showChatInput
+              ? "sr-only"
+              : "flex items-end gap-2"
+          }
+        >
+          {/* Options Menu Toggle and Expanding Toolbar */}
+          <div className="flex h-11 items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              className={`ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-all cursor-pointer ${
+                isMenuOpen
+                  ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent-strong)] dark:text-[var(--color-accent)] shadow-xs"
+                  : "border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+              }`}
+              title={isMenuOpen ? "Thu gọn tùy chọn" : "Mở rộng tùy chọn"}
+              aria-label={isMenuOpen ? "Thu gọn tùy chọn" : "Mở rộng tùy chọn"}
+              aria-expanded={isMenuOpen}
+            >
+              <ChevronRight
+                className={`h-4 w-4 transition-transform duration-200 ${
+                  isMenuOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* Expanding toolbar */}
+            <div
+              className={`flex items-center gap-1.5 overflow-hidden transition-all duration-200 ease-out ${
+                isMenuOpen
+                  ? "max-w-[160px] opacity-100"
+                  : "max-w-0 opacity-0 pointer-events-none"
+              }`}
+            >
+              {/* Attach image */}
+              <button
+                type="button"
+                className="ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
+                title="Đính kèm ảnh"
+                aria-label="Đính kèm ảnh"
+              >
+                <ImageIcon className="h-4 w-4" />
+              </button>
+
+              {/* Attach file */}
+              <button
+                type="button"
+                className="ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
+                title="Đính kèm file"
+                aria-label="Đính kèm file"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
+
+              {/* Agent mode Robot toggle */}
+              {chat && (
+                <button
+                  type="button"
+                  aria-label={`Agent mode: ${chat.mode}`}
+                  onClick={() => chat.setMode(chat.mode === "auto" ? "ask" : "auto")}
+                  disabled={chat.locked}
+                  title={
+                    chat.mode === "auto"
+                      ? "Chế độ Auto (Tự động) - Click để chuyển sang Ask"
+                      : "Chế độ Ask (Hỏi ý kiến) - Click để chuyển sang Auto"
+                  }
+                  className={`ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-all cursor-pointer ${
+                    chat.mode === "auto"
+                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-500/20 shadow-xs"
+                      : "border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  } ${chat.locked ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  <Bot
+                    className={`h-4 w-4 transition-transform ${
+                      chat.mode === "auto"
+                        ? "fill-emerald-600/20 text-emerald-600 dark:text-emerald-400 dark:fill-emerald-400/20"
+                        : "fill-none text-[var(--color-text-muted)]"
+                    }`}
+                  />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {chat && (
+            <label className="sr-only">
+              Agent mode
+              <select
+                aria-label="Agent mode"
+                value={chat.mode}
+                disabled={chat.locked}
+                onChange={(event) => chat.setMode(event.target.value)}
+              >
+                <option value="auto">Auto</option>
+                <option value="ask">Ask</option>
+              </select>
+            </label>
+          )}
+
           <textarea
             rows={1}
             aria-label="Message"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
+            onFocus={() => setIsMenuOpen(false)}
+            onClick={() => setIsMenuOpen(false)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message…"
-            className="ui-input min-w-0 flex-1 resize-none rounded-2xl px-4 py-2 text-sm"
+            placeholder={
+              chat?.interaction
+                ? "Nhập tin nhắn để bỏ qua câu hỏi…"
+                : "Type a message…"
+            }
+            className="ui-input min-w-0 flex-1 resize-none rounded-2xl px-4 py-2 text-sm transition-all duration-200"
             style={{
               fieldSizing: "content",
               minHeight: "2.75rem",
