@@ -1,3 +1,4 @@
+import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
 import { useMemo, useState, memo } from "react";
 import { isSameDay, sortTasksByDueTime } from "./calendarUtils";
 import {
@@ -83,6 +84,7 @@ const DayCell = memo(
     onTaskCopy,
     viewMode = "month",
   }) => {
+    const [editingTask, setEditingTask] = useState(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [draggingTaskId, setDraggingTaskId] = useState(null);
     const taskCount = tasks?.length || 0;
@@ -151,152 +153,172 @@ const DayCell = memo(
     };
 
     return (
-      <button
-        type="button"
-        onClick={() => onClick(day)}
-        aria-label={`${day.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}, ${taskCount} ${taskCount === 1 ? "task" : "tasks"}`}
-        aria-pressed={isSelected}
-        aria-current={isToday ? "date" : undefined}
-        data-today={isToday}
-        data-selected={isSelected}
-        data-current-month={isCurrentMonth}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`
-        calendar-day ui-focus-ring cursor-pointer rounded-[14px] border text-left transition-[background-color,border-color,box-shadow,transform] duration-150
-        overflow-hidden ${viewMode === "week" ? "min-h-[132px] py-3" : "min-h-[96px] py-2.5"}
-        ${!isCurrentMonth ? "bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]" : "text-[var(--color-text)]"}
-        ${isSelected ? "shadow-[var(--shadow-xs)]" : ""}
-        ${isDragOver ? "shadow-[var(--shadow-sm)] ring-2 ring-[color:var(--color-accent)] ring-offset-2 ring-offset-[var(--color-canvas)]" : ""}
-      `}
-        style={{
-          borderColor:
-            isSelected || isToday
-              ? "var(--color-accent)"
-              : hasOverdue
-                ? "var(--color-danger-soft)"
-                : "var(--color-line)",
-          background: isDragOver
-            ? "var(--color-accent-soft)"
-            : isSelected
+      <>
+        <div
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+              event.preventDefault();
+              onClick(day);
+            }
+          }}
+          onClick={() => onClick(day)}
+          aria-label={`${day.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}, ${taskCount} ${taskCount === 1 ? "task" : "tasks"}`}
+          aria-pressed={isSelected}
+          aria-current={isToday ? "date" : undefined}
+          data-today={isToday}
+          data-selected={isSelected}
+          data-current-month={isCurrentMonth}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`
+          calendar-day ui-focus-ring cursor-pointer rounded-[14px] border text-left transition-[background-color,border-color,box-shadow,transform] duration-150
+          overflow-hidden ${viewMode === "week" ? "min-h-[132px] py-3" : "min-h-[96px] py-2.5"}
+          ${!isCurrentMonth ? "bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]" : "text-[var(--color-text)]"}
+          ${isSelected ? "shadow-[var(--shadow-xs)]" : ""}
+          ${isDragOver ? "shadow-[var(--shadow-sm)] ring-2 ring-[color:var(--color-accent)] ring-offset-2 ring-offset-[var(--color-canvas)]" : ""}
+        `}
+          style={{
+            borderColor:
+              isSelected || isToday
+                ? "var(--color-accent)"
+                : hasOverdue
+                  ? "var(--color-danger-soft)"
+                  : "var(--color-line)",
+            background: isDragOver
               ? "var(--color-accent-soft)"
-              : isToday
-                ? "color-mix(in srgb, var(--color-accent-soft) 58%, var(--color-surface))"
-                : isCurrentMonth
-                  ? "var(--color-surface)"
-                  : "var(--color-surface-muted)",
-          transform: isDragOver ? "translateY(-1px)" : undefined,
-        }}
-      >
-        <div className="flex h-full flex-col">
-          <div
-            className={`mb-1 flex items-center justify-between ${viewMode === "week" ? "px-3" : "px-2.5"}`}
-          >
-            <span
-              className={`calendar-day-number text-sm font-semibold ${isCurrentMonth ? "" : "opacity-75"}`}
-              style={{
-                color:
-                  isToday || isSelected ? "var(--color-accent)" : undefined,
-              }}
-            >
-              {day.getDate()}
-            </span>
-            {taskCount > 0 && (
-              <span className="calendar-day-count">{taskCount}</span>
-            )}
-          </div>
-
-          {taskCount === 0 && viewMode === "week" && (
-            <span className="calendar-day-free">No plans yet</span>
-          )}
-          {taskCount > 0 && (
+              : isSelected
+                ? "var(--color-accent-soft)"
+                : isToday
+                  ? "color-mix(in srgb, var(--color-accent-soft) 58%, var(--color-surface))"
+                  : isCurrentMonth
+                    ? "var(--color-surface)"
+                    : "var(--color-surface-muted)",
+            transform: isDragOver ? "translateY(-1px)" : undefined,
+          }}
+        >
+          <div className="flex h-full flex-col">
             <div
-              className="flex flex-1 flex-col gap-1.5 px-1.5"
-              data-cal-task-list
+              className={`mb-1 flex items-center justify-between ${viewMode === "week" ? "px-3" : "px-2.5"}`}
             >
-              {sortedTasks.slice(0, previewLimit).map((task, idx) => {
-                const previewTone = taskPreviewTone(task);
-                const taskId = task._id || task.id || `${idx}`;
-                const projectColor = task.projectId
-                  ? getTaskProjectColor(task)
-                  : null;
-
-                return (
-                  <div
-                    key={taskId}
-                    draggable={Boolean(task._id || task.id)}
-                    onDragStart={(event) => {
-                      event.stopPropagation();
-                      setTaskDragData(event, task);
-                      setDraggingTaskId(taskId);
-                    }}
-                    onDragEnd={() => {
-                      setDraggingTaskId(null);
-                      setIsDragOver(false);
-                    }}
-                    data-cal-task-card
-                    className={`w-full rounded-lg border px-2 py-1.5 text-left transition-[border-color,background-color,box-shadow,opacity,transform] duration-150 ${
-                      task.status === "completed" || task.status === "given-up"
-                        ? "opacity-80"
-                        : ""
-                    } ${draggingTaskId === taskId ? "opacity-60" : ""} cursor-grab active:cursor-grabbing`}
-                    style={{
-                      borderColor: previewTone.borderColor,
-                      background: previewTone.background,
-                      borderLeftColor: projectColor || previewTone.borderColor,
-                      borderLeftWidth: projectColor ? "4px" : undefined,
-                    }}
-                    title={`${task.title} • ${task.priority || "Medium"} • ${formatDateTime(task.dueDate, "No due date")}`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <span
-                        className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={
-                          priorityDotStyle[task.priority] || {
-                            background: "var(--color-text-muted)",
-                          }
-                        }
-                        aria-hidden="true"
-                        data-cal-priority-dot
-                      />
-                      <div className="min-w-0">
-                        <div
-                          data-cal-task-name
-                          className={`truncate text-[11px] font-semibold ${
-                            task.status === "completed" ||
-                            task.status === "given-up"
-                              ? "text-[var(--color-text-muted)] line-through"
-                              : "text-[var(--color-text)]"
-                          }`}
-                        >
-                          {task.title}
-                        </div>
-                        <div
-                          data-cal-due-time
-                          className="mt-0.5 text-[10px]"
-                          style={{ color: previewTone.metaColor }}
-                        >
-                          <span className="ui-tabular">
-                            {formatCellTime(task.dueDate)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              {taskCount > previewLimit && (
-                <span
-                  className={`mt-0.5 text-xs text-[var(--color-text-muted)] ${viewMode === "week" ? "px-3" : "px-2.5"}`}
-                >
-                  +{taskCount - previewLimit} more
-                </span>
+              <span
+                className={`calendar-day-number text-sm font-semibold ${isCurrentMonth ? "" : "opacity-75"}`}
+                style={{
+                  color:
+                    isToday || isSelected ? "var(--color-accent)" : undefined,
+                }}
+              >
+                {day.getDate()}
+              </span>
+              {taskCount > 0 && (
+                <span className="calendar-day-count">{taskCount}</span>
               )}
             </div>
-          )}
+
+            {taskCount === 0 && viewMode === "week" && (
+              <span className="calendar-day-free">No plans yet</span>
+            )}
+            {taskCount > 0 && (
+              <div
+                className="flex flex-1 flex-col gap-1.5 px-1.5"
+                data-cal-task-list
+              >
+                {sortedTasks.slice(0, previewLimit).map((task, idx) => {
+                  const previewTone = taskPreviewTone(task);
+                  const taskId = task._id || task.id || `${idx}`;
+                  const projectColor = task.projectId
+                    ? getTaskProjectColor(task)
+                    : null;
+
+                  return (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setEditingTask(task);
+                      }}
+                      aria-label={`Edit ${task.title}`}
+                      key={taskId}
+                      draggable={Boolean(task._id || task.id)}
+                      onDragStart={(event) => {
+                        event.stopPropagation();
+                        setTaskDragData(event, task);
+                        setDraggingTaskId(taskId);
+                      }}
+                      onDragEnd={() => {
+                        setDraggingTaskId(null);
+                        setIsDragOver(false);
+                      }}
+                      data-cal-task-card
+                      className={`w-full rounded-lg border px-2 py-1.5 text-left transition-[border-color,background-color,box-shadow,opacity,transform] duration-150 ${
+                        task.status === "completed" || task.status === "given-up"
+                          ? "opacity-80"
+                          : ""
+                      } ${draggingTaskId === taskId ? "opacity-60" : ""} cursor-grab active:cursor-grabbing`}
+                      style={{
+                        borderColor: previewTone.borderColor,
+                        background: previewTone.background,
+                        borderLeftColor: projectColor || previewTone.borderColor,
+                        borderLeftWidth: projectColor ? "4px" : undefined,
+                      }}
+                      title={`${task.title} • ${task.priority || "Medium"} • ${formatDateTime(task.dueDate, "No due date")}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span
+                          className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
+                          style={
+                            priorityDotStyle[task.priority] || {
+                              background: "var(--color-text-muted)",
+                            }
+                          }
+                          aria-hidden="true"
+                          data-cal-priority-dot
+                        />
+                        <div className="min-w-0">
+                          <div
+                            data-cal-task-name
+                            className={`truncate text-[11px] font-semibold ${
+                              task.status === "completed" ||
+                              task.status === "given-up"
+                                ? "text-[var(--color-text-muted)] line-through"
+                                : "text-[var(--color-text)]"
+                            }`}
+                          >
+                            {task.title}
+                          </div>
+                          <div
+                            data-cal-due-time
+                            className="mt-0.5 text-[10px]"
+                            style={{ color: previewTone.metaColor }}
+                          >
+                            <span className="ui-tabular">
+                              {formatCellTime(task.dueDate)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+                {taskCount > previewLimit && (
+                  <span
+                    className={`mt-0.5 text-xs text-[var(--color-text-muted)] ${viewMode === "week" ? "px-3" : "px-2.5"}`}
+                  >
+                    +{taskCount - previewLimit} more
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </button>
+        <TaskDetailButton
+          isOpen={Boolean(editingTask)}
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      </>
     );
   },
 );

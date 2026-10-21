@@ -220,9 +220,7 @@ const CalendarTaskDetailCard = ({
   };
 
   const handleOpen = () => {
-    if (mode === "panel") {
-      onClick?.(task);
-    }
+    (onEdit || onClick)?.(task);
   };
 
   const handleToggleCompletion = async (event) => {
@@ -435,6 +433,9 @@ const CalendarTaskDetailCard = ({
     <article
       data-status={task.status}
       data-calendar-task-card
+      onClick={(event) => {
+        if (!event.target.closest("button, a, input, select, textarea")) handleOpen();
+      }}
       draggable={Boolean(taskId) && !isFlushing}
       onDragStart={handleDragStart}
       className={`group relative cursor-grab rounded-[16px] border active:cursor-grabbing transition-all duration-350 ease-in-out ${
@@ -539,7 +540,7 @@ const CalendarTaskDetailCard = ({
         ) : null}
 
         <div className="min-w-0 flex-1">
-          {mode === "panel" ? (
+          {(onEdit || onClick) ? (
             <button
               type="button"
               onClick={handleOpen}

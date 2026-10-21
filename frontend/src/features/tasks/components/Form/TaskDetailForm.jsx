@@ -1,5 +1,6 @@
 import FormDialog from "@/shared/components/FormDialog";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import DescriptionEditor from "./DescriptionEditor";
 import AddCategoryForm from "./AddCategoryForm";
 import AddProjectForm from "./AddProjectForm";
 import { useUpdateTaskMutation } from "../../api/taskMutations";
@@ -32,6 +33,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
     toDateTimeLocalValue(task?.dueDate || ""),
   );
   const [submitError, setSubmitError] = useState("");
+  const formRef = useRef(null);
   const [description, setDescription] = useState(task?.description || "");
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddProject, setShowAddProject] = useState(false);
@@ -99,7 +101,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="workspace-form">
+      <form ref={formRef} onSubmit={handleSubmit} className="workspace-form">
         <div>
           <label
             htmlFor="edit-title"
@@ -234,22 +236,13 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
           </div>
         </div>
 
-        <div>
-          <label
-            htmlFor="edit-description"
-            className="mb-2 block text-sm font-medium text-[var(--color-text)]"
-          >
-            Description
-          </label>
-          <textarea
-            id="edit-description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter task description…"
-            rows={3}
-            className="ui-input"
-          />
-        </div>
+        <DescriptionEditor
+          value={description}
+          onChange={setDescription}
+          onSave={() => formRef.current?.requestSubmit()}
+          busy={isSubmitting}
+          error={submitError}
+        />
 
         {submitError && (
           <p className="workspace-form-error" role="alert">
