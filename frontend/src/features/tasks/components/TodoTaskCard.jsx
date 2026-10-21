@@ -87,7 +87,12 @@ const TodoTaskCard = ({
   }, [menuOpen]);
   return (
     <article
-      className="todo-task"
+      className="todo-task cursor-pointer"
+      onClick={(event) => {
+        if (!event.target.closest("button, a, input, select, textarea, [role='menu']")) {
+          onEdit?.(task);
+        }
+      }}
       data-status={task.status}
       draggable={Boolean(onDragStart)}
       onDragStart={onDragStart}

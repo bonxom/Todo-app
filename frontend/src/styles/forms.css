@@ -288,3 +288,72 @@
     gap: 17px;
   }
 }
+
+.description-editor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 3vw, 40px);
+  background: var(--color-overlay);
+  backdrop-filter: blur(8px);
+}
+.description-editor-dialog {
+  width: min(100%, 960px);
+  height: min(80dvh, 760px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: clamp(16px, 3vw, 28px);
+  border: 1px solid var(--color-line);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+.description-editor-textarea {
+  flex: 1;
+  min-height: 0;
+  resize: none;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.description-editor-overlay {
+  animation: description-backdrop-in 240ms ease-out both;
+}
+.description-editor-dialog {
+  animation: description-expand 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: center;
+}
+.description-editor-overlay[data-closing="true"] {
+  animation: description-backdrop-out 180ms ease-in both;
+}
+.description-editor-overlay[data-closing="true"] .description-editor-dialog {
+  animation: description-collapse 180ms ease-in both;
+  pointer-events: none;
+}
+@keyframes description-backdrop-in {
+  from { background: transparent; backdrop-filter: blur(0); }
+  to { background: var(--color-overlay); backdrop-filter: blur(8px); }
+}
+@keyframes description-backdrop-out {
+  from { background: var(--color-overlay); backdrop-filter: blur(8px); }
+  to { background: transparent; backdrop-filter: blur(0); }
+}
+@keyframes description-expand {
+  from { opacity: 0; transform: translateY(12px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes description-collapse {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(8px) scale(0.96); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .description-editor-overlay,
+  .description-editor-dialog,
+  .description-editor-overlay[data-closing="true"],
+  .description-editor-overlay[data-closing="true"] .description-editor-dialog {
+    animation-duration: 0.01ms;
+  }
+}

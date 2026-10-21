@@ -173,7 +173,7 @@ describe.skipIf(!uri)("MCP HTTP + MongoDB integration", () => {
   it("P2-03: negotiates protocol, discovers four schemas and calls all tools", async () => {
     const client = await connect("a");
     const tools = (await client.listTools()).tools;
-    expect(tools).toHaveLength(4);
+    expect(tools).toHaveLength(5);
     expect(
       tools.every(
         (t) => t.inputSchema && t.outputSchema && t.annotations?.readOnlyHint,

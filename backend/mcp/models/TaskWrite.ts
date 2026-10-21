@@ -11,10 +11,23 @@ const taskFields = {
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().max(1000).optional(),
   priority: z.enum(["Low", "Medium", "High"]).optional(),
-  categoryId: id.optional().describe("Use tool to list categories and their IDs. Omit for Uncategorized."),
-  projectId: id.nullable().optional().describe("Use tool to list projects and their IDs. Omit to leave unchanged."),
+  categoryId: id
+    .optional()
+    .describe(
+      "Use tool to list categories and their IDs. Omit for Uncategorized.",
+    ),
+  projectId: id
+    .nullable()
+    .optional()
+    .describe(
+      "Use tool to list projects and their IDs. Omit to leave unchanged.",
+    ),
   startDate: z.iso.datetime({ offset: true }).nullable().optional(),
-  dueDate: z.iso.datetime({ offset: true }).nullable().optional().describe("default set to 23:59 of the current date if not specified"),
+  dueDate: z.iso
+    .datetime({ offset: true })
+    .nullable()
+    .optional()
+    .describe("default set to 23:59 of the current date if not specified"),
 };
 export const createTaskInputSchema = z.strictObject({
   idempotencyKey,

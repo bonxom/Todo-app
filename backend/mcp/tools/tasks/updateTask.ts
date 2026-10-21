@@ -13,7 +13,7 @@ export function registerUpdateTaskTool(
     {
       title: "Update Orbit task",
       description:
-        "Update content and/or status after resolving the correct task. Set changes.status to in-progress to start a pending task, or completed/given-up for an in-progress task. Already-at-target status is a no-op. Other transitions are rejected. Content and status changes are atomic. Null projectId removes the project; null dates clear dates. Reuse idempotencyKey and arguments on retry.",
+        "In Ask mode, use grill_user first if the user needs to choose or clarify the proposed action. If the user has already clearly requested or confirmed it, proceed without asking again. Update content and/or status after resolving the correct task. Set changes.status to in-progress to start a pending task, or completed/given-up for an in-progress task. Already-at-target status is a no-op. Other transitions are rejected. Content and status changes are atomic. Null projectId removes the project; null dates clear dates. Reuse idempotencyKey and arguments on retry.",
       inputSchema: updateTaskInputSchema,
       outputSchema: getTaskOutputSchema,
       annotations: writeAnnotations,

@@ -8,15 +8,22 @@ import type {
 } from "../types/domain";
 
 export const aiService = {
-  getConversation: async (id?: string, before?: number): Promise<ConversationSnapshot | null> => {
-    const response = await axiosInstance.get<{ data: ConversationSnapshot | null }>(
-      id ? `/api/ai/conversations/${id}` : "/api/ai/conversations/latest",
-      { params: before ? { before } : undefined },
-    );
+  getConversation: async (
+    id?: string,
+    before?: number,
+  ): Promise<ConversationSnapshot | null> => {
+    const response = await axiosInstance.get<{
+      data: ConversationSnapshot | null;
+    }>(id ? `/api/ai/conversations/${id}` : "/api/ai/conversations/latest", {
+      params: before ? { before } : undefined,
+    });
     return response.data.data;
   },
   createConversation: async (conversationId: string): Promise<string> => {
-    const response = await axiosInstance.post<{ conversationId: string }>("/api/ai/conversations", { conversationId });
+    const response = await axiosInstance.post<{ conversationId: string }>(
+      "/api/ai/conversations",
+      { conversationId },
+    );
     return response.data.conversationId;
   },
   // Generate tasks based on user requirement

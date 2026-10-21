@@ -6,6 +6,8 @@ export type McpContext = Readonly<{
   user: IUserDocument;
   requestId: string;
   scopes?: readonly string[];
+  /** Internal runner guard; never accepted from model arguments or HTTP input. */
+  beforeWrite?: () => Promise<void>;
 }>;
 // Only call after protect: decoding here adds an expiry requirement, not authentication.
 export function createMcpContext(

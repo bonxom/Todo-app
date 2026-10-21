@@ -13,7 +13,7 @@ export function registerCreateTaskTool(
     {
       title: "Create Orbit task",
       description:
-        "Create a task only when the user requests it. You are only allowed to create tasks with pending status. Dates need timezone. Reuse idempotencyKey and arguments on retry; never retry with a new key after an uncertain result.",
+        "In Ask mode, use grill_user first if the user needs to choose or clarify the proposed action. If the user has already clearly requested or confirmed it, proceed without asking again. Create a task only when the user requests it. You are only allowed to create tasks with pending status. Dates need timezone. Reuse idempotencyKey and arguments on retry; never retry with a new key after an uncertain result.",
       inputSchema: createTaskInputSchema,
       outputSchema: getTaskOutputSchema,
       annotations: { ...writeAnnotations, destructiveHint: false },

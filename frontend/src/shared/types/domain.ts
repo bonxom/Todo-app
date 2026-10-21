@@ -138,7 +138,28 @@ export interface ChangePasswordPayload {
 export interface GenerateTasksPayload {
   userRequirement: string;
 }
+export type AgentMode = "auto" | "ask";
+export interface InteractionAnswer {
+  optionId?: string;
+  customAnswer?: string;
+}
+export interface AgentInteraction {
+  id: string;
+  kind: "clarification" | "confirmation";
+  question: string;
+  options: Array<{ id: string; label: string; description?: string }>;
+  allowCustomAnswer: boolean;
+  status: "pending" | "answered" | "cancelled";
+  details?: Array<{ label: string; value: string }>;
+  answer?: InteractionAnswer;
+}
+export interface InteractionSelection extends InteractionAnswer {
+  interactionId: string;
+  cancel?: boolean;
+}
 export interface ChatPayload {
+  selection?: InteractionSelection;
+  mode?: AgentMode;
   conversationId?: string;
   requestId?: string;
   userInput: string;
@@ -178,9 +199,15 @@ export interface ApiEnvelope<T> {
   data: T;
 }
 export type GenerateTasksResponse = ApiEnvelope<Task[]>;
-export type ChatResponse = ApiEnvelope<string>;
+export interface ChatResponse extends ApiEnvelope<string> {
+  status?: "processing" | "completed" | "failed" | "cancelled";
+  conversationId?: string;
+  requestId?: string;
+  interaction?: AgentInteraction;
+}
 
 export interface ConversationMessage {
+  interaction?: AgentInteraction;
   id: string;
   sender: string;
   text: string;
@@ -191,5 +218,12 @@ export interface ConversationSnapshot {
   title: string;
   before: number | null;
   messages: ConversationMessage[];
-  pending: Array<{ requestId: string; userInput: string }>;
+  mode: AgentMode;
+  interaction?: AgentInteraction;
+  pending: Array<{
+    requestId: string;
+    userInput: string;
+    mode: AgentMode;
+    selection?: InteractionSelection;
+  }>;
 }
