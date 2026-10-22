@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, ChevronRight, Image as ImageIcon, Paperclip } from "lucide-react";
 import InteractionCard from "./InteractionCard";
+import RecentConversations from "./RecentConversations";
 import MarkdownText from "./MarkdownText";
 import { formatDateTime } from "@/shared/utils/dateTime";
 
@@ -54,8 +55,8 @@ const ChatField = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         {chat?.before && (
           <button
             type="button"
@@ -67,15 +68,18 @@ const ChatField = ({
           </button>
         )}
         {messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">
+          chat && !chat.loading && !chat.interaction ? (
+            <RecentConversations onOpen={chat.openConversation} disabled={chat.locked} />
+          ) : <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">
             No messages yet. Start a conversation!
           </div>
         ) : (
           messages
             .filter(
               (message) =>
-                message.interaction?.id !== chat?.interaction?.id ||
-                !message.interaction,
+                !(message.sender === "user" && message.replyToInteractionId) &&
+                (message.interaction?.id !== chat?.interaction?.id ||
+                  !message.interaction),
             )
             .map((message) => (
               <div
@@ -167,8 +171,8 @@ const ChatField = ({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-[var(--color-line)] bg-[var(--color-surface)] p-3 sm:p-4">
-        {chat?.interaction && (
+      <div className={`min-h-0 shrink-0 border-t border-[var(--color-line)] bg-[var(--color-surface)] p-3 ${chat?.interaction && !showChatInput ? "flex max-h-[75%] flex-col" : "sm:p-4"}`}>
+        {chat?.interaction && showChatInput && (
           <div className="mb-2 flex items-center justify-end text-sm">
             <button
               type="button"

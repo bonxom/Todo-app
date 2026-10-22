@@ -1,3 +1,15 @@
+.ui-chat-history-label {
+  padding: 0 0.5rem;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  color: var(--color-text-muted);
+  text-align: left;
+}
+
 .ui-main-shell {
   min-height: 100vh;
   background: var(--color-canvas);
@@ -1027,6 +1039,60 @@ textarea.ui-input {
   --assistant-height: min(50rem, calc(100dvh - 2rem));
   right: calc((100vw - var(--assistant-width)) / 2);
   bottom: calc((100dvh - var(--assistant-height)) / 2);
+}
+
+.ui-workspace-layout {
+  --assistant-dock-width: min(50vw, var(--assistant-dock-preferred-width, clamp(22rem, 32vw, 30rem)));
+}
+
+.ui-assistant-panel.ui-assistant-panel--docked {
+  --assistant-width: min(50vw, var(--assistant-dock-preferred-width, clamp(22rem, 32vw, 30rem)));
+  --assistant-height: calc(100dvh - var(--topbar-height, 64px));
+  top: var(--topbar-height, 64px);
+  right: 0;
+  bottom: 0;
+  border-radius: 0;
+  border-width: 0 0 0 1px;
+  box-shadow: none;
+}
+
+.ui-assistant-resize-handle {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 2;
+  width: 7px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.ui-assistant-resize-handle:hover,
+.ui-assistant-resize-handle:focus-visible,
+.ui-assistant-panel[data-resizing="true"] .ui-assistant-resize-handle {
+  background: var(--color-accent);
+}
+
+.ui-assistant-panel[data-resizing="true"] {
+  user-select: none;
+}
+
+.ui-assistant-panel.ui-assistant-panel--docked {
+  transition: opacity 180ms ease, visibility 0s;
+}
+
+/* Only the content below the topbar makes room for the open dock. */
+@media (min-width: 1024px) {
+  .ui-workspace-layout:has(.ui-assistant-presence[data-open="true"] .ui-assistant-panel--docked) > .ui-main-shell {
+    margin-right: var(--assistant-dock-width);
+  }
+}
+
+@media (max-width: 1023px) {
+  .ui-assistant-resize-handle {
+    display: none;
+  }
+  .ui-assistant-panel.ui-assistant-panel--docked {
+    --assistant-width: 100vw;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

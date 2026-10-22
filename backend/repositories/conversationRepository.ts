@@ -3,6 +3,11 @@ import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
 
 export const conversationRepository = {
+  list: (userId: string) =>
+    Conversation.find({ userId, sequence: { $gt: 0 } })
+      .select("_id title updatedAt")
+      .sort({ updatedAt: -1, _id: -1 })
+      .lean(),
   async create(userId: string, conversationId: string) {
     try {
       return await Conversation.create({ _id: conversationId, userId });

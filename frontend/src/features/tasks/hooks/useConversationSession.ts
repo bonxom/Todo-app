@@ -66,12 +66,12 @@ export function useConversationSession() {
     };
   }, [load, isCurrent]);
 
-  const reload = async () => {
+  const openConversation = async (id?: string) => {
     if (busy.current) return;
     busy.current = true;
     setLoading(true);
     try {
-      await load(conversationId);
+      await load(id);
       if (isCurrent()) setError(null);
     } catch {
       if (isCurrent())
@@ -81,6 +81,8 @@ export function useConversationSession() {
       if (isCurrent()) setLoading(false);
     }
   };
+
+  const reload = () => openConversation(conversationId);
 
   const newConversation = async () => {
     if (busy.current) return false;
@@ -160,6 +162,7 @@ export function useConversationSession() {
     load,
     receive,
     reload,
+    openConversation,
     loadEarlier,
     newConversation,
   };

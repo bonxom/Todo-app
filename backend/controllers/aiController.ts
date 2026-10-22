@@ -78,3 +78,8 @@ export const getConversation = async (
   );
   res.json({ data: conversation });
 };
+
+export const listConversations = async (req: Request, res: Response): Promise<void> => {
+  const conversations = await conversationService.list(String(req.user!._id));
+  res.json({ data: conversations.map(({ _id, title, updatedAt }) => ({ id: _id, title, updatedAt })) });
+};

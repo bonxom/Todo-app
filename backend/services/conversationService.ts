@@ -14,6 +14,7 @@ import { runConversationTurn } from "./conversationTurnService.js";
 import { prepareInteractionSelection } from "./interactionAnswerService.js";
 
 export const conversationService = {
+  list: (userId: string) => repository.list(userId),
   create: (userId: string, id: string) => repository.create(userId, id),
   async get(userId: string, id?: string, before?: number) {
     const conversation = id

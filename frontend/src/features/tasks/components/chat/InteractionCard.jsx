@@ -221,7 +221,7 @@ function InteractionCardContent({
     <form
       className={
         docked
-          ? `space-y-3 max-h-[55vh] overflow-y-auto pr-0.5 text-sm transition-all ${
+          ? `flex min-h-0 flex-col overflow-hidden text-sm ${
               disabled ? "opacity-75" : ""
             }`
           : `space-y-3 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-sm shadow-sm transition-all ${
@@ -230,13 +230,13 @@ function InteractionCardContent({
       }
       onSubmit={handleSubmit}
     >
-      <div className="flex items-center justify-between gap-2 border-b border-[var(--color-line)] pb-2 text-xs">
-        <div className="inline-flex items-center gap-1.5 font-mono text-[var(--color-accent-strong)] dark:text-[var(--color-accent)]">
-          <Terminal className="h-3.5 w-3.5" />
-          <span className="font-semibold uppercase tracking-wider">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--color-line)] pb-2.5 text-xs">
+        <div className="inline-flex min-w-0 flex-wrap items-center gap-1.5 text-[var(--color-accent-strong)] dark:text-[var(--color-accent)]">
+          <Terminal className="h-3.5 w-3.5 shrink-0" />
+          <span className="font-medium">
             {confirmation ? "Xác nhận hành động" : "Câu hỏi từ Agent"}
           </span>
-          <span className="text-[var(--color-text-muted)] font-normal">
+          <span className="rounded-full bg-[var(--color-surface-muted)] px-1.5 py-0.5 text-[10px] text-[var(--color-text-muted)] font-normal">
             ({visibleOptions.length} lựa chọn)
           </span>
         </div>
@@ -244,15 +244,16 @@ function InteractionCardContent({
           <button
             type="button"
             onClick={onSwitchToMessage}
-            className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors underline cursor-pointer"
+            className="ui-focus-ring shrink-0 rounded-lg px-2 py-1.5 text-xs text-[var(--color-accent-strong)] hover:bg-[var(--color-surface-muted)] transition-colors cursor-pointer"
           >
             Nhắn tin →
           </button>
         )}
       </div>
 
-      <fieldset disabled={disabled} className="space-y-3">
-        <legend className="font-semibold text-sm sm:text-base text-[var(--color-text)] leading-snug break-words">
+      <div className={docked ? "min-h-0 overflow-y-auto overscroll-contain py-3 pr-1 [scrollbar-width:thin]" : ""}>
+      <fieldset disabled={disabled} className="min-w-0 space-y-3">
+        <legend className="mb-2 w-full text-sm font-medium text-[var(--color-text)] leading-relaxed break-words">
           {interaction.question}
         </legend>
 
@@ -287,7 +288,7 @@ function InteractionCardContent({
                     onAnswer?.({ optionId: option.id });
                   }
                 }}
-                className={`group relative flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition-all duration-150 ${
+                className={`group relative flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-[var(--color-accent)] ${
                   isSelected
                     ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]/40 ring-1 ring-[var(--color-accent)] shadow-xs"
                     : "border-[var(--color-line)] bg-[var(--color-surface)] hover:border-[var(--color-accent)]/60 hover:bg-[var(--color-surface-muted)]/40"
@@ -315,7 +316,7 @@ function InteractionCardContent({
                     </span>
                   </div>
                   {option.description && (
-                    <p className="mt-1 text-xs text-[var(--color-text-muted)] leading-relaxed break-words">
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)] leading-normal break-words">
                       {option.description}
                     </p>
                   )}
@@ -334,8 +335,17 @@ function InteractionCardContent({
               </span>
               <textarea
                 aria-label="Other answer"
-                className="ui-input w-full text-xs font-sans rounded-lg resize-none min-h-[64px] p-2.5 transition-all focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
-                placeholder="Nhập câu trả lời cụ thể của bạn nếu các lựa chọn trên không phù hợp..."
+                rows={1}
+                style={{
+                  height: "2.5rem",
+                  minHeight: "2.5rem",
+                  padding: "0.5rem 0.75rem",
+                  lineHeight: "1.375rem",
+                  resize: "none",
+                  overflowY: "auto",
+                }}
+                className="ui-input w-full text-xs font-sans rounded-lg resize-none p-2.5 transition-all focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
+                placeholder="Lựa chọn khác..."
                 value={customAnswer}
                 maxLength={2000}
                 onChange={(event) => {
@@ -347,12 +357,15 @@ function InteractionCardContent({
           </div>
         )}
 
-        {/* Buttons */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--color-line)]/60">
+      </fieldset>
+      </div>
+        {/* Keep actions visible while the question and options scroll. */}
+        <div className="flex shrink-0 items-center justify-between gap-2 pt-2.5 border-t border-[var(--color-line)]">
           <div className="flex items-center gap-2 ml-auto">
             <button
               className="ui-btn-secondary ui-focus-ring px-3 py-1.5 text-xs font-medium rounded-lg cursor-pointer"
               type="button"
+              disabled={disabled}
               onClick={handleCancel}
             >
               Cancel
@@ -367,7 +380,6 @@ function InteractionCardContent({
             </button>
           </div>
         </div>
-      </fieldset>
     </form>
   );
 }

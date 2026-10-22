@@ -1,9 +1,10 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { ApiError } from "@/shared/services/apiError";
 import { useAuthStore } from "@/stores/useAuthStore";
 import ChatBubble from "../chat";
+import { aiService } from "@/shared/services/aiService";
 
 const { send, load, create } = vi.hoisted(() => ({
   send: vi.fn(),
@@ -11,7 +12,7 @@ const { send, load, create } = vi.hoisted(() => ({
   create: vi.fn(),
 }));
 vi.mock("@/shared/services/aiService", () => ({
-  aiService: { getConversation: load, createConversation: create },
+  aiService: { getConversation: load, createConversation: create, listConversations: vi.fn().mockResolvedValue([]) },
 }));
 const snapshot = (messages = []) => ({
   conversationId: create.mock.calls.at(-1)?.[0],
@@ -31,6 +32,7 @@ vi.mock("../../api/aiMutations", () => ({
 }));
 
 beforeEach(() => {
+  aiService.listConversations.mockResolvedValue([]);
   send.mockReset();
   load.mockReset();
   create.mockReset();
@@ -42,6 +44,26 @@ beforeEach(() => {
     configurable: true,
     value: vi.fn(),
   });
+});
+
+it("opens a previous conversation from the empty chat and continues in that conversation", async () => {
+  aiService.listConversations.mockResolvedValue([
+    { id: "previous", title: "Previous plan", updatedAt: new Date().toISOString() },
+  ]);
+  load.mockImplementation(async (id) => id === "previous"
+    ? { ...snapshot([message("Previous reply")]), conversationId: "previous" }
+    : null);
+  send.mockResolvedValue({ data: "Continued" });
+  const user = userEvent.setup();
+  render(<ChatBubble />);
+  await user.click(screen.getByRole("button", { name: "Open assistant" }));
+  await user.click(await screen.findByRole("button", { name: /Previous plan/ }));
+  expect(await screen.findByText("Previous reply")).toBeVisible();
+  await user.type(screen.getByRole("textbox", { name: "Message" }), "Continue this plan{Enter}");
+  await waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({
+    conversationId: "previous", userInput: "Continue this plan",
+  })));
+  expect(create).not.toHaveBeenCalled();
 });
 
 it("keeps messages, pending replies and drafts when closed and reopened", async () => {
@@ -73,7 +95,32 @@ it("keeps messages, pending replies and drafts when closed and reopened", async 
   expect(screen.getByText("Here is your plan")).toBeVisible();
 });
 
-it("expands and restores the same chat without losing the draft", async () => {
+it("resizes the dock up to half the page and closes to the bubble at the minimum", async () => {
+  const user = userEvent.setup();
+  render(<div className="ui-workspace-layout"><ChatBubble /></div>);
+  await user.click(screen.getByRole("button", { name: "Open assistant" }));
+  await user.type(screen.getByRole("textbox"), "Keep this draft");
+  await user.click(screen.getByRole("button", { name: "Expand chat" }));
+  await user.click(screen.getByRole("button", { name: "Dock chat to right" }));
+  const panel = screen.getByRole("region", { name: "Assistant chat" });
+  const handle = screen.getByRole("separator", { name: "Resize chat sidebar" });
+  vi.spyOn(panel, "getBoundingClientRect").mockReturnValue({ width: 400 });
+  // MouseEvent supplies coordinates in jsdom, which has no native PointerEvent.
+  handle.setPointerCapture = vi.fn();
+  fireEvent(handle, new MouseEvent("pointerdown", { bubbles: true, clientX: 624, button: 0 }));
+  fireEvent(handle, new MouseEvent("pointermove", { bubbles: true, clientX: 100 }));
+  expect(panel.style.getPropertyValue("--assistant-dock-preferred-width")).toBe(`${window.innerWidth / 2}px`);
+  expect(panel.closest(".ui-workspace-layout").style.getPropertyValue("--assistant-dock-preferred-width")).toBe(`${window.innerWidth / 2}px`);
+  fireEvent(handle, new MouseEvent("pointermove", { bubbles: true, clientX: 700 }));
+  expect(panel.style.getPropertyValue("--assistant-dock-preferred-width")).toBe("324px");
+  fireEvent(handle, new MouseEvent("pointermove", { bubbles: true, clientX: 760 }));
+  expect(screen.getByRole("button", { name: "Open assistant" })).toBeVisible();
+  expect(screen.queryByRole("region", { name: "Assistant chat" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Open assistant" }));
+  expect(screen.getByRole("textbox")).toHaveValue("Keep this draft");
+});
+
+it("cycles through expanded, docked and compact chat without losing the draft", async () => {
   const user = userEvent.setup();
   render(<ChatBubble />);
   await user.click(screen.getByRole("button", { name: "Open assistant" }));
@@ -83,14 +130,27 @@ it("expands and restores the same chat without losing the draft", async () => {
     "ui-assistant-panel--expanded",
   );
   expect(screen.getByRole("textbox")).toHaveValue("Draft message");
+  await user.click(screen.getByRole("button", { name: "Dock chat to right" }));
+  expect(screen.getByRole("region", { name: "Assistant chat" })).toHaveClass(
+    "ui-assistant-panel--docked",
+  );
+  expect(screen.getByRole("textbox")).toHaveValue("Draft message");
+  await user.click(screen.getByRole("button", { name: "Close chat" }));
+  await user.click(screen.getByRole("button", { name: "Open assistant" }));
+  expect(screen.getByRole("region", { name: "Assistant chat" })).toHaveClass(
+    "ui-assistant-panel--docked",
+  );
   await user.click(screen.getByRole("button", { name: "Restore chat size" }));
   expect(
     screen.getByRole("region", { name: "Assistant chat" }),
   ).not.toHaveClass("ui-assistant-panel--expanded");
+  expect(screen.getByRole("region", { name: "Assistant chat" })).toHaveClass(
+    "ui-assistant-panel--compact",
+  );
   expect(screen.getByRole("textbox")).toHaveValue("Draft message");
 });
 
-it("creates lazily, retains context across modes, and restores latest history after remount", async () => {
+it("creates lazily, retains context, and restores latest history after remount", async () => {
   send.mockResolvedValue({ data: "Saved response" });
   load.mockImplementation(async () => snapshot([message("Saved response")]));
   const user = userEvent.setup();
@@ -104,8 +164,7 @@ it("creates lazily, retains context across modes, and restores latest history af
   await user.type(screen.getByRole("textbox"), "First message{Enter}");
   expect(await screen.findByText("Saved response")).toBeVisible();
   const firstId = create.mock.calls[0][0];
-  await user.click(screen.getByRole("button", { name: "Tasks" }));
-  await user.click(screen.getByRole("button", { name: "Chat", exact: true }));
+  expect(screen.queryByRole("group", { name: "Assistant mode" })).not.toBeInTheDocument();
   expect(screen.getByText("Saved response")).toBeVisible();
   await user.type(screen.getByRole("textbox"), "Follow up{Enter}");
   await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
@@ -334,9 +393,8 @@ it("sends selected mode and allows a custom clarification answer", async () => {
     }),
   );
   expect(send.mock.calls[1][0].selection).not.toHaveProperty("optionId");
-  await user.click(screen.getByRole("button", { name: "Tasks", exact: true }));
   expect(
-    screen.queryByRole("combobox", { name: "Agent mode" }),
+    screen.queryByRole("button", { name: "Tasks", exact: true }),
   ).not.toBeInTheDocument();
 });
 

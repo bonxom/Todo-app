@@ -57,7 +57,7 @@ const MainLayout = ({ children = null, assistant = null }) => {
     : 0;
 
   return (
-    <div style={{ "--sidebar-w": `${sidebarWidth}px` }}>
+    <div className="ui-workspace-layout" style={{ "--sidebar-w": `${sidebarWidth}px`, "--topbar-height": `${TOPBAR_HEIGHT}px` }}>
       <Sidebar
         isDesktop={isDesktop}
         isExpanded={isSidebarExpanded}

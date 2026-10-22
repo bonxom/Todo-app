@@ -3,7 +3,32 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import ChatField from "../chat/ChatField";
 
+vi.mock("@/shared/services/aiService", () => ({
+  aiService: { listConversations: vi.fn().mockResolvedValue([]) },
+}));
+
 describe("ChatField", () => {
+  it("hides interaction reply bubbles while retaining the answer card and ordinary messages", () => {
+    const timestamp = new Date().toISOString();
+    render(
+      <ChatField
+        onSendMessage={vi.fn()}
+        messages={[
+          { id: "question", sender: "bot", timestamp, interaction: {
+            id: "choice", status: "answered", question: "Choose a plan",
+            options: [], answer: { customAnswer: "My custom plan" },
+          } },
+          { id: "answer", sender: "user", timestamp, text: "My custom plan", replyToInteractionId: "choice" },
+          { id: "selection", sender: "user", timestamp, text: "Selected option", replyToInteractionId: "other-choice" },
+          { id: "ordinary", sender: "user", timestamp, text: "Selected option" },
+        ]}
+      />,
+    );
+    expect(screen.getAllByText("My custom plan")).toHaveLength(1);
+    expect(screen.getAllByText("Selected option")).toHaveLength(1);
+    expect(screen.getByText("Choose a plan")).toBeVisible();
+  });
+
   const defaultChat = {
     mode: "auto",
     setMode: vi.fn(),

@@ -61,6 +61,7 @@ export function turnMessages(turn: ChatTurn) {
     {
       id: `${turn._id}:user`,
       sender: "user",
+      ...(turn.selection ? { replyToInteractionId: turn.selection.interactionId } : {}),
       text: turn.userInput,
       timestamp: turn.createdAt.toISOString(),
     },

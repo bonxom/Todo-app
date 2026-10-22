@@ -8,6 +8,10 @@ import type {
 } from "../types/domain";
 
 export const aiService = {
+  listConversations: async (): Promise<Array<{ id: string; title: string; updatedAt: string }>> => {
+    const response = await axiosInstance.get<{ data: Array<{ id: string; title: string; updatedAt: string }> }>("/api/ai/conversations");
+    return response.data.data;
+  },
   getConversation: async (
     id?: string,
     before?: number,

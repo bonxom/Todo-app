@@ -67,6 +67,7 @@ export function useConversationChat() {
           {
             id: payload!.requestId!,
             sender: "user",
+            ...(selection ? { replyToInteractionId: selection.interactionId } : {}),
             text: text!,
             timestamp: new Date().toISOString(),
           },
@@ -129,5 +130,6 @@ export function useConversationChat() {
     loadEarlier,
     newConversation,
     locked,
+    openConversation: session.openConversation,
   };
 }

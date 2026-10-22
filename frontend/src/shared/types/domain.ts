@@ -207,6 +207,7 @@ export interface ChatResponse extends ApiEnvelope<string> {
 }
 
 export interface ConversationMessage {
+  replyToInteractionId?: string;
   interaction?: AgentInteraction;
   id: string;
   sender: string;
