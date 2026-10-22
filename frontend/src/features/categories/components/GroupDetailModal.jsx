@@ -17,6 +17,7 @@ import {
 } from "@/features/tasks/api/taskMutations";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 import GroupTaskRow from "./GroupTaskRow";
+import { useTransitionTasks } from "@/features/tasks/hooks/useTransitionTasks";
 
 const STATUS_FILTERS = [
   ["all", "All tasks"],
@@ -145,6 +146,7 @@ export default function GroupDetailModal({
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
   );
+  const transitionTasks = useTransitionTasks(shown);
   const updatePage = (next) => {
     setPage(next);
     listRef.current?.scrollTo({ top: 0 });
@@ -286,9 +288,9 @@ export default function GroupDetailModal({
             </p>
           )}
           <div className="group-detail-list" ref={listRef}>
-            {shown.length ? (
+            {transitionTasks.length ? (
               <ul>
-                {shown.map((task) => (
+                {transitionTasks.map((task) => (
                   <GroupTaskRow
                     key={task._id || task.id}
                     task={task}

@@ -15,6 +15,7 @@ import {
   toMidnightDateTimeLocalValue,
 } from "@/shared/utils/dateTime";
 import { sortTasksByDueTime } from "./calendarUtils";
+import { useTransitionTasks } from "@/features/tasks/hooks/useTransitionTasks";
 
 const TaskListPanel = ({
   selectedDate,
@@ -43,6 +44,7 @@ const TaskListPanel = ({
 
   const MAX_DISPLAY_TASKS = 4;
   const displayTasks = sortedTasks.slice(0, MAX_DISPLAY_TASKS);
+  const transitionTasks = useTransitionTasks(displayTasks);
   const hasMore = sortedTasks.length > MAX_DISPLAY_TASKS;
 
   return (
@@ -124,9 +126,9 @@ const TaskListPanel = ({
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto">
-        {tasks.length > 0 ? (
+        {transitionTasks.length > 0 ? (
           <>
-            {displayTasks.map((task) => (
+            {transitionTasks.map((task) => (
               <CalendarTaskDetailCard
                 key={task._id || task.id}
                 task={task}

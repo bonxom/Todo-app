@@ -1,5 +1,6 @@
 import TodoTaskCard from "./TodoTaskCard";
 import { ListTodo, Plus, Search } from "lucide-react";
+import { useTransitionTasks } from "../hooks/useTransitionTasks";
 
 const TaskList = ({
   tasks,
@@ -15,6 +16,7 @@ const TaskList = ({
   onClearFilters,
   onAddTask,
 }) => {
+  const visibleTasks = useTransitionTasks(tasks);
   if (isLoading) {
     return (
       <div className="space-y-3" aria-live="polite" aria-label="Loading tasks">
@@ -28,7 +30,7 @@ const TaskList = ({
     );
   }
 
-  if (!tasks || tasks.length === 0) {
+  if (visibleTasks.length === 0) {
     return (
       <div className="todo-empty-state">
         <span className="todo-empty-icon">
@@ -69,7 +71,7 @@ const TaskList = ({
 
   return (
     <div className="todo-task-list">
-      {tasks.map((task) => (
+      {visibleTasks.map((task) => (
         <TodoTaskCard
           key={task._id || task.id}
           task={task}

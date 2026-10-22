@@ -10,6 +10,7 @@ import type {
   TaskMutationPayload,
 } from "../../../shared/types/domain";
 import { invalidateTaskDependents } from "./invalidation";
+import { notifyTaskStatus } from "../hooks/taskStatusTransitions";
 
 export const useCreateTaskMutation = (
   options?: UseMutationOptions<Task, Error, Partial<TaskMutationPayload>>,
@@ -36,8 +37,11 @@ export const useUpdateTaskMutation = (
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ taskId, payload }: UpdateTaskVariables) =>
-      taskService.updateTask(taskId, payload),
+    mutationFn: async ({ taskId, payload }: UpdateTaskVariables) => {
+      const task = await taskService.updateTask(taskId, payload);
+      if (payload.status) notifyTaskStatus(taskId, payload.status);
+      return task;
+    },
     onSuccess: async (...args) => {
       await invalidateTaskDependents(queryClient);
       await options?.onSuccess?.(...args);
@@ -65,7 +69,11 @@ export const useStartTaskMutation = (
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (taskId: EntityId) => taskService.startTask(taskId),
+    mutationFn: async (taskId: EntityId) => {
+      const task = await taskService.startTask(taskId);
+      notifyTaskStatus(taskId, "in-progress");
+      return task;
+    },
     onSuccess: async (...args) => {
       await invalidateTaskDependents(queryClient);
       await options?.onSuccess?.(...args);
@@ -79,7 +87,11 @@ export const useFinishTaskMutation = (
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (taskId: EntityId) => taskService.finishTask(taskId),
+    mutationFn: async (taskId: EntityId) => {
+      const task = await taskService.finishTask(taskId);
+      notifyTaskStatus(taskId, "completed");
+      return task;
+    },
     onSuccess: async (...args) => {
       await invalidateTaskDependents(queryClient);
       await options?.onSuccess?.(...args);
@@ -93,7 +105,11 @@ export const useGiveUpTaskMutation = (
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (taskId: EntityId) => taskService.giveUpTask(taskId),
+    mutationFn: async (taskId: EntityId) => {
+      const task = await taskService.giveUpTask(taskId);
+      notifyTaskStatus(taskId, "given-up");
+      return task;
+    },
     onSuccess: async (...args) => {
       await invalidateTaskDependents(queryClient);
       await options?.onSuccess?.(...args);
@@ -107,7 +123,11 @@ export const useRestoreTaskMutation = (
 ) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (taskId: EntityId) => taskService.restoreTask(taskId),
+    mutationFn: async (taskId: EntityId) => {
+      const task = await taskService.restoreTask(taskId);
+      notifyTaskStatus(taskId, "in-progress");
+      return task;
+    },
     onSuccess: async (...args) => {
       await invalidateTaskDependents(queryClient);
       await options?.onSuccess?.(...args);

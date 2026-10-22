@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTaskStatusEffect } from "../../hooks/useTaskStatusEffect";
 import {
   AlarmClock,
   CircleCheckBig,
@@ -109,6 +110,7 @@ const TaskCard = ({
   onTaskUpdated,
   enableDrag = false,
 }) => {
+  const statusEffectRef = useTaskStatusEffect(task);
   const [isHovering, setIsHovering] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
   const [isCardHovering, setIsCardHovering] = useState(false);
@@ -181,6 +183,7 @@ const TaskCard = ({
 
   return (
     <Wrapper
+      ref={statusEffectRef}
       {...wrapperProps}
       draggable={enableDrag}
       onDragStart={handleDragStart}

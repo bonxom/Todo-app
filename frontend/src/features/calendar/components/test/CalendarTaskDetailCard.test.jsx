@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import CalendarTaskDetailCard from "../CalendarTaskDetailCard";
 
 const task = {
@@ -15,6 +15,20 @@ const task = {
 };
 
 describe("CalendarTaskDetailCard compact layout", () => {
+  it.each([
+    ["given-up", "#ef4444"],
+    ["in-progress", "#3b82f6"],
+    ["completed", "#22c55e"],
+  ])("runs the shared two-second border effect for %s", (status, color) => {
+    const initial = { ...task, status: "pending" };
+    const { container, rerender } = render(<CalendarTaskDetailCard task={initial} />);
+    const animate = vi.fn(() => ({ cancel: vi.fn() }));
+    container.querySelector("article").animate = animate;
+    rerender(<CalendarTaskDetailCard task={{ ...task, status }} />);
+    expect(animate).toHaveBeenCalledWith(expect.arrayContaining([
+      expect.objectContaining({ boxShadow: `inset 0 0 0 2px ${color}` }),
+    ]), { duration: 2000, easing: "linear" });
+  });
   it("keeps title and description to one line before secondary details", () => {
     render(
       <CalendarTaskDetailCard

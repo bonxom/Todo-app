@@ -15,6 +15,7 @@ import {
 import { formatDateTime } from "@/shared/utils/dateTime";
 import { setTaskDragData } from "@/shared/utils/taskDrag";
 import { getTaskProjectColor } from "@/shared/utils/projectColor";
+import { useTaskStatusEffect } from "@/features/tasks/hooks/useTaskStatusEffect";
 
 const formatLabel = (value) => {
   if (!value) return "None";
@@ -94,19 +95,9 @@ const Badge = ({
   </span>
 );
 
-// One-shot border/glow presets for the whole card: each task action gets its
-// own color so the card itself visibly "announces" what just happened, not
-// just the small button that was clicked.
+// Deleting a pending suggestion keeps its existing departure effect.
+// Status changes use the shared two-second effect instead.
 const cardFlashPresets = {
-  complete: {
-    border: "var(--color-success)",
-    shadow: "color-mix(in srgb, var(--color-success) 35%, transparent)",
-  },
-  giveUp: {
-    border: "var(--color-danger)",
-    shadow: "color-mix(in srgb, var(--color-danger) 35%, transparent)",
-  },
-  accept: { border: "#8b5cf6", shadow: "rgba(139, 92, 246, 0.35)" },
   deny: { border: "#eab308", shadow: "rgba(234, 179, 8, 0.35)" },
 };
 
@@ -144,6 +135,7 @@ const CalendarTaskDetailCard = ({
   onTaskDelete,
   compact = false,
 }) => {
+  const statusEffectRef = useTaskStatusEffect(task);
   const [isCompletionUpdating, setIsCompletionUpdating] = useState(false);
   const [isGiveUpUpdating, setIsGiveUpUpdating] = useState(false);
   const [isFlushing, setIsFlushing] = useState(false);
@@ -151,8 +143,7 @@ const CalendarTaskDetailCard = ({
   // flips to completed, so the action feels rewarding instead of silent.
   const [justCompleted, setJustCompleted] = useState(false);
   const celebrationTimeoutRef = useRef(null);
-  // Drives the whole-card border/glow pulse ("chạy 1 vòng rồi trở lại bình
-  // thường") for complete / give-up / accept / deny actions.
+  // Preserve the departure flash for denying a pending suggestion.
   const [flashColor, setFlashColor] = useState(null);
   const flashTimeoutRef = useRef(null);
 
@@ -234,7 +225,6 @@ const CalendarTaskDetailCard = ({
       setIsCompletionUpdating(true);
       if (isPending) {
         await onTaskStatusChange?.(task, "in-progress");
-        triggerCardFlash("accept");
       } else {
         const goingToComplete = !isCompleted;
         await onTaskStatusChange?.(
@@ -247,7 +237,6 @@ const CalendarTaskDetailCard = ({
             () => setJustCompleted(false),
             500,
           );
-          triggerCardFlash("complete");
         }
       }
     } catch (error) {
@@ -285,11 +274,7 @@ const CalendarTaskDetailCard = ({
 
     try {
       setIsGiveUpUpdating(true);
-      const goingToGiveUp = !isGivenUp;
       await onTaskStatusChange?.(task, isGivenUp ? "in-progress" : "given-up");
-      if (goingToGiveUp) {
-        triggerCardFlash("giveUp");
-      }
     } catch (error) {
       console.error("Failed to update task give-up status:", error);
     } finally {
@@ -431,6 +416,8 @@ const CalendarTaskDetailCard = ({
 
   return (
     <article
+      ref={statusEffectRef}
+      data-task-id={taskId}
       data-status={task.status}
       data-calendar-task-card
       onClick={(event) => {

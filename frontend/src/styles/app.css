@@ -1048,6 +1048,8 @@ textarea.ui-input {
 .ui-assistant-panel.ui-assistant-panel--docked {
   --assistant-width: min(50vw, var(--assistant-dock-preferred-width, clamp(22rem, 32vw, 30rem)));
   --assistant-height: calc(100dvh - var(--topbar-height, 64px));
+  /* The dock belongs below topbar menus and navigation overlays. */
+  z-index: 25;
   top: var(--topbar-height, 64px);
   right: 0;
   bottom: 0;

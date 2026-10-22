@@ -6,6 +6,7 @@ import { setTaskDragData } from "@/shared/utils/taskDrag";
 import Pagination from "@/shared/components/Pagination";
 import { usePagination } from "@/shared/hooks/usePagination";
 import { sortTasksByDueTime } from "./calendarUtils";
+import { useTransitionTasks } from "@/features/tasks/hooks/useTransitionTasks";
 
 const ProjectFocusWeekAgenda = ({
   selectedDate,
@@ -57,6 +58,7 @@ const ProjectFocusWeekAgenda = ({
     const start = (pageNo - 1) * pageSize;
     return sortedTasks.slice(start, start + pageSize);
   }, [sortedTasks, pageNo, pageSize]);
+  const transitionTasks = useTransitionTasks(displayTasks);
 
   return (
     <section className="ui-section-card calendar-agenda">
@@ -123,9 +125,9 @@ const ProjectFocusWeekAgenda = ({
       </div>
 
       <div className="calendar-agenda-list">
-        {displayTasks.length > 0 ? (
+        {transitionTasks.length > 0 ? (
           <>
-            {displayTasks.map((task) => (
+            {transitionTasks.map((task) => (
               <TodoTaskCard
                 key={task._id || task.id}
                 task={task}

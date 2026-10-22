@@ -15,6 +15,7 @@ import {
 import "../todos.css";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 import { differenceInCalendarDays, format, isValid } from "date-fns";
+import { useTaskStatusEffect } from "../hooks/useTaskStatusEffect";
 
 const TodoTaskCard = ({
   task,
@@ -28,6 +29,7 @@ const TodoTaskCard = ({
   onReject,
   showDueTime = false,
 }) => {
+  const statusEffectRef = useTaskStatusEffect(task);
   const [busy, setBusy] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -87,6 +89,7 @@ const TodoTaskCard = ({
   }, [menuOpen]);
   return (
     <article
+      ref={statusEffectRef}
       className="todo-task cursor-pointer"
       onClick={(event) => {
         if (!event.target.closest("button, a, input, select, textarea, [role='menu']")) {
@@ -94,6 +97,7 @@ const TodoTaskCard = ({
         }
       }}
       data-status={task.status}
+      data-task-id={taskId}
       draggable={Boolean(onDragStart)}
       onDragStart={onDragStart}
     >

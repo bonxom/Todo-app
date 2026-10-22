@@ -4,6 +4,7 @@ import { Calendar as CalendarIcon, X } from "lucide-react";
 import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
 import DeleteDialog from "@/features/tasks/components/dialogs/DeleteDialog";
 import CalendarTaskDetailCard from "./CalendarTaskDetailCard";
+import { useTransitionTasks } from "@/features/tasks/hooks/useTransitionTasks";
 import Pagination from "@/shared/components/Pagination";
 import { usePagination } from "@/shared/hooks/usePagination";
 import { formatDateTime } from "@/shared/utils/dateTime";
@@ -49,6 +50,7 @@ const TaskListDetailModal = ({
     const start = (pageNo - 1) * pageSize;
     return sortedTasks.slice(start, start + pageSize);
   }, [sortedTasks, pageNo, pageSize]);
+  const transitionTasks = useTransitionTasks(isOpen ? displayTasks : []);
 
   const handleEdit = (task) => {
     setSelectedTask(task);
@@ -169,9 +171,9 @@ const TaskListDetailModal = ({
           </div>
 
           <div className="flex-1 overflow-y-auto overscroll-contain p-6">
-            {displayTasks.length > 0 ? (
+            {transitionTasks.length > 0 ? (
               <div className="space-y-3">
-                {displayTasks.map((task) => (
+                {transitionTasks.map((task) => (
                   <div
                     key={task._id || task.id}
                     className={`transition-[opacity,transform] duration-300 ${
