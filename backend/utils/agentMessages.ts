@@ -52,7 +52,54 @@ export function prepareHistory(
   for (const turn of turns) {
     // newest first
     if (turn.status === "awaiting_user") continue;
-    const messages = [...turn.messages];
+    const loaderCallIds = new Set<string>();
+    for (const message of turn.messages) {
+      if (message.role === "assistant" && message.tool_calls) {
+        for (const call of message.tool_calls) {
+          if (
+            call.type === "function" &&
+            (call.function.name === "load_skill" ||
+              call.function.name === "read_skill_document")
+          ) {
+            loaderCallIds.add(call.id);
+          }
+        }
+      }
+    }
+    const messages = turn.messages.map((message) => {
+      if (
+        message.role === "tool" &&
+        loaderCallIds.has(message.tool_call_id) &&
+        typeof message.content === "string"
+      ) {
+        try {
+          const parsed = JSON.parse(message.content);
+          if (
+            parsed &&
+            typeof parsed === "object" &&
+            !parsed.isError &&
+            parsed.executed !== false &&
+            parsed.skillId &&
+            parsed.document &&
+            parsed.version
+          ) {
+            return {
+              ...message,
+              content: JSON.stringify({
+                skillId: parsed.skillId,
+                document: parsed.document,
+                version: parsed.version,
+                previouslyLoaded: true,
+                validForCurrentTurn: false,
+              }),
+            };
+          }
+        } catch {
+          // not JSON, keep unchanged
+        }
+      }
+      return message;
+    });
     const results = new Set(
       messages.filter((m) => m.role === "tool").map((m) => m.tool_call_id),
     );

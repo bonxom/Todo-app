@@ -1,3 +1,4 @@
+import { createAgentBudget } from "../utils/agentBudget.js";
 import type { McpContext } from "../mcp/context.js";
 import type { ChatTurn } from "../types/IChatTurn.js";
 import type { AgentInteraction } from "../types/IAgent.js";
@@ -13,6 +14,7 @@ export async function runConversationTurn(
   context: McpContext,
   selectedInteraction?: AgentInteraction,
 ) {
+  const budget = createAgentBudget();
   let latestMessages = turn.messages;
   try {
     if (selectedInteraction?.status === "cancelled") {
@@ -47,6 +49,7 @@ export async function runConversationTurn(
         },
       },
       {
+        budget,
         mode: turn.mode ?? "auto",
         history: prepareHistory(previous),
         approvedInteraction:
