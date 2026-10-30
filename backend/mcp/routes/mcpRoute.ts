@@ -1,4 +1,6 @@
 import { Router } from "express";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { getSkillRegistry } from "../../skills/registry.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { McpContext } from "../context.js";
 import { createOrbitMcpServer } from "../server.js";
@@ -7,16 +9,13 @@ export function createMcpRoute(): Router {
   const router = Router();
 
   router.post("/", async (req, res, next) => {
-    const server = createOrbitMcpServer(res.locals.mcpContext as McpContext);
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-      enableJsonResponse: true,
-    });
+    let server: McpServer | undefined;
+    let transport: StreamableHTTPServerTransport | undefined;
     let closed = false;
     const cleanup = async () => {
       if (closed) return;
       closed = true;
-      await Promise.allSettled([transport.close(), server.close()]);
+      await Promise.allSettled([transport?.close(), server?.close()]);
     };
     res.once("finish", () => {
       void cleanup();
@@ -25,6 +24,14 @@ export function createMcpRoute(): Router {
       void cleanup();
     });
     try {
+      const registry = await getSkillRegistry();
+      // The connection may close while registry initialization is pending.
+      if (closed) return;
+      server = createOrbitMcpServer(res.locals.mcpContext as McpContext, registry);
+      transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined,
+        enableJsonResponse: true,
+      });
       await server.connect(transport);
       await transport.handleRequest(req, res, req.body);
     } catch (error) {

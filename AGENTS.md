@@ -1,0 +1,221 @@
+# CLAUDE.md
+
+Guidance for coding agents working in this repository.
+
+## Project layout and toolchain
+
+- `backend/`: Node 22, Express 5, TypeScript, Mongoose, Zod, and the OpenAI-compatible SDK.
+- `frontend/`: React 19, Vite 7, Tailwind CSS 4, and plain JavaScript/JSX.
+- The frontend and backend are separate pnpm projects. There is no root `package.json` or root workspace.
+- Both packages pin `pnpm@11.21.0`. Use pnpm only; do not recreate `package-lock.json`.
+- Run package commands from the corresponding package directory.
+
+## Setup and common commands
+
+Enable the package manager once:
+
+```bash
+corepack enable
+```
+
+Install exactly from the committed lockfiles:
+
+```bash
+cd backend && pnpm install --frozen-lockfile
+cd frontend && pnpm install --frozen-lockfile
+```
+
+Backend commands:
+
+```bash
+cd backend
+pnpm run dev       # tsx watch; default http://0.0.0.0:3001
+pnpm run start     # run server.ts without watch mode
+pnpm run build     # TypeScript type-check (tsc --noEmit)
+```
+
+Frontend commands:
+
+```bash
+cd frontend
+pnpm run dev       # Vite on http://0.0.0.0:5000
+pnpm run lint      # ESLint
+pnpm run build     # production bundle in dist/
+pnpm run preview   # preview the production bundle
+```
+
+The backend has a Vitest suite; the frontend currently has no automated test suite. For normal changes, the minimum verification is:
+
+```bash
+cd backend && pnpm run build && pnpm test
+cd frontend && pnpm run lint && pnpm run build
+```
+
+When a dependency changes, run `pnpm install` in that package and commit the matching `pnpm-lock.yaml`. Do not edit lockfiles manually.
+
+## Running locally
+
+Create `backend/.env` from `backend/.env.example`, then supply valid secrets and MongoDB settings. Run backend and frontend in separate terminals. The Vite config has no development proxy, so point the browser app directly at the local API:
+
+```bash
+cd backend && pnpm run dev
+cd frontend && VITE_SERVER_URL=http://localhost:3001 pnpm run dev
+```
+
+Useful health check:
+
+```bash
+curl http://localhost:3001/healthz
+```
+
+`/healthz` validates the backend environment and MongoDB connection; it is not a process-only liveness check.
+
+## Environment variables
+
+Backend variables validated at startup:
+
+- `MONGO_URI`
+- `JWT_SECRET`
+- `JWT_REFRESH_SECRET`
+- `JWT_ACCESS_EXPIRES_IN` (for example, `15m`)
+- `JWT_REFRESH_EXPIRES_IN` (for example, `7d`)
+- `SALT_ROUNDS` (positive integer)
+
+Optional backend configuration:
+
+- `MONGO_NAME`: database name.
+- `ALLOWED_ORIGINS`: comma-separated CORS origins; replaces the built-in allowlist when set.
+- `HOST` and `PORT`: defaults are `0.0.0.0` and `3001`.
+- `AI_API_KEY`, `AI_BASE_URL`, and `AI_MODEL_NAME`: all are required when using `/api/ai/*` endpoints.
+- `VERCEL`: suppresses `app.listen()` in `server.ts` when set by the deployment environment.
+
+The current code does not read `API_KEY` or `JWT_EXPIRES_IN`; use `AI_API_KEY` and `JWT_ACCESS_EXPIRES_IN` instead.
+
+Frontend variables:
+
+- `VITE_SERVER_URL`: Axios base URL. Set it to `http://localhost:3001` for separate local dev servers. Leave it unset in Docker so requests remain relative and Nginx proxies `/api/`.
+- `VITE_API_DEBUG=true`: enables verbose Axios request/response logging.
+
+Never commit real `.env` files or secrets.
+
+## Docker harness
+
+```bash
+docker compose build backend frontend
+docker compose up -d
+docker compose down
+```
+
+- Backend is exposed at `http://localhost:4000` and receives `backend/.env` through Compose.
+- Frontend is exposed at `http://localhost:3636` and is served by Nginx.
+- Frontend Nginx proxies `/api/` to `backend:4000` and falls back to `index.html` for client-side routes.
+- Each Docker build context is its package directory and uses its own frozen pnpm lockfile.
+- Docker ignore files are lowercase `.dockerignore`; filenames are case-sensitive on Linux.
+
+## Backend runtime and architecture
+
+### Startup
+
+- `backend/server.ts` loads dotenv, validates server environment, connects to MongoDB, and listens unless `VERCEL` is set.
+- `backend/app.ts` creates the Express app and exports it. Its memoized `ensureAppReady()` also validates configuration and connects to MongoDB before `/healthz` and all application routes. Failed initialization clears the promise so a later request can retry.
+- Routes are mounted at `/api/auth`, `/api/users`, `/api/categories`, `/api/projects`, `/api/tasks`, `/api/ai`, and `/api/stats`.
+
+### Request flow
+
+Keep backend changes in the existing direction:
+
+```text
+route -> middleware/validation -> controller -> service -> repository -> Mongoose model
+```
+
+- Routes compose `protect`, optional `authorize`, Zod `validate(...)`, and a controller.
+- Validated JSON is stored on `req.validatedBody`; use it instead of reparsing validated input from `req.body`.
+- Controllers translate HTTP input/output and pass failures to `next(error)`. Keep domain rules and database queries out of controllers.
+- Services own business rules, authorization/ownership checks, cross-repository orchestration, and stats updates.
+- Repositories own Mongoose queries, population, aggregation, and persistence details.
+- Throw the typed errors from `backend/utils/errors.ts` for expected failures. The central error middleware maps `AppError` instances to HTTP responses.
+- Authenticated request typing is augmented in `backend/types/express.d.ts` as `req.user` and `req.validatedBody`.
+
+This is NodeNext ESM TypeScript. Relative imports in `.ts` source intentionally use `.js` suffixes; preserve that convention.
+
+### Important domain invariants
+
+- Tasks have no direct `userId`. Non-admin access is derived from category and project ownership in `taskService`; admin users bypass that ownership filter.
+- Normal task creation resolves a missing category to the user's `Uncategorized` category. A project is optional, and completed projects cannot receive new task assignments.
+- Deleting a category reassigns its tasks to that user's `Uncategorized` category when available. Deleting a project clears `projectId` on its tasks.
+- New users receive Work, Personal, Health, and Uncategorized categories through the User model post-save flow.
+- Stats are rebuilt when fetched and are also adjusted incrementally during task mutations. Task lifecycle changes must keep stats consistent.
+- Access tokens and rotating refresh tokens use different secrets. Used refresh tokens are stored in `InvalidatedToken` and cannot be reused.
+
+## Frontend architecture
+
+The provider hierarchy in `src/App.jsx` is:
+
+```text
+ErrorBoundary
+  -> AuthProvider
+    -> TaskRefreshProvider
+      -> TaskFilterProvider
+        -> AppRouter
+```
+
+- Pages in `src/page/` are composition shells. Feature UI belongs in `src/feature/`; reusable application UI belongs in `src/component/`.
+- All backend calls should go through `src/api/apiService.js` and the shared `axiosInstance`. Keep endpoint normalization in API helpers rather than scattering it across components.
+- `axiosInstance` attaches the access token, uses a 60-second timeout for AI calls, serializes concurrent refresh attempts through one queue, rotates tokens, and clears auth on terminal 401 failures. Preserve this behavior when changing authentication.
+- Auth state persists `token`, `refreshToken`, and `user` in local storage. `AuthProvider` verifies an existing session through `GET /api/auth/me` before setting `isAuthReady`.
+- Protected routes redirect guests to `/login`; public-only auth routes redirect signed-in users to `/dashboard`.
+- Tailwind CSS is provided through the Vite plugin. The project also uses `App.css`, `index.css`, and feature-specific CSS, so follow the styling pattern of the area being changed.
+
+## Change discipline
+
+- Preserve user changes already present in the worktree and keep unrelated edits out of the task.
+- Do not edit `node_modules/`, `dist/`, generated lockfile internals, or real environment files.
+- Add or update Zod validation for request-body contract changes.
+- Keep authorization and ownership checks in place for every user-scoped read or mutation.
+- After changing routes or API response shapes, update both the backend service/controller and the corresponding frontend API helper/consumer.
+- Report the exact verification commands run and any remaining warnings or untested paths.
+
+## Anthropic skill routing
+
+Project-local Anthropic skills live under `.claude/skills/<skill-name>/`. Before taking action, inspect the request and use the matching skill when one applies. Read that skill's `SKILL.md` completely before acting, and follow its workflow and bundled resources. Use only the relevant skills; combine skills when the task genuinely spans multiple domains.
+
+Use these triggers as a routing guide:
+
+- `algorithmic-art`: Create code-based generative art, p5.js sketches, particle systems, flow fields, or interactive canvas artwork.
+- `brainstorming`: Use before substantial design or implementation work when the problem, requirements, or solution space needs exploration; clarify goals and produce a design direction.
+- `cicd-pipeline-skill`: Create or update CI/CD pipeline configurations for GitHub Actions, Jenkins, GitLab CI, or Azure DevOps, including automated test execution.
+- `doc-coauthoring`: Co-author structured documentation, proposals, technical specifications, or decision documents.
+- `docx`: Create, read, edit, or convert Word `.docx`/`.dotx` files.
+- `frontend-design`: Design or reshape frontend UI; use it for visual direction, typography, layout, and distinctive styling.
+- `internal-comms`: Write internal status updates, leadership updates, newsletters, FAQs, incident reports, or similar communications.
+- `mcp-builder`: Build MCP servers that expose external APIs or services as well-designed LLM tools.
+- `node`: Apply Node.js/TypeScript best practices for native TypeScript, async code, streams, errors, testing, performance, and runtime configuration.
+- `pptx`: Create, read, edit, or convert PowerPoint `.pptx`/`.potx` presentations.
+- `theme-factory`: Apply or create a consistent visual theme for slides, documents, reports, or HTML artifacts.
+- `web-artifacts-builder`: Build complex multi-component React/Tailwind/shadcn HTML artifacts with state, routing, or rich interaction; do not use it for simple single-file markup.
+- `webapp-testing`: Test local web applications with Playwright, including UI flows, screenshots, and browser logs.
+- `web-design-guidelines`: Audit frontend UI for accessibility, usability, UX, and Web Interface Guidelines compliance.
+- `writing-plans`: Turn an agreed design or specification into a detailed, file-specific implementation plan before coding.
+- `executing-plans`: Execute an existing implementation plan task by task with checkpoints and verification.
+- `xlsx`: Create, read, edit, or transform spreadsheet files such as `.xlsx`, `.xlsm`, `.csv`, or `.tsv`.
+
+For a frontend task, normally use `frontend-design` for visual decisions, `web-artifacts-builder` only when a complex standalone artifact is requested, and `webapp-testing` for browser-based verification.
+For substantial feature work, prefer the Superpowers sequence `brainstorming` → `writing-plans` → `executing-plans`; skip it for small, unambiguous edits.
+
+
+## Mandatory spec-driven workflow for new features
+
+Every new feature must follow this sequence:
+
+**Brainstorming -> Spec -> Plan -> Test -> Code -> Test -> Lint -> Format check -> Build/type-check**
+
+1. **Brainstorming:** Clarify the problem, goals, scope, constraints, edge cases, and design alternatives. Settle on a design direction before writing the spec.
+2. **Spec:** Write a specification in `docs/superpowers/specs/YYYY-MM-DD-<feature>.md` covering expected behavior, acceptance criteria, non-goals, API/data/UI changes where relevant, error handling, and testable edge cases. Keep it current when requirements change.
+3. **Plan:** Write an implementation plan in `docs/superpowers/plans/YYYY-MM-DD-<feature>.md` referencing the spec, with ordered tasks, affected files, test cases, and verification commands. Complete the spec and plan before implementation.
+4. **Test before code:** Derive tests from the spec's acceptance criteria. Write and run automated tests first, confirming that they fail for the expected missing behavior rather than setup errors. If the affected area has no test harness, add appropriate test tooling as part of the plan. Document any checks that require manual or browser verification.
+5. **Code:** Implement the planned behavior to satisfy the tests and spec. Keep changes scoped and update the spec and plan if implementation reveals a necessary design change.
+6. **Test after code:** Rerun the new tests and relevant regression suites; perform the planned integration, end-to-end, and manual/browser checks where applicable. Fix failures before declaring the feature complete.
+7. **Lint and formatting:** Run the affected packages' lint checks and Prettier checks (or their configured formatter). Fix lint errors and formatting issues, then rerun checks. Use project-local tooling and configuration; if a required lint/format tool or script is missing, add it as part of the feature plan. Limit formatting changes to relevant files.
+8. **Build and type-check:** Run the affected packages' build/type-check commands and the minimum verification commands documented above. Report the exact commands and results, plus any blockers or checks that could not run; do not claim full verification when a required check was skipped or failed.
+
+This workflow is mandatory for every new feature, including small features. The earlier allowance to skip the Superpowers sequence for small, unambiguous edits applies only to non-feature changes such as documentation or mechanical maintenance.

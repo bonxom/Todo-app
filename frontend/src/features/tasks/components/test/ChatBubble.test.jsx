@@ -181,7 +181,7 @@ it("creates lazily, retains context, and restores latest history after remount",
   expect(load.mock.calls.some(([id]) => id === undefined)).toBe(true);
 });
 
-it("retries an uncertain response with the same request ID", async () => {
+it("recovers conversation after network failure via reload", async () => {
   send.mockRejectedValueOnce(new Error("Connection lost"));
   const user = userEvent.setup();
   render(<ChatBubble />);
@@ -196,10 +196,11 @@ it("retries an uncertain response with the same request ID", async () => {
   load.mockResolvedValue(
     snapshot([message("Create task", "user"), message("Created once")]),
   );
-  send.mockResolvedValueOnce({ data: "Created once" });
-  await user.click(screen.getByRole("button", { name: "Check reply / Retry" }));
+  expect(
+    screen.queryByRole("button", { name: "Check reply / Retry" }),
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Reload conversation" }));
   expect(await screen.findByText("Created once")).toBeVisible();
-  expect(send.mock.calls[1][0]).toEqual(original);
 });
 
 it("reuses the creation ID after a network failure without loading an old conversation", async () => {
@@ -317,9 +318,11 @@ it("restores Ask, allows new messages, and retries a choice with the same reques
     conversationId: "saved",
     mode: "ask",
   });
-  await user.click(screen.getByRole("button", { name: "Check reply / Retry" }));
+  expect(
+    screen.queryByRole("button", { name: "Check reply / Retry" }),
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Reload conversation" }));
   expect(await screen.findByText("Plan ready")).toBeVisible();
-  expect(send.mock.calls[1][0]).toEqual(payload);
 });
 
 it("cancels confirmation through a new chat message", async () => {
@@ -425,12 +428,12 @@ it("reloads a processing answer without replaying the original chat send", async
   );
   expect(screen.getByRole("combobox", { name: "Agent mode" })).toBeDisabled();
   expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
-  send.mockResolvedValue({ data: "", status: "processing" });
-  await user.click(screen.getByRole("button", { name: "Check reply / Retry" }));
-  expect(send.mock.calls[1][0]).toEqual(original);
+  expect(
+    screen.queryByRole("button", { name: "Check reply / Retry" }),
+  ).not.toBeInTheDocument();
 });
 
-it("retains answer retry identity when processing response history reload fails", async () => {
+it("allows reloading when processing response history reload fails", async () => {
   load.mockResolvedValue({
     ...snapshot(),
     conversationId: "saved",
@@ -442,15 +445,22 @@ it("retains answer retry identity when processing response history reload fails"
   render(<ChatBubble />);
   await user.click(screen.getByRole("button", { name: "Open assistant" }));
   await user.click(await screen.findByRole("radio", { name: "Quick plan" }));
-  load.mockRejectedValue(new Error("History unavailable"));
+  load.mockRejectedValueOnce(new Error("History unavailable"));
   await user.click(screen.getByRole("button", { name: "Send answer" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "History unavailable",
   );
   expect(screen.getByRole("combobox", { name: "Agent mode" })).toBeDisabled();
-  const original = send.mock.calls[0][0];
-  await user.click(screen.getByRole("button", { name: "Check reply / Retry" }));
-  expect(send.mock.calls[1][0]).toEqual(original);
+  expect(
+    screen.queryByRole("button", { name: "Check reply / Retry" }),
+  ).not.toBeInTheDocument();
+  load.mockResolvedValue({
+    ...snapshot([message("Recovered plan")]),
+    conversationId: "saved",
+    mode: "ask",
+  });
+  await user.click(screen.getByRole("button", { name: "Reload conversation" }));
+  expect(await screen.findByText("Recovered plan")).toBeVisible();
 });
 
 it("allows a new message to replace a menu without treating text as approval", async () => {

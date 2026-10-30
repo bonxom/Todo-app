@@ -1,33 +1,58 @@
 const MarkdownText = ({ text }) => {
-  // Parse markdown formatting
+  // Parse markdown formatting: code, bold, italic
   const parseMarkdown = (text) => {
+    if (!text) return text;
     const parts = [];
     let lastIndex = 0;
     let key = 0;
 
-    // Pattern for **bold**
-    const boldRegex = /\*\*(.+?)\*\*/g;
+    // Pattern for `code`, **bold**, *italic*, _italic_
+    const tokenRegex = /(?:`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_)/g;
     let match;
 
-    while ((match = boldRegex.exec(text)) !== null) {
-      // Add text before bold
+    while ((match = tokenRegex.exec(text)) !== null) {
       if (match.index > lastIndex) {
         parts.push(
           <span key={key++}>{text.slice(lastIndex, match.index)}</span>,
         );
       }
 
-      // Add bold text
-      parts.push(
-        <strong key={key++} className="font-semibold">
-          {match[1]}
-        </strong>,
-      );
+      if (match[1] !== undefined) {
+        // Inline code
+        parts.push(
+          <code
+            key={key++}
+            className="rounded bg-[var(--color-surface-muted)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-accent-strong)] border border-[var(--color-line)]"
+          >
+            {match[1]}
+          </code>,
+        );
+      } else if (match[2] !== undefined) {
+        // Bold
+        parts.push(
+          <strong key={key++} className="font-semibold">
+            {match[2]}
+          </strong>,
+        );
+      } else if (match[3] !== undefined) {
+        // Italic with *
+        parts.push(
+          <em key={key++} className="italic">
+            {match[3]}
+          </em>,
+        );
+      } else if (match[4] !== undefined) {
+        // Italic with _
+        parts.push(
+          <em key={key++} className="italic">
+            {match[4]}
+          </em>,
+        );
+      }
 
       lastIndex = match.index + match[0].length;
     }
 
-    // Add remaining text
     if (lastIndex < text.length) {
       parts.push(<span key={key++}>{text.slice(lastIndex)}</span>);
     }

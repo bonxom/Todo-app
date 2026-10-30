@@ -34,3 +34,16 @@ it("keeps ordinary pipes as text and supports escaped pipes in table cells", () 
   expect(screen.getByText("One | two")).toBeVisible();
   expect(screen.getByRole("cell", { name: "Read | write" })).toBeVisible();
 });
+
+it("renders inline code, italic and bold formatting together", () => {
+  render(
+    <MarkdownText
+      text={"Run `orbit_create_task` with *high* priority and **urgent** deadline and _daily_ recurrence."}
+    />,
+  );
+  const code = screen.getByText("orbit_create_task");
+  expect(code.tagName).toBe("CODE");
+  expect(screen.getByText("high").tagName).toBe("EM");
+  expect(screen.getByText("daily").tagName).toBe("EM");
+  expect(screen.getByText("urgent").tagName).toBe("STRONG");
+});

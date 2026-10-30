@@ -18,7 +18,7 @@ export const getAiClient = (): OpenAI => {
       throw new AppError(AI_ERROR.CONFIG_MISSING);
     }
 
-    client = new OpenAI({ apiKey, baseURL, timeout: 60000 });
+    client = new OpenAI({ apiKey, baseURL, timeout: 600000 });
   }
 
   return client;

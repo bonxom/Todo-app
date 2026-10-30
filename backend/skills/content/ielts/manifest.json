@@ -1,0 +1,6 @@
+{
+  "id": "ielts",
+  "description": "Plan IELTS practice and give evidence-based Writing or Speaking feedback using the matching reference.",
+  "entrypoint": "SKILL.md",
+  "documents": ["SKILL.md", "writing-rubric.md", "speaking-rubric.md"]
+}

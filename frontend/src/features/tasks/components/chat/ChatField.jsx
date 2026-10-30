@@ -3,6 +3,9 @@ import { Send, Bot, ChevronRight, Image as ImageIcon, Paperclip } from "lucide-r
 import InteractionCard from "./InteractionCard";
 import RecentConversations from "./RecentConversations";
 import MarkdownText from "./MarkdownText";
+import ToolBadge from "./ToolBadge";
+import SlashCommandMenu from "./SlashCommandMenu";
+import { filterTools } from "./toolCatalog";
 import { formatDateTime } from "@/shared/utils/dateTime";
 
 const ChatField = ({
@@ -13,11 +16,18 @@ const ChatField = ({
   chat,
 }) => {
   const [inputValue, setInputValue] = useState("");
+  const [selectedTool, setSelectedTool] = useState(null);
+  const [slashQuery, setSlashQuery] = useState("");
+  const [isSlashMenuOpen, setIsSlashMenuOpen] = useState(false);
+  const [selectedToolIndex, setSelectedToolIndex] = useState(0);
   const [messageInteractionId, setMessageInteractionId] = useState(null);
   const interactionId = chat?.interaction?.id;
   const showChatInput = Boolean(interactionId) && messageInteractionId === interactionId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  const availableTools = filterTools(slashQuery);
 
   const userMessageStyle = {
     borderColor: "var(--color-accent)",
@@ -39,15 +49,77 @@ const ChatField = ({
     scrollToBottom();
   }, [messages, isTyping]);
 
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setInputValue(value);
+
+    // If no tool selected yet, check for slash trigger
+    if (!selectedTool) {
+      const slashMatch = value.match(/(?:^|\s)\/([a-zA-Z0-9_-]*)$/);
+      if (slashMatch) {
+        setSlashQuery(slashMatch[1]);
+        setIsSlashMenuOpen(true);
+        setSelectedToolIndex(0);
+        return;
+      }
+    }
+    setIsSlashMenuOpen(false);
+  };
+
+  const handleSelectTool = (tool) => {
+    setSelectedTool(tool);
+    const cleaned = inputValue.replace(/(?:^|\s)\/[a-zA-Z0-9_-]*$/, "").trim();
+    setInputValue(cleaned);
+    setIsSlashMenuOpen(false);
+    textareaRef.current?.focus();
+  };
+
   const handleSubmit = (e) => {
-    e.preventDefault();
-    if (inputValue.trim() && !disabled) {
-      onSendMessage(inputValue.trim());
+    e?.preventDefault?.();
+    const trimmed = inputValue.trim();
+    if ((trimmed || selectedTool) && !disabled) {
+      const fullMessage = selectedTool
+        ? `[Skill: ${selectedTool.id}] ${trimmed}`
+        : trimmed;
+      onSendMessage(fullMessage);
       setInputValue("");
+      setSelectedTool(null);
+      setIsSlashMenuOpen(false);
     }
   };
 
   const handleKeyDown = (e) => {
+    if (isSlashMenuOpen && availableTools.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedToolIndex((prev) => (prev + 1) % availableTools.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedToolIndex(
+          (prev) => (prev - 1 + availableTools.length) % availableTools.length,
+        );
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        handleSelectTool(availableTools[selectedToolIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setIsSlashMenuOpen(false);
+        return;
+      }
+    }
+
+    if (e.key === "Backspace" && selectedTool && inputValue === "") {
+      e.preventDefault();
+      setSelectedTool(null);
+      return;
+    }
+
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -105,10 +177,33 @@ const ChatField = ({
                         disabled
                         embedded
                       />
-                    ) : message.sender === "bot" ? (
-                      <MarkdownText text={message.text} />
                     ) : (
-                      message.text
+                      <>
+                        {(() => {
+                          const match = message.text?.match(
+                            /^\[(?:Skill|Tool):\s*([a-zA-Z0-9_-]+)\]\s*([\s\S]*)$/,
+                          );
+                          if (match) {
+                            return (
+                              <>
+                                <div className="mb-1.5">
+                                  <ToolBadge
+                                    tool={match[1]}
+                                    size="sm"
+                                    className={
+                                      message.sender === "user"
+                                        ? "bg-white/20 border-white/40 text-white"
+                                        : ""
+                                    }
+                                  />
+                                </div>
+                                <MarkdownText text={match[2]} />
+                              </>
+                            );
+                          }
+                          return <MarkdownText text={message.text} />;
+                        })()}
+                      </>
                     )}
                   </div>
                   <span className="text-xs opacity-70 mt-1 block">
@@ -124,17 +219,8 @@ const ChatField = ({
             {chat.error}
           </div>
         )}
-        {chat && (chat.error || chat.pending) && (
+        {chat?.error && (
           <div className="flex gap-3 text-sm">
-            {chat.pending && (
-              <button
-                type="button"
-                disabled={chat.loading || chat.sending}
-                onClick={() => chat.send()}
-              >
-                Check reply / Retry
-              </button>
-            )}
             <button
               type="button"
               disabled={chat.loading || chat.sending}
@@ -171,6 +257,24 @@ const ChatField = ({
         <div ref={messagesEndRef} />
       </div>
 
+      {selectedTool && (
+        <div className="shrink-0 px-3 sm:px-4 py-1.5 flex items-center">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-2.5 py-1 shadow-xs text-xs animate-in fade-in duration-150">
+            <span className="text-[11px] font-medium text-[var(--color-text-muted)] select-none">
+              Skill:
+            </span>
+            <ToolBadge
+              tool={selectedTool}
+              size="sm"
+              onRemove={() => {
+                setSelectedTool(null);
+                textareaRef.current?.focus();
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       <div className={`min-h-0 shrink-0 border-t border-[var(--color-line)] bg-[var(--color-surface)] p-3 ${chat?.interaction && !showChatInput ? "flex max-h-[75%] flex-col" : "sm:p-4"}`}>
         {chat?.interaction && showChatInput && (
           <div className="mb-2 flex items-center justify-end text-sm">
@@ -179,7 +283,7 @@ const ChatField = ({
               onClick={() => setMessageInteractionId(showChatInput ? null : interactionId)}
               className="ui-focus-ring text-xs text-[var(--color-accent)] hover:underline cursor-pointer"
             >
-              {showChatInput ? "← Quay lại câu hỏi" : "Nhắn tin thay vì chọn →"}
+              {showChatInput ? "← Back to question" : "Message instead of choosing →"}
             </button>
           </div>
         )}
@@ -201,7 +305,7 @@ const ChatField = ({
           className={
             chat?.interaction && !showChatInput
               ? "sr-only"
-              : "flex items-end gap-2"
+              : "flex items-center gap-2"
           }
         >
           {/* Options Menu Toggle and Expanding Toolbar */}
@@ -214,8 +318,8 @@ const ChatField = ({
                   ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent-strong)] dark:text-[var(--color-accent)] shadow-xs"
                   : "border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)]"
               }`}
-              title={isMenuOpen ? "Thu gọn tùy chọn" : "Mở rộng tùy chọn"}
-              aria-label={isMenuOpen ? "Thu gọn tùy chọn" : "Mở rộng tùy chọn"}
+              title={isMenuOpen ? "Collapse options" : "Expand options"}
+              aria-label={isMenuOpen ? "Collapse options" : "Expand options"}
               aria-expanded={isMenuOpen}
             >
               <ChevronRight
@@ -237,8 +341,8 @@ const ChatField = ({
               <button
                 type="button"
                 className="ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
-                title="Đính kèm ảnh"
-                aria-label="Đính kèm ảnh"
+                title="Attach image"
+                aria-label="Attach image"
               >
                 <ImageIcon className="h-4 w-4" />
               </button>
@@ -247,8 +351,8 @@ const ChatField = ({
               <button
                 type="button"
                 className="ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
-                title="Đính kèm file"
-                aria-label="Đính kèm file"
+                title="Attach file"
+                aria-label="Attach file"
               >
                 <Paperclip className="h-4 w-4" />
               </button>
@@ -262,8 +366,8 @@ const ChatField = ({
                   disabled={chat.locked}
                   title={
                     chat.mode === "auto"
-                      ? "Chế độ Auto (Tự động) - Click để chuyển sang Ask"
-                      : "Chế độ Ask (Hỏi ý kiến) - Click để chuyển sang Auto"
+                      ? "Auto mode - Click to switch to Ask"
+                      : "Ask mode - Click to switch to Auto"
                   }
                   className={`ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-all cursor-pointer ${
                     chat.mode === "auto"
@@ -298,33 +402,48 @@ const ChatField = ({
             </label>
           )}
 
-          <textarea
-            rows={1}
-            aria-label="Message"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onFocus={() => setIsMenuOpen(false)}
-            onClick={() => setIsMenuOpen(false)}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              chat?.interaction
-                ? "Nhập tin nhắn để bỏ qua câu hỏi…"
-                : "Type a message…"
-            }
-            className="ui-input min-w-0 flex-1 resize-none rounded-2xl px-4 py-2 text-sm transition-all duration-200"
-            style={{
-              fieldSizing: "content",
-              minHeight: "2.75rem",
-              maxHeight: "calc(2lh + 1rem + 2px)",
-              paddingBlock: "0.5rem",
-              overflowY: "auto",
-              resize: "none",
-            }}
-          />
+          <div className="relative min-w-0 flex-1">
+            {isSlashMenuOpen && (
+              <SlashCommandMenu
+                query={slashQuery}
+                selectedIndex={selectedToolIndex}
+                onSelect={handleSelectTool}
+                onHoverIndex={setSelectedToolIndex}
+              />
+            )}
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              aria-label="Message"
+              value={inputValue}
+              onChange={handleInputChange}
+              onFocus={() => setIsMenuOpen(false)}
+              onClick={() => setIsMenuOpen(false)}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                chat?.interaction
+                  ? "Type a message to skip question…"
+                  : selectedTool
+                    ? `Type a prompt for ${selectedTool.name}…`
+                    : "Type a message or '/' for skills…"
+              }
+              className="ui-input block min-w-0 w-full resize-none rounded-2xl px-4 text-sm transition-all duration-200"
+              style={{
+                fieldSizing: "content",
+                minHeight: "2.75rem",
+                maxHeight: "calc(2lh + 1.375rem + 2px)",
+                paddingTop: "0.6875rem",
+                paddingBottom: "0.6875rem",
+                lineHeight: "1.25rem",
+                overflowY: "auto",
+                resize: "none",
+              }}
+            />
+          </div>
           <button
             type="submit"
             aria-label="Send message"
-            disabled={disabled || !inputValue.trim()}
+            disabled={disabled || (!inputValue.trim() && !selectedTool)}
             className="ui-btn-primary ui-focus-ring h-11 w-11 flex-shrink-0 rounded-full p-0 disabled:cursor-not-allowed disabled:border-[var(--color-line)] disabled:bg-[var(--color-surface-muted)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
           >
             <Send className="h-4 w-4" />

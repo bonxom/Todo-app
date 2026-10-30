@@ -1,3 +1,4 @@
+import type { AgentBudget } from "../utils/agentBudget.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
 
 export type AgentMode = "auto" | "ask";
@@ -22,6 +23,7 @@ export type AgentInteraction = {
 };
 
 export interface AgentMemory {
+  budget?: AgentBudget;
   mode?: AgentMode;
   approvedInteraction?: AgentInteraction;
   history?: ChatCompletionMessageParam[];
