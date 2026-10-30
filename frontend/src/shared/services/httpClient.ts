@@ -196,9 +196,9 @@ axiosInstance.interceptors.request.use(
       console.log("Base URL:", config.baseURL);
     }
 
-    // AI endpoints timeout is 60s
+    // AI endpoints timeout is 10 minutes (600,000ms)
     if (config.url?.includes("/api/ai/")) {
-      config.timeout = 60000;
+      config.timeout = 600000;
     }
 
     let token = useAuthStore.getState().token;

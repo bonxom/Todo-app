@@ -219,17 +219,8 @@ const ChatField = ({
             {chat.error}
           </div>
         )}
-        {chat && (chat.error || chat.pending) && (
+        {chat?.error && (
           <div className="flex gap-3 text-sm">
-            {chat.pending && (
-              <button
-                type="button"
-                disabled={chat.loading || chat.sending}
-                onClick={() => chat.send()}
-              >
-                Check reply / Retry
-              </button>
-            )}
             <button
               type="button"
               disabled={chat.loading || chat.sending}

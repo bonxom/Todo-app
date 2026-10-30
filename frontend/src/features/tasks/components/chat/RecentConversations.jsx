@@ -30,8 +30,6 @@ export default function RecentConversations({ onOpen, disabled }) {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(false);
     aiService.listConversations().then((items) => {
       if (active) setConversations(items);
     }).catch(() => {
@@ -46,7 +44,17 @@ export default function RecentConversations({ onOpen, disabled }) {
   if (error) return (
     <div className="space-y-2 py-4 text-sm text-[var(--color-text-muted)]">
       <p>Không tải được hội thoại cũ.</p>
-      <button type="button" className="ui-focus-ring rounded text-[var(--color-accent)]" onClick={() => setAttempt((value) => value + 1)}>Thử lại</button>
+      <button
+        type="button"
+        className="ui-focus-ring rounded text-[var(--color-accent)]"
+        onClick={() => {
+          setError(false);
+          setLoading(true);
+          setAttempt((value) => value + 1);
+        }}
+      >
+        Thử lại
+      </button>
     </div>
   );
   if (!conversations.length) return <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">No messages yet. Start a conversation!</div>;
