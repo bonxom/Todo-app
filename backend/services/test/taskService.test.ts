@@ -91,7 +91,7 @@ describe("taskService.finish", () => {
       undefined as never,
     );
 
-    const result = await taskService.finish(taskId, mockUser);
+    await taskService.finish(taskId, mockUser);
 
     expect(mockTask.status).toBe("completed");
     expect(mockTask.save).toHaveBeenCalled();

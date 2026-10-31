@@ -19,4 +19,4 @@ export interface IUserMethods {
 
 export interface IUserDocument extends IUser, Document, IUserMethods {}
 
-export interface IUserModel extends Model<IUserDocument> {}
+export type IUserModel = Model<IUserDocument>;

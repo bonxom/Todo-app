@@ -3,7 +3,7 @@ import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["dist", "node_modules", "coverage"]),
+  globalIgnores(["dist", "node_modules", "coverage", ".vercel"]),
   {
     files: ["**/*.{js,mjs,cjs}"],
     extends: [js.configs.recommended],
@@ -34,4 +34,6 @@ export default defineConfig([
       "@typescript-eslint/no-explicit-any": "warn",
     },
   },
+  // Canonical skill paths intentionally reject control characters.
+  { files: ["skills/registry.ts"], rules: { "no-control-regex": "off" } },
 ]);

@@ -10,4 +10,4 @@ export interface IInvalidatedToken {
 export interface IInvalidatedTokenDocument
   extends IInvalidatedToken, Document {}
 
-export interface IInvalidatedTokenModel extends Model<IInvalidatedTokenDocument> {}
+export type IInvalidatedTokenModel = Model<IInvalidatedTokenDocument>;

@@ -11,6 +11,18 @@ const schema = new Schema<ChatTurn>(
     requestId: { type: String, required: true },
     sequence: { type: Number, required: true },
     userInput: { type: String, required: true, maxlength: 2000 },
+    attachments: {
+      type: [
+        {
+          _id: false,
+          id: String,
+          name: String,
+          mimeType: String,
+          size: Number,
+        },
+      ],
+      default: [],
+    },
     selection: { type: Schema.Types.Mixed },
     status: {
       type: String,

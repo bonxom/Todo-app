@@ -1,3 +1,4 @@
+import type { AttachmentView } from "../types/IAttachment.js";
 import mongoose from "mongoose";
 import { createHash, randomUUID } from "node:crypto";
 import Conversation from "../models/Conversation.js";
@@ -59,6 +60,10 @@ export const chatTurnRepository = {
     resolveSelection: (
       pending?: AgentInteraction,
     ) => AgentInteraction | undefined = () => undefined,
+    attachmentIds: string[] = [],
+    bindAttachments: (
+      session: mongoose.ClientSession,
+    ) => Promise<AttachmentView[]> = async () => [],
   ) {
     await ChatTurn.init();
     const id = turnId(userId, requestId);
@@ -71,7 +76,10 @@ export const chatTurnRepository = {
             previous.conversationId !== conversationId ||
             previous.userInput !== userInput ||
             (previous.mode ?? "auto") !== mode ||
-            selectionKey(previous.selection) !== selectionKey(selection)
+            selectionKey(previous.selection) !== selectionKey(selection) ||
+            JSON.stringify(
+              (previous.attachments ?? []).map((file) => file.id),
+            ) !== JSON.stringify(attachmentIds)
           ) {
             throw new AppError(AI_ERROR.CHAT_REQUEST_CONFLICT);
           }
@@ -145,6 +153,7 @@ export const chatTurnRepository = {
           pendingTurn.markModified("interactions");
           await pendingTurn.save({ session });
         }
+        const attachments = await bindAttachments(session);
         const [turn] = await ChatTurn.create(
           [
             {
@@ -154,6 +163,7 @@ export const chatTurnRepository = {
               requestId,
               userInput,
               selection,
+              attachments,
               sequence: conversation.sequence,
               expiresAt,
               mode,

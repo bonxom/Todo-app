@@ -21,4 +21,4 @@ export interface ITask {
 
 export interface ITaskDocument extends ITask, Document {}
 
-export interface ITaskModel extends Model<ITaskDocument> {}
+export type ITaskModel = Model<ITaskDocument>;
