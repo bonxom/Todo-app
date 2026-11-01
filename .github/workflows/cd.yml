@@ -2,6 +2,8 @@ name: CD
 run-name: Deploy ${{ github.ref_name }} at ${{ github.sha }}
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +18,7 @@ jobs:
     name: Publish ${{ matrix.service }} image
     runs-on: ubuntu-22.04
     timeout-minutes: 20
+    environment: production
     strategy:
       fail-fast: false
       matrix:
@@ -50,16 +53,11 @@ jobs:
   deploy:
     name: Deploy production
     needs: publish-images
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     timeout-minutes: 15
     environment: production
     env:
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
-      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH || secrets.DEPLOY_PATH || '/home/dung/todoapp' }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
@@ -67,62 +65,42 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Configure SSH
+      - name: Deploy with Docker Compose
         shell: bash
         run: |
           set -euo pipefail
 
-          required=(DEPLOY_HOST DEPLOY_USER DEPLOY_PATH DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS DOCKERHUB_USERNAME DOCKERHUB_TOKEN)
-          for name in "${required[@]}"; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "Missing required GitHub secret: ${name}" >&2
-              exit 1
-            fi
-          done
+          if [[ -z "${DOCKERHUB_USERNAME:-}" || -z "${DOCKERHUB_TOKEN:-}" ]]; then
+            echo "Missing required secret: DOCKERHUB_USERNAME or DOCKERHUB_TOKEN" >&2
+            exit 1
+          fi
 
-          install -d -m 700 "${RUNNER_TEMP}/todoapp-ssh"
-          printf '%s\n' "${DEPLOY_SSH_KEY}" > "${RUNNER_TEMP}/todoapp-ssh/id_deploy"
-          printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" > "${RUNNER_TEMP}/todoapp-ssh/known_hosts"
-          chmod 600 "${RUNNER_TEMP}/todoapp-ssh/id_deploy" "${RUNNER_TEMP}/todoapp-ssh/known_hosts"
+          TARGET_DIR="${DEPLOY_PATH:-$HOME/todoapp}"
+          mkdir -p "${TARGET_DIR}"
 
-      - name: Upload production Compose file
-        shell: bash
-        run: |
-          set -euo pipefail
-          SSH_KEY="${RUNNER_TEMP}/todoapp-ssh/id_deploy"
-          KNOWN_HOSTS="${RUNNER_TEMP}/todoapp-ssh/known_hosts"
-          SSH_TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
+          # Ensure backend/.env exists before starting
+          if [[ ! -f "${TARGET_DIR}/backend/.env" ]]; then
+            echo "Error: ${TARGET_DIR}/backend/.env does not exist on server!" >&2
+            echo "Please create ${TARGET_DIR}/backend/.env with your production environment variables." >&2
+            exit 1
+          fi
 
-          ssh -i "${SSH_KEY}" -p "${DEPLOY_PORT}" \
-            -o UserKnownHostsFile="${KNOWN_HOSTS}" \
-            -o StrictHostKeyChecking=yes \
-            "${SSH_TARGET}" "mkdir -p '${DEPLOY_PATH}'"
+          # Copy production Compose file to deploy folder
+          cp docker-compose.prod.yml "${TARGET_DIR}/docker-compose.prod.yml"
 
-          scp -i "${SSH_KEY}" -P "${DEPLOY_PORT}" \
-            -o UserKnownHostsFile="${KNOWN_HOSTS}" \
-            -o StrictHostKeyChecking=yes \
-            docker-compose.prod.yml \
-            "${SSH_TARGET}:${DEPLOY_PATH}/docker-compose.prod.yml"
+          cd "${TARGET_DIR}"
 
-      - name: Pull images and restart containers
-        shell: bash
-        run: |
-          set -euo pipefail
-          SSH_KEY="${RUNNER_TEMP}/todoapp-ssh/id_deploy"
-          KNOWN_HOSTS="${RUNNER_TEMP}/todoapp-ssh/known_hosts"
-          SSH_TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
+          # Log in to Docker Hub on server
+          printf '%s' "${DOCKERHUB_TOKEN}" | docker login --username "${DOCKERHUB_USERNAME}" --password-stdin
 
-          printf '%s' "${DOCKERHUB_TOKEN}" | ssh -i "${SSH_KEY}" -p "${DEPLOY_PORT}" \
-            -o UserKnownHostsFile="${KNOWN_HOSTS}" \
-            -o StrictHostKeyChecking=yes \
-            "${SSH_TARGET}" "docker login --username '${DOCKERHUB_USERNAME}' --password-stdin"
+          # Pull the latest published images
+          DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}" IMAGE_TAG="${GITHUB_SHA}" \
+            docker compose -f docker-compose.prod.yml pull
 
-          ssh -i "${SSH_KEY}" -p "${DEPLOY_PORT}" \
-            -o UserKnownHostsFile="${KNOWN_HOSTS}" \
-            -o StrictHostKeyChecking=yes \
-            "${SSH_TARGET}" \
-            "cd '${DEPLOY_PATH}' && \
-             test -f backend/.env && \
-             DOCKERHUB_USERNAME='${DOCKERHUB_USERNAME}' IMAGE_TAG='${GITHUB_SHA}' docker compose -f docker-compose.prod.yml pull && \
-             DOCKERHUB_USERNAME='${DOCKERHUB_USERNAME}' IMAGE_TAG='${GITHUB_SHA}' docker compose -f docker-compose.prod.yml up -d --remove-orphans --wait --wait-timeout 120 && \
-             DOCKERHUB_USERNAME='${DOCKERHUB_USERNAME}' IMAGE_TAG='${GITHUB_SHA}' docker compose -f docker-compose.prod.yml ps"
+          # Start or update containers
+          DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}" IMAGE_TAG="${GITHUB_SHA}" \
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans --wait --wait-timeout 120
+
+          # Check container status
+          DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}" IMAGE_TAG="${GITHUB_SHA}" \
+            docker compose -f docker-compose.prod.yml ps
