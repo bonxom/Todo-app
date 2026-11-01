@@ -3,6 +3,7 @@ import type { ChatAttachment } from "@/shared/types/domain";
 import { useRef, useState } from "react";
 import { ApiError } from "@/shared/services/apiError";
 import { aiService } from "@/shared/services/aiService";
+import { generateUUID } from "@/shared/utils/id";
 import type {
   AgentMode,
   InteractionAnswer,
@@ -60,7 +61,7 @@ export function useConversationChat() {
     try {
       let id = conversationId;
       if (!id) {
-        initialConversationId.current ??= crypto.randomUUID();
+        initialConversationId.current ??= generateUUID();
         id = await aiService.createConversation(initialConversationId.current);
         if (!isCurrent()) return;
         setConversationId(id);
@@ -81,7 +82,7 @@ export function useConversationChat() {
         setUploadProgress(null);
         payload = {
           conversationId: id,
-          requestId: crypto.randomUUID(),
+          requestId: generateUUID(),
           userInput: text!,
           ...(attachments.length
             ? { attachmentIds: attachments.map((file) => file.id) }

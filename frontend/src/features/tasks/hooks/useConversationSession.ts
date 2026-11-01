@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { aiService } from "@/shared/services/aiService";
+import { generateUUID } from "@/shared/utils/id";
 import { useAuthStore } from "@/stores/useAuthStore";
 import type {
   AgentMode,
@@ -89,7 +90,7 @@ export function useConversationSession() {
     busy.current = true;
     setLoading(true);
     try {
-      const id = await aiService.createConversation(crypto.randomUUID());
+      const id = await aiService.createConversation(generateUUID());
       if (!isCurrent()) return false;
       setConversationId(id);
       setMessages([]);
