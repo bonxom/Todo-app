@@ -1,3 +1,4 @@
+import type { AttachmentView } from "./IAttachment.js";
 import type mongoose from "mongoose";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
 import type { AgentInteraction, AgentMode } from "./IAgent.js";
@@ -9,6 +10,7 @@ export interface ChatTurn {
   requestId: string;
   sequence: number;
   userInput: string;
+  attachments?: AttachmentView[];
   selection?: InteractionSelection;
   status: "processing" | "awaiting_user" | "completed" | "failed" | "cancelled";
   mode: AgentMode;

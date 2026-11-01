@@ -1,5 +1,14 @@
+import AttachmentComposer from "./AttachmentComposer";
+import { FILE_ACCEPT, checkFiles } from "./attachmentFiles";
+import AttachmentList from "./AttachmentList";
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, ChevronRight, Image as ImageIcon, Paperclip } from "lucide-react";
+import {
+  Send,
+  Bot,
+  ChevronRight,
+  Image as ImageIcon,
+  Paperclip,
+} from "lucide-react";
 import InteractionCard from "./InteractionCard";
 import RecentConversations from "./RecentConversations";
 import MarkdownText from "./MarkdownText";
@@ -15,6 +24,30 @@ const ChatField = ({
   disabled = false,
   chat,
 }) => {
+  const [files, setFiles] = useState([]);
+  const [fileError, setFileError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const previousConversation = useRef(chat?.conversationId);
+  useEffect(() => {
+    if (
+      previousConversation.current &&
+      previousConversation.current !== chat?.conversationId
+    ) {
+      setFiles([]);
+      setFileError(null);
+      setInputValue("");
+    }
+    previousConversation.current = chat?.conversationId;
+  }, [chat?.conversationId]);
+  const chooseFiles = (event) => {
+    const next = [...files, ...Array.from(event.target.files || [])];
+    event.target.value = "";
+    const error = checkFiles(next);
+    setFileError(error);
+    if (!error) setFiles(next);
+  };
   const [inputValue, setInputValue] = useState("");
   const [selectedTool, setSelectedTool] = useState(null);
   const [slashQuery, setSlashQuery] = useState("");
@@ -22,7 +55,8 @@ const ChatField = ({
   const [selectedToolIndex, setSelectedToolIndex] = useState(0);
   const [messageInteractionId, setMessageInteractionId] = useState(null);
   const interactionId = chat?.interaction?.id;
-  const showChatInput = Boolean(interactionId) && messageInteractionId === interactionId;
+  const showChatInput =
+    Boolean(interactionId) && messageInteractionId === interactionId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -74,17 +108,46 @@ const ChatField = ({
     textareaRef.current?.focus();
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault?.();
     const trimmed = inputValue.trim();
-    if ((trimmed || selectedTool) && !disabled) {
+    if (
+      (trimmed || selectedTool) &&
+      (!files.length || trimmed) &&
+      !disabled &&
+      !submitting
+    ) {
       const fullMessage = selectedTool
         ? `[Skill: ${selectedTool.id}] ${trimmed}`
         : trimmed;
-      onSendMessage(fullMessage);
-      setInputValue("");
-      setSelectedTool(null);
-      setIsSlashMenuOpen(false);
+      if (!files.length) {
+        onSendMessage(fullMessage);
+        setInputValue("");
+        setSelectedTool(null);
+        setIsSlashMenuOpen(false);
+        return;
+      }
+      setSubmitting(true);
+      try {
+        const accepted = files.length
+          ? await onSendMessage(fullMessage, undefined, files)
+          : await onSendMessage(fullMessage);
+        if (accepted !== false) {
+          setInputValue("");
+          setFiles([]);
+          setFileError(null);
+          setSelectedTool(null);
+          setIsSlashMenuOpen(false);
+        }
+      } catch (error) {
+        setFileError(
+          error instanceof Error
+            ? error.message
+            : "Could not send. Please try again.",
+        );
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -141,10 +204,15 @@ const ChatField = ({
         )}
         {messages.length === 0 ? (
           chat && !chat.loading && !chat.interaction ? (
-            <RecentConversations onOpen={chat.openConversation} disabled={chat.locked} />
-          ) : <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">
-            No messages yet. Start a conversation!
-          </div>
+            <RecentConversations
+              onOpen={chat.openConversation}
+              disabled={chat.locked}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">
+              No messages yet. Start a conversation!
+            </div>
+          )
         ) : (
           messages
             .filter(
@@ -206,6 +274,10 @@ const ChatField = ({
                       </>
                     )}
                   </div>
+                  <AttachmentList
+                    conversationId={chat?.conversationId}
+                    files={message.attachments}
+                  />
                   <span className="text-xs opacity-70 mt-1 block">
                     {formatDateTime(message.timestamp)}
                   </span>
@@ -221,6 +293,15 @@ const ChatField = ({
         )}
         {chat?.error && (
           <div className="flex gap-3 text-sm">
+            {chat.pending && (
+              <button
+                type="button"
+                disabled={chat.loading || chat.sending}
+                onClick={() => chat.send()}
+              >
+                Retry message
+              </button>
+            )}
             <button
               type="button"
               disabled={chat.loading || chat.sending}
@@ -257,6 +338,47 @@ const ChatField = ({
         <div ref={messagesEndRef} />
       </div>
 
+      <AttachmentComposer
+        files={files}
+        disabled={disabled || submitting}
+        onRemove={(index) => {
+          setFiles((current) => current.filter((_, i) => i !== index));
+          setFileError(null);
+        }}
+      />
+      {(fileError || chat?.uploadError) && (
+        <p role="alert" className="px-4 pb-2 text-sm text-red-600">
+          {fileError || chat.uploadError}
+        </p>
+      )}
+      {chat?.uploadProgress && (
+        <p
+          role="status"
+          className="px-4 pb-2 text-xs text-[var(--color-text-muted)]"
+        >
+          {chat.uploadProgress}
+        </p>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept={FILE_ACCEPT}
+        aria-label="Choose files"
+        className="hidden"
+        disabled={disabled || submitting}
+        onChange={chooseFiles}
+      />
+      <input
+        ref={imageInputRef}
+        type="file"
+        multiple
+        accept=".jpg,.jpeg,.png,.gif,.webp"
+        aria-label="Choose images"
+        className="hidden"
+        disabled={disabled || submitting}
+        onChange={chooseFiles}
+      />
       {selectedTool && (
         <div className="shrink-0 px-3 sm:px-4 py-1.5 flex items-center">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-2.5 py-1 shadow-xs text-xs animate-in fade-in duration-150">
@@ -275,15 +397,21 @@ const ChatField = ({
         </div>
       )}
 
-      <div className={`min-h-0 shrink-0 border-t border-[var(--color-line)] bg-[var(--color-surface)] p-3 ${chat?.interaction && !showChatInput ? "flex max-h-[75%] flex-col" : "sm:p-4"}`}>
+      <div
+        className={`min-h-0 shrink-0 border-t border-[var(--color-line)] bg-[var(--color-surface)] p-3 ${chat?.interaction && !showChatInput ? "flex max-h-[75%] flex-col" : "sm:p-4"}`}
+      >
         {chat?.interaction && showChatInput && (
           <div className="mb-2 flex items-center justify-end text-sm">
             <button
               type="button"
-              onClick={() => setMessageInteractionId(showChatInput ? null : interactionId)}
+              onClick={() =>
+                setMessageInteractionId(showChatInput ? null : interactionId)
+              }
               className="ui-focus-ring text-xs text-[var(--color-accent)] hover:underline cursor-pointer"
             >
-              {showChatInput ? "← Back to question" : "Message instead of choosing →"}
+              {showChatInput
+                ? "← Back to question"
+                : "Message instead of choosing →"}
             </button>
           </div>
         )}
@@ -341,6 +469,8 @@ const ChatField = ({
               <button
                 type="button"
                 className="ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
+                disabled={disabled || submitting}
+                onClick={() => imageInputRef.current?.click()}
                 title="Attach image"
                 aria-label="Attach image"
               >
@@ -351,6 +481,8 @@ const ChatField = ({
               <button
                 type="button"
                 className="ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
+                disabled={disabled || submitting}
+                onClick={() => fileInputRef.current?.click()}
                 title="Attach file"
                 aria-label="Attach file"
               >
@@ -362,7 +494,9 @@ const ChatField = ({
                 <button
                   type="button"
                   aria-label={`Agent mode: ${chat.mode}`}
-                  onClick={() => chat.setMode(chat.mode === "auto" ? "ask" : "auto")}
+                  onClick={() =>
+                    chat.setMode(chat.mode === "auto" ? "ask" : "auto")
+                  }
                   disabled={chat.locked}
                   title={
                     chat.mode === "auto"
@@ -415,6 +549,7 @@ const ChatField = ({
               ref={textareaRef}
               rows={1}
               aria-label="Message"
+              disabled={submitting}
               value={inputValue}
               onChange={handleInputChange}
               onFocus={() => setIsMenuOpen(false)}
@@ -422,10 +557,8 @@ const ChatField = ({
               onKeyDown={handleKeyDown}
               placeholder={
                 chat?.interaction
-                  ? "Type a message to skip question…"
-                  : selectedTool
-                    ? `Type a prompt for ${selectedTool.name}…`
-                    : "Type a message or '/' for skills…"
+                  ? "Other answers"
+                  : "Ask something…"
               }
               className="ui-input block min-w-0 w-full resize-none rounded-2xl px-4 text-sm transition-all duration-200"
               style={{
@@ -443,7 +576,11 @@ const ChatField = ({
           <button
             type="submit"
             aria-label="Send message"
-            disabled={disabled || (!inputValue.trim() && !selectedTool)}
+            disabled={
+              disabled ||
+              submitting ||
+              (!inputValue.trim() && (files.length > 0 || !selectedTool))
+            }
             className="ui-btn-primary ui-focus-ring h-11 w-11 flex-shrink-0 rounded-full p-0 disabled:cursor-not-allowed disabled:border-[var(--color-line)] disabled:bg-[var(--color-surface-muted)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
           >
             <Send className="h-4 w-4" />

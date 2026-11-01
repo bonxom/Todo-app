@@ -56,7 +56,7 @@ Create 3 practical, actionable tasks with:
     if (!model) throw new AppError(AI_ERROR.CONFIG_MISSING);
 
     const rawSchema = tasksArraySchema.toJSONSchema();
-    const { $schema, ...jsonSchema } = rawSchema;
+    const { $schema: _schema, ...jsonSchema } = rawSchema;
 
     const response = await callAiProvider(() =>
       ai.chat.completions.create({

@@ -1,3 +1,4 @@
+import { attachmentService } from "./attachmentService.js";
 import type { McpContext } from "../mcp/context.js";
 import type { AgentMode } from "../types/IAgent.js";
 import type { InteractionSelection } from "../types/IChatTurn.js";
@@ -56,6 +57,9 @@ export const conversationService = {
                 requestId: activeTurn.requestId,
                 userInput: activeTurn.userInput,
                 mode: activeTurn.mode ?? "auto",
+                attachmentIds: (activeTurn.attachments ?? []).map(
+                  (file) => file.id,
+                ),
                 ...(activeTurn.selection
                   ? { selection: activeTurn.selection }
                   : {}),
@@ -71,6 +75,7 @@ export const conversationService = {
       userInput: string;
       mode?: AgentMode;
       selection?: InteractionSelection;
+      attachmentIds?: string[];
     },
     context: McpContext,
   ) {
@@ -89,6 +94,14 @@ export const conversationService = {
             input.selection,
             input.requestId,
             input.mode ?? "auto",
+          ),
+        input.attachmentIds ?? [],
+        (session) =>
+          attachmentService.bind(
+            userId,
+            input.conversationId,
+            input.attachmentIds ?? [],
+            session,
           ),
       );
     if (!claimed) {

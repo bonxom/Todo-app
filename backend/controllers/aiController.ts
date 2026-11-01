@@ -45,6 +45,7 @@ export const chatWithMcp = async (
       requestId: body.requestId as string,
       mode: body.mode as "auto" | "ask",
       selection: body.selection as InteractionSelection | undefined,
+      attachmentIds: body.attachmentIds as string[] | undefined,
     },
     createMcpContext(req, ["tasks:write"]),
   );
@@ -79,7 +80,16 @@ export const getConversation = async (
   res.json({ data: conversation });
 };
 
-export const listConversations = async (req: Request, res: Response): Promise<void> => {
+export const listConversations = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   const conversations = await conversationService.list(String(req.user!._id));
-  res.json({ data: conversations.map(({ _id, title, updatedAt }) => ({ id: _id, title, updatedAt })) });
+  res.json({
+    data: conversations.map(({ _id, title, updatedAt }) => ({
+      id: _id,
+      title,
+      updatedAt,
+    })),
+  });
 };

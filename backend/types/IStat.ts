@@ -28,4 +28,4 @@ export interface IStat {
 
 export interface IStatDocument extends IStat, Document {}
 
-export interface IStatModel extends Model<IStatDocument> {}
+export type IStatModel = Model<IStatDocument>;

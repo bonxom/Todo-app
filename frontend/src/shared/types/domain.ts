@@ -157,7 +157,14 @@ export interface InteractionSelection extends InteractionAnswer {
   interactionId: string;
   cancel?: boolean;
 }
+export interface ChatAttachment {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+}
 export interface ChatPayload {
+  attachmentIds?: string[];
   selection?: InteractionSelection;
   mode?: AgentMode;
   conversationId?: string;
@@ -207,6 +214,7 @@ export interface ChatResponse extends ApiEnvelope<string> {
 }
 
 export interface ConversationMessage {
+  attachments?: ChatAttachment[];
   replyToInteractionId?: string;
   interaction?: AgentInteraction;
   id: string;
@@ -222,6 +230,7 @@ export interface ConversationSnapshot {
   mode: AgentMode;
   interaction?: AgentInteraction;
   pending: Array<{
+    attachmentIds?: string[];
     requestId: string;
     userInput: string;
     mode: AgentMode;

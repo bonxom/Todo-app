@@ -1,3 +1,4 @@
+import { readStorageConfig } from "./storage.js";
 import { CorsOptions } from "cors";
 import { AppError } from "../error/AppError.js";
 import { COMMON_ERROR } from "../error/definitions/commonErrors.js";
@@ -64,6 +65,7 @@ export const getServerConfig = (): ServerConfig => ({
 });
 
 export const validateServerEnv = (): void => {
+  readStorageConfig();
   const missing: string[] = [];
 
   if (!process.env.MONGO_URI) missing.push("MONGO_URI");

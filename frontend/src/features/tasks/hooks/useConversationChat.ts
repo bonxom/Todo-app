@@ -1,4 +1,6 @@
-import { useRef } from "react";
+import { attachmentService } from "@/shared/services/attachmentService";
+import type { ChatAttachment } from "@/shared/types/domain";
+import { useRef, useState } from "react";
 import { ApiError } from "@/shared/services/apiError";
 import { aiService } from "@/shared/services/aiService";
 import type {
@@ -13,6 +15,11 @@ import { useConversationSession } from "./useConversationSession";
 export function useConversationChat() {
   const mutation = useAgenticChatMutation();
   const session = useConversationSession();
+  const uploadedFiles = useRef(
+    new WeakMap<File, { conversationId: string; metadata: ChatAttachment }>(),
+  );
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const initialConversationId = useRef<string | null>(null);
   const {
     messages,
@@ -39,11 +46,16 @@ export function useConversationChat() {
     newConversation,
   } = session;
 
-  const send = async (text?: string, selection?: InteractionSelection) => {
-    if (busy.current || loading || (!pending && !text?.trim())) return;
+  const send = async (
+    text?: string,
+    selection?: InteractionSelection,
+    files: File[] = [],
+  ) => {
+    if (busy.current || loading || (!pending && !text?.trim())) return false;
     busy.current = true;
     setSending(true);
     setError(null);
+    setUploadError(null);
     let payload = pending;
     try {
       let id = conversationId;
@@ -54,10 +66,26 @@ export function useConversationChat() {
         setConversationId(id);
       }
       if (!payload) {
+        const attachments: ChatAttachment[] = [];
+        for (const [index, file] of files.entries()) {
+          setUploadProgress(`Uploading ${index + 1} of ${files.length}…`);
+          const previous = uploadedFiles.current.get(file);
+          const metadata =
+            previous?.conversationId === id
+              ? previous.metadata
+              : await attachmentService.upload(id, file);
+          uploadedFiles.current.set(file, { conversationId: id, metadata });
+          if (!isCurrent()) return false;
+          attachments.push(metadata);
+        }
+        setUploadProgress(null);
         payload = {
           conversationId: id,
           requestId: crypto.randomUUID(),
           userInput: text!,
+          ...(attachments.length
+            ? { attachmentIds: attachments.map((file) => file.id) }
+            : {}),
           mode: selection ? "ask" : mode,
           ...(selection ? { selection } : {}),
         };
@@ -67,8 +95,11 @@ export function useConversationChat() {
           {
             id: payload!.requestId!,
             sender: "user",
-            ...(selection ? { replyToInteractionId: selection.interactionId } : {}),
+            ...(selection
+              ? { replyToInteractionId: selection.interactionId }
+              : {}),
             text: text!,
+            ...(attachments.length ? { attachments } : {}),
             timestamp: new Date().toISOString(),
           },
         ]);
@@ -77,7 +108,17 @@ export function useConversationChat() {
       if (!isCurrent()) return;
       receive(result, payload.requestId);
       await load(id);
+      return true;
     } catch (err) {
+      if (!payload && files.length) {
+        if (isCurrent())
+          setUploadError(
+            err instanceof Error
+              ? err.message
+              : "Upload failed. Please try again.",
+          );
+        return false;
+      }
       if (
         isCurrent() &&
         err instanceof ApiError &&
@@ -90,7 +131,9 @@ export function useConversationChat() {
             ? err.message
             : "Could not get the reply. Retry using the same request.",
         );
+      return Boolean(payload);
     } finally {
+      if (isCurrent()) setUploadProgress(null);
       busy.current = false;
       if (isCurrent()) setSending(false);
     }
@@ -113,6 +156,8 @@ export function useConversationChat() {
   const locked = loading || sending || Boolean(error) || Boolean(pending);
   return {
     messages,
+    uploadError,
+    uploadProgress,
     conversationId,
     mode,
     setMode: (value: AgentMode) => {

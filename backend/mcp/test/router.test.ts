@@ -125,8 +125,8 @@ describe("MCP HTTP boundary", () => {
     "returns405 for %s after auth",
     async (method) => {
       const { app } = setup();
-      const res = await request(app)
-        [method]("/mcp")
+      const operation = request(app)[method]("/mcp");
+      const res = await operation
         .set("Host", "localhost:3001")
         .set("Authorization", `Bearer ${token()}`);
       expect(res.status).toBe(405);

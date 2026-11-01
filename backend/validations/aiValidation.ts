@@ -29,6 +29,19 @@ export const interactionSelectionSchema = z
   );
 
 export const conversationChatSchema = chatSchema.extend({
+  userInput: z
+    .string()
+    .min(1)
+    .max(2000)
+    .refine((value) => Boolean(value.trim()), "A text message is required"),
+  attachmentIds: z
+    .array(z.uuid())
+    .max(4)
+    .refine(
+      (ids) => new Set(ids).size === ids.length,
+      "Attachment IDs must be unique",
+    )
+    .optional(),
   conversationId: z.uuid(),
   requestId: z.uuid(),
   mode: z.enum(["auto", "ask"]).default("auto"),

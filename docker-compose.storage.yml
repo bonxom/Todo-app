@@ -1,0 +1,13 @@
+# Same-host Docker only. Combine with docker-compose.yml or docker-compose.prod.yml.
+# MinIO must also join this external network with the alias "minio".
+services:
+  backend:
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+    networks:
+      - default
+      - storage
+networks:
+  storage:
+    external: true
+    name: ${MINIO_DOCKER_NETWORK:-todoapp-storage}

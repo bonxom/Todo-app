@@ -1,3 +1,4 @@
+import attachmentRoutes from "./attachmentRoutes.js";
 import express from "express";
 import {
   generateTasksWithRequirement,
@@ -23,6 +24,8 @@ router.use((_req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   next();
 });
+
+router.use(attachmentRoutes);
 
 router.post(
   "/generate-tasks",

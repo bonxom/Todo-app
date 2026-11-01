@@ -1,6 +1,7 @@
 import type { AgentInteraction } from "../types/IAgent.js";
 import type { ChatTurn } from "../types/IChatTurn.js";
 import { interruptedReply } from "./interruptedReply.js";
+import { decodeFilename } from "./attachmentFile.js";
 
 export function publicInteraction(i: AgentInteraction) {
   const {
@@ -61,8 +62,18 @@ export function turnMessages(turn: ChatTurn) {
     {
       id: `${turn._id}:user`,
       sender: "user",
-      ...(turn.selection ? { replyToInteractionId: turn.selection.interactionId } : {}),
+      ...(turn.selection
+        ? { replyToInteractionId: turn.selection.interactionId }
+        : {}),
       text: turn.userInput,
+      ...(turn.attachments?.length
+        ? {
+            attachments: turn.attachments.map((file) => ({
+              ...file,
+              name: decodeFilename(file.name),
+            })),
+          }
+        : {}),
       timestamp: turn.createdAt.toISOString(),
     },
     ...(turn.interactions ?? []).map((i) => ({
