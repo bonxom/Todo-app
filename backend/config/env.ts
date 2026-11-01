@@ -6,7 +6,7 @@ import { COMMON_ERROR } from "../error/definitions/commonErrors.js";
 const DEFAULT_ALLOWED_ORIGINS: string[] = [
   "http://localhost:5000",
   "https://fetodo-six.vercel.app",
-  "http://192.168.1.17:3636/"
+  "http://192.168.1.17:3636",
   // allow all origins
   // "*",
 ];
