@@ -143,7 +143,9 @@ describe("InteractionCard", () => {
     await user.click(toggleBtn);
 
     expect(screen.getByText("Ẩn chi tiết câu hỏi")).toBeVisible();
-    expect(screen.getByText("Đồng bộ với thứ 6: tan làm 17:00...")).toBeVisible();
+    expect(
+      screen.getByText("Đồng bộ với thứ 6: tan làm 17:00..."),
+    ).toBeVisible();
   });
 
   it("renders pre-resolved cancelled interaction naturally", () => {

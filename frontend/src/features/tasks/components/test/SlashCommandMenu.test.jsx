@@ -30,8 +30,6 @@ describe("SlashCommandMenu", () => {
 
   it("shows empty state when no skill matches query", () => {
     render(<SlashCommandMenu query="nonexistent123" onSelect={vi.fn()} />);
-    expect(
-      screen.getByText(/No skills matching/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/No skills matching/i)).toBeInTheDocument();
   });
 });

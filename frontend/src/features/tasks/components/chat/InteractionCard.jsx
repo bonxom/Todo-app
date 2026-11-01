@@ -215,7 +215,8 @@ function InteractionCardContent({
   }
 
   // --- PENDING VIEW (CODING AGENT INTERACTIVE CARD) ---
-  const canSubmit = !disabled && (Boolean(optionId) || Boolean(customAnswer.trim()));
+  const canSubmit =
+    !disabled && (Boolean(optionId) || Boolean(customAnswer.trim()));
 
   return (
     <form
@@ -251,135 +252,140 @@ function InteractionCardContent({
         )}
       </div>
 
-      <div className={docked ? "min-h-0 overflow-y-auto overscroll-contain py-3 pr-1 [scrollbar-width:thin]" : ""}>
-      <fieldset disabled={disabled} className="min-w-0 space-y-3">
-        <legend className="mb-2 w-full text-sm font-medium text-[var(--color-text)] leading-relaxed break-words">
-          {interaction.question}
-        </legend>
+      <div
+        className={
+          docked
+            ? "min-h-0 overflow-y-auto overscroll-contain py-3 pr-1 [scrollbar-width:thin]"
+            : ""
+        }
+      >
+        <fieldset disabled={disabled} className="min-w-0 space-y-3">
+          <legend className="mb-2 w-full text-sm font-medium text-[var(--color-text)] leading-relaxed break-words">
+            {interaction.question}
+          </legend>
 
-        {/* Details list if any */}
-        {hasDetails && (
-          <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-muted)]/50 p-2.5 text-xs font-mono">
-            {interaction.details.map((detail, index) => (
-              <div key={index} className="flex gap-2 py-0.5">
-                <span className="font-medium text-[var(--color-text-muted)] shrink-0">
-                  {detail.label}:
-                </span>
-                <span className="text-[var(--color-text)] break-words">
-                  {detail.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+          {/* Details list if any */}
+          {hasDetails && (
+            <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-muted)]/50 p-2.5 text-xs font-mono">
+              {interaction.details.map((detail, index) => (
+                <div key={index} className="flex gap-2 py-0.5">
+                  <span className="font-medium text-[var(--color-text-muted)] shrink-0">
+                    {detail.label}:
+                  </span>
+                  <span className="text-[var(--color-text)] break-words">
+                    {detail.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
-        {/* Options list */}
-        <div className="space-y-2">
-          {visibleOptions.map((option) => {
-            const isSelected = optionId === option.id && !customAnswer;
-            return (
-              <label
-                key={option.id}
-                onDoubleClick={() => {
-                  if (!disabled) {
-                    setOptionId(option.id);
-                    setCustomAnswer("");
-                    setLocalSubmission({ optionId: option.id });
-                    onAnswer?.({ optionId: option.id });
-                  }
-                }}
-                className={`group relative flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-[var(--color-accent)] ${
-                  isSelected
-                    ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]/40 ring-1 ring-[var(--color-accent)] shadow-xs"
-                    : "border-[var(--color-line)] bg-[var(--color-surface)] hover:border-[var(--color-accent)]/60 hover:bg-[var(--color-surface-muted)]/40"
-                }`}
-              >
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center">
-                  <input
-                    type="radio"
-                    id={`interaction-${interaction.id}-${option.id}`}
-                    name={`interaction-${interaction.id}`}
-                    value={option.id}
-                    aria-label={option.label}
-                    checked={isSelected}
-                    onChange={() => {
+          {/* Options list */}
+          <div className="space-y-2">
+            {visibleOptions.map((option) => {
+              const isSelected = optionId === option.id && !customAnswer;
+              return (
+                <label
+                  key={option.id}
+                  onDoubleClick={() => {
+                    if (!disabled) {
                       setOptionId(option.id);
                       setCustomAnswer("");
-                    }}
-                    className="h-4 w-4 accent-[var(--color-accent)] cursor-pointer"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-[var(--color-text)] leading-snug break-words">
-                      {option.label}
-                    </span>
+                      setLocalSubmission({ optionId: option.id });
+                      onAnswer?.({ optionId: option.id });
+                    }
+                  }}
+                  className={`group relative flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-[var(--color-accent)] ${
+                    isSelected
+                      ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]/40 ring-1 ring-[var(--color-accent)] shadow-xs"
+                      : "border-[var(--color-line)] bg-[var(--color-surface)] hover:border-[var(--color-accent)]/60 hover:bg-[var(--color-surface-muted)]/40"
+                  }`}
+                >
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center">
+                    <input
+                      type="radio"
+                      id={`interaction-${interaction.id}-${option.id}`}
+                      name={`interaction-${interaction.id}`}
+                      value={option.id}
+                      aria-label={option.label}
+                      checked={isSelected}
+                      onChange={() => {
+                        setOptionId(option.id);
+                        setCustomAnswer("");
+                      }}
+                      className="h-4 w-4 accent-[var(--color-accent)] cursor-pointer"
+                    />
                   </div>
-                  {option.description && (
-                    <p className="mt-1 text-xs text-[var(--color-text-muted)] leading-normal break-words">
-                      {option.description}
-                    </p>
-                  )}
-                </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-[var(--color-text)] leading-snug break-words">
+                        {option.label}
+                      </span>
+                    </div>
+                    {option.description && (
+                      <p className="mt-1 text-xs text-[var(--color-text-muted)] leading-normal break-words">
+                        {option.description}
+                      </p>
+                    )}
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+
+          {/* Other answer */}
+          {interaction.allowCustomAnswer && !confirmation && (
+            <div className="pt-1">
+              <label className="block space-y-1.5">
+                <span className="block text-xs font-medium text-[var(--color-text-muted)]">
+                  Other answer
+                </span>
+                <textarea
+                  aria-label="Other answer"
+                  rows={1}
+                  style={{
+                    height: "2.5rem",
+                    minHeight: "2.5rem",
+                    padding: "0.5rem 0.75rem",
+                    lineHeight: "1.375rem",
+                    resize: "none",
+                    overflowY: "auto",
+                  }}
+                  className="ui-input w-full text-xs font-sans rounded-lg resize-none p-2.5 transition-all focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
+                  placeholder="Lựa chọn khác..."
+                  value={customAnswer}
+                  maxLength={2000}
+                  onChange={(event) => {
+                    setCustomAnswer(event.target.value);
+                    setOptionId("");
+                  }}
+                />
               </label>
-            );
-          })}
-        </div>
-
-        {/* Other answer */}
-        {interaction.allowCustomAnswer && !confirmation && (
-          <div className="pt-1">
-            <label className="block space-y-1.5">
-              <span className="block text-xs font-medium text-[var(--color-text-muted)]">
-                Other answer
-              </span>
-              <textarea
-                aria-label="Other answer"
-                rows={1}
-                style={{
-                  height: "2.5rem",
-                  minHeight: "2.5rem",
-                  padding: "0.5rem 0.75rem",
-                  lineHeight: "1.375rem",
-                  resize: "none",
-                  overflowY: "auto",
-                }}
-                className="ui-input w-full text-xs font-sans rounded-lg resize-none p-2.5 transition-all focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
-                placeholder="Lựa chọn khác..."
-                value={customAnswer}
-                maxLength={2000}
-                onChange={(event) => {
-                  setCustomAnswer(event.target.value);
-                  setOptionId("");
-                }}
-              />
-            </label>
-          </div>
-        )}
-
-      </fieldset>
+            </div>
+          )}
+        </fieldset>
       </div>
-        {/* Keep actions visible while the question and options scroll. */}
-        <div className="flex shrink-0 items-center justify-between gap-2 pt-2.5 border-t border-[var(--color-line)]">
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              className="ui-btn-secondary ui-focus-ring px-3 py-1.5 text-xs font-medium rounded-lg cursor-pointer"
-              type="button"
-              disabled={disabled}
-              onClick={handleCancel}
-            >
-              Cancel
-            </button>
-            <button
-              className="ui-btn-primary ui-focus-ring px-3.5 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 shadow-xs disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-              type="submit"
-              disabled={!canSubmit}
-            >
-              <Send className="h-3 w-3" />
-              <span>{confirmation ? "Confirm" : "Send answer"}</span>
-            </button>
-          </div>
+      {/* Keep actions visible while the question and options scroll. */}
+      <div className="flex shrink-0 items-center justify-between gap-2 pt-2.5 border-t border-[var(--color-line)]">
+        <div className="flex items-center gap-2 ml-auto">
+          <button
+            className="ui-btn-secondary ui-focus-ring px-3 py-1.5 text-xs font-medium rounded-lg cursor-pointer"
+            type="button"
+            disabled={disabled}
+            onClick={handleCancel}
+          >
+            Cancel
+          </button>
+          <button
+            className="ui-btn-primary ui-focus-ring px-3.5 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 shadow-xs disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            type="submit"
+            disabled={!canSubmit}
+          >
+            <Send className="h-3 w-3" />
+            <span>{confirmation ? "Confirm" : "Send answer"}</span>
+          </button>
         </div>
+      </div>
     </form>
   );
 }

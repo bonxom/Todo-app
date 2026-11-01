@@ -19,9 +19,7 @@ export const ToolBadge = ({ tool, onRemove, size = "md", className = "" }) => {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-accent)] bg-[var(--color-accent-soft)] font-medium text-[var(--color-accent-strong)] dark:text-[var(--color-accent)] transition-all ${
-        isSmall
-          ? "px-2 py-0.5 text-[11px]"
-          : "px-2.5 py-1 text-xs shadow-xs"
+        isSmall ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs shadow-xs"
       } ${className}`}
     >
       <ToolIcon

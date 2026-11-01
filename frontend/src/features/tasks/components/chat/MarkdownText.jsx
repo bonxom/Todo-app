@@ -1,7 +1,13 @@
+import CodeBlock from "./CodeBlock";
+import MermaidDiagram from "./MermaidDiagram";
+import SvgPreview from "./SvgPreview";
+
 const MarkdownText = ({ text }) => {
-  // Parse markdown formatting: code, bold, italic
-  const parseMarkdown = (text) => {
-    if (!text) return text;
+  if (!text) return null;
+
+  // Parse inline markdown formatting: code, bold, italic
+  const parseMarkdown = (rawText) => {
+    if (!rawText) return rawText;
     const parts = [];
     let lastIndex = 0;
     let key = 0;
@@ -10,10 +16,10 @@ const MarkdownText = ({ text }) => {
     const tokenRegex = /(?:`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_)/g;
     let match;
 
-    while ((match = tokenRegex.exec(text)) !== null) {
+    while ((match = tokenRegex.exec(rawText)) !== null) {
       if (match.index > lastIndex) {
         parts.push(
-          <span key={key++}>{text.slice(lastIndex, match.index)}</span>,
+          <span key={key++}>{rawText.slice(lastIndex, match.index)}</span>,
         );
       }
 
@@ -53,11 +59,11 @@ const MarkdownText = ({ text }) => {
       lastIndex = match.index + match[0].length;
     }
 
-    if (lastIndex < text.length) {
-      parts.push(<span key={key++}>{text.slice(lastIndex)}</span>);
+    if (lastIndex < rawText.length) {
+      parts.push(<span key={key++}>{rawText.slice(lastIndex)}</span>);
     }
 
-    return parts.length > 0 ? parts : text;
+    return parts.length > 0 ? parts : rawText;
   };
 
   const lines = text.split(/\r?\n/);
@@ -68,17 +74,57 @@ const MarkdownText = ({ text }) => {
       .replace(/(?<!\\)\|$/, "")
       .split(/(?<!\\)\|/)
       .map((cell) => cell.trim().replace(/\\\|/g, "|"));
-  const blocks = [];
 
-  for (let index = 0; index < lines.length; index++) {
-    const headers = splitRow(lines[index]);
+  const blocks = [];
+  let blockKey = 0;
+  let index = 0;
+
+  while (index < lines.length) {
+    const currentLine = lines[index];
+
+    // 1. Fenced Code Block: ```[lang]
+    const codeBlockMatch = currentLine.match(/^```(\w*)/);
+    if (codeBlockMatch) {
+      const language = codeBlockMatch[1] || "text";
+      const codeLines = [];
+      index++;
+      while (index < lines.length && !lines[index].startsWith("```")) {
+        codeLines.push(lines[index]);
+        index++;
+      }
+      if (index < lines.length && lines[index].startsWith("```")) {
+        index++; // Skip closing ```
+      }
+      const codeContent = codeLines.join("\n");
+      const langLower = language.toLowerCase();
+      if (langLower === "mermaid") {
+        blocks.push(<MermaidDiagram key={blockKey++} code={codeContent} />);
+      } else if (
+        langLower === "svg" ||
+        ((langLower === "xml" ||
+          langLower === "html" ||
+          langLower === "text" ||
+          !language) &&
+          /<svg[\s>]/i.test(codeContent))
+      ) {
+        blocks.push(<SvgPreview key={blockKey++} code={codeContent} />);
+      } else {
+        blocks.push(
+          <CodeBlock key={blockKey++} code={codeContent} language={language} />,
+        );
+      }
+      continue;
+    }
+
+    // 2. Markdown Table
+    const headers = splitRow(currentLine);
     const separator = splitRow(lines[index + 1] ?? "");
     if (
-      lines[index].includes("|") &&
+      currentLine.includes("|") &&
       separator.length === headers.length &&
       separator.every((cell) => /^:?-{3,}:?$/.test(cell))
     ) {
-      const tableKey = index;
+      const tableKey = blockKey++;
       const alignments = separator.map((cell) =>
         cell.endsWith(":")
           ? cell.startsWith(":")
@@ -96,7 +142,6 @@ const MarkdownText = ({ text }) => {
         rows.push(splitRow(lines[index]));
         index++;
       }
-      index--;
       blocks.push(
         <div
           key={tableKey}
@@ -138,14 +183,139 @@ const MarkdownText = ({ text }) => {
           </table>
         </div>,
       );
-    } else {
-      blocks.push(
-        <span key={index}>
-          {parseMarkdown(lines[index])}
-          {index < lines.length - 1 && <br />}
-        </span>,
-      );
+      continue;
     }
+
+    // 3. Headings: #, ##, ###, ####
+    const h1Match = currentLine.match(/^#\s+(.+)$/);
+    if (h1Match) {
+      blocks.push(
+        <h1
+          key={blockKey++}
+          className="my-2 text-base font-bold text-[var(--color-text)]"
+        >
+          {parseMarkdown(h1Match[1])}
+        </h1>,
+      );
+      index++;
+      continue;
+    }
+
+    const h2Match = currentLine.match(/^##\s+(.+)$/);
+    if (h2Match) {
+      blocks.push(
+        <h2
+          key={blockKey++}
+          className="my-1.5 text-sm font-bold text-[var(--color-text)]"
+        >
+          {parseMarkdown(h2Match[1])}
+        </h2>,
+      );
+      index++;
+      continue;
+    }
+
+    const h3Match = currentLine.match(/^###\s+(.+)$/);
+    if (h3Match) {
+      blocks.push(
+        <h3
+          key={blockKey++}
+          className="my-1 text-xs font-semibold text-[var(--color-text)]"
+        >
+          {parseMarkdown(h3Match[1])}
+        </h3>,
+      );
+      index++;
+      continue;
+    }
+
+    const h4Match = currentLine.match(/^####\s+(.+)$/);
+    if (h4Match) {
+      blocks.push(
+        <h4
+          key={blockKey++}
+          className="my-0.5 text-xs font-semibold text-[var(--color-text-muted)]"
+        >
+          {parseMarkdown(h4Match[1])}
+        </h4>,
+      );
+      index++;
+      continue;
+    }
+
+    // 4. Blockquotes: > line
+    if (/^>\s?/.test(currentLine)) {
+      const quoteLines = [];
+      while (index < lines.length && /^>\s?/.test(lines[index])) {
+        quoteLines.push(lines[index].replace(/^>\s?/, ""));
+        index++;
+      }
+      blocks.push(
+        <blockquote
+          key={blockKey++}
+          className="my-1.5 border-l-2 border-[var(--color-accent)] pl-2.5 italic text-[var(--color-text-muted)]"
+        >
+          {quoteLines.map((qLine, qIdx) => (
+            <span key={qIdx}>
+              {parseMarkdown(qLine)}
+              {qIdx < quoteLines.length - 1 && <br />}
+            </span>
+          ))}
+        </blockquote>,
+      );
+      continue;
+    }
+
+    // 5. Lists: Unordered (- or *)
+    if (/^[-*]\s+(.+)$/.test(currentLine)) {
+      const items = [];
+      while (index < lines.length && /^[-*]\s+(.+)$/.test(lines[index])) {
+        const itemMatch = lines[index].match(/^[-*]\s+(.+)$/);
+        if (itemMatch) items.push(itemMatch[1]);
+        index++;
+      }
+      blocks.push(
+        <ul
+          key={blockKey++}
+          className="my-1.5 ml-4 list-disc space-y-0.5 text-sm"
+        >
+          {items.map((item, itemIdx) => (
+            <li key={itemIdx}>{parseMarkdown(item)}</li>
+          ))}
+        </ul>,
+      );
+      continue;
+    }
+
+    // Ordered list: \d+\.
+    if (/^\d+\.\s+(.+)$/.test(currentLine)) {
+      const items = [];
+      while (index < lines.length && /^\d+\.\s+(.+)$/.test(lines[index])) {
+        const itemMatch = lines[index].match(/^\d+\.\s+(.+)$/);
+        if (itemMatch) items.push(itemMatch[1]);
+        index++;
+      }
+      blocks.push(
+        <ol
+          key={blockKey++}
+          className="my-1.5 ml-4 list-decimal space-y-0.5 text-sm"
+        >
+          {items.map((item, itemIdx) => (
+            <li key={itemIdx}>{parseMarkdown(item)}</li>
+          ))}
+        </ol>,
+      );
+      continue;
+    }
+
+    // 6. Regular text line
+    blocks.push(
+      <span key={blockKey++}>
+        {parseMarkdown(currentLine)}
+        {index < lines.length - 1 && <br />}
+      </span>,
+    );
+    index++;
   }
 
   return <>{blocks}</>;

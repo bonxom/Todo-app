@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { ApiError } from "@/shared/services/apiError";
@@ -12,7 +18,11 @@ const { send, load, create } = vi.hoisted(() => ({
   create: vi.fn(),
 }));
 vi.mock("@/shared/services/aiService", () => ({
-  aiService: { getConversation: load, createConversation: create, listConversations: vi.fn().mockResolvedValue([]) },
+  aiService: {
+    getConversation: load,
+    createConversation: create,
+    listConversations: vi.fn().mockResolvedValue([]),
+  },
 }));
 const snapshot = (messages = []) => ({
   conversationId: create.mock.calls.at(-1)?.[0],
@@ -48,21 +58,37 @@ beforeEach(() => {
 
 it("opens a previous conversation from the empty chat and continues in that conversation", async () => {
   aiService.listConversations.mockResolvedValue([
-    { id: "previous", title: "Previous plan", updatedAt: new Date().toISOString() },
+    {
+      id: "previous",
+      title: "Previous plan",
+      updatedAt: new Date().toISOString(),
+    },
   ]);
-  load.mockImplementation(async (id) => id === "previous"
-    ? { ...snapshot([message("Previous reply")]), conversationId: "previous" }
-    : null);
+  load.mockImplementation(async (id) =>
+    id === "previous"
+      ? { ...snapshot([message("Previous reply")]), conversationId: "previous" }
+      : null,
+  );
   send.mockResolvedValue({ data: "Continued" });
   const user = userEvent.setup();
   render(<ChatBubble />);
   await user.click(screen.getByRole("button", { name: "Open assistant" }));
-  await user.click(await screen.findByRole("button", { name: /Previous plan/ }));
+  await user.click(
+    await screen.findByRole("button", { name: /Previous plan/ }),
+  );
   expect(await screen.findByText("Previous reply")).toBeVisible();
-  await user.type(screen.getByRole("textbox", { name: "Message" }), "Continue this plan{Enter}");
-  await waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({
-    conversationId: "previous", userInput: "Continue this plan",
-  })));
+  await user.type(
+    screen.getByRole("textbox", { name: "Message" }),
+    "Continue this plan{Enter}",
+  );
+  await waitFor(() =>
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: "previous",
+        userInput: "Continue this plan",
+      }),
+    ),
+  );
   expect(create).not.toHaveBeenCalled();
 });
 
@@ -97,7 +123,11 @@ it("keeps messages, pending replies and drafts when closed and reopened", async 
 
 it("resizes the dock up to half the page and closes to the bubble at the minimum", async () => {
   const user = userEvent.setup();
-  render(<div className="ui-workspace-layout"><ChatBubble /></div>);
+  render(
+    <div className="ui-workspace-layout">
+      <ChatBubble />
+    </div>,
+  );
   await user.click(screen.getByRole("button", { name: "Open assistant" }));
   await user.type(screen.getByRole("textbox"), "Keep this draft");
   await user.click(screen.getByRole("button", { name: "Expand chat" }));
@@ -107,15 +137,37 @@ it("resizes the dock up to half the page and closes to the bubble at the minimum
   vi.spyOn(panel, "getBoundingClientRect").mockReturnValue({ width: 400 });
   // MouseEvent supplies coordinates in jsdom, which has no native PointerEvent.
   handle.setPointerCapture = vi.fn();
-  fireEvent(handle, new MouseEvent("pointerdown", { bubbles: true, clientX: 624, button: 0 }));
-  fireEvent(handle, new MouseEvent("pointermove", { bubbles: true, clientX: 100 }));
-  expect(panel.style.getPropertyValue("--assistant-dock-preferred-width")).toBe(`${window.innerWidth / 2}px`);
-  expect(panel.closest(".ui-workspace-layout").style.getPropertyValue("--assistant-dock-preferred-width")).toBe(`${window.innerWidth / 2}px`);
-  fireEvent(handle, new MouseEvent("pointermove", { bubbles: true, clientX: 700 }));
-  expect(panel.style.getPropertyValue("--assistant-dock-preferred-width")).toBe("324px");
-  fireEvent(handle, new MouseEvent("pointermove", { bubbles: true, clientX: 760 }));
+  fireEvent(
+    handle,
+    new MouseEvent("pointerdown", { bubbles: true, clientX: 624, button: 0 }),
+  );
+  fireEvent(
+    handle,
+    new MouseEvent("pointermove", { bubbles: true, clientX: 100 }),
+  );
+  expect(panel.style.getPropertyValue("--assistant-dock-preferred-width")).toBe(
+    `${window.innerWidth / 2}px`,
+  );
+  expect(
+    panel
+      .closest(".ui-workspace-layout")
+      .style.getPropertyValue("--assistant-dock-preferred-width"),
+  ).toBe(`${window.innerWidth / 2}px`);
+  fireEvent(
+    handle,
+    new MouseEvent("pointermove", { bubbles: true, clientX: 700 }),
+  );
+  expect(panel.style.getPropertyValue("--assistant-dock-preferred-width")).toBe(
+    "324px",
+  );
+  fireEvent(
+    handle,
+    new MouseEvent("pointermove", { bubbles: true, clientX: 760 }),
+  );
   expect(screen.getByRole("button", { name: "Open assistant" })).toBeVisible();
-  expect(screen.queryByRole("region", { name: "Assistant chat" })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("region", { name: "Assistant chat" }),
+  ).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Open assistant" }));
   expect(screen.getByRole("textbox")).toHaveValue("Keep this draft");
 });
@@ -164,7 +216,9 @@ it("creates lazily, retains context, and restores latest history after remount",
   await user.type(screen.getByRole("textbox"), "First message{Enter}");
   expect(await screen.findByText("Saved response")).toBeVisible();
   const firstId = create.mock.calls[0][0];
-  expect(screen.queryByRole("group", { name: "Assistant mode" })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("group", { name: "Assistant mode" }),
+  ).not.toBeInTheDocument();
   expect(screen.getByText("Saved response")).toBeVisible();
   await user.type(screen.getByRole("textbox"), "Follow up{Enter}");
   await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
@@ -494,7 +548,10 @@ it("allows a new message to replace a menu without treating text as approval", a
 });
 
 it("starts a fresh conversation and clears the draft with the plus button", async () => {
-  load.mockResolvedValue({ ...snapshot([message("Old conversation")]), conversationId: "old" });
+  load.mockResolvedValue({
+    ...snapshot([message("Old conversation")]),
+    conversationId: "old",
+  });
   const user = userEvent.setup();
   render(<ChatBubble />);
   await user.click(screen.getByRole("button", { name: "Open assistant" }));
@@ -503,17 +560,26 @@ it("starts a fresh conversation and clears the draft with the plus button", asyn
   await user.click(screen.getByRole("button", { name: "New chat" }));
   await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(""));
   expect(screen.queryByText("Old conversation")).not.toBeInTheDocument();
-  expect(screen.getByText("No messages yet. Start a conversation!")).toBeVisible();
+  expect(
+    screen.getByText("No messages yet. Start a conversation!"),
+  ).toBeVisible();
   const newId = create.mock.calls[0][0];
   send.mockResolvedValue({ data: "Fresh reply" });
   load.mockResolvedValue({ ...snapshot(), conversationId: newId });
   await user.type(screen.getByRole("textbox"), "Hello{Enter}");
-  await waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ conversationId: newId })));
+  await waitFor(() =>
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ conversationId: newId }),
+    ),
+  );
   expect(create).toHaveBeenCalledTimes(1);
 });
 
 it("preserves history and draft when creating a new chat fails", async () => {
-  load.mockResolvedValue({ ...snapshot([message("Keep history")]), conversationId: "old" });
+  load.mockResolvedValue({
+    ...snapshot([message("Keep history")]),
+    conversationId: "old",
+  });
   create.mockRejectedValue(new Error("Unavailable"));
   const user = userEvent.setup();
   render(<ChatBubble />);
@@ -521,7 +587,9 @@ it("preserves history and draft when creating a new chat fails", async () => {
   await screen.findByText("Keep history");
   await user.type(screen.getByRole("textbox"), "Keep draft");
   await user.click(screen.getByRole("button", { name: "New chat" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent("Could not create a new conversation");
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Could not create a new conversation",
+  );
   expect(screen.getByText("Keep history")).toBeVisible();
   expect(screen.getByRole("textbox")).toHaveValue("Keep draft");
 });

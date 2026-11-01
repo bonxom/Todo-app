@@ -48,6 +48,36 @@ const ChatField = ({
     setFileError(error);
     if (!error) setFiles(next);
   };
+
+  const handlePaste = (event) => {
+    const clipboardData = event.clipboardData;
+    if (!clipboardData) return;
+
+    let pastedFiles = [];
+    if (clipboardData.files && clipboardData.files.length > 0) {
+      pastedFiles = Array.from(clipboardData.files).filter(
+        (file) => file.type && file.type.startsWith("image/"),
+      );
+    } else if (clipboardData.items && clipboardData.items.length > 0) {
+      const items = Array.from(clipboardData.items);
+      const imageItems = items.filter(
+        (item) => item.type && item.type.startsWith("image/"),
+      );
+      pastedFiles = imageItems
+        .map((item) =>
+          typeof item.getAsFile === "function" ? item.getAsFile() : null,
+        )
+        .filter(Boolean);
+    }
+
+    if (pastedFiles.length > 0) {
+      event.preventDefault();
+      const next = [...files, ...pastedFiles];
+      const error = checkFiles(next);
+      setFileError(error);
+      if (!error) setFiles(next);
+    }
+  };
   const [inputValue, setInputValue] = useState("");
   const [selectedTool, setSelectedTool] = useState(null);
   const [slashQuery, setSlashQuery] = useState("");
@@ -552,22 +582,21 @@ const ChatField = ({
               disabled={submitting}
               value={inputValue}
               onChange={handleInputChange}
+              onPaste={handlePaste}
               onFocus={() => setIsMenuOpen(false)}
               onClick={() => setIsMenuOpen(false)}
               onKeyDown={handleKeyDown}
               placeholder={
-                chat?.interaction
-                  ? "Other answers"
-                  : "Ask something…"
+                chat?.interaction ? "Other answers" : "Ask something…"
               }
               className="ui-input block min-w-0 w-full resize-none rounded-2xl px-4 text-sm transition-all duration-200"
               style={{
                 fieldSizing: "content",
                 minHeight: "2.75rem",
-                maxHeight: "calc(2lh + 1.375rem + 2px)",
+                maxHeight: "11.25rem",
                 paddingTop: "0.6875rem",
                 paddingBottom: "0.6875rem",
-                lineHeight: "1.25rem",
+                lineHeight: "1.375rem",
                 overflowY: "auto",
                 resize: "none",
               }}

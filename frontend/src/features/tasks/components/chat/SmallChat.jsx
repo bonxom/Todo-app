@@ -14,8 +14,12 @@ const SmallChat = ({ onClose }) => {
   useEffect(() => {
     const workspace = panelRef.current?.closest(".ui-workspace-layout");
     if (!workspace || dockWidth === null) return;
-    workspace.style.setProperty("--assistant-dock-preferred-width", `${dockWidth}px`);
-    return () => workspace.style.removeProperty("--assistant-dock-preferred-width");
+    workspace.style.setProperty(
+      "--assistant-dock-preferred-width",
+      `${dockWidth}px`,
+    );
+    return () =>
+      workspace.style.removeProperty("--assistant-dock-preferred-width");
   }, [dockWidth]);
 
   const stopResize = () => {
@@ -30,8 +34,16 @@ const SmallChat = ({ onClose }) => {
     }
     setDockWidth(Math.min(width, window.innerWidth / 2));
   };
-  const nextDisplayMode = { compact: "expanded", expanded: "docked", docked: "compact" };
-  const resizeLabel = { compact: "Expand chat", expanded: "Dock chat to right", docked: "Restore chat size" }[displayMode];
+  const nextDisplayMode = {
+    compact: "expanded",
+    expanded: "docked",
+    docked: "compact",
+  };
+  const resizeLabel = {
+    compact: "Expand chat",
+    expanded: "Dock chat to right",
+    docked: "Restore chat size",
+  }[displayMode];
   const chat = useConversationChat();
   const [chatRevision, setChatRevision] = useState(0);
 
@@ -46,40 +58,59 @@ const SmallChat = ({ onClose }) => {
       ref={panelRef}
       className={`ui-assistant-panel ui-assistant-panel--${displayMode}`}
       data-resizing={isResizing}
-      style={dockWidth === null ? undefined : { "--assistant-dock-preferred-width": `${dockWidth}px` }}
+      style={
+        dockWidth === null
+          ? undefined
+          : { "--assistant-dock-preferred-width": `${dockWidth}px` }
+      }
       role="region"
       aria-label="Assistant chat"
     >
-      {displayMode === "docked" && <div
-        className="ui-assistant-resize-handle ui-focus-ring"
-        role="separator"
-        aria-label="Resize chat sidebar"
-        aria-orientation="vertical"
-        aria-valuemin={minimumDockWidth}
-        aria-valuemax={Math.floor(window.innerWidth / 2)}
-        aria-valuenow={Math.round(Math.min(dockWidth ?? window.innerWidth * 0.32, window.innerWidth / 2))}
-        tabIndex={0}
-        title="Kéo để đổi chiều rộng. Kéo hẹp hết để đóng chat."
-        onPointerDown={(event) => {
-          if (event.button !== 0) return;
-          event.preventDefault();
-          dragRef.current = { x: event.clientX, width: panelRef.current.getBoundingClientRect().width };
-          event.currentTarget.setPointerCapture(event.pointerId);
-          setIsResizing(true);
-        }}
-        onPointerMove={(event) => {
-          if (!dragRef.current) return;
-          resizeDock(dragRef.current.width + dragRef.current.x - event.clientX);
-        }}
-        onPointerUp={stopResize}
-        onPointerCancel={stopResize}
-        onLostPointerCapture={stopResize}
-        onKeyDown={(event) => {
-          if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-          event.preventDefault();
-          resizeDock(panelRef.current.getBoundingClientRect().width + (event.key === "ArrowLeft" ? 24 : -24));
-        }}
-      />}
+      {displayMode === "docked" && (
+        <div
+          className="ui-assistant-resize-handle ui-focus-ring"
+          role="separator"
+          aria-label="Resize chat sidebar"
+          aria-orientation="vertical"
+          aria-valuemin={minimumDockWidth}
+          aria-valuemax={Math.floor(window.innerWidth / 2)}
+          aria-valuenow={Math.round(
+            Math.min(
+              dockWidth ?? window.innerWidth * 0.32,
+              window.innerWidth / 2,
+            ),
+          )}
+          tabIndex={0}
+          title="Kéo để đổi chiều rộng. Kéo hẹp hết để đóng chat."
+          onPointerDown={(event) => {
+            if (event.button !== 0) return;
+            event.preventDefault();
+            dragRef.current = {
+              x: event.clientX,
+              width: panelRef.current.getBoundingClientRect().width,
+            };
+            event.currentTarget.setPointerCapture(event.pointerId);
+            setIsResizing(true);
+          }}
+          onPointerMove={(event) => {
+            if (!dragRef.current) return;
+            resizeDock(
+              dragRef.current.width + dragRef.current.x - event.clientX,
+            );
+          }}
+          onPointerUp={stopResize}
+          onPointerCancel={stopResize}
+          onLostPointerCapture={stopResize}
+          onKeyDown={(event) => {
+            if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+            event.preventDefault();
+            resizeDock(
+              panelRef.current.getBoundingClientRect().width +
+                (event.key === "ArrowLeft" ? 24 : -24),
+            );
+          }}
+        />
+      )}
       <div className="ui-assistant-header">
         <div className="flex items-center justify-between gap-3">
           <div className="ui-assistant-status">
@@ -103,7 +134,9 @@ const SmallChat = ({ onClose }) => {
             </button>
             <button
               type="button"
-              onClick={() => setDisplayMode((current) => nextDisplayMode[current])}
+              onClick={() =>
+                setDisplayMode((current) => nextDisplayMode[current])
+              }
               className="ui-icon-button ui-focus-ring h-8 w-8"
               aria-label={resizeLabel}
               title={resizeLabel}

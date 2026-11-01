@@ -4,14 +4,20 @@ import { expect, it, vi } from "vitest";
 import RecentConversations from "../chat/RecentConversations";
 import { aiService } from "@/shared/services/aiService";
 
-vi.mock("@/shared/services/aiService", () => ({ aiService: { listConversations: vi.fn() } }));
+vi.mock("@/shared/services/aiService", () => ({
+  aiService: { listConversations: vi.fn() },
+}));
 
 it("shows three recent conversations, expands the list and opens the selected ID", async () => {
   const user = userEvent.setup();
   const onOpen = vi.fn();
-  aiService.listConversations.mockResolvedValue(Array.from({ length: 5 }, (_, index) => ({
-    id: `id-${index}`, title: `Conversation ${index}`, updatedAt: new Date().toISOString(),
-  })));
+  aiService.listConversations.mockResolvedValue(
+    Array.from({ length: 5 }, (_, index) => ({
+      id: `id-${index}`,
+      title: `Conversation ${index}`,
+      updatedAt: new Date().toISOString(),
+    })),
+  );
   render(<RecentConversations onOpen={onOpen} />);
   await screen.findByText("Conversation 0");
   expect(screen.queryByText("Conversation 3")).not.toBeInTheDocument();
@@ -31,9 +37,13 @@ it("shows three recent conversations, expands the list and opens the selected ID
 });
 
 it("allows retry after a failed history request", async () => {
-  aiService.listConversations.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce([]);
+  aiService.listConversations
+    .mockRejectedValueOnce(new Error("offline"))
+    .mockResolvedValueOnce([]);
   const user = userEvent.setup();
   render(<RecentConversations onOpen={vi.fn()} />);
   await user.click(await screen.findByRole("button", { name: "Thử lại" }));
-  expect(await screen.findByText("No messages yet. Start a conversation!")).toBeVisible();
+  expect(
+    await screen.findByText("No messages yet. Start a conversation!"),
+  ).toBeVisible();
 });
