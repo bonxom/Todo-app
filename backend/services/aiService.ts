@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ChatCompletion } from "openai/resources/chat/completions";
 import mongoose from "mongoose";
 import { getAiClient } from "../libs/aiClient.js";
 import { callAiProvider, parseAiResponse } from "../libs/aiProvider.js";
@@ -58,7 +59,7 @@ Create 3 practical, actionable tasks with:
     const rawSchema = tasksArraySchema.toJSONSchema();
     const { $schema: _schema, ...jsonSchema } = rawSchema;
 
-    const response = await callAiProvider(() =>
+    const response = await callAiProvider<ChatCompletion>(() =>
       ai.chat.completions.create({
         model,
         messages: [
@@ -128,7 +129,7 @@ Provide short, clear, concise, and friendly responses.`;
     const model = getAiModel();
     if (!model) throw new AppError(AI_ERROR.CONFIG_MISSING);
 
-    const response = await callAiProvider(() =>
+    const response = await callAiProvider<ChatCompletion>(() =>
       ai.chat.completions.create({
         model,
         messages: [
