@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 import type { ZodType } from "zod";
 import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";

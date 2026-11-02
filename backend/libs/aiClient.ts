@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 import { getAiApiKey, getAiBaseUrl } from "../config/env.js";
 import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";

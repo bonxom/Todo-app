@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import multer from "multer";
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 import { ZodError } from "zod";
 import { AppError } from "./AppError.js";
 import { COMMON_ERROR } from "./definitions/commonErrors.js";

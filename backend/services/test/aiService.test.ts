@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const completionCreate = vi.hoisted(() => vi.fn());

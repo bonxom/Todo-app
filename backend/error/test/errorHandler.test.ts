@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import multer from "multer";
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
