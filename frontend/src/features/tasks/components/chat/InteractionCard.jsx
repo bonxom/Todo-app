@@ -1,5 +1,12 @@
-import { useState } from "react";
-import { Check, ChevronDown, ChevronUp, Send, Terminal, X } from "lucide-react";
+import { useState, useId } from "react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Send,
+  MessageCircle,
+  X,
+} from "lucide-react";
 
 export default function InteractionCard(props) {
   const { interaction } = props;
@@ -18,24 +25,27 @@ function InteractionCardContent({
   onAnswer,
   onCancel,
   disabled = false,
+  sending = false,
   embedded = false,
   docked = false,
   onSwitchToMessage,
 }) {
+  const questionId = useId();
   const [optionId, setOptionId] = useState(interaction.answer?.optionId ?? "");
   const [customAnswer, setCustomAnswer] = useState(
     interaction.answer?.customAnswer ?? "",
   );
-  const [localSubmission, setLocalSubmission] = useState(null);
+  const [showCustomAnswer, setShowCustomAnswer] = useState(
+    Boolean(interaction.answer?.customAnswer),
+  );
   const [showDetails, setShowDetails] = useState(false);
 
-  const isServerResolved = interaction.status !== "pending";
-  const effectiveAnswer = localSubmission || interaction.answer;
+  const isResolved = interaction.status !== "pending";
+  const effectiveAnswer = interaction.answer;
+  const isBusy = disabled || sending;
   const isCancelled =
-    Boolean(localSubmission?.cancelled) ||
     interaction.status === "cancelled" ||
     effectiveAnswer?.optionId === "cancel";
-  const isResolved = isServerResolved || Boolean(localSubmission);
 
   const confirmation = interaction.kind === "confirmation";
   const options = interaction.options || [];
@@ -47,31 +57,32 @@ function InteractionCardContent({
     (opt) => opt.id === effectiveAnswer?.optionId,
   );
   const selectedOptionLabel =
-    selectedOption?.label ?? effectiveAnswer?.optionId ?? "Đã chọn";
+    selectedOption?.label ?? effectiveAnswer?.optionId ?? "Selected";
   const isCustomAnswer = Boolean(effectiveAnswer?.customAnswer);
   const customAnswerText = effectiveAnswer?.customAnswer;
 
   const hasDetails = Boolean(interaction.details?.length);
   const hasMultipleOptions = visibleOptions.length > 1;
 
+  const directOption =
+    confirmation && visibleOptions.length === 1 ? visibleOptions[0] : null;
+
   const handleSubmit = (event) => {
     if (event) event.preventDefault();
-    if (disabled || isResolved) return;
+    if (isBusy || isResolved) return;
 
-    const trimmedCustom = customAnswer.trim();
-    if (!trimmedCustom && !optionId) return;
+    const trimmedCustom = showCustomAnswer ? customAnswer.trim() : "";
+    const selectedId = directOption?.id ?? (showCustomAnswer ? "" : optionId);
+    if (!trimmedCustom && !selectedId) return;
 
     const answer = trimmedCustom
       ? { customAnswer: trimmedCustom }
-      : { optionId };
-
-    setLocalSubmission(answer);
+      : { optionId: selectedId };
     onAnswer?.(answer);
   };
 
   const handleCancel = () => {
-    if (disabled || isResolved) return;
-    setLocalSubmission({ cancelled: true });
+    if (isBusy || isResolved) return;
     onCancel?.();
   };
 
@@ -108,12 +119,12 @@ function InteractionCardContent({
             <div className="text-xs sm:text-sm leading-relaxed text-[var(--color-text)]">
               {isCancelled ? (
                 <span className="text-[var(--color-text-muted)] italic">
-                  (Đã hủy)
+                  (Cancelled)
                 </span>
               ) : isCustomAnswer ? (
                 <div className="flex flex-wrap items-baseline gap-1.5">
                   <span className="text-[var(--color-text-muted)]">
-                    Bạn đã trả lời:
+                    Your answer:
                   </span>
                   <span className="font-medium text-[var(--color-text)] bg-[var(--color-surface-muted)] px-2 py-0.5 rounded border border-[var(--color-line)] break-words">
                     {customAnswerText}
@@ -122,7 +133,7 @@ function InteractionCardContent({
               ) : (
                 <div className="flex flex-wrap items-baseline gap-1.5">
                   <span className="text-[var(--color-text-muted)]">
-                    {confirmation ? "Bạn đã xác nhận" : "Bạn đã chọn"}
+                    {confirmation ? "Confirmed" : "You selected"}
                   </span>
                   <span className="font-semibold text-[var(--color-accent-strong)] dark:text-[var(--color-accent)] bg-[var(--color-accent-soft)] px-2 py-0.5 rounded border border-[var(--color-line)] break-words">
                     {selectedOptionLabel}
@@ -144,12 +155,12 @@ function InteractionCardContent({
               {showDetails ? (
                 <>
                   <ChevronUp className="h-3 w-3" />
-                  <span>Ẩn chi tiết câu hỏi</span>
+                  <span>Hide question details</span>
                 </>
               ) : (
                 <>
                   <ChevronDown className="h-3 w-3" />
-                  <span>Xem chi tiết câu hỏi</span>
+                  <span>Show question details</span>
                 </>
               )}
             </button>
@@ -174,7 +185,7 @@ function InteractionCardContent({
                 {hasMultipleOptions && (
                   <div className="space-y-1.5">
                     <span className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold font-mono block">
-                      Các lựa chọn:
+                      Options:
                     </span>
                     <div className="space-y-1">
                       {visibleOptions.map((opt) => {
@@ -214,177 +225,178 @@ function InteractionCardContent({
     );
   }
 
-  // --- PENDING VIEW (CODING AGENT INTERACTIVE CARD) ---
   const canSubmit =
-    !disabled && (Boolean(optionId) || Boolean(customAnswer.trim()));
+    !isBusy &&
+    Boolean(
+      directOption || (showCustomAnswer ? customAnswer.trim() : optionId),
+    );
 
   return (
     <form
+      aria-busy={sending}
       className={
         docked
-          ? `flex min-h-0 flex-col overflow-hidden text-sm ${
-              disabled ? "opacity-75" : ""
-            }`
-          : `space-y-3 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-sm shadow-sm transition-all ${
-              disabled ? "opacity-75" : ""
-            }`
+          ? "ui-ask-card flex min-h-0 flex-col overflow-hidden text-sm"
+          : "ui-ask-card flex min-h-0 flex-col rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4 text-sm"
       }
       onSubmit={handleSubmit}
     >
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--color-line)] pb-2.5 text-xs">
-        <div className="inline-flex min-w-0 flex-wrap items-center gap-1.5 text-[var(--color-accent-strong)] dark:text-[var(--color-accent)]">
-          <Terminal className="h-3.5 w-3.5 shrink-0" />
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 pb-2 text-xs">
+        <div className="inline-flex items-center gap-1.5 text-[var(--color-accent-strong)]">
+          <MessageCircle className="h-4 w-4" aria-hidden="true" />
           <span className="font-medium">
-            {confirmation ? "Xác nhận hành động" : "Câu hỏi từ Agent"}
-          </span>
-          <span className="rounded-full bg-[var(--color-surface-muted)] px-1.5 py-0.5 text-[10px] text-[var(--color-text-muted)] font-normal">
-            ({visibleOptions.length} lựa chọn)
+            {confirmation ? "Confirm action" : "Let's clarify your request"}
           </span>
         </div>
         {onSwitchToMessage && (
           <button
             type="button"
+            aria-label="Change request"
+            disabled={isBusy}
             onClick={onSwitchToMessage}
-            className="ui-focus-ring shrink-0 rounded-lg px-2 py-1.5 text-xs text-[var(--color-accent-strong)] hover:bg-[var(--color-surface-muted)] transition-colors cursor-pointer"
+            title="Send a new request instead of answering this question"
+            className="ui-focus-ring rounded-lg px-2 py-1.5 text-xs text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50"
           >
-            Nhắn tin →
+            Change request →
           </button>
         )}
       </div>
 
-      <div
-        className={
-          docked
-            ? "min-h-0 overflow-y-auto overscroll-contain py-3 pr-1 [scrollbar-width:thin]"
-            : ""
-        }
-      >
-        <fieldset disabled={disabled} className="min-w-0 space-y-3">
-          <legend className="mb-2 w-full text-sm font-medium text-[var(--color-text)] leading-relaxed break-words">
-            {interaction.question}
-          </legend>
+      <h3 id={questionId} className="chat-ask-question">
+        {interaction.question}
+      </h3>
 
-          {/* Details list if any */}
+      {interaction.allowCustomAnswer && !confirmation && (
+        <div
+          className="mb-2 flex shrink-0 gap-1 rounded-lg bg-[var(--color-surface-muted)] p-1"
+          aria-label="Answer method"
+        >
+          <button
+            type="button"
+            aria-pressed={!showCustomAnswer}
+            disabled={isBusy}
+            onClick={() => setShowCustomAnswer(false)}
+            className={`ui-focus-ring flex-1 rounded-md px-2 py-2 text-xs font-medium ${!showCustomAnswer ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-xs" : "text-[var(--color-text-muted)]"}`}
+          >
+            Choose an option
+          </button>
+          <button
+            type="button"
+            aria-pressed={showCustomAnswer}
+            disabled={isBusy}
+            onClick={() => setShowCustomAnswer(true)}
+            className={`ui-focus-ring flex-1 rounded-md px-2 py-2 text-xs font-medium ${showCustomAnswer ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-xs" : "text-[var(--color-text-muted)]"}`}
+          >
+            Other answer
+          </button>
+        </div>
+      )}
+
+      <div className="min-h-0 overflow-y-auto overscroll-contain py-2 pr-1 [scrollbar-width:thin]">
+        <fieldset
+          aria-labelledby={questionId}
+          disabled={isBusy}
+          className="min-w-0 space-y-3"
+        >
           {hasDetails && (
-            <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-muted)]/50 p-2.5 text-xs font-mono">
+            <dl className="space-y-1 rounded-lg bg-[var(--color-surface-muted)] p-3 text-xs">
               {interaction.details.map((detail, index) => (
-                <div key={index} className="flex gap-2 py-0.5">
-                  <span className="font-medium text-[var(--color-text-muted)] shrink-0">
+                <div key={index} className="flex flex-wrap gap-x-2 gap-y-1">
+                  <dt className="font-medium text-[var(--color-text-muted)]">
                     {detail.label}:
-                  </span>
-                  <span className="text-[var(--color-text)] break-words">
+                  </dt>
+                  <dd className="min-w-0 break-words text-[var(--color-text)]">
                     {detail.value}
-                  </span>
+                  </dd>
                 </div>
               ))}
-            </div>
+            </dl>
           )}
-
-          {/* Options list */}
-          <div className="space-y-2">
-            {visibleOptions.map((option) => {
-              const isSelected = optionId === option.id && !customAnswer;
-              return (
-                <label
-                  key={option.id}
-                  onDoubleClick={() => {
-                    if (!disabled) {
-                      setOptionId(option.id);
-                      setCustomAnswer("");
-                      setLocalSubmission({ optionId: option.id });
-                      onAnswer?.({ optionId: option.id });
-                    }
-                  }}
-                  className={`group relative flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 text-sm transition-colors duration-150 focus-within:ring-2 focus-within:ring-[var(--color-accent)] ${
-                    isSelected
-                      ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]/40 ring-1 ring-[var(--color-accent)] shadow-xs"
-                      : "border-[var(--color-line)] bg-[var(--color-surface)] hover:border-[var(--color-accent)]/60 hover:bg-[var(--color-surface-muted)]/40"
-                  }`}
-                >
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center">
-                    <input
-                      type="radio"
-                      id={`interaction-${interaction.id}-${option.id}`}
-                      name={`interaction-${interaction.id}`}
-                      value={option.id}
-                      aria-label={option.label}
-                      checked={isSelected}
-                      onChange={() => {
-                        setOptionId(option.id);
-                        setCustomAnswer("");
-                      }}
-                      className="h-4 w-4 accent-[var(--color-accent)] cursor-pointer"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-[var(--color-text)] leading-snug break-words">
-                        {option.label}
+          {showCustomAnswer ? (
+            <label className="block space-y-2">
+              <span className="text-xs text-[var(--color-text-muted)]">
+                Your answer
+              </span>
+              <textarea
+                aria-label="Other answer"
+                rows={3}
+                autoFocus
+                className="ui-input block w-full resize-none rounded-xl px-3 py-2 text-sm"
+                placeholder="Tell the assistant what works for you…"
+                value={customAnswer}
+                maxLength={2000}
+                onChange={(event) => {
+                  setCustomAnswer(event.target.value);
+                  setOptionId("");
+                }}
+              />
+            </label>
+          ) : (
+            !directOption && (
+              <div className="space-y-2">
+                {visibleOptions.map((option) => {
+                  const isSelected = optionId === option.id;
+                  return (
+                    <label
+                      key={option.id}
+                      className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition-colors focus-within:ring-2 focus-within:ring-[var(--color-accent)] ${isSelected ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]" : "border-[var(--color-line)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-muted)]"}`}
+                    >
+                      <input
+                        type="radio"
+                        name={`interaction-${interaction.id}`}
+                        value={option.id}
+                        aria-label={option.label}
+                        checked={isSelected}
+                        onChange={() => setOptionId(option.id)}
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-accent)]"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-medium leading-snug break-words text-[var(--color-text)]">
+                          {option.label}
+                        </span>
+                        {option.description && (
+                          <span className="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">
+                            {option.description}
+                          </span>
+                        )}
                       </span>
-                    </div>
-                    {option.description && (
-                      <p className="mt-1 text-xs text-[var(--color-text-muted)] leading-normal break-words">
-                        {option.description}
-                      </p>
-                    )}
-                  </div>
-                </label>
-              );
-            })}
-          </div>
-
-          {/* Other answer */}
-          {interaction.allowCustomAnswer && !confirmation && (
-            <div className="pt-1">
-              <label className="block space-y-1.5">
-                <span className="block text-xs font-medium text-[var(--color-text-muted)]">
-                  Other answer
-                </span>
-                <textarea
-                  aria-label="Other answer"
-                  rows={1}
-                  style={{
-                    height: "2.5rem",
-                    minHeight: "2.5rem",
-                    padding: "0.5rem 0.75rem",
-                    lineHeight: "1.375rem",
-                    resize: "none",
-                    overflowY: "auto",
-                  }}
-                  className="ui-input w-full text-xs font-sans rounded-lg resize-none p-2.5 transition-all focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
-                  placeholder="Lựa chọn khác..."
-                  value={customAnswer}
-                  maxLength={2000}
-                  onChange={(event) => {
-                    setCustomAnswer(event.target.value);
-                    setOptionId("");
-                  }}
-                />
-              </label>
-            </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )
+          )}
+          {directOption?.description && (
+            <p className="text-sm text-[var(--color-text-muted)]">
+              {directOption.description}
+            </p>
           )}
         </fieldset>
       </div>
-      {/* Keep actions visible while the question and options scroll. */}
-      <div className="flex shrink-0 items-center justify-between gap-2 pt-2.5 border-t border-[var(--color-line)]">
-        <div className="flex items-center gap-2 ml-auto">
-          <button
-            className="ui-btn-secondary ui-focus-ring px-3 py-1.5 text-xs font-medium rounded-lg cursor-pointer"
-            type="button"
-            disabled={disabled}
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
-          <button
-            className="ui-btn-primary ui-focus-ring px-3.5 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 shadow-xs disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-            type="submit"
-            disabled={!canSubmit}
-          >
-            <Send className="h-3 w-3" />
-            <span>{confirmation ? "Confirm" : "Send answer"}</span>
-          </button>
-        </div>
+      <div className="mt-2 flex shrink-0 items-center justify-end gap-2 border-t border-[var(--color-line)] pt-3">
+        <button
+          className="ui-btn-secondary ui-focus-ring rounded-lg px-3 text-xs font-medium disabled:opacity-50"
+          type="button"
+          aria-label="Cancel"
+          disabled={isBusy}
+          onClick={handleCancel}
+        >
+          Cancel
+        </button>
+        <button
+          className="ui-btn-primary ui-focus-ring min-w-0 rounded-lg px-3 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+          type="submit"
+          aria-label={confirmation ? "Confirm" : "Send answer"}
+          disabled={!canSubmit}
+        >
+          <Send className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span className="break-words leading-snug">
+            {sending
+              ? "Sending…"
+              : (directOption?.label ??
+                (confirmation ? "Confirm" : "Send answer"))}
+          </span>
+        </button>
       </div>
     </form>
   );

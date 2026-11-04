@@ -1,25 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import mermaid from "mermaid";
 import { generateUUID } from "@/shared/utils/id";
-import { AlertCircle, Check, Code, Copy, Eye } from "lucide-react";
-
-let mermaidInitialized = false;
-
-const initMermaid = () => {
-  if (mermaidInitialized) return;
-  const isDark =
-    typeof document !== "undefined" &&
-    document.documentElement.classList.contains("dark");
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: isDark ? "dark" : "default",
-    securityLevel: "loose",
-    fontFamily: "inherit",
-  });
-  mermaidInitialized = true;
-};
+import { useTheme } from "@/shared/theme/theme";
+import { AlertCircle, Check, Code, Copy, Eye, Minus, Plus } from "lucide-react";
 
 const MermaidDiagram = ({ code }) => {
+  const { theme } = useTheme();
+  const [zoom, setZoom] = useState(100);
   const [activeTab, setActiveTab] = useState("diagram");
   const [svg, setSvg] = useState("");
   const [error, setError] = useState(null);
@@ -53,7 +40,12 @@ const MermaidDiagram = ({ code }) => {
       setRendering(true);
       setError(null);
       try {
-        initMermaid();
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: theme === "dark" ? "dark" : "default",
+          securityLevel: "strict",
+          fontFamily: "inherit",
+        });
         const cleanedCode = code.trim();
         const id = `mermaid-${generateUUID().replace(/[^a-zA-Z0-9]/g, "")}`;
         const { svg: renderedSvg } = await mermaid.render(id, cleanedCode);
@@ -78,16 +70,17 @@ const MermaidDiagram = ({ code }) => {
     return () => {
       isCancelled = true;
     };
-  }, [code]);
+  }, [code, theme]);
 
   return (
-    <div className="my-3 overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] shadow-xs">
+    <div className="chat-diagram my-3 overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] shadow-xs">
       {/* Single clean top header */}
-      <div className="flex items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs text-[var(--color-text-muted)]">
+      <div className="chat-rich-header flex items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs text-[var(--color-text-muted)]">
         <div className="flex items-center gap-1" role="tablist">
           <button
             type="button"
             role="tab"
+            aria-label="Diagram"
             aria-selected={activeTab === "diagram"}
             onClick={() => setActiveTab("diagram")}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
@@ -102,6 +95,7 @@ const MermaidDiagram = ({ code }) => {
           <button
             type="button"
             role="tab"
+            aria-label="Code"
             aria-selected={activeTab === "code"}
             onClick={() => setActiveTab("code")}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
@@ -128,7 +122,7 @@ const MermaidDiagram = ({ code }) => {
             {copied ? (
               <>
                 <Check className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="text-emerald-500 font-medium">Copied!</span>
+                <span className="text-emerald-500 font-medium">Copied</span>
               </>
             ) : (
               <>
@@ -140,9 +134,40 @@ const MermaidDiagram = ({ code }) => {
         </div>
       </div>
 
+      {activeTab === "diagram" && !rendering && !error && (
+        <div className="chat-diagram-zoom">
+          <span>Zoom in for a closer look</span>
+          <button
+            type="button"
+            aria-label="Zoom out diagram"
+            title="Zoom out"
+            disabled={zoom <= 100}
+            onClick={() => setZoom((value) => Math.max(100, value - 25))}
+          >
+            <Minus size={14} />
+          </button>
+          <button
+            type="button"
+            aria-label="Reset diagram zoom"
+            title="Fit to view"
+            onClick={() => setZoom(100)}
+          >
+            {zoom}%
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in diagram"
+            title="Zoom in"
+            disabled={zoom >= 200}
+            onClick={() => setZoom((value) => Math.min(200, value + 25))}
+          >
+            <Plus size={14} />
+          </button>
+        </div>
+      )}
       {/* Content body - direct pre/code, no nested CodeBlock */}
       {activeTab === "diagram" ? (
-        <div className="p-4 flex min-h-[140px] items-center justify-center overflow-x-auto bg-white/50 dark:bg-black/20">
+        <div className="chat-diagram-canvas p-4 min-h-[140px] overflow-x-auto">
           {rendering ? (
             <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
               <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--color-accent)] border-t-transparent" />
@@ -151,12 +176,13 @@ const MermaidDiagram = ({ code }) => {
           ) : error ? (
             <div className="flex flex-col items-center gap-1.5 text-center text-xs text-amber-600 dark:text-amber-400">
               <AlertCircle className="h-4 w-4" />
-              <span>Could not render diagram. Switching to code view.</span>
+              <span>Unable to render the diagram. You can view the code.</span>
             </div>
           ) : (
             <div
               ref={containerRef}
-              className="max-w-full overflow-x-auto [&>svg]:mx-auto [&>svg]:max-w-full [&>svg]:h-auto"
+              style={{ width: `${zoom}%`, minWidth: `${zoom}%` }}
+              className="[&>svg]:mx-auto [&>svg]:w-full [&>svg]:h-auto"
               dangerouslySetInnerHTML={{ __html: svg }}
             />
           )}

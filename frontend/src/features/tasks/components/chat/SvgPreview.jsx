@@ -138,11 +138,12 @@ const SvgPreview = ({ code }) => {
   return (
     <div className="my-3 overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] shadow-xs">
       {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs text-[var(--color-text-muted)]">
+      <div className="chat-rich-header flex items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs text-[var(--color-text-muted)]">
         <div className="flex items-center gap-1" role="tablist">
           <button
             type="button"
             role="tab"
+            aria-label="Preview"
             aria-selected={activeTab === "preview"}
             onClick={() => setActiveTab("preview")}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
@@ -157,6 +158,7 @@ const SvgPreview = ({ code }) => {
           <button
             type="button"
             role="tab"
+            aria-label="Code"
             aria-selected={activeTab === "code"}
             onClick={() => setActiveTab("code")}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
@@ -188,7 +190,7 @@ const SvgPreview = ({ code }) => {
                 type="button"
                 onClick={handleResetZoom}
                 aria-label="Reset zoom"
-                title="Reset zoom to 100%"
+                title="Reset to 100%"
                 className="ui-focus-ring px-1 font-mono text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer"
               >
                 {zoom}%
@@ -210,7 +212,7 @@ const SvgPreview = ({ code }) => {
                   type="button"
                   onClick={handleResetZoom}
                   aria-label="Reset zoom"
-                  title="Reset zoom"
+                  title="Fit to view"
                   className="ui-focus-ring flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-line)] hover:text-[var(--color-text)] cursor-pointer"
                 >
                   <RotateCcw className="h-3 w-3" />
@@ -221,7 +223,7 @@ const SvgPreview = ({ code }) => {
                 type="button"
                 onClick={handleDownload}
                 aria-label="Download SVG"
-                title="Download SVG file"
+                title="Download SVG"
                 className="ui-focus-ring flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-line)] hover:text-[var(--color-text)] cursor-pointer ml-1"
               >
                 <Download className="h-3 w-3" />
@@ -242,7 +244,7 @@ const SvgPreview = ({ code }) => {
             {copied ? (
               <>
                 <Check className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="text-emerald-500 font-medium">Copied!</span>
+                <span className="text-emerald-500 font-medium">Copied</span>
               </>
             ) : (
               <>
@@ -260,7 +262,9 @@ const SvgPreview = ({ code }) => {
           {!valid ? (
             <div className="flex flex-col items-center gap-1.5 text-center text-xs text-amber-600 dark:text-amber-400">
               <AlertCircle className="h-4 w-4" />
-              <span>{error || "Could not parse SVG. Check the code tab."}</span>
+              <span>
+                {error || "Unable to render the SVG. Check the code."}
+              </span>
             </div>
           ) : (
             <div

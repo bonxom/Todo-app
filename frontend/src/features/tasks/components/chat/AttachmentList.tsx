@@ -90,12 +90,12 @@ function AttachmentItem({
         onClick={download}
         aria-label={`Download ${file.name}`}
       >
-        {loading ? "Downloading…" : file.name} ·{" "}
+        {loading ? "Loading…" : file.name} ·{" "}
         {Math.max(1, Math.ceil(file.size / 1024))} KB
       </button>
       {error && (
         <div role="alert" className="mt-1 text-xs">
-          Could not load file.{" "}
+          Unable to load the file.{" "}
           <button
             type="button"
             className="ui-focus-ring underline"
@@ -103,7 +103,7 @@ function AttachmentItem({
               isImage ? setRevision((value) => value + 1) : void download()
             }
           >
-            Retry
+            Try again
           </button>
         </div>
       )}

@@ -88,7 +88,7 @@ describe("SvgPreview", () => {
 
     expect(writeTextMock).toHaveBeenCalledWith(validSvg);
     await waitFor(() => {
-      expect(screen.getByText("Copied!")).toBeInTheDocument();
+      expect(screen.getByText("Copied")).toBeInTheDocument();
     });
   });
 

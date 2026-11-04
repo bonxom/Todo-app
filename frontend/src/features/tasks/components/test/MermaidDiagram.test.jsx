@@ -45,3 +45,16 @@ describe("MermaidDiagram", () => {
     });
   });
 });
+
+it("lets the reader enlarge a diagram and reset its size", async () => {
+  render(<MermaidDiagram code="graph TD; A-->B;" />);
+  await screen.findByTestId("mock-svg");
+  fireEvent.click(screen.getByRole("button", { name: "Zoom in diagram" }));
+  expect(
+    screen.getByRole("button", { name: "Reset diagram zoom" }),
+  ).toHaveTextContent("125%");
+  fireEvent.click(screen.getByRole("button", { name: "Reset diagram zoom" }));
+  expect(
+    screen.getByRole("button", { name: "Reset diagram zoom" }),
+  ).toHaveTextContent("100%");
+});

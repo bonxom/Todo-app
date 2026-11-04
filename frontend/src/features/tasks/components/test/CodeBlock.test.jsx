@@ -25,7 +25,7 @@ describe("CodeBlock", () => {
 
     expect(writeTextMock).toHaveBeenCalledWith("print('hello')");
     await waitFor(() => {
-      expect(screen.getByText("Copied!")).toBeInTheDocument();
+      expect(screen.getByText("Copied")).toBeInTheDocument();
     });
   });
 });

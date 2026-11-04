@@ -1,0 +1,235 @@
+{
+  "scope": "Actual UI, mocked API; no live AI or database",
+  "checks": [
+    {
+      "name": "First request explicitly sends mode=ask",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "No option selected by default",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Send answer disabled before choosing",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Option payload includes interactionId and optionId",
+      "passed": true,
+      "details": {
+        "conversationId": "3128b88d-893c-43dc-ae64-20f75351b189",
+        "requestId": "d6e3ed1c-3b76-4e9c-a501-386569f9316d",
+        "userInput": "Thói quen nhẹ mỗi ngày",
+        "mode": "ask",
+        "selection": {
+          "interactionId": "f0b88af2-f10f-4743-a1df-189df19b8c91-question",
+          "optionId": "daily"
+        }
+      }
+    },
+    {
+      "name": "Ask restored after reload",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Custom answer sends no optionId",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Message instead sends ask without selection",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Cancel sends selection.cancel=true",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Failure still shows success-like answer summary",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Retry preserves full payload and requestId",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "422 removes retry action",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "After 422 reload user can select answer again",
+      "passed": false,
+      "details": null
+    },
+    {
+      "name": "New chat resets selected Ask mode to Auto",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Mobile custom answer reaches API in Ask mode",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Historical confirmation sends explicit optionId",
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Historical confirmation can be cancelled",
+      "passed": true,
+      "details": null
+    }
+  ],
+  "pageErrors": [],
+  "requests": [
+    {
+      "conversationId": "3128b88d-893c-43dc-ae64-20f75351b189",
+      "requestId": "f0b88af2-f10f-4743-a1df-189df19b8c91",
+      "userInput": "Tôi muốn học tiếng Anh",
+      "mode": "ask"
+    },
+    {
+      "conversationId": "3128b88d-893c-43dc-ae64-20f75351b189",
+      "requestId": "d6e3ed1c-3b76-4e9c-a501-386569f9316d",
+      "userInput": "Thói quen nhẹ mỗi ngày",
+      "mode": "ask",
+      "selection": {
+        "interactionId": "f0b88af2-f10f-4743-a1df-189df19b8c91-question",
+        "optionId": "daily"
+      }
+    },
+    {
+      "conversationId": "5d3e1af8-e3b4-4d0b-8cac-aee737e11c82",
+      "requestId": "163bdcdd-bef7-43f5-9b40-a29b6ab74f4a",
+      "userInput": "Tôi muốn học tiếng Anh",
+      "mode": "ask"
+    },
+    {
+      "conversationId": "5d3e1af8-e3b4-4d0b-8cac-aee737e11c82",
+      "requestId": "16c5f61b-13fa-4172-8fd4-65244ea5b5c5",
+      "userInput": "Chỉ học buổi sáng, 20 phút",
+      "mode": "ask",
+      "selection": {
+        "interactionId": "163bdcdd-bef7-43f5-9b40-a29b6ab74f4a-question",
+        "customAnswer": "Chỉ học buổi sáng, 20 phút"
+      }
+    },
+    {
+      "conversationId": "6f4e1e25-646e-43b8-b877-5697c8b28aca",
+      "requestId": "fac3624c-d6a6-49fd-8d8c-04879c3aeccb",
+      "userInput": "Tôi muốn học tiếng Anh",
+      "mode": "ask"
+    },
+    {
+      "conversationId": "6f4e1e25-646e-43b8-b877-5697c8b28aca",
+      "requestId": "a55aea3d-66a5-4f6c-be95-f24667931a54",
+      "userInput": "Tôi muốn đổi sang học tiếng Nhật",
+      "mode": "ask"
+    },
+    {
+      "conversationId": "71be5564-a941-4b6d-bb6a-b07148cf0d4c",
+      "requestId": "5343beb8-a01f-44f2-829a-b53c8a0896b3",
+      "userInput": "Tôi muốn học tiếng Anh",
+      "mode": "ask"
+    },
+    {
+      "conversationId": "71be5564-a941-4b6d-bb6a-b07148cf0d4c",
+      "requestId": "2b843a85-4ff4-4800-b34d-d3cc1a4f1046",
+      "userInput": "Hủy",
+      "mode": "ask",
+      "selection": {
+        "interactionId": "5343beb8-a01f-44f2-829a-b53c8a0896b3-question",
+        "cancel": true
+      }
+    },
+    {
+      "conversationId": "1d1bc6b8-b379-4b82-845d-5c72b79159a3",
+      "requestId": "91ddc0ea-7102-4682-a98d-8dbfe0fe3a27",
+      "userInput": "Tôi muốn học tiếng Anh",
+      "mode": "ask"
+    },
+    {
+      "conversationId": "1d1bc6b8-b379-4b82-845d-5c72b79159a3",
+      "requestId": "4c4f82d0-6107-42b0-83bc-9c434f3a4ee8",
+      "userInput": "Thói quen nhẹ mỗi ngày",
+      "mode": "ask",
+      "selection": {
+        "interactionId": "91ddc0ea-7102-4682-a98d-8dbfe0fe3a27-question",
+        "optionId": "daily"
+      }
+    },
+    {
+      "conversationId": "1d1bc6b8-b379-4b82-845d-5c72b79159a3",
+      "requestId": "4c4f82d0-6107-42b0-83bc-9c434f3a4ee8",
+      "userInput": "Thói quen nhẹ mỗi ngày",
+      "mode": "ask",
+      "selection": {
+        "interactionId": "91ddc0ea-7102-4682-a98d-8dbfe0fe3a27-question",
+        "optionId": "daily"
+      }
+    },
+    {
+      "conversationId": "d512c513-7dee-4de5-b405-5131d759c820",
+      "requestId": "d617596d-7531-4e57-b8a8-3492b2cdd344",
+      "userInput": "Tôi muốn học tiếng Anh",
+      "mode": "ask"
+    },
+    {
+      "conversationId": "d512c513-7dee-4de5-b405-5131d759c820",
+      "requestId": "d47c38ed-1337-4c02-94b3-ce52e0ffe55d",
+      "userInput": "Thói quen nhẹ mỗi ngày",
+      "mode": "ask",
+      "selection": {
+        "interactionId": "d617596d-7531-4e57-b8a8-3492b2cdd344-question",
+        "optionId": "daily"
+      }
+    },
+    {
+      "conversationId": "faf7127a-15c7-4234-a5f5-315656cfea71",
+      "requestId": "ef2f87be-74bd-4fa7-afdc-7e3d49571b64",
+      "userInput": "Tôi muốn học tiếng Anh",
+      "mode": "ask"
+    },
+    {
+      "conversationId": "faf7127a-15c7-4234-a5f5-315656cfea71",
+      "requestId": "7117875a-4d6d-444d-90c5-44116d4fef40",
+      "userInput": "Tôi chỉ có 10 phút mỗi ngày",
+      "mode": "ask",
+      "selection": {
+        "interactionId": "ef2f87be-74bd-4fa7-afdc-7e3d49571b64-question",
+        "customAnswer": "Tôi chỉ có 10 phút mỗi ngày"
+      }
+    },
+    {
+      "conversationId": "faf7127a-15c7-4234-a5f5-315656cfea71",
+      "requestId": "4fe913f9-a2f9-4249-81df-92f2132a3e95",
+      "userInput": "Tạo 3 công việc",
+      "mode": "ask",
+      "selection": {
+        "interactionId": "old-confirmation",
+        "optionId": "confirm"
+      }
+    },
+    {
+      "conversationId": "faf7127a-15c7-4234-a5f5-315656cfea71",
+      "requestId": "27947fe2-49e0-40bd-94cc-14578e391771",
+      "userInput": "Hủy",
+      "mode": "ask",
+      "selection": {
+        "interactionId": "cancel-confirm",
+        "cancel": true
+      }
+    }
+  ]
+}

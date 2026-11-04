@@ -62,7 +62,7 @@ describe("ChatField", () => {
     sending: false,
   };
 
-  it("renders collapsed options menu (>) on the left of textarea and expands on click", async () => {
+  it("opens attachment options while keeping mode available", async () => {
     const user = userEvent.setup();
     const setMode = vi.fn();
     render(
@@ -88,11 +88,9 @@ describe("ChatField", () => {
     expect(
       screen.getByRole("button", { name: "Attach file" }),
     ).toBeInTheDocument();
-    const botBtn = screen.getByRole("button", { name: "Agent mode: auto" });
-    expect(botBtn).toBeInTheDocument();
-
-    // Clicking Bot toggles mode
-    await user.click(botBtn);
+    const mode = screen.getByRole("button", { name: /Agent mode:/ });
+    expect(mode).toBeVisible();
+    await user.click(mode);
     expect(setMode).toHaveBeenCalledWith("ask");
   });
 
@@ -114,7 +112,7 @@ describe("ChatField", () => {
     expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("renders Bot with ask outline style when mode is ask and toggles to auto", async () => {
+  it("shows Ask in the visible mode selector and allows switching to Auto", async () => {
     const user = userEvent.setup();
     const setMode = vi.fn();
     render(
@@ -128,9 +126,9 @@ describe("ChatField", () => {
     const toggleBtn = screen.getByRole("button", { name: "Expand options" });
     await user.click(toggleBtn);
 
-    const botBtn = screen.getByRole("button", { name: "Agent mode: ask" });
-    expect(botBtn).toBeInTheDocument();
-    await user.click(botBtn);
+    const mode = screen.getByRole("button", { name: /Agent mode:/ });
+    expect(mode).toHaveAttribute("aria-pressed", "true");
+    await user.click(mode);
     expect(setMode).toHaveBeenCalledWith("auto");
   });
 

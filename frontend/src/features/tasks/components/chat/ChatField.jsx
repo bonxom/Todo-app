@@ -2,13 +2,8 @@ import AttachmentComposer from "./AttachmentComposer";
 import { FILE_ACCEPT, checkFiles } from "./attachmentFiles";
 import AttachmentList from "./AttachmentList";
 import { useState, useRef, useEffect } from "react";
-import {
-  Send,
-  Bot,
-  ChevronRight,
-  Image as ImageIcon,
-  Paperclip,
-} from "lucide-react";
+import { Send, ArrowUpRight, Sparkles } from "lucide-react";
+import ChatToolbar from "./ChatToolbar";
 import InteractionCard from "./InteractionCard";
 import RecentConversations from "./RecentConversations";
 import MarkdownText from "./MarkdownText";
@@ -38,6 +33,8 @@ const ChatField = ({
       setFiles([]);
       setFileError(null);
       setInputValue("");
+      setSelectedTool(null);
+      setIsSlashMenuOpen(false);
     }
     previousConversation.current = chat?.conversationId;
   }, [chat?.conversationId]);
@@ -87,13 +84,13 @@ const ChatField = ({
   const interactionId = chat?.interaction?.id;
   const showChatInput =
     Boolean(interactionId) && messageInteractionId === interactionId;
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
   const availableTools = filterTools(slashQuery);
 
   const userMessageStyle = {
+    color: "var(--chat-user-text, #fff)",
     borderColor: "var(--color-accent)",
     background: "var(--color-accent)",
     boxShadow: "var(--shadow-xs)",
@@ -106,11 +103,20 @@ const ChatField = ({
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView?.({ behavior: "smooth" });
+    if (
+      messagesEndRef.current?.closest(
+        '.ui-assistant-presence[data-open="false"]',
+      )
+    )
+      return;
+    messagesEndRef.current?.scrollIntoView?.({
+      behavior: "instant",
+      block: "end",
+    });
   };
 
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length || isTyping) scrollToBottom();
   }, [messages, isTyping]);
 
   const handleInputChange = (e) => {
@@ -118,7 +124,7 @@ const ChatField = ({
     setInputValue(value);
 
     // If no tool selected yet, check for slash trigger
-    if (!selectedTool) {
+    if (!selectedTool && !disabled) {
       const slashMatch = value.match(/(?:^|\s)\/([a-zA-Z0-9_-]*)$/);
       if (slashMatch) {
         setSlashQuery(slashMatch[1]);
@@ -151,10 +157,25 @@ const ChatField = ({
         ? `[Skill: ${selectedTool.id}] ${trimmed}`
         : trimmed;
       if (!files.length) {
-        onSendMessage(fullMessage);
         setInputValue("");
         setSelectedTool(null);
         setIsSlashMenuOpen(false);
+        const restoreDraft = () => {
+          setInputValue((current) =>
+            current ? `${trimmed}\n\n${current}` : trimmed,
+          );
+          setSelectedTool((current) => current ?? selectedTool);
+        };
+        try {
+          if ((await onSendMessage(fullMessage)) === false) restoreDraft();
+        } catch (error) {
+          restoreDraft();
+          setFileError(
+            error instanceof Error
+              ? error.message
+              : "Unable to send. Please try again.",
+          );
+        }
         return;
       }
       setSubmitting(true);
@@ -173,7 +194,7 @@ const ChatField = ({
         setFileError(
           error instanceof Error
             ? error.message
-            : "Could not send. Please try again.",
+            : "Unable to send. Please try again.",
         );
       } finally {
         setSubmitting(false);
@@ -182,6 +203,12 @@ const ChatField = ({
   };
 
   const handleKeyDown = (e) => {
+    if (e.nativeEvent.isComposing) return;
+    if (isSlashMenuOpen && e.key === "Escape") {
+      e.preventDefault();
+      setIsSlashMenuOpen(false);
+      return;
+    }
     if (isSlashMenuOpen && availableTools.length > 0) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -221,7 +248,7 @@ const ChatField = ({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="chat-messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
         {chat?.before && (
           <button
             type="button"
@@ -234,13 +261,43 @@ const ChatField = ({
         )}
         {messages.length === 0 ? (
           chat && !chat.loading && !chat.interaction ? (
-            <RecentConversations
-              onOpen={chat.openConversation}
-              disabled={chat.locked}
-            />
+            <div className="chat-welcome">
+              <div className="chat-welcome-icon">
+                <Sparkles size={24} />
+              </div>
+              <h2>Let's make your day more manageable.</h2>
+              <p>Plan your day, review your tasks, or break down a goal.</p>
+              <div className="chat-starters">
+                {[
+                  ["Plan my day", "Help me plan my tasks for today."],
+                  ["Review upcoming tasks", "Show me my upcoming tasks."],
+                  [
+                    "Break down a goal",
+                    "Help me break down a goal into actionable steps.",
+                  ],
+                ].map(([label, prompt]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => {
+                      setInputValue(prompt);
+                      textareaRef.current?.focus();
+                    }}
+                  >
+                    <span>{label}</span>
+                    <ArrowUpRight size={16} />
+                  </button>
+                ))}
+              </div>
+              <RecentConversations
+                onOpen={chat.openConversation}
+                disabled={chat.locked}
+              />
+            </div>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">
-              No messages yet. Start a conversation!
+              Start with something you need help with.
             </div>
           )
         ) : (
@@ -257,9 +314,9 @@ const ChatField = ({
                 className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                  className={`chat-message ${message.sender === "user" ? "chat-message--user" : "chat-message--bot"} rounded-2xl px-4 py-3 ${
                     message.sender === "user"
-                      ? "rounded-br-sm border text-white"
+                      ? "rounded-br-sm border"
                       : "rounded-bl-sm border"
                   }`}
                   style={
@@ -290,7 +347,7 @@ const ChatField = ({
                                     size="sm"
                                     className={
                                       message.sender === "user"
-                                        ? "bg-white/20 border-white/40 text-white"
+                                        ? "bg-white/20 border-white/40 text-inherit"
                                         : ""
                                     }
                                   />
@@ -308,46 +365,33 @@ const ChatField = ({
                     conversationId={chat?.conversationId}
                     files={message.attachments}
                   />
-                  <span className="text-xs opacity-70 mt-1 block">
-                    {formatDateTime(message.timestamp)}
-                  </span>
+                  <time
+                    className="chat-message-time"
+                    dateTime={message.timestamp}
+                    title={formatDateTime(message.timestamp)}
+                  >
+                    {new Date(message.timestamp).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </time>
                 </div>
               </div>
             ))
         )}
 
-        {chat?.error && (
-          <div role="alert" className="text-sm text-red-600">
-            {chat.error}
-          </div>
-        )}
-        {chat?.error && (
-          <div className="flex gap-3 text-sm">
-            {chat.pending && (
-              <button
-                type="button"
-                disabled={chat.loading || chat.sending}
-                onClick={() => chat.send()}
-              >
-                Retry message
-              </button>
-            )}
-            <button
-              type="button"
-              disabled={chat.loading || chat.sending}
-              onClick={chat.reload}
-            >
-              Reload conversation
-            </button>
-          </div>
-        )}
         {isTyping && (
           <div className="flex justify-start">
             <div
               className="rounded-2xl rounded-bl-sm border px-4 py-3"
               style={botMessageStyle}
             >
-              <div className="flex space-x-1">
+              <div
+                className="flex items-center space-x-1"
+                role="status"
+                aria-label="Processing request"
+              >
+                <span className="mr-2 text-xs">Processing</span>
                 <div
                   className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]"
                   style={{ animationDelay: "0ms" }}
@@ -413,7 +457,7 @@ const ChatField = ({
         <div className="shrink-0 px-3 sm:px-4 py-1.5 flex items-center">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-2.5 py-1 shadow-xs text-xs animate-in fade-in duration-150">
             <span className="text-[11px] font-medium text-[var(--color-text-muted)] select-none">
-              Skill:
+              Skills:
             </span>
             <ToolBadge
               tool={selectedTool}
@@ -428,144 +472,97 @@ const ChatField = ({
       )}
 
       <div
-        className={`min-h-0 shrink-0 border-t border-[var(--color-line)] bg-[var(--color-surface)] p-3 ${chat?.interaction && !showChatInput ? "flex max-h-[75%] flex-col" : "sm:p-4"}`}
+        className={`chat-composer ${chat?.interaction && !showChatInput ? "chat-composer--answer" : ""}`}
       >
-        {chat?.interaction && showChatInput && (
-          <div className="mb-2 flex items-center justify-end text-sm">
+        {chat?.error && (
+          <div className="chat-error">
+            <p role="alert">{chat.error}</p>
+            <p className="text-xs">
+              Your request is not complete. Try again or reload the
+              conversation.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {chat.pending && (
+                <button
+                  type="button"
+                  className="chat-recovery ui-focus-ring"
+                  aria-label="Retry message"
+                  disabled={chat.loading || chat.sending}
+                  onClick={() => chat.send()}
+                >
+                  Retry message
+                </button>
+              )}
+              <button
+                type="button"
+                className="chat-recovery ui-focus-ring"
+                aria-label="Reload conversation"
+                disabled={chat.loading || chat.sending}
+                onClick={chat.reload}
+              >
+                Reload conversation
+              </button>
+            </div>
+          </div>
+        )}
+        {chat?.pending && !chat.error && !chat.sending && (
+          <div className="chat-pending" role="status">
+            <span>
+              Your request is processing. Check the result before sending
+              another message.
+            </span>
             <button
               type="button"
-              onClick={() =>
-                setMessageInteractionId(showChatInput ? null : interactionId)
-              }
-              className="ui-focus-ring text-xs text-[var(--color-accent)] hover:underline cursor-pointer"
+              aria-label="Reload conversation"
+              className="chat-recovery ui-focus-ring"
+              disabled={chat.loading}
+              onClick={chat.reload}
             >
-              {showChatInput
-                ? "← Back to question"
-                : "Message instead of choosing →"}
+              Check result
             </button>
           </div>
         )}
-
+        {chat?.interaction && showChatInput && (
+          <div className="chat-answer-back">
+            <button
+              type="button"
+              aria-label="← Back to question"
+              onClick={() => setMessageInteractionId(null)}
+              className="ui-focus-ring"
+            >
+              ← Back to question
+            </button>
+            <span>Your new message will replace the pending question.</span>
+          </div>
+        )}
         {chat?.interaction && !showChatInput && (
           <InteractionCard
             key={chat.interaction.id}
             interaction={chat.interaction}
             onAnswer={chat.answer}
             onCancel={() => chat.answer(undefined, true)}
-            disabled={chat.loading || chat.sending || Boolean(chat.pending)}
+            disabled={
+              chat.loading ||
+              chat.sending ||
+              Boolean(chat.pending) ||
+              Boolean(chat.error)
+            }
+            sending={chat.sending}
             docked
             onSwitchToMessage={() => setMessageInteractionId(interactionId)}
           />
         )}
-
         <form
           onSubmit={handleSubmit}
-          className={
-            chat?.interaction && !showChatInput
-              ? "sr-only"
-              : "flex items-center gap-2"
-          }
+          hidden={Boolean(chat?.interaction && !showChatInput)}
+          className="chat-input-form"
         >
-          {/* Options Menu Toggle and Expanding Toolbar */}
-          <div className="flex h-11 items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => setIsMenuOpen((prev) => !prev)}
-              className={`ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-all cursor-pointer ${
-                isMenuOpen
-                  ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent-strong)] dark:text-[var(--color-accent)] shadow-xs"
-                  : "border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-              }`}
-              title={isMenuOpen ? "Collapse options" : "Expand options"}
-              aria-label={isMenuOpen ? "Collapse options" : "Expand options"}
-              aria-expanded={isMenuOpen}
-            >
-              <ChevronRight
-                className={`h-4 w-4 transition-transform duration-200 ${
-                  isMenuOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {/* Expanding toolbar */}
-            <div
-              className={`flex items-center gap-1.5 overflow-hidden transition-all duration-200 ease-out ${
-                isMenuOpen
-                  ? "max-w-[160px] opacity-100"
-                  : "max-w-0 opacity-0 pointer-events-none"
-              }`}
-            >
-              {/* Attach image */}
-              <button
-                type="button"
-                className="ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
-                disabled={disabled || submitting}
-                onClick={() => imageInputRef.current?.click()}
-                title="Attach image"
-                aria-label="Attach image"
-              >
-                <ImageIcon className="h-4 w-4" />
-              </button>
-
-              {/* Attach file */}
-              <button
-                type="button"
-                className="ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
-                disabled={disabled || submitting}
-                onClick={() => fileInputRef.current?.click()}
-                title="Attach file"
-                aria-label="Attach file"
-              >
-                <Paperclip className="h-4 w-4" />
-              </button>
-
-              {/* Agent mode Robot toggle */}
-              {chat && (
-                <button
-                  type="button"
-                  aria-label={`Agent mode: ${chat.mode}`}
-                  onClick={() =>
-                    chat.setMode(chat.mode === "auto" ? "ask" : "auto")
-                  }
-                  disabled={chat.locked}
-                  title={
-                    chat.mode === "auto"
-                      ? "Auto mode - Click to switch to Ask"
-                      : "Ask mode - Click to switch to Auto"
-                  }
-                  className={`ui-focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-all cursor-pointer ${
-                    chat.mode === "auto"
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-500/20 shadow-xs"
-                      : "border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                  } ${chat.locked ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  <Bot
-                    className={`h-4 w-4 transition-transform ${
-                      chat.mode === "auto"
-                        ? "fill-emerald-600/20 text-emerald-600 dark:text-emerald-400 dark:fill-emerald-400/20"
-                        : "fill-none text-[var(--color-text-muted)]"
-                    }`}
-                  />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {chat && (
-            <label className="sr-only">
-              Agent mode
-              <select
-                aria-label="Agent mode"
-                value={chat.mode}
-                disabled={chat.locked}
-                onChange={(event) => chat.setMode(event.target.value)}
-              >
-                <option value="auto">Auto</option>
-                <option value="ask">Ask</option>
-              </select>
-            </label>
-          )}
-
+          <ChatToolbar
+            chat={chat}
+            disabled={disabled || submitting}
+            onFiles={() => fileInputRef.current?.click()}
+            onImages={() => imageInputRef.current?.click()}
+          />
           <div className="relative min-w-0 flex-1">
             {isSlashMenuOpen && (
               <SlashCommandMenu
@@ -583,36 +580,25 @@ const ChatField = ({
               value={inputValue}
               onChange={handleInputChange}
               onPaste={handlePaste}
-              onFocus={() => setIsMenuOpen(false)}
-              onClick={() => setIsMenuOpen(false)}
               onKeyDown={handleKeyDown}
               placeholder={
-                chat?.interaction ? "Other answers" : "Ask something…"
+                chat?.interaction ? "New request…" : "Message Orbit…"
               }
-              className="ui-input block min-w-0 w-full resize-none rounded-2xl px-4 text-sm transition-all duration-200"
-              style={{
-                fieldSizing: "content",
-                minHeight: "2.75rem",
-                maxHeight: "11.25rem",
-                paddingTop: "0.6875rem",
-                paddingBottom: "0.6875rem",
-                lineHeight: "1.375rem",
-                overflowY: "auto",
-                resize: "none",
-              }}
+              className="chat-input ui-focus-ring"
             />
           </div>
           <button
             type="submit"
             aria-label="Send message"
+            title="Send message"
             disabled={
               disabled ||
               submitting ||
               (!inputValue.trim() && (files.length > 0 || !selectedTool))
             }
-            className="ui-btn-primary ui-focus-ring h-11 w-11 flex-shrink-0 rounded-full p-0 disabled:cursor-not-allowed disabled:border-[var(--color-line)] disabled:bg-[var(--color-surface-muted)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
+            className="chat-send ui-focus-ring"
           >
-            <Send className="h-4 w-4" />
+            <Send size={18} />
           </button>
         </form>
       </div>
