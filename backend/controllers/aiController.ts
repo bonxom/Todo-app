@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { createMcpContext } from "../mcp/context.js";
 import { conversationService } from "../services/conversationService.js";
 import { aiService } from "../services/aiService.js";
+import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
 
 export const generateTasksWithRequirement = async (
   req: Request,
@@ -92,4 +93,11 @@ export const listConversations = async (
       updatedAt,
     })),
   });
+};
+
+export const getConversationCapabilities = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
+  res.json({ taskProposals: isTaskProposalsEnabled() });
 };

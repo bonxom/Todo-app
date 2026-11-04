@@ -54,8 +54,12 @@ must also remove proposals and receipts; no new deletion endpoint is in scope.
 
 ## Shared interfaces and file responsibilities
 
-Backend types belong in `backend/types/ITaskProposal.ts`; frontend wire types in
-`frontend/src/shared/types/taskProposal.ts`. Keep protocol dependency out of backend
+All A2UI-only source files live in an `A2UI` subdirectory of their existing layer.
+Test files keep their existing locations; shared routes/controllers stay in place.
+This naming applies to subsequent implementation tasks as well.
+
+Backend types belong in `backend/types/A2UI/ITaskProposal.ts`; frontend wire types in
+`frontend/src/shared/types/A2UI/taskProposal.ts`. Keep protocol dependency out of backend
 production code: validate the narrow emitted envelope with Zod and verify it against
 the actual A2UI processor in frontend contract tests. Maintain one checked-in sample
 at `docs/superpowers/fixtures/a2ui-task-proposal-v09.json`, tested by both packages.
@@ -121,10 +125,10 @@ the capability endpoint initially and refreshes from snapshots.
 
 **Files**
 
-- Create `backend/types/ITaskProposal.ts`, `backend/validations/taskProposalValidation.ts`.
-- Create `backend/models/TaskProposal.ts`, `backend/models/TaskProposalReceipt.ts`.
-- Create `backend/repositories/taskProposalRepository.ts`.
-- Create `backend/config/a2ui.ts`, `backend/error/definitions/taskProposalErrors.ts`.
+- Create `backend/types/A2UI/ITaskProposal.ts`, `backend/validations/A2UI/taskProposalValidation.ts`.
+- Create `backend/models/A2UI/TaskProposal.ts`, `backend/models/A2UI/TaskProposalReceipt.ts`.
+- Create `backend/repositories/A2UI/taskProposalRepository.ts`.
+- Create `backend/config/A2UI/a2ui.ts`, `backend/error/definitions/A2UI/taskProposalErrors.ts`.
 - Modify `backend/routes/aiRoutes.ts`, `backend/controllers/aiController.ts`, `backend/.env.example`.
 - Test `backend/validations/test/taskProposalValidation.test.ts`, `backend/services/test/taskProposalCapability.test.ts`.
 
@@ -132,7 +136,7 @@ the capability endpoint initially and refreshes from snapshots.
 `proposalItemsSchema`, `proposalActionSchema`, `proposalParamsSchema`;
 repository `findOwned(userId, conversationId, proposalId)`,
 `findByTurn(userId, turnId)`, `findReceipt(userId, requestId)`,
-`saveReceipt(receipt)`, `saveRevision(userId, proposalId, revision, update)`.
+`saveReceipt(receipt)`, `saveRevision(userId, conversationId, proposalId, revision, update)`.
 All queries execute within the caller's transaction when present.
 
 - [ ] Write schema and capability tests before production files, including this case:
@@ -172,7 +176,7 @@ receiptSchema.index({ userId: 1, requestId: 1 }, { unique: true });
 - Modify `backend/validations/aiValidation.ts`, `backend/types/IChatTurn.ts`, `backend/types/IAgent.ts`, `backend/models/ChatTurn.ts`.
 - Modify `backend/services/agentService.ts`, `backend/services/conversationService.ts`, `backend/services/conversationTurnService.ts`.
 - Modify `backend/repositories/chatTurnRepository.ts`, `backend/utils/conversationView.ts`, `backend/controllers/aiController.ts`.
-- Create `backend/services/taskProposalGenerationService.ts`.
+- Create `backend/services/A2UI/taskProposalGenerationService.ts`.
 - Test `backend/services/test/taskProposalGeneration.test.ts`; extend `backend/services/test/conversationService.integration.test.ts`, `backend/services/test/agentService.test.ts` and `backend/services/test/conversationHistory.test.ts`.
 
 **Interfaces:** optional `intent` on ChatPayload/ChatTurn/AgentMemory;
@@ -212,8 +216,8 @@ if (memory.intent === "task_proposal" && !proposalAllowedTools.has(name)) {
 
 **Files**
 
-- Create `backend/services/taskProposalActionService.ts`, `backend/controllers/taskProposalController.ts`.
-- Modify `backend/routes/aiRoutes.ts`, `backend/repositories/taskProposalRepository.ts`.
+- Create `backend/services/A2UI/taskProposalActionService.ts`, `backend/controllers/A2UI/taskProposalController.ts`.
+- Modify `backend/routes/aiRoutes.ts`, `backend/repositories/A2UI/taskProposalRepository.ts`.
 - Reuse `backend/mcp/repositories/writeRepository.ts`, `backend/services/taskService.ts`, category/project repositories and existing stats updates.
 - Test `backend/services/test/taskProposalActions.test.ts`, `backend/services/test/taskProposalActions.integration.test.ts`.
 
@@ -257,10 +261,10 @@ return writeRepository.transaction(userId, async () => {
 
 **Files**
 
-- Create `backend/services/taskProposalUiService.ts`, `backend/validations/a2uiValidation.ts`.
-- Modify `backend/services/conversationService.ts`, `backend/services/conversationTurnService.ts`, `backend/controllers/taskProposalController.ts`.
-- Create `frontend/src/shared/types/taskProposal.ts`.
-- Create `frontend/src/features/tasks/components/chat/a2ui/taskProposalCatalog.tsx`, `TaskProposalForm.tsx`, `TaskProposalSurface.tsx` in that same directory.
+- Create `backend/services/A2UI/taskProposalUiService.ts`, `backend/validations/A2UI/a2uiValidation.ts`.
+- Modify `backend/services/conversationService.ts`, `backend/services/conversationTurnService.ts`, `backend/controllers/A2UI/taskProposalController.ts`.
+- Create `frontend/src/shared/types/A2UI/taskProposal.ts`.
+- Create `frontend/src/features/tasks/components/chat/A2UI/taskProposalCatalog.tsx`, `TaskProposalForm.tsx`, `TaskProposalSurface.tsx` in that same directory.
 - Create `docs/superpowers/fixtures/a2ui-task-proposal-v09.json`.
 - Modify `frontend/package.json`, generated `frontend/pnpm-lock.yaml`.
 - Test `backend/services/test/taskProposalUi.test.ts`, `frontend/src/features/tasks/components/test/TaskProposalProtocol.test.tsx`.
@@ -298,9 +302,9 @@ return surface ? <A2uiSurface surface={surface} /> : <p>{envelope.text}</p>;
 
 - Modify `frontend/src/shared/services/aiService.ts`, `frontend/src/shared/types/domain.ts`.
 - Modify `frontend/src/features/tasks/hooks/useConversationChat.ts`, `useConversationSession.ts` in the same directory.
-- Create `frontend/src/features/tasks/hooks/useTaskProposal.ts`.
+- Create `frontend/src/features/tasks/hooks/A2UI/useTaskProposal.ts`.
 - Modify `frontend/src/features/tasks/api/aiMutations.ts`, existing invalidation helpers only if necessary.
-- Modify `frontend/src/features/tasks/components/chat/ChatField.jsx`, `ChatToolbar.jsx`; create `a2ui/taskProposal.css` alongside the catalog.
+- Modify `frontend/src/features/tasks/components/chat/ChatField.jsx`, `ChatToolbar.jsx`; create `A2UI/taskProposal.css` alongside the catalog.
 - Test `frontend/src/features/tasks/components/test/TaskProposalChat.test.tsx`, extend `frontend/src/features/tasks/api/test/aiMutations.test.tsx`.
 
 **Interfaces:** `aiService.getConversationCapabilities()`;
@@ -447,3 +451,41 @@ Planning is complete when the document and pinned-version spec pass formatting
 and diff checks. No feature code or dependencies are changed during planning.
 On an instruction to implement, read the approved spec and this plan, invoke the
 local executing-plans skill, and proceed inline through the tasks in order.
+
+## Task 1 review fixes and verification — 2026-11-04
+
+Task 1 review fixes are implemented; no work from Tasks 2–6 is claimed complete.
+Calendar/time overflow is rejected before normalization, conversation route IDs
+require UUIDs, and revision updates are scoped to owner + conversation + proposal.
+Capability tests restore their environment and spies. The model formatting issue
+is fixed. Changes remain staged for review, without a new commit.
+
+Behavioral RED evidence: date/UUID regression tests ran against existing modules
+and produced six assertion failures. After adding the conversation parameter to
+the repository signature but before fixing its filter, the real MongoDB test
+returned the wrong conversation ID (one assertion failure, four tests passed).
+This supplements the earlier missing-module RED report; it does not retroactively
+establish a behavioral RED phase for every original Task 1 requirement.
+
+GREEN commands executed from `backend/`:
+
+```sh
+ORBIT_MCP_TEST_MONGO_URI=mongodb://127.0.0.1:27029/ pnpm exec vitest run validations/test/taskProposalValidation.test.ts services/test/taskProposalCapability.test.ts repositories/test/taskProposalRepository.integration.test.ts
+# 3 files, 33 tests passed.
+ORBIT_MCP_TEST_MONGO_URI=mongodb://127.0.0.1:27029/ pnpm test
+# 35 files, 306 tests passed; no skipped tests.
+pnpm run lint
+pnpm run build
+pnpm exec prettier --check config/A2UI/a2ui.ts controllers/aiController.ts error/definitions/A2UI/taskProposalErrors.ts error/errorCodes.ts models/A2UI/TaskProposal.ts models/A2UI/TaskProposalReceipt.ts repositories/A2UI/taskProposalRepository.ts repositories/test/taskProposalRepository.integration.test.ts routes/aiRoutes.ts services/test/taskProposalCapability.test.ts types/A2UI/ITaskProposal.ts validations/A2UI/taskProposalValidation.ts validations/test/taskProposalValidation.test.ts ../docs/superpowers/plans/2026-11-04-a2ui-task-proposals.md
+```
+
+All checks above passed. From `frontend/`, `pnpm run lint` and `pnpm run build`
+passed. Vite reported mixed static/dynamic imports for ErrorPage and chunks over
+500 kB. No frontend source changes or browser checks were part of this fix.
+
+Real database evidence covers unique turn/proposal/receipt indexes, owner isolation,
+receipt persistence, stale revisions, cross-conversation update isolation and
+rollback of proposal + receipt with an explicit session. MongoDB 8 could not start
+on the host kernel; a disposable MongoDB 7 replica set on loopback port 27029 was
+used instead, with isolated test databases. The temporary containers are removed
+after verification. Full task-batch confirmation atomicity is still Task 3 scope.

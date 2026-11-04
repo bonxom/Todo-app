@@ -7,6 +7,7 @@ import {
   createConversation,
   getConversation,
   listConversations,
+  getConversationCapabilities,
 } from "../controllers/aiController.js";
 import { protect } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
@@ -47,6 +48,7 @@ router.post(
   validate({ body: conversationCreateSchema }),
   createConversation,
 );
+router.get("/conversations/capabilities", protect, getConversationCapabilities);
 router.get("/conversations/latest", protect, getConversation);
 router.get("/conversations", protect, listConversations);
 router.get(
