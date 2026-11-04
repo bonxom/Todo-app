@@ -1,7 +1,7 @@
 # A2UI task proposals
 
 Date: 2026-11-04
-Status: Proposed design for review; implementation has not started.
+Status: Design approved for planning on 2026-11-04; implementation has not started.
 
 ## Goal and agreed direction
 
@@ -59,11 +59,14 @@ the existing legacy generate-tasks endpoint are outside this feature.
    Tasks, statistics, proposal status and the action receipt commit atomically.
    Reuse the repository's transaction infrastructure without nesting transactions.
 
-Do not install a guessed renderer version. Before dependency changes, verify the
-official React renderer package, React 19 peer compatibility, supported protocol,
-catalog APIs and registry availability. Pin a mutually supported released
-protocol/renderer pair, capture it in this spec and the plan, and test actual
-protocol messages. This compatibility check is a prerequisite to implementation.
+Dependency decision verified against npm metadata and published package README/type
+declarations on 2026-11-04: pin `@a2ui/react@0.15.0` and
+`@a2ui/web_core@0.15.0`; use protocol `v0.9` through versioned imports and catalog
+`urn:orbit:a2ui:task-proposals:v1`. React's peer range includes React 19. The
+renderer uses Zod 3; add `zod@3.25.76` in the frontend only, leaving backend Zod 4
+unchanged. Use `A2uiSurface`, `createComponentImplementation`, `Catalog`, and
+`MessageProcessor`. Package metadata compatibility is verified; runtime rendering
+and action/data binding remain required implementation tests.
 
 ## Data and API contracts
 
