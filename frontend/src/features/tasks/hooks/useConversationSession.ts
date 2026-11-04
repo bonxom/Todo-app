@@ -56,7 +56,7 @@ export function useConversationSession() {
     void load()
       .catch(() => {
         if (isCurrent())
-          setError("Could not load your conversation. Please try again.");
+          setError("Unable to load the conversation. Please try again.");
       })
       .finally(() => {
         busy.current = false;
@@ -74,9 +74,11 @@ export function useConversationSession() {
     try {
       await load(id);
       if (isCurrent()) setError(null);
+      return isCurrent();
     } catch {
       if (isCurrent())
-        setError("Could not load your conversation. Please try again.");
+        setError("Unable to load the conversation. Please try again.");
+      return false;
     } finally {
       busy.current = false;
       if (isCurrent()) setLoading(false);
@@ -98,10 +100,10 @@ export function useConversationSession() {
       setBefore(null);
       setPending(null);
       setError(null);
-      setMode("auto");
       return true;
     } catch {
-      if (isCurrent()) setError("Could not create a new conversation. Please try again.");
+      if (isCurrent())
+        setError("Unable to create a conversation. Please try again.");
       return false;
     } finally {
       busy.current = false;
@@ -135,7 +137,7 @@ export function useConversationSession() {
         setBefore(result.before);
       }
     } catch {
-      if (isCurrent()) setError("Could not load earlier messages.");
+      if (isCurrent()) setError("Unable to load earlier messages.");
     } finally {
       busy.current = false;
       if (isCurrent()) setLoading(false);

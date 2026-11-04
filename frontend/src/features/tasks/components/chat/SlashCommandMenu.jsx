@@ -43,7 +43,8 @@ const SlashCommandMenu = ({
 
   useEffect(() => {
     if (listRef.current) {
-      const activeEl = listRef.current.children[selectedIndex];
+      const activeEl =
+        listRef.current.querySelectorAll('[role="option"]')[selectedIndex];
       if (activeEl?.scrollIntoView) {
         activeEl.scrollIntoView({ block: "nearest" });
       }
@@ -53,7 +54,7 @@ const SlashCommandMenu = ({
   if (tools.length === 0) {
     return (
       <div className="absolute bottom-full left-0 right-0 mb-2 z-50 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-center text-xs text-[var(--color-text-muted)] shadow-xl">
-        No skills matching "{query}"
+        No skills match "{query}"
       </div>
     );
   }
@@ -66,7 +67,7 @@ const SlashCommandMenu = ({
       className="absolute bottom-full left-0 right-0 mb-2 z-50 max-h-64 overflow-y-auto rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-1.5 shadow-xl transition-all"
     >
       <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-        Suggested skills ({tools.length})
+        Skills ({tools.length})
       </div>
       {tools.map((tool, index) => {
         const isSelected = index === selectedIndex;
@@ -113,7 +114,7 @@ const SlashCommandMenu = ({
                   : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
               }`}
             >
-              {tool.category === "skill" ? "Skill" : "Core"}
+              {tool.category === "skill" ? "Skills" : "Tools"}
             </span>
           </button>
         );

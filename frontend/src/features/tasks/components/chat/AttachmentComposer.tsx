@@ -35,8 +35,8 @@ export default function AttachmentComposer({
         ))}
       </ul>
       <p className="text-xs text-[var(--color-text-muted)]">
-        Add a message to send. Files are saved for reference; the assistant
-        cannot read them yet.
+        Add a message to send. Files are stored for reference; the assistant
+        cannot read their contents yet.
       </p>
     </div>
   );

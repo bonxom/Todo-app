@@ -27,7 +27,7 @@ const CodeBlock = ({ code, language = "text" }) => {
 
   return (
     <div className="my-2.5 overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] shadow-xs">
-      <div className="flex items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs text-[var(--color-text-muted)]">
+      <div className="chat-rich-header flex items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs text-[var(--color-text-muted)]">
         <span className="font-mono font-medium lowercase">
           {displayLanguage}
         </span>
@@ -40,7 +40,7 @@ const CodeBlock = ({ code, language = "text" }) => {
           {copied ? (
             <>
               <Check className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="text-emerald-500 font-medium">Copied!</span>
+              <span className="text-emerald-500 font-medium">Copied</span>
             </>
           ) : (
             <>

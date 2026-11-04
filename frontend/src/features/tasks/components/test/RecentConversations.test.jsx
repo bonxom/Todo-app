@@ -30,7 +30,7 @@ it("shows three recent conversations, expands the list and opens the selected ID
   expect(onOpen).toHaveBeenCalledWith("id-4");
   await user.clear(search);
   await user.type(search, "No such title");
-  expect(screen.getByText("No matching chats")).toBeVisible();
+  expect(screen.getByText("No conversations found")).toBeVisible();
   await user.keyboard("{Escape}");
   expect(screen.queryByText("Conversation 4")).not.toBeInTheDocument();
   expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
@@ -41,9 +41,7 @@ it("allows retry after a failed history request", async () => {
     .mockRejectedValueOnce(new Error("offline"))
     .mockResolvedValueOnce([]);
   const user = userEvent.setup();
-  render(<RecentConversations onOpen={vi.fn()} />);
-  await user.click(await screen.findByRole("button", { name: "Thử lại" }));
-  expect(
-    await screen.findByText("No messages yet. Start a conversation!"),
-  ).toBeVisible();
+  render(<RecentConversations expanded onOpen={vi.fn()} />);
+  await user.click(await screen.findByRole("button", { name: "Try again" }));
+  expect(await screen.findByText("No conversations yet.")).toBeVisible();
 });

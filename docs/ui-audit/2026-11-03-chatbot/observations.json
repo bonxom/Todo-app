@@ -1,0 +1,68 @@
+{
+  "findings": [
+    {
+      "initialFocus": {
+        "tag": "BODY",
+        "label": null
+      }
+    },
+    {
+      "modeSwitch": 1
+    },
+    {
+      "draftAfterClose": "Bản nháp chưa gửi"
+    },
+    {
+      "attachmentOnlySendDisabled": true
+    },
+    {
+      "mobileToolbarTextarea": {
+        "x": 191,
+        "y": 747,
+        "width": 126,
+        "height": 68
+      }
+    },
+    {
+      "mobileSlashOverflow": {
+        "client": 244,
+        "scroll": 244
+      }
+    },
+    {
+      "mobileDocumentWidth": {
+        "width": 390,
+        "scroll": 390
+      }
+    },
+    {
+      "errorQuestionText": "Assistant\n\nLập kế hoạch tuần này\n03/11/2026 23:22\nMình đã ghi nhận. Bạn muốn ưu tiên công việc nào hôm nay?\n03/11/2026 23:22\nTrình bày bằng bảng, code và sơ đồ\n03/11/2026 23:22\nKế hoạch tuần này\n\n\nNgày\tCông việc\tKết quả mong đợi\nThứ hai\tHoàn thiện bản thiết kế giao diện dashboard\tBàn giao phiên bản đầy đủ để review\nThứ ba\tKiểm thử chatbot trên điện thoại\tTổng hợp vấn đề và đề xuất\n\n\njavascript\nCopy\nconst tasks = await fetch(\"https://example.test/api/tasks?status=pending&priority=high\");\n\n\nDiagram\nCode\nmermaid\nCopy\n\nLập kế hoạch\n\nThực hiện\n\nĐánh giá\n\n03/11/2026 23:22\nAI service temporarily unavailable. Please try again.\nRetry message\nReload conversation\n\nBạn muốn ưu tiên nhóm công việc nào trong tuần này?\n\nBạn đã chọn\nCông việc\nXem chi tiết câu hỏi\nAgent mode\nAuto\nAsk"
+    },
+    {
+      "shiftEnterDraft": "Dòng đầu\nDòng thứ hai"
+    },
+    {
+      "sendDisabledStyle": {
+        "disabled": true,
+        "background": "rgb(69, 107, 140)",
+        "color": "rgb(255, 255, 255)"
+      }
+    },
+    {
+      "tabBackFromInput": {
+        "label": "Agent mode",
+        "rect": {
+          "x": 996.421875,
+          "y": 943.5,
+          "width": 56,
+          "height": 24,
+          "top": 943.5,
+          "right": 1052.421875,
+          "bottom": 967.5,
+          "left": 996.421875
+        }
+      }
+    }
+  ],
+  "pageErrors": []
+}

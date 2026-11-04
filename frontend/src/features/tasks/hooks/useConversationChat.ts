@@ -69,7 +69,7 @@ export function useConversationChat() {
       if (!payload) {
         const attachments: ChatAttachment[] = [];
         for (const [index, file] of files.entries()) {
-          setUploadProgress(`Uploading ${index + 1} of ${files.length}…`);
+          setUploadProgress(`Uploading file ${index + 1}/${files.length}…`);
           const previous = uploadedFiles.current.get(file);
           const metadata =
             previous?.conversationId === id
@@ -116,7 +116,7 @@ export function useConversationChat() {
           setUploadError(
             err instanceof Error
               ? err.message
-              : "Upload failed. Please try again.",
+              : "Unable to upload the file. Please try again.",
           );
         return false;
       }
@@ -130,7 +130,7 @@ export function useConversationChat() {
         setError(
           err instanceof Error
             ? err.message
-            : "Could not get the reply. Retry using the same request.",
+            : "No response received. Please try again.",
         );
       return Boolean(payload);
     } finally {
@@ -143,7 +143,7 @@ export function useConversationChat() {
   const answer = (value?: InteractionAnswer, cancel = false) => {
     if (!interaction || pending || busy.current) return;
     const text = cancel
-      ? "Hủy"
+      ? "Cancel"
       : (value?.customAnswer ??
         interaction.options.find((option) => option.id === value?.optionId)
           ?.label);

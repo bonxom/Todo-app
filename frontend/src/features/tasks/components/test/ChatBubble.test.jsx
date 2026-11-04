@@ -349,11 +349,13 @@ it("restores Ask, allows new messages, and retries a choice with the same reques
   render(<ChatBubble />);
   await user.click(screen.getByRole("button", { name: "Open assistant" }));
   expect(await screen.findByText("Choose a plan")).toBeVisible();
-  expect(screen.getByRole("combobox", { name: "Agent mode" })).toHaveValue(
-    "ask",
-  );
-  expect(screen.getByRole("combobox", { name: "Agent mode" })).toBeEnabled();
+  await user.click(screen.getByRole("button", { name: "Change request" }));
+  await user.click(screen.getByRole("button", { name: "Expand options" }));
+  expect(
+    screen.getByRole("button", { name: "Agent mode: ask" }),
+  ).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByRole("textbox", { name: "Message" })).toBeEnabled();
+  await user.click(screen.getByRole("button", { name: "← Back to question" }));
   await user.click(screen.getByRole("radio", { name: "Quick plan" }));
   await user.click(screen.getByRole("button", { name: "Send answer" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -406,7 +408,7 @@ it("cancels confirmation through a new chat message", async () => {
   await user.click(screen.getByRole("button", { name: "Cancel", exact: true }));
   expect(send).toHaveBeenCalledWith(
     expect.objectContaining({
-      userInput: "Hủy",
+      userInput: "Cancel",
       selection: { cancel: true, interactionId: "question-1" },
       requestId: expect.any(String),
     }),
@@ -418,10 +420,16 @@ it("sends selected mode and allows a custom clarification answer", async () => {
   const user = userEvent.setup();
   render(<ChatBubble />);
   await user.click(screen.getByRole("button", { name: "Open assistant" }));
-  await user.selectOptions(
-    screen.getByRole("combobox", { name: "Agent mode" }),
-    "ask",
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Expand options" }),
+    ).toBeEnabled(),
   );
+  await waitFor(() =>
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveFocus(),
+  );
+  await user.click(screen.getByRole("button", { name: "Expand options" }));
+  await user.click(screen.getByRole("button", { name: "Agent mode: auto" }));
   load.mockResolvedValue({
     ...snapshot(),
     conversationId: "saved",
@@ -434,6 +442,7 @@ it("sends selected mode and allows a custom clarification answer", async () => {
   );
   expect(await screen.findByText("Choose a plan")).toBeVisible();
   expect(send).toHaveBeenCalledWith(expect.objectContaining({ mode: "ask" }));
+  await user.click(screen.getByRole("button", { name: "Other answer" }));
   await user.type(
     screen.getByRole("textbox", { name: "Other answer" }),
     "Only morning tasks",
@@ -480,7 +489,9 @@ it("reloads a processing answer without replaying the original chat send", async
   await waitFor(() =>
     expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
   );
-  expect(screen.getByRole("combobox", { name: "Agent mode" })).toBeDisabled();
+  expect(
+    screen.queryByRole("button", { name: /Agent mode:/ }),
+  ).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled();
   expect(
     screen.queryByRole("button", { name: "Check reply / Retry" }),
@@ -504,7 +515,9 @@ it("allows reloading when processing response history reload fails", async () =>
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "History unavailable",
   );
-  expect(screen.getByRole("combobox", { name: "Agent mode" })).toBeDisabled();
+  expect(
+    screen.queryByRole("button", { name: /Agent mode:/ }),
+  ).not.toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: "Check reply / Retry" }),
   ).not.toBeInTheDocument();
@@ -534,6 +547,7 @@ it("allows a new message to replace a menu without treating text as approval", a
     conversationId: "saved",
     mode: "ask",
   });
+  await user.click(screen.getByRole("button", { name: "Change request" }));
   await user.type(
     screen.getByRole("textbox", { name: "Message" }),
     "Change my request{Enter}",
@@ -561,7 +575,7 @@ it("starts a fresh conversation and clears the draft with the plus button", asyn
   await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(""));
   expect(screen.queryByText("Old conversation")).not.toBeInTheDocument();
   expect(
-    screen.getByText("No messages yet. Start a conversation!"),
+    screen.getByText("Let's make your day more manageable."),
   ).toBeVisible();
   const newId = create.mock.calls[0][0];
   send.mockResolvedValue({ data: "Fresh reply" });
@@ -588,8 +602,34 @@ it("preserves history and draft when creating a new chat fails", async () => {
   await user.type(screen.getByRole("textbox"), "Keep draft");
   await user.click(screen.getByRole("button", { name: "New chat" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
-    "Could not create a new conversation",
+    "Unable to create a conversation",
   );
   expect(screen.getByText("Keep history")).toBeVisible();
   expect(screen.getByRole("textbox")).toHaveValue("Keep draft");
+});
+
+it("clears an unsent first draft only when switching successfully to a saved chat", async () => {
+  aiService.listConversations.mockResolvedValue([
+    {
+      id: "saved",
+      title: "Saved conversation",
+      updatedAt: new Date().toISOString(),
+    },
+  ]);
+  load.mockImplementation(async (id) =>
+    id === "saved"
+      ? { ...snapshot([message("Saved reply")]), conversationId: "saved" }
+      : null,
+  );
+  const user = userEvent.setup();
+  render(<ChatBubble />);
+  await user.click(screen.getByRole("button", { name: "Open assistant" }));
+  const input = screen.getByRole("textbox", { name: "Message" });
+  await user.type(input, "Unsent first draft");
+  await user.click(screen.getByRole("button", { name: "Chat history" }));
+  await user.click(
+    await screen.findByRole("button", { name: /Saved conversation/ }),
+  );
+  expect(await screen.findByText("Saved reply")).toBeVisible();
+  expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
 });

@@ -6,7 +6,7 @@ import SlashCommandMenu from "../chat/SlashCommandMenu";
 describe("SlashCommandMenu", () => {
   it("renders skills when query is empty and shows correct count", () => {
     render(<SlashCommandMenu query="" onSelect={vi.fn()} />);
-    expect(screen.getByText(/Suggested skills/i)).toBeInTheDocument();
+    expect(screen.getByText(/Skills \(/i)).toBeInTheDocument();
     expect(screen.getByText("gym")).toBeInTheDocument();
     expect(screen.getByText("ielts")).toBeInTheDocument();
   });
@@ -30,6 +30,6 @@ describe("SlashCommandMenu", () => {
 
   it("shows empty state when no skill matches query", () => {
     render(<SlashCommandMenu query="nonexistent123" onSelect={vi.fn()} />);
-    expect(screen.getByText(/No skills matching/i)).toBeInTheDocument();
+    expect(screen.getByText(/No skills match/i)).toBeInTheDocument();
   });
 });

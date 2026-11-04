@@ -1,12 +1,57 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Maximize2, Minimize2, PanelRight, Plus } from "lucide-react";
+import {
+  X,
+  Maximize2,
+  Minimize2,
+  PanelRight,
+  Plus,
+  History,
+  ArrowLeft,
+  Sparkles,
+} from "lucide-react";
 import { useConversationChat } from "../../hooks/useConversationChat";
 import ChatField from "./ChatField";
+import RecentConversations from "./RecentConversations";
+import "@/styles/chat.css";
 
-const SmallChat = ({ onClose }) => {
+const SmallChat = ({ onClose, isOpen = true }) => {
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const historyButton = useRef(null);
   const [displayMode, setDisplayMode] = useState("compact");
   const panelRef = useRef(null);
   const dragRef = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const id = requestAnimationFrame(() => {
+      const field = panelRef.current?.querySelector("textarea:not([disabled])");
+      if (field && !field.closest("[hidden]")) field.focus();
+      else panelRef.current?.querySelector("button:not([disabled])")?.focus();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isOpen]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const panel = panelRef.current;
+    const workspace = panel?.closest(".ui-workspace-layout");
+    const background = [...(workspace?.children ?? [])]
+      .filter((element) => !element.contains(panel))
+      .map((element) => ({ element, inert: element.hasAttribute("inert") }));
+    const originalOverflow = document.body.style.overflow;
+    const update = () => {
+      const mobile = window.innerWidth <= 640;
+      for (const { element, inert } of background)
+        element.toggleAttribute("inert", mobile || inert);
+      document.body.style.overflow = mobile ? "hidden" : originalOverflow;
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      for (const { element, inert } of background)
+        element.toggleAttribute("inert", inert);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
   const [dockWidth, setDockWidth] = useState(null);
   const [isResizing, setIsResizing] = useState(false);
   const minimumDockWidth = 280;
@@ -47,9 +92,24 @@ const SmallChat = ({ onClose }) => {
   const chat = useConversationChat();
   const [chatRevision, setChatRevision] = useState(0);
 
+  const handleOpenConversation = async (id) => {
+    if (!(await chat.openConversation(id))) return;
+    if (id !== chat.conversationId) setChatRevision((revision) => revision + 1);
+    setHistoryOpen(false);
+    requestAnimationFrame(() => {
+      const input = panelRef.current?.querySelector("textarea");
+      if (input && !input.closest("[hidden]")) input.focus();
+      else historyButton.current?.focus();
+    });
+  };
+
   const handleNewChat = async () => {
     if (await chat.newConversation()) {
       setChatRevision((revision) => revision + 1);
+      setHistoryOpen(false);
+      requestAnimationFrame(() =>
+        panelRef.current?.querySelector("textarea")?.focus(),
+      );
     }
   };
 
@@ -65,6 +125,37 @@ const SmallChat = ({ onClose }) => {
       }
       role="region"
       aria-label="Assistant chat"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && !event.defaultPrevented) {
+          if (historyOpen) {
+            setHistoryOpen(false);
+            historyButton.current?.focus();
+          } else onClose();
+          event.stopPropagation();
+        }
+        if (event.key === "Tab" && window.innerWidth <= 640) {
+          const focusable = [
+            ...panelRef.current.querySelectorAll(
+              "button, input, textarea, select, a[href], [tabindex]",
+            ),
+          ].filter(
+            (element) =>
+              !element.disabled &&
+              element.tabIndex >= 0 &&
+              element.getClientRects().length > 0 &&
+              !element.closest("[hidden]"),
+          );
+          const first = focusable[0],
+            last = focusable.at(-1);
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first?.focus();
+          }
+        }
+      }}
     >
       {displayMode === "docked" && (
         <div
@@ -81,7 +172,7 @@ const SmallChat = ({ onClose }) => {
             ),
           )}
           tabIndex={0}
-          title="Kéo để đổi chiều rộng. Kéo hẹp hết để đóng chat."
+          title="Drag to resize. Drag all the way closed to close chat."
           onPointerDown={(event) => {
             if (event.button !== 0) return;
             event.preventDefault();
@@ -114,21 +205,35 @@ const SmallChat = ({ onClose }) => {
       <div className="ui-assistant-header">
         <div className="flex items-center justify-between gap-3">
           <div className="ui-assistant-status">
-            <div className="ui-assistant-status-dot" aria-hidden="true" />
+            <span className="chat-brand-icon" aria-hidden="true">
+              <Sparkles size={18} />
+            </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-[var(--color-text)]">
-                Assistant
+                Orbit Assistant
               </p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              ref={historyButton}
+              type="button"
+              className="ui-icon-button ui-focus-ring"
+              aria-label="Chat history"
+              title="Chat history"
+              aria-expanded={historyOpen}
+              disabled={chat.loading || chat.sending || Boolean(chat.pending)}
+              onClick={() => setHistoryOpen((open) => !open)}
+            >
+              <History size={18} />
+            </button>
             <button
               type="button"
               onClick={handleNewChat}
               disabled={chat.loading || chat.sending}
               className="ui-icon-button ui-focus-ring h-8 w-8 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="New chat"
-              title="New chat"
+              title="New conversation"
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -137,9 +242,15 @@ const SmallChat = ({ onClose }) => {
               onClick={() =>
                 setDisplayMode((current) => nextDisplayMode[current])
               }
-              className="ui-icon-button ui-focus-ring h-8 w-8"
+              className="chat-display-mode ui-icon-button ui-focus-ring h-8 w-8"
               aria-label={resizeLabel}
-              title={resizeLabel}
+              title={
+                {
+                  compact: "Expand",
+                  expanded: "Dock to the right",
+                  docked: "Compact view",
+                }[displayMode]
+              }
             >
               {displayMode === "docked" ? (
                 <Minimize2 className="h-4 w-4" />
@@ -154,6 +265,7 @@ const SmallChat = ({ onClose }) => {
               onClick={onClose}
               className="ui-icon-button ui-focus-ring h-8 w-8"
               aria-label="Close chat"
+              title="Close chat"
             >
               <X className="h-4 w-4" />
             </button>
@@ -161,15 +273,46 @@ const SmallChat = ({ onClose }) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden bg-[var(--color-canvas)]">
-        <ChatField
-          key={chatRevision}
-          chat={chat}
-          messages={chat.messages}
-          onSendMessage={chat.send}
-          isTyping={chat.sending}
-          disabled={chat.locked || Boolean(chat.error)}
-        />
+      <div className="chat-body">
+        {historyOpen && (
+          <div className="chat-history-view">
+            <button
+              type="button"
+              className="chat-history-back ui-focus-ring"
+              aria-label="Back to conversation"
+              onClick={() => {
+                setHistoryOpen(false);
+                historyButton.current?.focus();
+              }}
+            >
+              <ArrowLeft size={16} /> Back to conversation
+            </button>
+            {chat.error && (
+              <p role="alert" className="chat-error">
+                {chat.error}
+              </p>
+            )}
+            <RecentConversations
+              expanded
+              onClose={() => {
+                setHistoryOpen(false);
+                historyButton.current?.focus();
+              }}
+              onOpen={handleOpenConversation}
+              disabled={chat.loading || chat.sending}
+            />
+          </div>
+        )}
+        <div hidden={historyOpen} className="chat-field-container">
+          <ChatField
+            key={chatRevision}
+            chat={{ ...chat, openConversation: handleOpenConversation }}
+            messages={chat.messages}
+            onSendMessage={chat.send}
+            isTyping={chat.sending}
+            disabled={chat.locked || Boolean(chat.error)}
+          />
+        </div>
       </div>
     </div>
   );
