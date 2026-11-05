@@ -9,7 +9,7 @@ import type {
   ProposalAction,
   ProposalEnvelope,
 } from "@/shared/types/A2UI/taskProposal";
-import fixture from "../../../../../../docs/superpowers/fixtures/a2ui-task-proposal-v09.json";
+import fixture from "@/test/fixtures/a2ui-task-proposal-v09.json";
 const initial = fixture as ProposalEnvelope;
 const action: ProposalAction = {
   action: "confirm",

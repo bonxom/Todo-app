@@ -70,7 +70,7 @@ Every action payload (`save`, `confirm`, `cancel`) requires a client-generated U
 
 ### Envelope and runtime
 
-The executable envelope is documented in [the shared v0.9 fixture](superpowers/fixtures/a2ui-task-proposal-v09.json), consumed by backend, renderer and browser tests. Each message contains `version: "v0.9"` and an operation object such as `createSurface`, `updateComponents` or `updateDataModel`. The root component binds to `/proposal`; actions resolve proposal and request ID from the data model.
+The executable envelope is documented in [the shared v0.9 fixture](../frontend/src/test/fixtures/a2ui-task-proposal-v09.json), consumed by backend, renderer and browser tests. Each message contains `version: "v0.9"` and an operation object such as `createSurface`, `updateComponents` or `updateDataModel`. The root component binds to `/proposal`; actions resolve proposal and request ID from the data model.
 
 The frontend uses `@a2ui/web_core/v0_9` MessageProcessor and `@a2ui/react/v0_9` A2uiSurface (packages pinned to 0.15.0).
 
@@ -92,3 +92,5 @@ Disabling the flag rejects both explicit and inherited proposal generation inten
 ### Verification
 
 Browser tests use the shared protocol fixture and mocked HTTP responses; they cover save/reload, subset confirmation, lost-response retry, cancellation and dirty navigation on mobile. MongoDB integration tests independently exercise concurrent confirms, receipt replay, payload conflicts, task/stat updates and rollback after partial execution. Browser tests do not call a live model.
+
+The shared fixture lives inside the frontend package so its tests can be type-checked within the frontend-only Docker build context. Backend contract tests read the same fixture from the repository checkout.

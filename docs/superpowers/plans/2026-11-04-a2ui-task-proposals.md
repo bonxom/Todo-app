@@ -62,7 +62,7 @@ Backend types belong in `backend/types/A2UI/ITaskProposal.ts`; frontend wire typ
 `frontend/src/shared/types/A2UI/taskProposal.ts`. Keep protocol dependency out of backend
 production code: validate the narrow emitted envelope with Zod and verify it against
 the actual A2UI processor in frontend contract tests. Maintain one checked-in sample
-at `docs/superpowers/fixtures/a2ui-task-proposal-v09.json`, tested by both packages.
+at `frontend/src/test/fixtures/a2ui-task-proposal-v09.json`, tested by both packages.
 
 ```ts
 type ProposalIntent = "task_proposal";
@@ -265,7 +265,7 @@ return writeRepository.transaction(userId, async () => {
 - Modify `backend/services/conversationService.ts`, `backend/services/conversationTurnService.ts`, `backend/controllers/A2UI/taskProposalController.ts`.
 - Create `frontend/src/shared/types/A2UI/taskProposal.ts`.
 - Create `frontend/src/features/tasks/components/chat/A2UI/taskProposalCatalog.tsx`, `TaskProposalForm.tsx`, `TaskProposalSurface.tsx` in that same directory.
-- Create `docs/superpowers/fixtures/a2ui-task-proposal-v09.json`.
+- Create `frontend/src/test/fixtures/a2ui-task-proposal-v09.json`.
 - Modify `frontend/package.json`, generated `frontend/pnpm-lock.yaml`.
 - Test `backend/services/test/taskProposalUi.test.ts`, `frontend/src/features/tasks/components/test/TaskProposalProtocol.test.tsx`.
 

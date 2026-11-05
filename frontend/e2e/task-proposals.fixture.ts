@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 const fixture = JSON.parse(
   readFileSync(
     new URL(
-      "../../docs/superpowers/fixtures/a2ui-task-proposal-v09.json",
+      "../src/test/fixtures/a2ui-task-proposal-v09.json",
       import.meta.url,
     ),
     "utf8",

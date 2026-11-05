@@ -6,7 +6,7 @@ import ChatToolbar from "../chat/ChatToolbar";
 import { categoryService } from "@/shared/services/categoryService";
 import { projectService } from "@/shared/services/projectService";
 import { aiService } from "@/shared/services/aiService";
-import fixture from "../../../../../../docs/superpowers/fixtures/a2ui-task-proposal-v09.json";
+import fixture from "@/test/fixtures/a2ui-task-proposal-v09.json";
 beforeEach(() => {
   vi.spyOn(aiService, "listConversations").mockResolvedValue([]);
   vi.spyOn(categoryService, "getAllCategories").mockResolvedValue([

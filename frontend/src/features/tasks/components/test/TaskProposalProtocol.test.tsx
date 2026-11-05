@@ -6,7 +6,7 @@ import { categoryService } from "@/shared/services/categoryService";
 import { projectService } from "@/shared/services/projectService";
 import { A2uiMessageSchema, MessageProcessor } from "@a2ui/web_core/v0_9";
 import type { ProposalEnvelope } from "@/shared/types/A2UI/taskProposal";
-import fixture from "../../../../../../docs/superpowers/fixtures/a2ui-task-proposal-v09.json";
+import fixture from "@/test/fixtures/a2ui-task-proposal-v09.json";
 
 const envelope = () => structuredClone(fixture) as ProposalEnvelope;
 beforeEach(() => {

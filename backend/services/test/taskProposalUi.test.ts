@@ -8,7 +8,7 @@ import type { ProposalView } from "../../types/A2UI/ITaskProposal.js";
 describe("taskProposalUiService", () => {
   const fixturePath = resolve(
     process.cwd(),
-    "../docs/superpowers/fixtures/a2ui-task-proposal-v09.json",
+    "../frontend/src/test/fixtures/a2ui-task-proposal-v09.json",
   );
   const fixture = JSON.parse(readFileSync(fixturePath, "utf-8"));
 
