@@ -15,13 +15,87 @@ it("bounds context by whole turns and restores chronological order", () => {
 });
 
 it("compacts old successful loader results before the history limit without mutating stored turns", () => {
-  const turns = [{ messages: [
-    { role: "assistant" as const, tool_calls: [{ id: "load-old", type: "function" as const, function: { name: "load_skill", arguments: '{"skillId":"ielts"}' } }] },
-    { role: "tool" as const, tool_call_id: "load-old", content: JSON.stringify({ skillId: "ielts", document: "SKILL.md", version: "old", text: "x".repeat(60000) }) },
-  ] }];
+  const turns = [
+    {
+      messages: [
+        {
+          role: "assistant" as const,
+          tool_calls: [
+            {
+              id: "load-old",
+              type: "function" as const,
+              function: {
+                name: "load_skill",
+                arguments: '{"skillId":"ielts"}',
+              },
+            },
+          ],
+        },
+        {
+          role: "tool" as const,
+          tool_call_id: "load-old",
+          content: JSON.stringify({
+            skillId: "ielts",
+            document: "SKILL.md",
+            version: "old",
+            text: "x".repeat(60000),
+          }),
+        },
+      ],
+    },
+  ];
   const before = structuredClone(turns);
   const result = prepareHistory(turns);
   expect(result).toHaveLength(2);
-  expect(JSON.parse(result[1].content as string)).toMatchObject({ previouslyLoaded: true, validForCurrentTurn: false });
+  expect(JSON.parse(result[1].content as string)).toMatchObject({
+    previouslyLoaded: true,
+    validForCurrentTurn: false,
+  });
   expect(turns).toEqual(before);
+});
+
+it("preserves task proposal turns with propose_tasks tool calls and assistant summary", () => {
+  const turns = [
+    {
+      messages: [
+        { role: "user" as const, content: "Draft 2 tasks" },
+        {
+          role: "assistant" as const,
+          tool_calls: [
+            {
+              id: "prop-1",
+              type: "function" as const,
+              function: {
+                name: "propose_tasks",
+                arguments: '{"items":[{"title":"Task 1"}]}',
+              },
+            },
+          ],
+        },
+        {
+          role: "tool" as const,
+          tool_call_id: "prop-1",
+          content: JSON.stringify({ status: "proposed", count: 1 }),
+        },
+        { role: "assistant" as const, content: "Here is your proposal." },
+      ],
+      status: "completed",
+    },
+  ];
+  const history = prepareHistory(turns);
+  expect(history).toHaveLength(4);
+  expect(history[0]).toEqual({ role: "user", content: "Draft 2 tasks" });
+  expect(history[1]).toMatchObject({
+    role: "assistant",
+    tool_calls: [expect.objectContaining({ id: "prop-1" })],
+  });
+  expect(history[2]).toEqual({
+    role: "tool",
+    tool_call_id: "prop-1",
+    content: JSON.stringify({ status: "proposed", count: 1 }),
+  });
+  expect(history[3]).toEqual({
+    role: "assistant",
+    content: "Here is your proposal.",
+  });
 });

@@ -160,45 +160,95 @@ describe("Ask runner", () => {
     );
   });
   it("accepts a plan with more than eight tool calls and lets the model summarize", async () => {
-    const write = vi.spyOn(taskWriteService, "create").mockResolvedValue({ task: {} } as never);
+    const write = vi
+      .spyOn(taskWriteService, "create")
+      .mockResolvedValue({ task: {} } as never);
     completionCreate
-      .mockResolvedValueOnce(response(...Array.from({ length: 10 }, (_, i) => call(`plan-${i}`, "orbit_create_task", { ...createArgs, title: `Task ${i}`, idempotencyKey: `unique-key-${i}-123456` }))))
+      .mockResolvedValueOnce(
+        response(
+          ...Array.from({ length: 10 }, (_, i) =>
+            call(`plan-${i}`, "orbit_create_task", {
+              ...createArgs,
+              title: `Task ${i}`,
+              idempotencyKey: `unique-key-${i}-123456`,
+            }),
+          ),
+        ),
+      )
       .mockResolvedValueOnce(done);
-    expect(await agentService.chatWithMcp("Create a ten-task plan", askContext, { mode: "ask" })).toBe("Done");
+    expect(
+      await agentService.chatWithMcp("Create a ten-task plan", askContext, {
+        mode: "ask",
+      }),
+    ).toBe("Done");
     expect(write).toHaveBeenCalledTimes(10);
   });
   it("recovers from the malformed menu JSON seen in saved turns without replaying successful tools", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
-    const write = vi.spyOn(taskWriteService, "create").mockResolvedValue({ task: {} } as never);
-    const menu = { question: "Which direction?", options: [{ id: "a", label: "A" }, { id: "b", label: "B" }] };
+    const write = vi
+      .spyOn(taskWriteService, "create")
+      .mockResolvedValue({ task: {} } as never);
+    const menu = {
+      question: "Which direction?",
+      options: [
+        { id: "a", label: "A" },
+        { id: "b", label: "B" },
+      ],
+    };
     const invalid = call("broken-menu", "grill_user", menu);
     invalid.function.arguments += "]}";
-    completionCreate
-      .mockResolvedValueOnce(response(call("write-once", "orbit_create_task", createArgs), invalid));
+    completionCreate.mockResolvedValueOnce(
+      response(call("write-once", "orbit_create_task", createArgs), invalid),
+    );
     completionCreate.mockImplementationOnce(async ({ messages }) => {
-      const result = messages.find((m: { role: string; tool_call_id?: string }) => m.role === "tool" && m.tool_call_id === "broken-menu");
-      expect(JSON.parse(result.content)).toMatchObject({ code: "INVALID_TOOL_ARGUMENTS", executed: false });
+      const result = messages.find(
+        (m: { role: string; tool_call_id?: string }) =>
+          m.role === "tool" && m.tool_call_id === "broken-menu",
+      );
+      expect(JSON.parse(result.content)).toMatchObject({
+        code: "INVALID_TOOL_ARGUMENTS",
+        executed: false,
+      });
       return response(call("fixed-menu", "grill_user", menu));
     });
-    const result = await agentService.chatWithMcp("Help", askContext, { mode: "ask" });
+    const result = await agentService.chatWithMcp("Help", askContext, {
+      mode: "ask",
+    });
     expect(result).toMatchObject({ interaction: { question: menu.question } });
     expect(write).toHaveBeenCalledOnce();
   });
   it("executes requested writes in Ask and returns the model response without a forced menu", async () => {
-    const write = vi.spyOn(taskWriteService, "create").mockResolvedValue({ task: {} } as never);
+    const write = vi
+      .spyOn(taskWriteService, "create")
+      .mockResolvedValue({ task: {} } as never);
     completionCreate
-      .mockResolvedValueOnce(response(call("write", "orbit_create_task", createArgs)))
+      .mockResolvedValueOnce(
+        response(call("write", "orbit_create_task", createArgs)),
+      )
       .mockResolvedValueOnce(done);
-    expect(await agentService.chatWithMcp("Create", askContext, { mode: "ask" })).toBe("Done");
+    expect(
+      await agentService.chatWithMcp("Create", askContext, { mode: "ask" }),
+    ).toBe("Done");
     expect(write).toHaveBeenCalledOnce();
     expect(write.mock.calls[0][0]).toEqual(createArgs);
   });
   it("lets the model summarize after the final tool round instead of interrupting it", async () => {
-    const write = vi.spyOn(taskWriteService, "create").mockResolvedValue({ task: {} } as never);
+    const write = vi
+      .spyOn(taskWriteService, "create")
+      .mockResolvedValue({ task: {} } as never);
     vi.spyOn(categoryService, "getAll").mockResolvedValue([]);
-    for (let i = 0; i < 4; i++) completionCreate.mockResolvedValueOnce(response(call(`read-${i}`, "orbit_list_categories", {})));
-    completionCreate.mockResolvedValueOnce(response(call("last-write", "orbit_create_task", createArgs))).mockResolvedValueOnce(done);
-    expect(await agentService.chatWithMcp("Create", askContext, { mode: "ask" })).toBe("Done");
+    for (let i = 0; i < 4; i++)
+      completionCreate.mockResolvedValueOnce(
+        response(call(`read-${i}`, "orbit_list_categories", {})),
+      );
+    completionCreate
+      .mockResolvedValueOnce(
+        response(call("last-write", "orbit_create_task", createArgs)),
+      )
+      .mockResolvedValueOnce(done);
+    expect(
+      await agentService.chatWithMcp("Create", askContext, { mode: "ask" }),
+    ).toBe("Done");
     expect(write).toHaveBeenCalledOnce();
     expect(completionCreate.mock.calls[5][0].tool_choice).toBe("none");
     expect(completionCreate.mock.calls[5][0].messages.at(-1).role).toBe("tool");
@@ -270,4 +320,61 @@ it("rechecks approval inside the write transaction and prevents mutation when st
   } finally {
     vi.restoreAllMocks();
   }
+});
+
+describe("Task proposal agent mode", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    completionCreate.mockReset();
+  });
+
+  it("filters write tools from provider tools and includes propose_tasks", async () => {
+    completionCreate.mockResolvedValueOnce(done);
+    await agentService.chatWithMcp("Plan my week", askContext, {
+      intent: "task_proposal",
+    });
+
+    expect(completionCreate).toHaveBeenCalledOnce();
+    const tools = completionCreate.mock.calls[0][0].tools;
+    const toolNames = tools.map(
+      (t: { function: { name: string } }) => t.function.name,
+    );
+    expect(toolNames).toContain("propose_tasks");
+    expect(toolNames).not.toContain("orbit_create_task");
+    expect(toolNames).not.toContain("orbit_update_task");
+    expect(toolNames).toContain("orbit_list_categories");
+    expect(toolNames).toContain("orbit_list_projects");
+  });
+
+  it("rejects write tool call with WRITE_FORBIDDEN and succeeds on subsequent propose_tasks", async () => {
+    completionCreate
+      .mockResolvedValueOnce(
+        response(call("forbidden-write", "orbit_create_task", createArgs)),
+      )
+      .mockImplementationOnce(async ({ messages }) => {
+        const rejected = messages.find(
+          (m: { role: string; tool_call_id?: string }) =>
+            m.role === "tool" && m.tool_call_id === "forbidden-write",
+        );
+        expect(JSON.parse(rejected.content)).toMatchObject({
+          isError: true,
+          code: "WRITE_FORBIDDEN",
+          executed: false,
+        });
+        return response(
+          call("propose-call", "propose_tasks", {
+            items: [{ title: "Study Math", priority: "High" }],
+          }),
+        );
+      });
+
+    const result = await agentService.chatWithMcp("Plan tasks", askContext, {
+      intent: "task_proposal",
+    });
+
+    expect(typeof result).toBe("object");
+    expect(result).toEqual({
+      proposalItems: [{ title: "Study Math", priority: "High" }],
+    });
+  });
 });

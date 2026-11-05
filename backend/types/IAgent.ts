@@ -1,5 +1,6 @@
 import type { AgentBudget } from "../utils/agentBudget.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
+import type { ProposalIntent } from "./A2UI/ITaskProposal.js";
 
 export type AgentMode = "auto" | "ask";
 export type AgentInteraction = {
@@ -25,6 +26,7 @@ export type AgentInteraction = {
 export interface AgentMemory {
   budget?: AgentBudget;
   mode?: AgentMode;
+  intent?: ProposalIntent;
   approvedInteraction?: AgentInteraction;
   history?: ChatCompletionMessageParam[];
   checkpoint?: (messages: ChatCompletionMessageParam[]) => Promise<void>;

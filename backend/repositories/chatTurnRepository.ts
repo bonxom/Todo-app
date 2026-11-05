@@ -1,3 +1,6 @@
+import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
+import { TASK_PROPOSAL_ERROR } from "../error/definitions/A2UI/taskProposalErrors.js";
+import { taskProposalRepository } from "./A2UI/taskProposalRepository.js";
 import type { AttachmentView } from "../types/IAttachment.js";
 import mongoose from "mongoose";
 import { createHash, randomUUID } from "node:crypto";
@@ -9,6 +12,12 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 import { AppError } from "../error/AppError.js";
 import { completeMenuMessages } from "../utils/agentMessages.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
+import TaskProposal from "../models/A2UI/TaskProposal.js";
+import type {
+  ITaskProposal,
+  ProposalItem,
+  ProposalIntent,
+} from "../types/A2UI/ITaskProposal.js";
 
 const turnId = (userId: string, requestId: string) =>
   createHash("sha256").update(`${userId}:${requestId}`).digest("hex");
@@ -56,6 +65,7 @@ export const chatTurnRepository = {
     requestId: string,
     userInput: string,
     mode: AgentMode = "auto",
+    intent?: ProposalIntent,
     selection?: InteractionSelection,
     resolveSelection: (
       pending?: AgentInteraction,
@@ -76,6 +86,9 @@ export const chatTurnRepository = {
             previous.conversationId !== conversationId ||
             previous.userInput !== userInput ||
             (previous.mode ?? "auto") !== mode ||
+            (previous.requestIntent === undefined
+              ? previous.intent
+              : (previous.requestIntent ?? undefined)) !== intent ||
             selectionKey(previous.selection) !== selectionKey(selection) ||
             JSON.stringify(
               (previous.attachments ?? []).map((file) => file.id),
@@ -102,6 +115,12 @@ export const chatTurnRepository = {
             { session },
           );
         }
+        const effectiveIntent: ProposalIntent | undefined =
+          selection && pendingTurn?.intent === "task_proposal"
+            ? "task_proposal"
+            : intent;
+        if (effectiveIntent === "task_proposal" && !isTaskProposalsEnabled())
+          throw new AppError(TASK_PROPOSAL_ERROR.DISABLED);
         const expiresAt = lease();
         const conversation = await Conversation.findOneAndUpdate(
           {
@@ -167,6 +186,8 @@ export const chatTurnRepository = {
               sequence: conversation.sequence,
               expiresAt,
               mode,
+              intent: effectiveIntent,
+              requestIntent: intent ?? null,
               executionToken: randomUUID(),
               messages: [{ role: "user", content: userInput }],
             },
@@ -247,6 +268,60 @@ export const chatTurnRepository = {
         { $set: { activeTurn: null, busyUntil: null } },
         { session },
       );
+    });
+  },
+  async finishWithProposal(
+    id: string,
+    executionToken: string,
+    preparedItems: ProposalItem[],
+    response: string,
+  ): Promise<ITaskProposal | null> {
+    await taskProposalRepository.initIndexes();
+    return mongoose.connection.transaction(async (session) => {
+      const turn = await ChatTurn.findOne({
+        _id: id,
+        status: "processing",
+        expiresAt: { $gt: new Date() },
+        executionToken,
+      }).session(session);
+      if (!turn) return null;
+
+      const proposalId = randomUUID();
+      const proposalData: Partial<ITaskProposal> = {
+        userId: turn.userId,
+        conversationId: turn.conversationId,
+        turnId: id,
+        proposalId,
+        revision: 1,
+        status: "draft",
+        protocolVersion: "v0.9",
+        catalogId: "urn:orbit:a2ui:task-proposals:v1",
+        items: preparedItems,
+        selectedItemIds: preparedItems.map((item) => item.id),
+        createdTasks: [],
+      };
+
+      const [proposal] = await TaskProposal.create([proposalData], { session });
+
+      await ChatTurn.updateOne(
+        { _id: id, status: "processing", executionToken },
+        {
+          $set: {
+            response,
+            status: "completed",
+            proposalId,
+          },
+        },
+        { session },
+      );
+
+      await Conversation.updateOne(
+        { activeTurn: id },
+        { $set: { activeTurn: null, busyUntil: null } },
+        { session },
+      );
+
+      return proposal.toObject();
     });
   },
 };

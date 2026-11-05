@@ -153,3 +153,20 @@ also has Playwright. New test tooling is not presumed necessary.
   `frontend/src/features/tasks/hooks/useConversationChat.ts`,
   `frontend/src/features/tasks/components/chat/ChatField.jsx`, and
   `frontend/src/shared/services/aiService.ts`.
+
+## Implementation clarification — 2026-11-05 review
+
+The reusable frontend runtime is in `src/shared/A2UI/`: a static catalog
+registry and a surface host using the official v0.9 MessageProcessor/A2uiSurface.
+Task-specific registration, data validation and action translation live under
+the task feature's `A2UI/` folders. The protocol fixture uses operation objects
+(`createSurface`, `updateComponents`, `updateDataModel`), not a custom type-tagged
+message format. New features supply domain catalogs and action adapters without
+rewriting the host.
+
+Uncertain action failures freeze the draft and preserve the entire submitted
+payload and request ID for explicit retry. Authoritative reload can discard
+edits only after a prompt. Explicit and clarification-inherited proposal intent
+both obey the feature flag; submitted intent is persisted separately to validate
+idempotent clarification retries. Validate model dates before normalization and
+reject inaccessible or completed references instead of silently replacing them.

@@ -1,4 +1,5 @@
 import type { InteractionSelection } from "../types/IChatTurn.js";
+import type { ProposalIntent } from "../types/A2UI/ITaskProposal.js";
 import type { Request, Response } from "express";
 import { createMcpContext } from "../mcp/context.js";
 import { conversationService } from "../services/conversationService.js";
@@ -45,6 +46,7 @@ export const chatWithMcp = async (
       conversationId: body.conversationId as string,
       requestId: body.requestId as string,
       mode: body.mode as "auto" | "ask",
+      intent: body.intent as ProposalIntent | undefined,
       selection: body.selection as InteractionSelection | undefined,
       attachmentIds: body.attachmentIds as string[] | undefined,
     },

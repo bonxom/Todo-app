@@ -20,6 +20,9 @@ const { send, load, create } = vi.hoisted(() => ({
 vi.mock("@/shared/services/aiService", () => ({
   aiService: {
     getConversation: load,
+    getConversationCapabilities: vi
+      .fn()
+      .mockResolvedValue({ taskProposals: false }),
     createConversation: create,
     listConversations: vi.fn().mockResolvedValue([]),
   },

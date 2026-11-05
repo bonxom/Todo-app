@@ -170,7 +170,7 @@ export const proposalActionSchema = z.discriminatedUnion("action", [
 
 export const proposalParamsSchema = z
   .object({
-    conversationId: z.uuid("conversationId must be a valid UUID"),
-    proposalId: z.string().uuid("proposalId must be a valid UUID"),
+    conversationId: z.uuid(),
+    proposalId: z.uuid(),
   })
   .strict();

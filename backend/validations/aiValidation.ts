@@ -45,6 +45,7 @@ export const conversationChatSchema = chatSchema.extend({
   conversationId: z.uuid(),
   requestId: z.uuid(),
   mode: z.enum(["auto", "ask"]).default("auto"),
+  intent: z.enum(["task_proposal"]).optional(),
   selection: interactionSelectionSchema.optional(),
 });
 export const conversationCreateSchema = z.object({ conversationId: z.uuid() });

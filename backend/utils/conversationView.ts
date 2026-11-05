@@ -1,5 +1,6 @@
 import type { AgentInteraction } from "../types/IAgent.js";
 import type { ChatTurn } from "../types/IChatTurn.js";
+import type { ProposalView } from "../types/A2UI/ITaskProposal.js";
 import { interruptedReply } from "./interruptedReply.js";
 import { decodeFilename } from "./attachmentFile.js";
 
@@ -35,12 +36,15 @@ export function resultFor(
     | "interactions"
     | "expiresAt"
   > & { messages?: ChatTurn["messages"] },
+  envelope?: { proposal?: ProposalView; a2ui?: unknown; text?: string },
 ) {
   const expired =
     turn.status === "processing" && turn.expiresAt.getTime() <= Date.now();
   const interaction = turn.interactions?.find((i) => i.status === "pending");
   return {
-    data: expired ? interruptedReply(turn.messages) : turn.response,
+    data: expired
+      ? interruptedReply(turn.messages)
+      : (envelope?.text ?? turn.response),
     conversationId: turn.conversationId,
     requestId: turn.requestId,
     status: expired
@@ -52,10 +56,15 @@ export function resultFor(
     interaction
       ? { interaction: publicInteraction(interaction) }
       : {}),
+    ...(envelope?.proposal ? { proposal: envelope.proposal } : {}),
+    ...(envelope?.a2ui ? { a2ui: envelope.a2ui } : {}),
   };
 }
 
-export function turnMessages(turn: ChatTurn) {
+export function turnMessages(
+  turn: ChatTurn,
+  envelope?: { proposal?: ProposalView; a2ui?: unknown; text?: string },
+) {
   const expired =
     turn.status === "processing" && turn.expiresAt.getTime() < Date.now();
   return [
@@ -88,8 +97,12 @@ export function turnMessages(turn: ChatTurn) {
           {
             id: `${turn._id}:bot`,
             sender: "bot",
-            text: turn.response || interruptedReply(turn.messages),
+            text:
+              envelope?.text ??
+              (turn.response || interruptedReply(turn.messages)),
             timestamp: turn.updatedAt.toISOString(),
+            ...(envelope?.proposal ? { proposal: envelope.proposal } : {}),
+            ...(envelope?.a2ui ? { a2ui: envelope.a2ui } : {}),
           },
         ]
       : []),

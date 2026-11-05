@@ -11,6 +11,7 @@ import ToolBadge from "./ToolBadge";
 import SlashCommandMenu from "./SlashCommandMenu";
 import { filterTools } from "./toolCatalog";
 import { formatDateTime } from "@/shared/utils/dateTime";
+import { TaskProposalMessage } from "./A2UI/TaskProposalMessage";
 
 const ChatField = ({
   messages,
@@ -156,6 +157,8 @@ const ChatField = ({
       const fullMessage = selectedTool
         ? `[Skill: ${selectedTool.id}] ${trimmed}`
         : trimmed;
+      const currentIntent = chat?.intent;
+
       if (!files.length) {
         setInputValue("");
         setSelectedTool(null);
@@ -165,9 +168,15 @@ const ChatField = ({
             current ? `${trimmed}\n\n${current}` : trimmed,
           );
           setSelectedTool((current) => current ?? selectedTool);
+          if (currentIntent) chat?.setIntent?.(currentIntent);
         };
         try {
-          if ((await onSendMessage(fullMessage)) === false) restoreDraft();
+          if (
+            (await (currentIntent
+              ? onSendMessage(fullMessage, undefined, [], currentIntent)
+              : onSendMessage(fullMessage))) === false
+          )
+            restoreDraft();
         } catch (error) {
           restoreDraft();
           setFileError(
@@ -181,8 +190,12 @@ const ChatField = ({
       setSubmitting(true);
       try {
         const accepted = files.length
-          ? await onSendMessage(fullMessage, undefined, files)
-          : await onSendMessage(fullMessage);
+          ? await (currentIntent
+              ? onSendMessage(fullMessage, undefined, files, currentIntent)
+              : onSendMessage(fullMessage, undefined, files))
+          : await (currentIntent
+              ? onSendMessage(fullMessage, undefined, [], currentIntent)
+              : onSendMessage(fullMessage));
         if (accepted !== false) {
           setInputValue("");
           setFiles([]);
@@ -326,7 +339,18 @@ const ChatField = ({
                   }
                 >
                   <div className="text-sm whitespace-pre-wrap break-words">
-                    {message.interaction ? (
+                    {message.proposal ? (
+                      <TaskProposalMessage
+                        key={`${chat?.conversationId}:${message.proposal.id}`}
+                        envelope={{
+                          proposal: message.proposal,
+                          text: message.text,
+                          a2ui: message.a2ui,
+                        }}
+                        onDirtyChange={chat?.setProposalDirty}
+                        disabled={chat?.loading || chat?.sending}
+                      />
+                    ) : message.interaction ? (
                       <InteractionCard
                         interaction={message.interaction}
                         disabled
@@ -467,6 +491,25 @@ const ChatField = ({
                 textareaRef.current?.focus();
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {chat?.intent === "task_proposal" && (
+        <div className="shrink-0 px-3 sm:px-4 py-1 flex items-center">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 px-2.5 py-0.5 shadow-xs text-xs">
+            <span className="font-medium">
+              Chế độ: Lập kế hoạch công việc (Plan tasks)
+            </span>
+            <button
+              type="button"
+              className="hover:opacity-75 cursor-pointer ml-1 text-sm font-bold"
+              onClick={() => chat?.setIntent?.(undefined)}
+              title="Hủy lập kế hoạch"
+              aria-label="Hủy lập kế hoạch"
+            >
+              ×
+            </button>
           </div>
         </div>
       )}

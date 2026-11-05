@@ -1,9 +1,15 @@
+import { TASK_PROPOSAL_ERROR } from "../error/definitions/A2UI/taskProposalErrors.js";
 import { attachmentService } from "./attachmentService.js";
 import type { McpContext } from "../mcp/context.js";
 import type { AgentMode } from "../types/IAgent.js";
 import type { InteractionSelection } from "../types/IChatTurn.js";
+import type { ProposalIntent } from "../types/A2UI/ITaskProposal.js";
 import { conversationRepository as repository } from "../repositories/conversationRepository.js";
 import { chatTurnRepository } from "../repositories/chatTurnRepository.js";
+import { taskProposalRepository } from "../repositories/A2UI/taskProposalRepository.js";
+import { toProposalView } from "./A2UI/taskProposalGenerationService.js";
+import { taskProposalUiService } from "./A2UI/taskProposalUiService.js";
+import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
 import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
 import {
@@ -30,6 +36,12 @@ export const conversationService = {
     );
     const hasMore = rows.length > 50;
     const visible = rows.slice(0, 50).reverse();
+    const turnIds = visible.map((t) => t._id);
+    const proposals = await taskProposalRepository.findByTurnIds(
+      userId,
+      turnIds,
+    );
+    const proposalsByTurn = new Map(proposals.map((p) => [p.turnId, p]));
     const activeTurn = await chatTurnRepository.active(
       userId,
       conversation._id,
@@ -43,12 +55,31 @@ export const conversationService = {
       (i) => i.status === "pending",
     );
     return {
+      capabilities: { taskProposals: isTaskProposalsEnabled() },
       conversationId: conversation._id,
       title: conversation.title,
       mode: conversation.mode ?? "auto",
       ...(interaction ? { interaction: publicInteraction(interaction) } : {}),
       before: hasMore ? visible[0].sequence : null,
-      messages: visible.flatMap(turnMessages),
+      messages: visible.flatMap((turn) => {
+        const proposal = proposalsByTurn.get(turn._id);
+        const envelope = proposal
+          ? taskProposalUiService.present(
+              toProposalView(proposal),
+              isTaskProposalsEnabled(),
+            )
+          : undefined;
+        return turnMessages(
+          turn,
+          envelope
+            ? {
+                proposal: envelope.proposal,
+                a2ui: envelope.a2ui,
+                text: envelope.text,
+              }
+            : undefined,
+        );
+      }),
       pending:
         activeTurn?.status === "processing" &&
         activeTurn.expiresAt.getTime() > Date.now()
@@ -57,6 +88,10 @@ export const conversationService = {
                 requestId: activeTurn.requestId,
                 userInput: activeTurn.userInput,
                 mode: activeTurn.mode ?? "auto",
+                intent:
+                  activeTurn.requestIntent === undefined
+                    ? activeTurn.intent
+                    : (activeTurn.requestIntent ?? undefined),
                 attachmentIds: (activeTurn.attachments ?? []).map(
                   (file) => file.id,
                 ),
@@ -74,11 +109,14 @@ export const conversationService = {
       requestId: string;
       userInput: string;
       mode?: AgentMode;
+      intent?: ProposalIntent;
       selection?: InteractionSelection;
       attachmentIds?: string[];
     },
     context: McpContext,
   ) {
+    if (input.intent === "task_proposal" && !isTaskProposalsEnabled())
+      throw new AppError(TASK_PROPOSAL_ERROR.DISABLED);
     const userId = String(context.user._id);
     const { turn, claimed, selectedInteraction } =
       await chatTurnRepository.claim(
@@ -87,6 +125,7 @@ export const conversationService = {
         input.requestId,
         input.userInput,
         input.mode ?? "auto",
+        input.intent,
         input.selection,
         (pending) =>
           prepareInteractionSelection(
@@ -107,7 +146,26 @@ export const conversationService = {
     if (!claimed) {
       if (turn.status === "processing" && turn.expiresAt.getTime() > Date.now())
         throw new AppError(AI_ERROR.CONVERSATION_BUSY);
-      return resultFor(turn);
+      const proposal = await taskProposalRepository.findByTurn(
+        userId,
+        turn._id,
+      );
+      const envelope = proposal
+        ? taskProposalUiService.present(
+            toProposalView(proposal),
+            isTaskProposalsEnabled(),
+          )
+        : undefined;
+      return resultFor(
+        turn,
+        envelope
+          ? {
+              proposal: envelope.proposal,
+              a2ui: envelope.a2ui,
+              text: envelope.text,
+            }
+          : undefined,
+      );
     }
     return runConversationTurn(
       turn.toObject(),

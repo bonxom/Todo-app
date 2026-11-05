@@ -31,6 +31,7 @@ import {
   writeRepository,
 } from "../../mcp/repositories/writeRepository.js";
 import { chatTurnRepository } from "../../repositories/chatTurnRepository.js";
+import { taskWriteService } from "../../mcp/services/taskWriteService.js";
 
 const uri = process.env.ORBIT_MCP_TEST_MONGO_URI;
 const users = [new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId()];
@@ -82,6 +83,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     if (!uri || !/^mongodb:\/\/(127\.0\.0\.1|localhost):\d+\/$/.test(uri))
       throw new Error("Use disposable loopback MongoDB");
     vi.stubEnv("JWT_SECRET", secret);
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
     await mongoose.connect(uri, {
       dbName: `orbit_memory_test_${process.pid}_${Date.now()}`,
     });
@@ -103,6 +105,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     await McpWriteReceipt.init();
   });
   afterEach(() => {
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
     completion.mockReset();
     vi.restoreAllMocks();
   });
@@ -390,8 +393,20 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
 
   it("lets Ask write directly and uses the model's final response", async () => {
     const conversationId = await create();
-    completion.mockResolvedValueOnce(tool("orbit_create_task", { title: "Ask direct", idempotencyKey: randomUUID() })).mockResolvedValueOnce(answer("Đã thêm task cho bạn."));
-    const payload = { conversationId, requestId: randomUUID(), userInput: "Create task", mode: "ask" };
+    completion
+      .mockResolvedValueOnce(
+        tool("orbit_create_task", {
+          title: "Ask direct",
+          idempotencyKey: randomUUID(),
+        }),
+      )
+      .mockResolvedValueOnce(answer("Đã thêm task cho bạn."));
+    const payload = {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Create task",
+      mode: "ask",
+    };
     const result = await post("chat-mcp", payload);
     expect(result.body.status).toBe("completed");
     expect(result.body.data).toBe("Đã thêm task cho bạn.");
@@ -497,19 +512,59 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
 
   it("lets a new explicit request supersede a menu", async () => {
     const conversationId = await create();
-    completion.mockResolvedValueOnce(tool("grill_user", { question: "Create this task?", options: [{ id: "confirm", label: "Xác nhận" }, { id: "cancel", label: "Hủy" }] }));
-    const previous = await post("chat-mcp", { conversationId, requestId: randomUUID(), userInput: "Help", mode: "ask" });
-    completion.mockResolvedValueOnce(tool("orbit_create_task", { title: "New request", idempotencyKey: randomUUID() })).mockResolvedValueOnce(answer("Created"));
-    const result = await post("chat-mcp", { conversationId, requestId: randomUUID(), userInput: "Create New request", mode: "ask" });
+    completion.mockResolvedValueOnce(
+      tool("grill_user", {
+        question: "Create this task?",
+        options: [
+          { id: "confirm", label: "Xác nhận" },
+          { id: "cancel", label: "Hủy" },
+        ],
+      }),
+    );
+    const previous = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Help",
+      mode: "ask",
+    });
+    completion
+      .mockResolvedValueOnce(
+        tool("orbit_create_task", {
+          title: "New request",
+          idempotencyKey: randomUUID(),
+        }),
+      )
+      .mockResolvedValueOnce(answer("Created"));
+    const result = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Create New request",
+      mode: "ask",
+    });
     expect(result.body.data).toBe("Created");
     expect(await Task.countDocuments({ title: "New request" })).toBe(1);
-    expect((await post("chat-mcp", choose(conversationId, previous.body.interaction, { optionId: "confirm" }))).status).toBe(409);
+    expect(
+      (
+        await post(
+          "chat-mcp",
+          choose(conversationId, previous.body.interaction, {
+            optionId: "confirm",
+          }),
+        )
+      ).status,
+    ).toBe(409);
   });
 
   it("deduplicates concurrent selection turns and includes selection in pending recovery", async () => {
     const conversationId = await create();
     completion.mockResolvedValueOnce(
-      tool("grill_user", { question: "Create this task?", options: [{ id: "confirm", label: "Xác nhận" }, { id: "cancel", label: "Hủy" }] }),
+      tool("grill_user", {
+        question: "Create this task?",
+        options: [
+          { id: "confirm", label: "Xác nhận" },
+          { id: "cancel", label: "Hủy" },
+        ],
+      }),
     );
     const menu = await post("chat-mcp", {
       conversationId,
@@ -562,12 +617,17 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     expect(completion).toHaveBeenCalledTimes(2);
   });
 
-
   it("fences a selected-action worker whose lease expires before the write transaction", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const conversationId = await create();
     completion.mockResolvedValueOnce(
-      tool("grill_user", { question: "Create this task?", options: [{ id: "confirm", label: "Xác nhận" }, { id: "cancel", label: "Hủy" }] }),
+      tool("grill_user", {
+        question: "Create this task?",
+        options: [
+          { id: "confirm", label: "Xác nhận" },
+          { id: "cancel", label: "Hủy" },
+        ],
+      }),
     );
     const menu = await post("chat-mcp", {
       conversationId,
@@ -597,7 +657,12 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
         return transaction(userId, operation);
       },
     );
-    completion.mockResolvedValueOnce(tool("orbit_create_task", { title: "Expired worker write", idempotencyKey: randomUUID() }));
+    completion.mockResolvedValueOnce(
+      tool("orbit_create_task", {
+        title: "Expired worker write",
+        idempotencyKey: randomUUID(),
+      }),
+    );
     const result = await post(
       "chat-mcp",
       choose(conversationId, menu.body.interaction, { optionId: "confirm" }),
@@ -665,7 +730,13 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const conversationId = await create();
     completion.mockResolvedValueOnce(
-      tool("grill_user", { question: "Create this task?", options: [{ id: "confirm", label: "Xác nhận" }, { id: "cancel", label: "Hủy" }] }),
+      tool("grill_user", {
+        question: "Create this task?",
+        options: [
+          { id: "confirm", label: "Xác nhận" },
+          { id: "cancel", label: "Hủy" },
+        ],
+      }),
     );
     const menu = await post("chat-mcp", {
       conversationId,
@@ -673,7 +744,14 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
       userInput: "Create",
       mode: "ask",
     });
-    completion.mockResolvedValueOnce(tool("orbit_create_task", { title: "Approval survives failure", idempotencyKey: randomUUID() })).mockRejectedValueOnce(new Error("Provider down"));
+    completion
+      .mockResolvedValueOnce(
+        tool("orbit_create_task", {
+          title: "Approval survives failure",
+          idempotencyKey: randomUUID(),
+        }),
+      )
+      .mockRejectedValueOnce(new Error("Provider down"));
     const payload = choose(conversationId, menu.body.interaction, {
       optionId: "confirm",
     });
@@ -686,5 +764,188 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     expect(
       await Task.countDocuments({ title: "Approval survives failure" }),
     ).toBe(1);
+  });
+
+  it("enforces server-side write tool prohibition during task proposal mode", async () => {
+    const conversationId = await create();
+    const writeSpy = vi.spyOn(taskWriteService, "create");
+
+    // 1. Model tries orbit_create_task in proposal mode, rejected, then calls propose_tasks
+    completion
+      .mockResolvedValueOnce(
+        tool("orbit_create_task", {
+          title: "Read chapter 1",
+          idempotencyKey: randomUUID(),
+        }),
+      )
+      .mockResolvedValueOnce(
+        tool("propose_tasks", {
+          items: [{ title: "Read chapter 1", priority: "Medium" }],
+        }),
+      );
+
+    const proposalTurn = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Draft reading plan",
+      intent: "task_proposal",
+    });
+
+    expect(proposalTurn.body.status).toBe("completed");
+    expect(proposalTurn.body.proposal).toBeDefined();
+    expect(proposalTurn.body.proposal.items).toHaveLength(1);
+    expect(proposalTurn.body.proposal.items[0].title).toBe("Read chapter 1");
+    expect(writeSpy).not.toHaveBeenCalled();
+    expect(await Task.countDocuments({ title: "Read chapter 1" })).toBe(0);
+
+    const snapshot = (await get(`conversations/${conversationId}`)).body.data;
+    expect(
+      snapshot.messages.some(
+        (message: { proposal?: { items: unknown[] } }) =>
+          message.proposal?.items.length === 1,
+      ),
+    ).toBe(true);
+
+    // 2. Repeat after a clarification answer that omits intent
+    completion.mockResolvedValueOnce(
+      tool("grill_user", {
+        question: "Select focus area",
+        options: [
+          { id: "opt-1", label: "Math" },
+          { id: "opt-2", label: "Science" },
+        ],
+      }),
+    );
+    const menuResult = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Plan subjects",
+      intent: "task_proposal",
+      mode: "ask",
+    });
+    expect(menuResult.body.interaction).toBeDefined();
+
+    // Client answers menu without specifying intent
+    completion
+      .mockResolvedValueOnce(
+        tool("orbit_create_task", {
+          title: "Study Science",
+          idempotencyKey: randomUUID(),
+        }),
+      )
+      .mockResolvedValueOnce(
+        tool("propose_tasks", {
+          items: [{ title: "Study Science", priority: "High" }],
+        }),
+      );
+
+    const answerTurn = await post(
+      "chat-mcp",
+      choose(
+        conversationId,
+        menuResult.body.interaction,
+        { optionId: "opt-2" },
+        "Science",
+      ),
+    );
+
+    expect(answerTurn.body.status).toBe("completed");
+    expect(answerTurn.body.proposal).toBeDefined();
+    expect(answerTurn.body.proposal.items[0].title).toBe("Study Science");
+    expect(writeSpy).not.toHaveBeenCalled();
+    expect(await Task.countDocuments({ title: "Study Science" })).toBe(0);
+
+    // 3. Ordinary chat write regression: ordinary chat allows task creation
+    completion
+      .mockResolvedValueOnce(
+        tool("orbit_create_task", {
+          title: "Ordinary Task",
+          idempotencyKey: randomUUID(),
+        }),
+      )
+      .mockResolvedValueOnce(answer("Created"));
+
+    const normalTurn = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Create ordinary task",
+    });
+
+    expect(normalTurn.body.status).toBe("completed");
+    expect(await Task.countDocuments({ title: "Ordinary Task" })).toBe(1);
+    expect(writeSpy).toHaveBeenCalled();
+  });
+  it("blocks proposal requests and clarification continuations while disabled", async () => {
+    const conversationId = await create();
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "false");
+    const blocked = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Plan",
+      intent: "task_proposal",
+    });
+    expect(blocked.status).toBe(409);
+    expect(await ChatTurn.countDocuments({ conversationId })).toBe(0);
+    expect(completion).not.toHaveBeenCalled();
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
+    completion.mockResolvedValueOnce(
+      tool("grill_user", {
+        question: "Choose",
+        options: [
+          { id: "a", label: "A" },
+          { id: "b", label: "B" },
+        ],
+      }),
+    );
+    const menu = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Plan",
+      mode: "ask",
+      intent: "task_proposal",
+    });
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "false");
+    const result = await post(
+      "chat-mcp",
+      choose(conversationId, menu.body.interaction, { optionId: "a" }, "A"),
+    );
+    expect(result.status).toBe(409);
+    expect(await ChatTurn.countDocuments({ conversationId })).toBe(1);
+    expect(completion).toHaveBeenCalledTimes(1);
+  });
+
+  it("replays a proposal clarification answer with omitted intent", async () => {
+    const conversationId = await create();
+    completion.mockResolvedValueOnce(
+      tool("grill_user", {
+        question: "Choose",
+        options: [
+          { id: "a", label: "A" },
+          { id: "b", label: "B" },
+        ],
+      }),
+    );
+    const menu = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Plan",
+      mode: "ask",
+      intent: "task_proposal",
+    });
+    const payload = choose(
+      conversationId,
+      menu.body.interaction,
+      { optionId: "a" },
+      "A",
+    );
+    completion.mockResolvedValueOnce(
+      tool("propose_tasks", { items: [{ title: "Proposal retry" }] }),
+    );
+    const first = await post("chat-mcp", payload);
+    expect(first.status).toBe(200);
+    const replay = await post("chat-mcp", payload);
+    expect(replay.status).toBe(200);
+    expect(replay.body.proposal.id).toBe(first.body.proposal.id);
+    expect(completion).toHaveBeenCalledTimes(2);
   });
 });

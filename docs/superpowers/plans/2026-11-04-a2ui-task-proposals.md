@@ -489,3 +489,51 @@ rollback of proposal + receipt with an explicit session. MongoDB 8 could not sta
 on the host kernel; a disposable MongoDB 7 replica set on loopback port 27029 was
 used instead, with isolated test databases. The temporary containers are removed
 after verification. Full task-batch confirmation atomicity is still Task 3 scope.
+
+## Tasks 2–6 review corrections — 2026-11-05
+
+Implemented the review fixes: official v0.9 processor and React surface, shared
+catalog registry/lifecycle host, bound form edits/actions, correct service calls
+and string chat contract, frozen retry payloads, authoritative conflict reload,
+dirty navigation prompts, workspace invalidation, raw-date/reference validation,
+generation feature gating and clarification-intent replay. A2UI-only source stays
+in A2UI subdirectories; tests stay in normal test directories.
+
+The shared fixture is consumed by backend, renderer and browser tests. Behavioral
+RED was observed for the custom message format and request-ID replacement before
+the fixes. Added a real-Mongo rollback test that fails the second task creation
+and verifies that tasks, stats and receipt are absent and the draft revision is
+unchanged. Concurrent confirmation checks both task count and normal creation
+stats (in-progress by the existing task service default).
+
+Verification commands (run from the indicated package):
+
+Backend:
+
+- `ORBIT_MCP_TEST_MONGO_URI=mongodb://127.0.0.1:27029/ pnpm test`:
+  39 files, 347 tests passed, including real replica-set integration.
+- `pnpm run build`: passed.
+- `pnpm run lint`: passed with 13 no-explicit-any warnings in
+  `services/test/taskProposalActions.test.ts`.
+- `pnpm exec prettier --check <changed backend source/test files>`: passed.
+
+Frontend:
+
+- `pnpm run lint`: passed.
+- `pnpm run build`: type-check and production build passed; Vite reports
+  chunks larger than 500 kB and mixed static/dynamic ErrorPage imports.
+- `pnpm test`: 212 passed, 1 failed. The remaining failure is
+  `CalendarTaskDetailCard.test.jsx:60` (description/status DOM order);
+  calendar source/tests were not modified in this task.
+- `pnpm exec playwright test e2e/task-proposals.spec.ts`: 3 passed.
+  Browser scenarios use mocked HTTP, with the actual A2UI renderer:
+  save/reload/subset confirmation, response-loss replay preserving request
+  payload, and mobile dirty-navigation/cancellation.
+- `pnpm exec prettier --check <changed frontend source/test files>`: passed.
+- `pnpm install --lockfile-only`: synchronized the A2UI dependencies.
+
+Formatting was limited to changed feature files and relevant documentation.
+No live-model end-to-end call was performed. Full-suite approval remains blocked
+by the separate calendar test failure; A2UI checks above pass. Temporary MongoDB
+was isolated on loopback, and its test databases and container are cleaned up
+after verification.

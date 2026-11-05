@@ -46,4 +46,9 @@ export const COMMON_ERROR = {
     message: "Origin is not allowed",
     statusCode: 403,
   },
+  PAYLOAD_TOO_LARGE: {
+    code: "COMMON_0010",
+    message: "Request entity too large",
+    statusCode: 413,
+  },
 } as const satisfies Record<string, ErrorDefinition>;

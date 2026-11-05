@@ -6,10 +6,40 @@ import type {
   GenerateTasksPayload,
   GenerateTasksResponse,
 } from "../types/domain";
+import type {
+  ProposalAction,
+  ProposalEnvelope,
+} from "../types/A2UI/taskProposal";
 
 export const aiService = {
-  listConversations: async (): Promise<Array<{ id: string; title: string; updatedAt: string }>> => {
-    const response = await axiosInstance.get<{ data: Array<{ id: string; title: string; updatedAt: string }> }>("/api/ai/conversations");
+  getConversationCapabilities: async (): Promise<{
+    taskProposals: boolean;
+  }> => {
+    const response = await axiosInstance.get<{ taskProposals: boolean }>(
+      "/api/ai/conversations/capabilities",
+    );
+    return response.data;
+  },
+  applyProposalAction: async (
+    conversationId: string,
+    proposalId: string,
+    action: ProposalAction,
+  ): Promise<ProposalEnvelope> => {
+    const response = await axiosInstance.post<{
+      success: boolean;
+      data: ProposalEnvelope;
+    }>(
+      `/api/ai/conversations/${conversationId}/proposals/${proposalId}/actions`,
+      action,
+    );
+    return response.data.data;
+  },
+  listConversations: async (): Promise<
+    Array<{ id: string; title: string; updatedAt: string }>
+  > => {
+    const response = await axiosInstance.get<{
+      data: Array<{ id: string; title: string; updatedAt: string }>;
+    }>("/api/ai/conversations");
     return response.data.data;
   },
   getConversation: async (
