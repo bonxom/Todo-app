@@ -20,6 +20,9 @@ const { send, load, create } = vi.hoisted(() => ({
 vi.mock("@/shared/services/aiService", () => ({
   aiService: {
     getConversation: load,
+    getConversationCapabilities: vi
+      .fn()
+      .mockResolvedValue({ taskProposals: false }),
     createConversation: create,
     listConversations: vi.fn().mockResolvedValue([]),
   },
@@ -42,6 +45,9 @@ vi.mock("../../api/aiMutations", () => ({
 }));
 
 beforeEach(() => {
+  aiService.getConversationCapabilities.mockResolvedValue({
+    taskProposals: false,
+  });
   aiService.listConversations.mockResolvedValue([]);
   send.mockReset();
   load.mockReset();
@@ -632,4 +638,23 @@ it("clears an unsent first draft only when switching successfully to a saved cha
   );
   expect(await screen.findByText("Saved reply")).toBeVisible();
   expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
+});
+
+it("uses ordinary chat without a Plan tasks toggle or forced intent", async () => {
+  aiService.getConversationCapabilities.mockResolvedValue({
+    taskProposals: true,
+  });
+  send.mockResolvedValue({ response: "Hello!" });
+  const user = userEvent.setup();
+  render(<ChatBubble />);
+  await user.click(screen.getByRole("button", { name: "Open assistant" }));
+  const input = screen.getByRole("textbox", { name: "Message" });
+  await waitFor(() => expect(input).toBeEnabled());
+  expect(
+    screen.queryByRole("button", { name: "Plan tasks", exact: true }),
+  ).not.toBeInTheDocument();
+  await user.type(input, "Hello");
+  await user.click(screen.getByRole("button", { name: "Send message" }));
+  await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+  expect(send.mock.calls[0][0]).not.toHaveProperty("intent");
 });

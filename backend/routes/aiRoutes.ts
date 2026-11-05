@@ -7,7 +7,9 @@ import {
   createConversation,
   getConversation,
   listConversations,
+  getConversationCapabilities,
 } from "../controllers/aiController.js";
+import { handleProposalAction } from "../controllers/A2UI/taskProposalController.js";
 import { protect } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import {
@@ -18,6 +20,10 @@ import {
   conversationParamsSchema,
   conversationQuerySchema,
 } from "../validations/aiValidation.js";
+import {
+  proposalActionSchema,
+  proposalParamsSchema,
+} from "../validations/A2UI/taskProposalValidation.js";
 
 const router = express.Router();
 router.use((_req, res, next) => {
@@ -47,6 +53,7 @@ router.post(
   validate({ body: conversationCreateSchema }),
   createConversation,
 );
+router.get("/conversations/capabilities", protect, getConversationCapabilities);
 router.get("/conversations/latest", protect, getConversation);
 router.get("/conversations", protect, listConversations);
 router.get(
@@ -57,6 +64,17 @@ router.get(
     query: conversationQuerySchema,
   }),
   getConversation,
+);
+
+router.post(
+  "/conversations/:conversationId/proposals/:proposalId/actions",
+  protect,
+  express.json({ limit: "128kb" }),
+  validate({
+    params: proposalParamsSchema,
+    body: proposalActionSchema,
+  }),
+  handleProposalAction,
 );
 
 export default router;

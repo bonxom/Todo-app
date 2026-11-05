@@ -1,6 +1,6 @@
 import { attachmentService } from "@/shared/services/attachmentService";
 import type { ChatAttachment } from "@/shared/types/domain";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "@/shared/services/apiError";
 import { aiService } from "@/shared/services/aiService";
 import { generateUUID } from "@/shared/utils/id";
@@ -21,6 +21,46 @@ export function useConversationChat() {
   );
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [dirtyProposals, setDirtyProposals] = useState<Record<string, boolean>>(
+    {},
+  );
+  const proposalDirty = Object.values(dirtyProposals).some(Boolean);
+  const setProposalDirty = useCallback((id: string, dirty: boolean) => {
+    setDirtyProposals((previous) =>
+      previous[id] === dirty ? previous : { ...previous, [id]: dirty },
+    );
+  }, []);
+  const [discardRequest, setDiscardRequest] = useState(false);
+  const discardResolver = useRef<((answer: boolean) => void) | null>(null);
+  const resolveDiscard = (answer: boolean) => {
+    setDiscardRequest(false);
+    discardResolver.current?.(answer);
+    discardResolver.current = null;
+  };
+  const confirmDiscard = async () => {
+    if (!proposalDirty) return true;
+    if (discardResolver.current) return false;
+    return new Promise<boolean>((resolve) => {
+      discardResolver.current = resolve;
+      setDiscardRequest(true);
+    });
+  };
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
+      if (proposalDirty) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [proposalDirty]);
+  useEffect(
+    () => () => {
+      discardResolver.current?.(false);
+    },
+    [],
+  );
   const initialConversationId = useRef<string | null>(null);
   const {
     messages,
@@ -30,6 +70,7 @@ export function useConversationChat() {
     mode,
     setMode,
     interaction,
+    capabilities,
     before,
     loading,
     sending,
@@ -164,6 +205,12 @@ export function useConversationChat() {
     setMode: (value: AgentMode) => {
       if (!locked) setMode(value);
     },
+    proposalDirty,
+    setProposalDirty,
+    capabilities,
+    discardRequest,
+    resolveDiscard,
+    confirmDiscard,
     interaction,
     loading,
     sending,
@@ -174,8 +221,22 @@ export function useConversationChat() {
     answer,
     reload,
     loadEarlier,
-    newConversation,
+    newConversation: async () => {
+      if (!(await confirmDiscard())) return false;
+      const result = await newConversation();
+      if (result) {
+        setDirtyProposals({});
+      }
+      return result;
+    },
     locked,
-    openConversation: session.openConversation,
+    openConversation: async (id?: string) => {
+      if (!(await confirmDiscard())) return false;
+      const result = await session.openConversation(id);
+      if (result) {
+        setDirtyProposals({});
+      }
+      return result;
+    },
   };
 }

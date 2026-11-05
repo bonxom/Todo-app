@@ -57,6 +57,14 @@ const toAppError = (error: unknown): AppError => {
     return new AppError(AUTH_ERROR.TOKEN_INVALID, { cause: error });
   if (isMalformedJsonError(error))
     return new AppError(COMMON_ERROR.INVALID_JSON, { cause: error });
+  if (
+    error instanceof Error &&
+    ((error as { type?: string }).type === "entity.too.large" ||
+      (error as { status?: number }).status === 413 ||
+      error.name === "PayloadTooLargeError")
+  ) {
+    return new AppError(COMMON_ERROR.PAYLOAD_TOO_LARGE, { cause: error });
+  }
   if (error instanceof multer.MulterError)
     return new AppError(COMMON_ERROR.INVALID_PAYLOAD, { cause: error });
   if (error instanceof OpenAI.APIConnectionTimeoutError)

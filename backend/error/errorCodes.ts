@@ -7,6 +7,7 @@ import { PROJECT_ERROR } from "./definitions/projectErrors.js";
 import { TASK_ERROR } from "./definitions/taskErrors.js";
 import { AI_ERROR } from "./definitions/aiErrors.js";
 import { MCP_ERROR } from "./definitions/mcpErrors.js";
+import { TASK_PROPOSAL_ERROR } from "./definitions/A2UI/taskProposalErrors.js";
 
 export const ERROR_DEFINITION_GROUPS = {
   COMMON_ERROR,
@@ -17,6 +18,7 @@ export const ERROR_DEFINITION_GROUPS = {
   TASK_ERROR,
   AI_ERROR,
   MCP_ERROR,
+  TASK_PROPOSAL_ERROR,
 } as const satisfies Record<string, Record<string, ErrorDefinition>>;
 
 export {
@@ -28,4 +30,5 @@ export {
   TASK_ERROR,
   AI_ERROR,
   MCP_ERROR,
+  TASK_PROPOSAL_ERROR,
 };

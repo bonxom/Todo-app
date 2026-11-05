@@ -163,10 +163,13 @@ export interface ChatAttachment {
   mimeType: string;
   size: number;
 }
+import type { ProposalEnvelope, ProposalView } from "./A2UI/taskProposal";
+
 export interface ChatPayload {
   attachmentIds?: string[];
   selection?: InteractionSelection;
   mode?: AgentMode;
+  intent?: "task_proposal";
   conversationId?: string;
   requestId?: string;
   userInput: string;
@@ -211,12 +214,16 @@ export interface ChatResponse extends ApiEnvelope<string> {
   conversationId?: string;
   requestId?: string;
   interaction?: AgentInteraction;
+  proposal?: ProposalView;
+  a2ui?: ProposalEnvelope["a2ui"];
 }
 
 export interface ConversationMessage {
   attachments?: ChatAttachment[];
   replyToInteractionId?: string;
   interaction?: AgentInteraction;
+  proposal?: ProposalView;
+  a2ui?: ProposalEnvelope["a2ui"];
   id: string;
   sender: string;
   text: string;
@@ -229,11 +236,15 @@ export interface ConversationSnapshot {
   messages: ConversationMessage[];
   mode: AgentMode;
   interaction?: AgentInteraction;
+  capabilities?: {
+    taskProposals?: boolean;
+  };
   pending: Array<{
     attachmentIds?: string[];
     requestId: string;
     userInput: string;
     mode: AgentMode;
+    intent?: "task_proposal";
     selection?: InteractionSelection;
   }>;
 }

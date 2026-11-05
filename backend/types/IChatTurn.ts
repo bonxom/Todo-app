@@ -2,6 +2,7 @@ import type { AttachmentView } from "./IAttachment.js";
 import type mongoose from "mongoose";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
 import type { AgentInteraction, AgentMode } from "./IAgent.js";
+import type { ProposalIntent } from "./A2UI/ITaskProposal.js";
 
 export interface ChatTurn {
   _id: string;
@@ -14,6 +15,9 @@ export interface ChatTurn {
   selection?: InteractionSelection;
   status: "processing" | "awaiting_user" | "completed" | "failed" | "cancelled";
   mode: AgentMode;
+  intent?: ProposalIntent;
+  requestIntent?: ProposalIntent | null;
+  proposalId?: string;
   executionToken: string;
   interactions: AgentInteraction[];
   response: string;

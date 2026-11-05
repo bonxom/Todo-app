@@ -1,7 +1,28 @@
-node_modules
-dist
+# Dependencies and generated output
+**/node_modules
+**/dist
+**/coverage
+**/.cache
+**/.vite
+**/.pnpm-store
+**/*.tsbuildinfo
+**/*.log
+
+# Browser test artifacts
+**/test-results
+**/playwright-report
+**/blob-report
+
+# Local configuration and editor files
 .env
 .env.*
-*.log
 .git
 .gitignore
+**/.DS_Store
+.vscode
+.idea
+
+# Not used by the frontend build; retain src tests/fixtures for type-check.
+e2e
+docs
+README.md

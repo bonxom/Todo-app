@@ -17,6 +17,8 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@a2ui/react": "0.15.0",
+    "@a2ui/web_core": "0.15.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-query": "^5.101.4",
     "axios": "^1.13.2",
@@ -30,6 +32,7 @@
     "react-file-picker": "^0.0.6",
     "react-router-dom": "^7.11.0",
     "tailwindcss": "^4.1.18",
+    "zod": "3.25.76",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

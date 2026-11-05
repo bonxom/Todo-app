@@ -20,6 +20,11 @@ export function useConversationSession() {
   const [before, setBefore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [capabilities, setCapabilities] = useState<{ taskProposals?: boolean }>(
+    {
+      taskProposals: false,
+    },
+  );
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<ChatPayload | null>(null);
   const active = useRef(true);
@@ -35,8 +40,14 @@ export function useConversationSession() {
   const load = useCallback(
     async (id?: string) => {
       const version = ++loadVersion.current;
-      const result = await aiService.getConversation(id);
+      const [result, caps] = await Promise.all([
+        aiService.getConversation(id),
+        aiService
+          .getConversationCapabilities()
+          .catch(() => ({ taskProposals: false })),
+      ]);
       if (!isCurrent() || version !== loadVersion.current) return;
+      if (caps) setCapabilities(caps);
       setConversationId(result?.conversationId);
       setMessages(result?.messages ?? []);
       setBefore(result?.before ?? null);
@@ -121,6 +132,8 @@ export function useConversationSession() {
           id: `${requestId}:bot`,
           sender: "bot",
           text: result.data,
+          proposal: result.proposal,
+          a2ui: result.a2ui,
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -152,6 +165,7 @@ export function useConversationSession() {
     mode,
     setMode,
     interaction,
+    capabilities,
     before,
     loading,
     sending,

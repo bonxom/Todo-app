@@ -11,6 +11,7 @@ import ToolBadge from "./ToolBadge";
 import SlashCommandMenu from "./SlashCommandMenu";
 import { filterTools } from "./toolCatalog";
 import { formatDateTime } from "@/shared/utils/dateTime";
+import { TaskProposalMessage } from "./A2UI/TaskProposalMessage";
 
 const ChatField = ({
   messages,
@@ -156,6 +157,7 @@ const ChatField = ({
       const fullMessage = selectedTool
         ? `[Skill: ${selectedTool.id}] ${trimmed}`
         : trimmed;
+
       if (!files.length) {
         setInputValue("");
         setSelectedTool(null);
@@ -326,7 +328,18 @@ const ChatField = ({
                   }
                 >
                   <div className="text-sm whitespace-pre-wrap break-words">
-                    {message.interaction ? (
+                    {message.proposal ? (
+                      <TaskProposalMessage
+                        key={`${chat?.conversationId}:${message.proposal.id}`}
+                        envelope={{
+                          proposal: message.proposal,
+                          text: message.text,
+                          a2ui: message.a2ui,
+                        }}
+                        onDirtyChange={chat?.setProposalDirty}
+                        disabled={chat?.loading || chat?.sending}
+                      />
+                    ) : message.interaction ? (
                       <InteractionCard
                         interaction={message.interaction}
                         disabled

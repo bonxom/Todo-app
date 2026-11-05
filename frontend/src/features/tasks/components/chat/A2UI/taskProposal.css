@@ -1,0 +1,85 @@
+.task-proposal {
+  color: var(--color-text);
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+}
+.task-proposal-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+}
+.task-proposal-header span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+.task-proposal-item {
+  margin: 0.75rem 0;
+  border: 1px solid var(--color-line, #ddd);
+  border-radius: 0.65rem;
+  padding: 0.75rem;
+  min-width: 0;
+}
+.task-proposal-item legend {
+  font-size: 0.75rem;
+  padding: 0 0.25rem;
+}
+.task-proposal label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+  min-width: 0;
+}
+.task-proposal input:not([type="checkbox"]),
+.task-proposal textarea,
+.task-proposal select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 0.45rem;
+  border: 1px solid var(--color-line, #ddd);
+  border-radius: 0.3rem;
+  background: var(--color-surface, white);
+  color: inherit;
+  font: inherit;
+}
+.task-proposal .task-proposal-selection {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.task-proposal-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  gap: 0.5rem;
+}
+.task-proposal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.task-proposal button {
+  cursor: pointer;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-line, #ddd);
+  border-radius: 0.4rem;
+}
+.task-proposal-actions button:last-child {
+  background: var(--color-accent, #305b80);
+  color: white;
+}
+.task-proposal button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.task-proposal :focus-visible {
+  outline: 2px solid var(--color-accent, #305b80);
+  outline-offset: 2px;
+}
+.task-proposal [role="alert"] {
+  color: var(--color-danger, #b42318);
+  font-size: 0.8rem;
+}

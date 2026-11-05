@@ -262,7 +262,9 @@ const SmallChat = ({ onClose, isOpen = true }) => {
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={async () => {
+                if (await chat.confirmDiscard()) onClose();
+              }}
               className="ui-icon-button ui-focus-ring h-8 w-8"
               aria-label="Close chat"
               title="Close chat"
@@ -301,6 +303,25 @@ const SmallChat = ({ onClose, isOpen = true }) => {
               onOpen={handleOpenConversation}
               disabled={chat.loading || chat.sending}
             />
+          </div>
+        )}
+        {chat.discardRequest && (
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-label="Bỏ thay đổi chưa lưu?"
+            className="p-4"
+          >
+            <p>
+              Bản nháp chưa được lưu hoặc yêu cầu chưa rõ kết quả. Bạn muốn rời
+              hội thoại?
+            </p>
+            <button onClick={() => chat.resolveDiscard(false)}>
+              Tiếp tục chỉnh sửa
+            </button>
+            <button onClick={() => chat.resolveDiscard(true)}>
+              Bỏ thay đổi và tiếp tục
+            </button>
           </div>
         )}
         <div hidden={historyOpen} className="chat-field-container">
