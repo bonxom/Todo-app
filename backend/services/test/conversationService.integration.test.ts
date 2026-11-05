@@ -83,7 +83,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     if (!uri || !/^mongodb:\/\/(127\.0\.0\.1|localhost):\d+\/$/.test(uri))
       throw new Error("Use disposable loopback MongoDB");
     vi.stubEnv("JWT_SECRET", secret);
-    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "false");
     await mongoose.connect(uri, {
       dbName: `orbit_memory_test_${process.pid}_${Date.now()}`,
     });
@@ -105,7 +105,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     await McpWriteReceipt.init();
   });
   afterEach(() => {
-    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "false");
     completion.mockReset();
     vi.restoreAllMocks();
   });
@@ -501,6 +501,14 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     );
     const cancelled = await post("chat-mcp", payload);
     expect(cancelled.body.status).toBe("completed");
+    expect(cancelled.body.data).toBe("");
+    const historyAfterCancel = (await get(`conversations/${conversationId}`))
+      .body.data.messages;
+    expect(
+      historyAfterCancel.filter(
+        (message: { sender: string }) => message.sender === "bot",
+      ),
+    ).toHaveLength(1);
     expect((await post("chat-mcp", payload)).body).toEqual(cancelled.body);
     expect(await ChatTurn.countDocuments({ conversationId })).toBe(2);
     expect(await Task.countDocuments({ title: "Must not run" })).toBe(0);
@@ -766,7 +774,8 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     ).toBe(1);
   });
 
-  it("enforces server-side write tool prohibition during task proposal mode", async () => {
+  it("automatically persists proposals and prohibits direct creation without client intent", async () => {
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
     const conversationId = await create();
     const writeSpy = vi.spyOn(taskWriteService, "create");
 
@@ -788,7 +797,6 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
       conversationId,
       requestId: randomUUID(),
       userInput: "Draft reading plan",
-      intent: "task_proposal",
     });
 
     expect(proposalTurn.body.status).toBe("completed");
@@ -820,7 +828,6 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
       conversationId,
       requestId: randomUUID(),
       userInput: "Plan subjects",
-      intent: "task_proposal",
       mode: "ask",
     });
     expect(menuResult.body.interaction).toBeDefined();
@@ -865,6 +872,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
       )
       .mockResolvedValueOnce(answer("Created"));
 
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "false");
     const normalTurn = await post("chat-mcp", {
       conversationId,
       requestId: randomUUID(),
@@ -915,6 +923,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
   });
 
   it("replays a proposal clarification answer with omitted intent", async () => {
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
     const conversationId = await create();
     completion.mockResolvedValueOnce(
       tool("grill_user", {

@@ -18,14 +18,15 @@ The feature is gated behind the environment variable:
 A2UI_TASK_PROPOSALS_ENABLED=true
 ```
 
-- **Default value**: `false` (or unset).
+- **Default value**: enabled when unset. Set `false` explicitly to disable.
 - **When disabled (`false`)**:
-  - The chat entry for "Plan tasks" is hidden on the frontend.
+  - The agent cannot call propose_tasks; legacy chat tools remain available.
   - Action mutations at `/api/ai/conversations/:conversationId/proposals/:proposalId/actions` are rejected with `409 Conflict` (`TASK_PROPOSAL_ERROR.DISABLED`).
   - Historical proposal messages are rendered in graceful textual fallback mode.
 - **When enabled (`true`)**:
   - `GET /api/ai/conversations/capabilities` reports `{ "taskProposals": true }`.
-  - Chat composer displays the "Plan tasks" tool toggle.
+  - AI chooses propose_tasks automatically for actionable plans/creation requests in Auto or Ask. Ordinary conversation remains text; there is no Plan tasks toggle.
+  - Direct orbit_create_task calls are hidden and rejected. Creating tasks requires confirmation on the proposal.
   - Task proposal turns generate valid v0.9 protocol envelopes.
 
 ---

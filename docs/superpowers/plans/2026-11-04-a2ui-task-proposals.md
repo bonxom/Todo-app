@@ -537,3 +537,9 @@ No live-model end-to-end call was performed. Full-suite approval remains blocked
 by the separate calendar test failure; A2UI checks above pass. Temporary MongoDB
 was isolated on loopback, and its test databases and container are cleaned up
 after verification.
+
+## Automatic activation follow-up
+
+The user clarified that A2UI should be selected by the AI, not a default-on
+composer mode. See [the automatic selection plan](2026-11-05-automatic-a2ui.md)
+for the implemented revision, Calendar fix and current verification results.

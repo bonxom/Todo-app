@@ -1,7 +1,7 @@
 # A2UI task proposals
 
 Date: 2026-11-04
-Status: Design approved for planning on 2026-11-04; implementation has not started.
+Status: Implemented; automatic selection revision approved on 2026-11-05.
 
 ## Goal and agreed direction
 
@@ -12,10 +12,9 @@ structured task proposals; the model does not generate arbitrary UI code.
 
 ## Scope and user experience
 
-- Provide an explicit “Plan tasks” entry in the existing chat composer. Requests
-  sent through it use proposal intent, in either auto or ask mode. Natural-language
-  intent detection outside this entry is not required for the MVP.
-- Ask mode may use the existing clarification menu before producing a proposal.
+- AI chooses the structured propose_tasks tool when an ordinary chat request
+  calls for an actionable plan or new tasks. There is no Plan tasks composer mode.
+- Auto and Ask can clarify missing details before producing a proposal.
 - Generate 1–20 draft items with stable server-assigned item IDs. Show all selected
   initially. Each item supports editing title, description, priority, category,
   optional project, start date, and due date using existing task semantics.
@@ -38,12 +37,12 @@ the existing legacy generate-tasks endpoint are outside this feature.
 
 ## Architecture and boundaries
 
-1. Extend the existing chat request with optional intent `task_proposal`.
-   Ordinary chat without this intent retains its behavior.
-2. The proposal turn permits read tools and clarification plus a structured
-   proposal result. Enforce a server-side write-tool prohibition throughout this
-   intent, including clarification continuations; a prompt instruction alone is
-   insufficient. Proposal confirmation does not call the model.
+1. Expose propose_tasks when the backend capability is enabled; the model selects
+   it from the current request and history. Optional task_proposal intent is
+   retained only for compatibility with older clients and persisted turns.
+2. Hide and reject direct task creation in the agent while A2UI is enabled.
+   Explicit legacy proposal turns also prohibit updates. Existing task updates
+   retain normal authorization. Proposal confirmation does not call the model.
 3. A proposal service validates model output against the task field contracts,
    assigns IDs, resolves owned category/project references, and persists the draft.
    Invalid generation produces a retryable textual error without task writes.
@@ -116,7 +115,7 @@ projects cannot receive new assignments.
 
 ## Rollout and verification
 
-Gate the feature behind backend `A2UI_TASK_PROPOSALS_ENABLED`, default false.
+Gate the feature behind backend `A2UI_TASK_PROPOSALS_ENABLED`, enabled when unset; explicit false disables it.
 Expose availability through the existing conversation API so the frontend has one
 authoritative capability source. Disabled mode rejects proposal mutations and
 preserves textual history. No separate frontend flag is needed.
@@ -170,3 +169,10 @@ edits only after a prompt. Explicit and clarification-inherited proposal intent
 both obey the feature flag; submitted intent is persisted separately to validate
 idempotent clarification retries. Validate model dates before normalization and
 reject inaccessible or completed references instead of silently replacing them.
+
+## Automatic activation — 2026-11-05
+
+The [automatic A2UI spec](2026-11-05-automatic-a2ui.md) supersedes the manual
+intent entrypoint described above. No Plan tasks mode is shown. The model chooses
+propose_tasks from ordinary conversation in Auto or Ask; the backend blocks direct
+task creation while enabled. Legacy explicit intent remains backward-compatible.

@@ -26,13 +26,7 @@ export async function runConversationTurn(
   let latestMessages = turn.messages;
   try {
     if (selectedInteraction?.status === "cancelled") {
-      const response =
-        "Đã hủy lựa chọn. Các thao tác đã hoàn tất trước đó vẫn được giữ lại.";
-      await repository.checkpoint(
-        turn._id,
-        [...turn.messages, { role: "assistant", content: response }],
-        turn.executionToken,
-      );
+      const response = "";
       await repository.finish(
         turn._id,
         response,

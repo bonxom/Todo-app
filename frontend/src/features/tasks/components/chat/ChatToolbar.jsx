@@ -6,7 +6,6 @@ import {
   Bot,
   Zap,
   MessageCircleQuestion,
-  ListTodo,
 } from "lucide-react";
 
 export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
@@ -57,25 +56,6 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
               aria-hidden="true"
             />
           </button>
-          {Boolean(chat?.capabilities?.taskProposals) && (
-            <button
-              type="button"
-              className={`chat-tool ui-focus-ring ${chat?.intent === "task_proposal" ? "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 font-medium" : ""}`}
-              title="Plan tasks"
-              aria-label="Plan tasks"
-              aria-pressed={chat?.intent === "task_proposal"}
-              disabled={disabled || chat?.locked}
-              onClick={() =>
-                chat?.setIntent?.(
-                  chat?.intent === "task_proposal"
-                    ? undefined
-                    : "task_proposal",
-                )
-              }
-            >
-              <ListTodo size={17} />
-            </button>
-          )}
           {open && (
             <div
               id={optionsId}

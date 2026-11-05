@@ -225,7 +225,8 @@ describe("Task Proposal Generation & Protection", () => {
       }
     });
 
-    it("allows MCP write tools when intent is ordinary chat (regression check)", async () => {
+    it("preserves legacy direct creation when A2UI is explicitly disabled", async () => {
+      vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "false");
       const writeSpy = vi.spyOn(taskWriteService, "create").mockResolvedValue({
         task: { _id: "507f1f77bcf86cd799439099", title: "Ordinary task" },
       } as never);

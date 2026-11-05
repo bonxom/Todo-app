@@ -9,7 +9,7 @@ test("edits, saves, reloads and confirms a subset through the real A2UI renderer
   await page.getByRole("button", { name: "Open assistant" }).click();
   await expect(
     page.getByRole("button", { name: "Plan tasks", exact: true }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   const title = page.getByRole("textbox", {
     name: "Task 1 title",
     exact: true,
@@ -66,4 +66,25 @@ test("warns before leaving dirty edits and locks cancelled proposals on mobile",
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+
+test("receives an interactive proposal after an ordinary chat request", async ({
+  page,
+}) => {
+  const { chatRequests } = await setupTaskProposalMocks(page, false, true);
+  await page.goto("/dashboard");
+  await page.getByRole("button", { name: "Open assistant" }).click();
+  await expect(page.getByRole("button", { name: "Plan tasks" })).toHaveCount(0);
+  await page
+    .getByRole("textbox", { name: "Message" })
+    .fill("Đề xuất hai việc để học tiếng Anh");
+  await page.getByRole("button", { name: "Send message" }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Task 1 title", exact: true }),
+  ).toBeVisible();
+  expect(chatRequests).toHaveLength(1);
+  expect(chatRequests[0]).not.toHaveProperty("intent");
+  await expect(
+    page.getByRole("button", { name: "Xác nhận (2)" }),
+  ).toBeEnabled();
 });

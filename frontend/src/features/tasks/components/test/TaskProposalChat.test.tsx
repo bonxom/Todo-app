@@ -8,53 +8,40 @@ import { projectService } from "@/shared/services/projectService";
 import { aiService } from "@/shared/services/aiService";
 import fixture from "../../../../../../docs/superpowers/fixtures/a2ui-task-proposal-v09.json";
 beforeEach(() => {
+  vi.spyOn(aiService, "listConversations").mockResolvedValue([]);
   vi.spyOn(categoryService, "getAllCategories").mockResolvedValue([
     { _id: fixture.proposal.items[0].categoryId, name: "Work" },
   ] as never);
   vi.spyOn(projectService, "getAllProjects").mockResolvedValue([]);
 });
-it("shows Plan tasks only with backend capability", () => {
-  const base = { mode: "auto", setIntent: vi.fn() };
-  const props = { disabled: false, onFiles: vi.fn(), onImages: vi.fn() };
-  const { rerender } = render(
+
+it("has no manual proposal mode even when capability is enabled", () => {
+  render(
     <ChatToolbar
-      {...props}
-      chat={{ ...base, capabilities: { taskProposals: false } }}
+      disabled={false}
+      onFiles={vi.fn()}
+      onImages={vi.fn()}
+      chat={{ mode: "auto", capabilities: { taskProposals: true } }}
     />,
   );
   expect(
     screen.queryByRole("button", { name: "Plan tasks" }),
   ).not.toBeInTheDocument();
-  rerender(
-    <ChatToolbar
-      {...props}
-      chat={{ ...base, capabilities: { taskProposals: true } }}
-    />,
-  );
-  fireEvent.click(screen.getByRole("button", { name: "Plan tasks" }));
-  expect(base.setIntent).toHaveBeenCalledWith("task_proposal");
 });
-it("sends a string to the real chat hook contract with intent separately", async () => {
+it("sends ordinary text without forcing a proposal intent", async () => {
   const send = vi.fn().mockResolvedValue(true);
   render(
     <ChatField
       messages={[]}
       onSendMessage={send}
-      chat={{ intent: "task_proposal", capabilities: { taskProposals: true } }}
+      chat={{ capabilities: { taskProposals: true } }}
     />,
   );
   fireEvent.change(screen.getByRole("textbox"), {
     target: { value: "Learn TypeScript" },
   });
   fireEvent.click(screen.getByRole("button", { name: /send message/i }));
-  await waitFor(() =>
-    expect(send).toHaveBeenCalledWith(
-      "Learn TypeScript",
-      undefined,
-      [],
-      "task_proposal",
-    ),
-  );
+  await waitFor(() => expect(send).toHaveBeenCalledWith("Learn TypeScript"));
 });
 it("wires confirmation to shared API and displays committed state", async () => {
   const created = structuredClone(fixture);

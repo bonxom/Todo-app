@@ -8,4 +8,4 @@ export const A2UI_CONFIG = {
 };
 
 export const isTaskProposalsEnabled = (): boolean =>
-  process.env.A2UI_TASK_PROPOSALS_ENABLED === "true";
+  (process.env.A2UI_TASK_PROPOSALS_ENABLED ?? "true") === "true";

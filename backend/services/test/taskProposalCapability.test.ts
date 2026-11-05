@@ -31,7 +31,7 @@ describe("Task Proposal Capability", () => {
 
   it("evaluates isTaskProposalsEnabled from environment variable", () => {
     vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", undefined);
-    expect(isTaskProposalsEnabled()).toBe(false);
+    expect(isTaskProposalsEnabled()).toBe(true);
 
     vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "false");
     expect(isTaskProposalsEnabled()).toBe(false);

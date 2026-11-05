@@ -21,15 +21,20 @@ describe("CalendarTaskDetailCard compact layout", () => {
     ["completed", "#22c55e"],
   ])("runs the shared two-second border effect for %s", (status, color) => {
     const initial = { ...task, status: "pending" };
-    const { container, rerender } = render(<CalendarTaskDetailCard task={initial} />);
+    const { container, rerender } = render(
+      <CalendarTaskDetailCard task={initial} />,
+    );
     const animate = vi.fn(() => ({ cancel: vi.fn() }));
     container.querySelector("article").animate = animate;
     rerender(<CalendarTaskDetailCard task={{ ...task, status }} />);
-    expect(animate).toHaveBeenCalledWith(expect.arrayContaining([
-      expect.objectContaining({ boxShadow: `inset 0 0 0 2px ${color}` }),
-    ]), { duration: 2000, easing: "linear" });
+    expect(animate).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ boxShadow: `inset 0 0 0 2px ${color}` }),
+      ]),
+      { duration: 2000, easing: "linear" },
+    );
   });
-  it("keeps title and description to one line before secondary details", () => {
+  it("keeps compact text truncated with level/status in the side badges", () => {
     render(
       <CalendarTaskDetailCard
         task={task}
@@ -54,20 +59,17 @@ describe("CalendarTaskDetailCard compact layout", () => {
       title.compareDocumentPosition(description) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    expect(
-      description.compareDocumentPosition(status) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    const sideBadges = screen.getByLabelText("Task level and status");
+    expect(sideBadges).toContainElement(status);
+    expect(sideBadges).toContainElement(screen.getByText("High"));
     expect(levelDot).toHaveStyle({ background: "var(--color-danger)" });
-    expect(screen.queryByText("High")).not.toBeInTheDocument();
     expect(metadataGrid).toHaveClass(
       "grid",
       "grid-cols-[minmax(0,1fr)_minmax(0,7rem)]",
     );
-    expect(metadataGrid.children[0]).toContainElement(status);
-    expect(metadataGrid.children[1]).toContainElement(
+    expect(metadataGrid.children[0]).toContainElement(
       screen.getByText("Orbit launch"),
     );
-    expect(metadataGrid.children[3]).toContainElement(screen.getByText("Work"));
+    expect(metadataGrid.children[2]).toContainElement(screen.getByText("Work"));
   });
 });

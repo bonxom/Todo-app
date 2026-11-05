@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
 const completionCreate = vi.hoisted(() => vi.fn());
 
@@ -19,6 +19,7 @@ import { agentService } from "../agentService.js";
 
 describe("in-memory MCP chat", () => {
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
@@ -109,7 +110,9 @@ const createArgs = {
 };
 
 describe("Ask runner", () => {
+  beforeEach(() => vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "false"));
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
     completionCreate.mockReset();
   });
@@ -324,6 +327,7 @@ it("rechecks approval inside the write transaction and prevents mutation when st
 
 describe("Task proposal agent mode", () => {
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
     completionCreate.mockReset();
   });
@@ -376,5 +380,123 @@ describe("Task proposal agent mode", () => {
     expect(result).toEqual({
       proposalItems: [{ title: "Study Math", priority: "High" }],
     });
+  });
+});
+
+describe("Automatic task proposal selection", () => {
+  beforeEach(() => vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true"));
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+    completionCreate.mockReset();
+  });
+
+  it.each(["auto", "ask"] as const)(
+    "accepts proposals without client intent in %s mode",
+    async (mode) => {
+      completionCreate.mockResolvedValueOnce(
+        response(
+          call("proposal", "propose_tasks", {
+            items: [{ title: "Learn TypeScript", priority: "High" }],
+          }),
+        ),
+      );
+      const result = await agentService.chatWithMcp(
+        "Help me plan TypeScript study",
+        askContext,
+        { mode },
+      );
+      expect(result).toEqual({
+        proposalItems: [{ title: "Learn TypeScript", priority: "High" }],
+      });
+      const names = completionCreate.mock.calls[0][0].tools.map(
+        (tool: { function: { name: string } }) => tool.function.name,
+      );
+      expect(names).toContain("propose_tasks");
+      expect(names).not.toContain("orbit_create_task");
+      expect(names).toContain("orbit_update_task");
+    },
+  );
+
+  it("keeps ordinary chat textual", async () => {
+    completionCreate.mockResolvedValueOnce({
+      choices: [{ message: { role: "assistant", content: "Hello!" } }],
+    });
+    await expect(agentService.chatWithMcp("Hello", askContext)).resolves.toBe(
+      "Hello!",
+    );
+  });
+
+  it("rejects a hallucinated create call before accepting a proposal", async () => {
+    const create = vi.spyOn(taskWriteService, "create");
+    completionCreate
+      .mockResolvedValueOnce(
+        response(call("bypass", "orbit_create_task", createArgs)),
+      )
+      .mockImplementationOnce(async ({ messages }) => {
+        const rejected = messages.find(
+          (m: { tool_call_id?: string }) => m.tool_call_id === "bypass",
+        );
+        expect(JSON.parse(rejected.content)).toMatchObject({
+          code: "WRITE_FORBIDDEN",
+          executed: false,
+        });
+        return response(
+          call("proposal", "propose_tasks", { items: [{ title: "Read" }] }),
+        );
+      });
+    await expect(
+      agentService.chatWithMcp("Create a reading task", askContext),
+    ).resolves.toEqual({ proposalItems: [{ title: "Read" }] });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("allows clarification in Auto without client intent", async () => {
+    completionCreate.mockResolvedValueOnce(
+      response(
+        call("clarify", "grill_user", {
+          question: "Which subject?",
+          options: [
+            { id: "ts", label: "TypeScript" },
+            { id: "js", label: "JavaScript" },
+          ],
+          allowCustomAnswer: true,
+        }),
+      ),
+    );
+    await expect(
+      agentService.chatWithMcp("Plan my study", askContext, { mode: "auto" }),
+    ).resolves.toMatchObject({ interaction: { question: "Which subject?" } });
+  });
+
+  it("hides and rejects proposals when disabled", async () => {
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "false");
+    completionCreate
+      .mockResolvedValueOnce(
+        response(
+          call("disabled", "propose_tasks", { items: [{ title: "Read" }] }),
+        ),
+      )
+      .mockImplementationOnce(async ({ tools, messages }) => {
+        expect(
+          tools.some(
+            (tool: { function: { name: string } }) =>
+              tool.function.name === "propose_tasks",
+          ),
+        ).toBe(false);
+        const rejected = messages.find(
+          (m: { tool_call_id?: string }) => m.tool_call_id === "disabled",
+        );
+        expect(JSON.parse(rejected.content)).toMatchObject({
+          code: "TOOL_NOT_ALLOWED",
+          executed: false,
+        });
+        return {
+          choices: [{ message: { role: "assistant", content: "Unavailable" } }],
+        };
+      });
+    await expect(
+      agentService.chatWithMcp("Plan tasks", askContext),
+    ).resolves.toBe("Unavailable");
   });
 });

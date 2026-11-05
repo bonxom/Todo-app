@@ -18,6 +18,7 @@ import type {
 export async function setupTaskProposalMocks(
   page: Page,
   loseFirstResponse = false,
+  startEmpty = false,
 ) {
   await dashboardFixture(page, true);
   const envelope = structuredClone(fixture) as ProposalEnvelope;
@@ -29,6 +30,8 @@ export async function setupTaskProposalMocks(
   envelope.proposal.items.push(second);
   envelope.proposal.selectedItemIds.push(second.id);
   const actions: ProposalAction[] = [];
+  const chatRequests: Record<string, unknown>[] = [];
+  let hasProposal = !startEmpty;
   const sync = () => {
     for (const message of envelope.a2ui!.messages) {
       if ("updateDataModel" in message) {
@@ -47,6 +50,18 @@ export async function setupTaskProposalMocks(
   await page.route("**/api/projects**", (route) => route.fulfill({ json: [] }));
   await page.route("**/api/ai/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
+    if (path.endsWith("/chat-mcp")) {
+      chatRequests.push(route.request().postDataJSON());
+      hasProposal = true;
+      return route.fulfill({
+        json: {
+          ...envelope,
+          response: envelope.text,
+          status: "completed",
+          conversationId: envelope.proposal.conversationId,
+        },
+      });
+    }
     if (path.endsWith("/capabilities"))
       return route.fulfill({ json: { taskProposals: true } });
     if (path.endsWith("/actions")) {
@@ -91,17 +106,19 @@ export async function setupTaskProposalMocks(
           mode: "auto",
           before: null,
           pending: [],
-          messages: [
-            {
-              id: "proposal-message",
-              sender: "bot",
-              timestamp: new Date().toISOString(),
-              ...envelope,
-            },
-          ],
+          messages: hasProposal
+            ? [
+                {
+                  id: "proposal-message",
+                  sender: "bot",
+                  timestamp: new Date().toISOString(),
+                  ...envelope,
+                },
+              ]
+            : [],
         },
       },
     });
   });
-  return { actions };
+  return { actions, chatRequests };
 }

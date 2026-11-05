@@ -21,7 +21,6 @@ export function useConversationChat() {
   );
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
-  const [intent, setIntent] = useState<"task_proposal" | undefined>(undefined);
   const [dirtyProposals, setDirtyProposals] = useState<Record<string, boolean>>(
     {},
   );
@@ -93,7 +92,6 @@ export function useConversationChat() {
     text?: string,
     selection?: InteractionSelection,
     files: File[] = [],
-    sendIntent?: "task_proposal",
   ) => {
     if (busy.current || loading || (!pending && !text?.trim())) return false;
     busy.current = true;
@@ -123,12 +121,10 @@ export function useConversationChat() {
           attachments.push(metadata);
         }
         setUploadProgress(null);
-        const resolvedIntent = sendIntent ?? intent;
         payload = {
           conversationId: id,
           requestId: generateUUID(),
           userInput: text!,
-          ...(resolvedIntent ? { intent: resolvedIntent } : {}),
           ...(attachments.length
             ? { attachmentIds: attachments.map((file) => file.id) }
             : {}),
@@ -136,7 +132,6 @@ export function useConversationChat() {
           ...(selection ? { selection } : {}),
         };
         setPending(payload);
-        setIntent(undefined);
         setMessages((previous) => [
           ...previous,
           {
@@ -210,8 +205,6 @@ export function useConversationChat() {
     setMode: (value: AgentMode) => {
       if (!locked) setMode(value);
     },
-    intent,
-    setIntent,
     proposalDirty,
     setProposalDirty,
     capabilities,
@@ -233,7 +226,6 @@ export function useConversationChat() {
       const result = await newConversation();
       if (result) {
         setDirtyProposals({});
-        setIntent(undefined);
       }
       return result;
     },
@@ -243,7 +235,6 @@ export function useConversationChat() {
       const result = await session.openConversation(id);
       if (result) {
         setDirtyProposals({});
-        setIntent(undefined);
       }
       return result;
     },
