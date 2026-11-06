@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import {
   ArrowLeft,
+  BookOpen,
   Save,
   Trash2,
   Loader2,
@@ -215,7 +216,7 @@ function SkillEditorForm() {
   if (!isNew && isLoadingSkill) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--color-accent)]" />
       </div>
     );
   }
@@ -229,8 +230,7 @@ function SkillEditorForm() {
     );
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-6 space-y-6">
-      {/* Navigation Discard Dialog */}
+    <div className="ui-page-shell skills-page skill-editor-page">
       <AgentDiscardDialog
         isOpen={
           discardDialogOpen || reloadRequested || blocker.state === "blocked"
@@ -246,297 +246,260 @@ function SkillEditorForm() {
           if (blocker.state === "blocked") blocker.reset();
         }}
       />
-
-      {/* Delete Confirmation Modal */}
       {isDeleteDialogOpen && (
         <div
+          className="skill-modal-backdrop"
           ref={deleteRef}
-          aria-label="Xác nhận xóa kỹ năng"
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          aria-label="Xác nhận xóa kỹ năng"
         >
-          <div className="w-full max-w-md rounded-2xl bg-[var(--color-bg-primary)] p-6 shadow-xl border border-[var(--color-border)]">
-            <h3 className="text-lg font-semibold text-[var(--color-text)]">
-              Xác nhận xóa kỹ năng
-            </h3>
-            <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-              Bạn có chắc chắn muốn xóa kỹ năng{" "}
-              <strong className="text-[var(--color-text)]">{name}</strong>? Thao
-              tác này không thể hoàn tác.
+          <div className="skill-delete-dialog">
+            <span className="skill-delete-icon">
+              <Trash2 size={23} />
+            </span>
+            <h2>Xóa kỹ năng này?</h2>
+            <p>
+              <strong>{name}</strong> sẽ bị xóa khỏi thư viện. Các câu trả lời
+              trước đây vẫn được giữ nguyên.
             </p>
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="skills-actions">
               <button
-                type="button"
+                className="ui-btn-secondary"
                 onClick={() => setIsDeleteDialogOpen(false)}
-                className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-bg-hover)]"
               >
                 Hủy
               </button>
               <button
-                type="button"
+                className="skill-danger-button"
                 onClick={handleDelete}
                 disabled={deleteMutation.isPending}
-                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {deleteMutation.isPending && (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 size={16} className="animate-spin" />
                 )}
-                <span>Xác nhận xóa</span>
+                Xác nhận xóa
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="rounded-lg p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text)]"
-            aria-label="Quay lại danh sách"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
+      <div className="skills-section-bar">
+        <button
+          className="skill-back-link"
+          onClick={handleBack}
+          aria-label="Quay lại danh sách"
+        >
+          <ArrowLeft size={17} />
+          Kỹ năng cá nhân
+        </button>
+        <span className="skill-editor-status">
+          {isSaving
+            ? "Đang lưu…"
+            : isDirty
+              ? "Có thay đổi chưa lưu"
+              : isNew
+                ? "Bản nháp mới"
+                : "Đã lưu"}
+        </span>
+      </div>
+      <header className="skills-heading skill-editor-heading">
+        <div>
+          <h1 className="ui-page-title">
+            {isNew ? "Tạo kỹ năng mới" : name || "Chỉnh sửa kỹ năng"}
+          </h1>
+          <p className="ui-page-description">
+            Một hướng dẫn rõ ràng, nhiều cuộc trò chuyện tốt hơn.
+          </p>
+        </div>
+        <button
+          className="ui-btn-primary skill-save-button"
+          onClick={handleSave}
+          disabled={!isValid || isSaving || deleteMutation.isPending}
+        >
+          {isSaving ? (
+            <Loader2 size={17} className="animate-spin" />
+          ) : (
+            <Save size={17} />
+          )}
+          {isNew ? "Lưu kỹ năng" : "Lưu thay đổi"}
+        </button>
+      </header>
+      {conflictError && (
+        <div className="skills-notice skills-notice--warning" role="alert">
+          <AlertCircle size={19} />
           <div>
-            <h1 className="text-xl font-bold text-[var(--color-text)]">
-              {isNew ? "Tạo kỹ năng mới" : `Chỉnh sửa: ${baseline?.name}`}
-            </h1>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              {isNew
-                ? "Thêm hướng dẫn cá nhân để Orbit Agent thực hiện công việc theo ý bạn"
-                : `Phiên bản hiện tại: v${baseline?.version}`}
+            <strong>{conflictError}</strong>
+            <p>
+              Bản nháp vẫn được giữ nguyên. Sao chép nội dung hoặc tải bản mới
+              để tiếp tục.
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {!isNew && (
-            <button
-              type="button"
-              disabled={isSaving || deleteMutation.isPending}
-              onClick={() => setIsDeleteDialogOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3.5 py-2 text-sm font-medium text-red-600 hover:bg-red-500/10 dark:text-red-400"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Xóa kỹ năng</span>
-            </button>
-          )}
-
           <button
-            type="button"
-            onClick={handleSave}
-            disabled={!isValid || isSaving || deleteMutation.isPending}
-            className="flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-          >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            <span>{isNew ? "Lưu kỹ năng" : "Lưu thay đổi"}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Conflict / General Error Banner */}
-      {conflictError && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-400 flex items-start justify-between gap-3">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">{conflictError}</p>
-              <p className="mt-1 text-xs">
-                Nội dung bạn đang chỉnh sửa vẫn được giữ nguyên. Bạn có thể sao
-                chép bản thảo hoặc tải phiên bản mới nhất từ máy chủ.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
+            className="ui-btn-secondary"
             onClick={handleReloadServerVersion}
-            className="flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-white/50 px-3 py-1.5 text-xs font-semibold hover:bg-white/80 dark:bg-black/20"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>Tải bản mới</span>
+            <RotateCcw size={15} />
+            Tải bản mới
           </button>
         </div>
       )}
-
       {generalError && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 shrink-0" />
+        <div className="skills-notice skills-notice--error" role="alert">
+          <AlertCircle size={18} />
           <span>{generalError}</span>
         </div>
       )}
-
-      {/* Form Card */}
-      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-6 shadow-sm space-y-6">
-        {/* Name */}
-        <div>
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="skill-name"
-              className="block text-sm font-semibold text-[var(--color-text)]"
-            >
-              Tên kỹ năng *
-            </label>
-            <span
-              className={`text-xs ${
-                name.length > 80
-                  ? "text-red-500 font-semibold"
-                  : "text-[var(--color-text-muted)]"
-              }`}
-            >
-              {name.length}/80
-            </span>
+      <div className="skill-editor-grid">
+        <section
+          className="skill-info-panel"
+          aria-labelledby="skill-info-heading"
+        >
+          <div className="skill-panel-heading">
+            <h2 id="skill-info-heading">Thông tin kỹ năng</h2>
+            <p>Giúp Agent nhận ra khi nào cần dùng.</p>
           </div>
-          <input
-            disabled={isSaving || deleteMutation.isPending}
-            id="skill-name"
-            type="text"
-            value={name}
-            maxLength={80}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ví dụ: Quy tắc viết IELTS Task 2, Bài tập Gym chân..."
-            className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5 text-sm text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-hidden"
-          />
-        </div>
-
-        {/* Description */}
-        <div>
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="skill-description"
-              className="block text-sm font-semibold text-[var(--color-text)]"
-            >
-              Mô tả kỹ năng (khi nào Agent nên dùng)
-            </label>
-            <span
-              className={`text-xs ${
-                description.length > 500
-                  ? "text-red-500 font-semibold"
-                  : "text-[var(--color-text-muted)]"
-              }`}
-            >
-              {description.length}/500
-            </span>
+          <div className="skill-field">
+            <div className="skill-field-label">
+              <label htmlFor="skill-name">
+                Tên kỹ năng <span>*</span>
+              </label>
+              <span>{name.length}/80</span>
+            </div>
+            <input
+              className="ui-input"
+              id="skill-name"
+              value={name}
+              maxLength={80}
+              disabled={isSaving || deleteMutation.isPending}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ví dụ: IELTS Writing"
+            />
           </div>
-          <input
-            disabled={isSaving || deleteMutation.isPending}
-            id="skill-description"
-            type="text"
-            value={description}
-            maxLength={500}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Ví dụ: Áp dụng khi người dùng yêu cầu sửa bài viết tiếng Anh học thuật..."
-            className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5 text-sm text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-hidden"
-          />
-        </div>
-
-        {/* Enabled Toggle */}
-        <div className="flex items-center justify-between py-2 border-y border-[var(--color-border)]">
-          <div>
-            <span className="text-sm font-semibold text-[var(--color-text)]">
-              Kích hoạt kỹ năng
-            </span>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Khi được bật, Orbit Agent có thể tự động đọc hướng dẫn này trong
-              các lượt trò chuyện tiếp theo
+          <div className="skill-field">
+            <div className="skill-field-label">
+              <label htmlFor="skill-description">
+                Mô tả kỹ năng <span>*</span>
+              </label>
+              <span>{description.length}/500</span>
+            </div>
+            <textarea
+              className="ui-input skill-description-input"
+              id="skill-description"
+              rows={4}
+              value={description}
+              maxLength={500}
+              disabled={isSaving || deleteMutation.isPending}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Khi nào Agent nên dùng hướng dẫn này?"
+            />
+            <p className="skill-field-hint">
+              Ví dụ: Khi tôi cần nhận xét và cải thiện bài viết IELTS Task 2.
             </p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-label="Kích hoạt kỹ năng"
-            aria-checked={enabled}
-            onClick={() => setEnabled((prev) => !prev)}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-              enabled ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
-            }`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                enabled ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* Instructions (Markdown) */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <label
-                htmlFor="skill-instructions"
-                className="block text-sm font-semibold text-[var(--color-text)]"
-              >
-                Hướng dẫn chi tiết (Markdown) *
-              </label>
-              <div className="flex rounded-lg border border-[var(--color-border)] p-0.5 bg-[var(--color-bg-secondary)]">
-                <button
-                  type="button"
-                  onClick={() => setPreviewMode(false)}
-                  className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${
-                    !previewMode
-                      ? "bg-[var(--color-bg-primary)] text-[var(--color-text)] shadow-xs"
-                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                  }`}
-                >
-                  <Edit3 className="h-3 w-3" />
-                  <span>Soạn thảo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewMode(true)}
-                  className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${
-                    previewMode
-                      ? "bg-[var(--color-bg-primary)] text-[var(--color-text)] shadow-xs"
-                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                  }`}
-                >
-                  <Eye className="h-3 w-3" />
-                  <span>Xem trước</span>
-                </button>
-              </div>
+          <div className="skill-enabled-setting">
+            <div>
+              <label id="skill-enabled-label">Kích hoạt kỹ năng</label>
+              <p>
+                {enabled
+                  ? "Sẵn sàng cho cuộc trò chuyện tiếp theo."
+                  : "Agent sẽ không đọc kỹ năng này."}
+              </p>
             </div>
-            <span
-              className={`text-xs ${
-                instructions.length > 10000
-                  ? "text-red-500 font-semibold"
-                  : "text-[var(--color-text-muted)]"
-              }`}
+            <button
+              className="skill-switch"
+              role="switch"
+              aria-labelledby="skill-enabled-label"
+              aria-checked={enabled}
+              onClick={() => setEnabled((value) => !value)}
+              disabled={isSaving || deleteMutation.isPending}
             >
-              {instructions.length}/10.000 ký tự
-            </span>
+              <span />
+            </button>
           </div>
-
+          <div className="skill-editor-help">
+            <BookOpen size={17} />
+            <p>
+              Chỉ dẫn càng cụ thể, Agent càng dễ áp dụng. Viết như cách bạn
+              hướng dẫn một người cùng làm việc.
+            </p>
+          </div>
+          {!isNew && (
+            <div className="skill-editor-danger-zone">
+              <span>Phiên bản hiện tại: v{baseline?.version}</span>
+              <button
+                className="skill-text-action skill-text-danger"
+                disabled={isSaving || deleteMutation.isPending}
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                <Trash2 size={15} />
+                Xóa kỹ năng
+              </button>
+            </div>
+          )}
+        </section>
+        <section
+          className="skill-instructions-panel"
+          aria-label="Soạn hướng dẫn cho Agent"
+        >
+          <div className="skill-instructions-header">
+            <div>
+              <label id="skill-instructions-label" htmlFor="skill-instructions">
+                Hướng dẫn chi tiết <span>*</span>
+              </label>
+              <p>Agent sẽ làm theo hướng dẫn này khi đọc kỹ năng.</p>
+            </div>
+            <div className="skill-editor-tabs" aria-label="Chế độ soạn thảo">
+              <button
+                aria-pressed={!previewMode}
+                onClick={() => setPreviewMode(false)}
+              >
+                <Edit3 size={14} />
+                Soạn thảo
+              </button>
+              <button
+                aria-pressed={previewMode}
+                onClick={() => setPreviewMode(true)}
+              >
+                <Eye size={14} />
+                Xem trước
+              </button>
+            </div>
+          </div>
           {previewMode ? (
-            <div className="min-h-[280px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)]/40 p-4 text-sm text-[var(--color-text)] overflow-y-auto">
+            <div className="skill-markdown-preview">
               {instructions.trim() ? (
                 <MarkdownText text={instructions} />
               ) : (
-                <p className="italic text-[var(--color-text-muted)]">
-                  Chưa có nội dung để xem trước.
+                <p className="skill-preview-empty">
+                  Nội dung xem trước sẽ xuất hiện khi bạn thêm hướng dẫn.
                 </p>
               )}
             </div>
           ) : (
             <textarea
-              disabled={isSaving || deleteMutation.isPending}
               id="skill-instructions"
-              rows={12}
+              className="skill-instructions-input"
               value={instructions}
               maxLength={10000}
+              disabled={isSaving || deleteMutation.isPending}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Nhập hướng dẫn cụ thể cho Orbit Agent bằng Markdown...&#10;&#10;Ví dụ:&#10;## Quy tắc chấm điểm&#10;1. Luôn kiểm tra tính mạch lạc và liên kết (Coherence & Cohesion).&#10;2. Đưa ra 3 từ vựng học thuật thay thế phù hợp."
-              className="w-full font-mono rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-4 text-sm text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-hidden"
+              placeholder={
+                "Mô tả cách bạn muốn Agent hỗ trợ…\n\nVí dụ:\n- Giữ nguyên ý chính khi sửa bài.\n- Giải thích ngắn gọn từng thay đổi.\n- Kết thúc bằng một gợi ý thực hành."
+              }
             />
           )}
-        </div>
+          <div className="skill-instructions-footer">
+            <span>Hỗ trợ Markdown</span>
+            <span>
+              {instructions.length.toLocaleString("vi-VN")} / 10.000 ký tự
+            </span>
+          </div>
+        </section>
       </div>
+      <p className="skill-editor-footnote">
+        Thay đổi áp dụng từ lượt chat tiếp theo.
+      </p>
     </div>
   );
 }

@@ -15,12 +15,12 @@ test.describe("Personal Skills E2E", () => {
       .click();
 
     // Preview IELTS
-    await page.getByRole("button", { name: /preview IELTS/i }).click();
+    await page.getByRole("button", { name: /Xem mẫu IELTS/i }).click();
     await expect(page.getByText(/Hướng dẫn ôn thi IELTS/i)).toBeVisible();
 
     // Add to my skills
     await page
-      .getByRole("button", { name: /add to my skills/i })
+      .getByRole("button", { name: /Thêm vào kỹ năng của tôi/i })
       .first()
       .click();
 
@@ -102,7 +102,7 @@ test.describe("Personal Skills E2E", () => {
     await page.goto("/agent/skills");
     const trigger = page.getByRole("button", { name: /Thêm từ mẫu/i }).first();
     await trigger.click();
-    await page.getByRole("button", { name: /preview IELTS/i }).click();
+    await page.getByRole("button", { name: /Xem mẫu IELTS/i }).click();
     await expect(
       page.getByRole("heading", { name: "Hướng dẫn ôn thi IELTS" }),
     ).toBeVisible();

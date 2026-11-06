@@ -31,7 +31,7 @@ export function SkillReadBadge({ skill }: SkillReadBadgeProps) {
           ? "border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
           : isDifferentVersion
             ? "border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-            : "border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-text)]"
+            : "border border-[var(--color-line)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-text)]"
       }`}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
@@ -41,7 +41,7 @@ export function SkillReadBadge({ skill }: SkillReadBadgeProps) {
       {isDeleted || isDifferentVersion ? (
         <AlertTriangle className="h-3 w-3 shrink-0" />
       ) : (
-        <BookOpen className="h-3 w-3 shrink-0 text-[var(--color-primary)]" />
+        <BookOpen className="h-3 w-3 shrink-0 text-[var(--color-accent)]" />
       )}
       <span>Đã đọc: {skill.name}</span>
     </span>
@@ -70,7 +70,7 @@ export function SkillReadBadge({ skill }: SkillReadBadgeProps) {
       {showTooltip && (
         <div
           role="tooltip"
-          className="absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-[var(--color-bg-primary)] px-2.5 py-1 text-xs text-[var(--color-text)] shadow-md border border-[var(--color-border)]"
+          className="absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-[var(--color-surface)] px-2.5 py-1 text-xs text-[var(--color-text)] shadow-md border border-[var(--color-line)]"
         >
           {tooltipText}
         </div>

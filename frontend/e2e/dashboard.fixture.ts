@@ -130,7 +130,11 @@ export async function dashboardFixture(
     const path = url.pathname;
     if (!path.startsWith("/api/")) return route.continue();
     let body: unknown = {};
-    if (path.includes("/auth/me")) body = user;
+    if (path === "/api/ai/conversations") body = { data: [] };
+    else if (path === "/api/ai/conversations/latest") body = { data: null };
+    else if (path === "/api/ai/conversations/capabilities")
+      body = { taskProposals: false };
+    else if (path.includes("/auth/me")) body = user;
     else if (path === "/api/tasks" && route.request().method() === "POST") {
       const payload = route.request().postDataJSON();
       const task = {

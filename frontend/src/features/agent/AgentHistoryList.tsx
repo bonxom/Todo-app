@@ -57,7 +57,7 @@ export function AgentHistoryList({
           type="button"
           onClick={onNewChat}
           disabled={disabled}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--color-primary)] px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="ui-btn-primary agent-new-chat-button"
         >
           <Plus className="h-4 w-4" />
           <span>Cuộc trò chuyện mới</span>
@@ -71,7 +71,7 @@ export function AgentHistoryList({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm hội thoại..."
             aria-label="Tìm kiếm hội thoại"
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] py-1.5 pl-8 pr-3 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-hidden"
+            className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] py-1.5 pl-8 pr-3 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-hidden"
           />
         </div>
       </div>
@@ -97,8 +97,8 @@ export function AgentHistoryList({
                   disabled={disabled}
                   className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs transition-colors ${
                     isActive
-                      ? "bg-[var(--color-bg-active)] font-medium text-[var(--color-primary)]"
-                      : "text-[var(--color-text)] hover:bg-[var(--color-bg-hover)]"
+                      ? "bg-[var(--color-accent-soft)] font-medium text-[var(--color-accent)]"
+                      : "text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
                   }`}
                 >
                   <MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-70" />

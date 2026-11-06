@@ -28,7 +28,7 @@ export function AgentDiscardDialog({
       aria-labelledby="discard-dialog-title"
       data-testid="discard-dialog"
     >
-      <div className="w-full max-w-md rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-6 shadow-xl">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
             <AlertTriangle className="h-5 w-5" />
@@ -50,7 +50,7 @@ export function AgentDiscardDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-bg-hover)]"
+            className="rounded-lg border border-[var(--color-line)] px-4 py-2 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
           >
             Tiếp tục chỉnh sửa
           </button>

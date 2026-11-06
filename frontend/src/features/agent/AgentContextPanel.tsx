@@ -91,7 +91,7 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
     <div className="space-y-4">
       <div>
         <div className="flex items-center gap-2">
-          <Folder className="h-4 w-4 text-[var(--color-primary)]" />
+          <Folder className="h-4 w-4 text-[var(--color-accent)]" />
           <label
             htmlFor="agent-context-project-select"
             className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]"
@@ -110,7 +110,7 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
             disabled={isPending || loadingProjects || !chat.conversationId}
             value={currentProjectId}
             onChange={handleProjectChange}
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="">Không chọn dự án (Mặc định)</option>
             {projects.map((proj) => (

@@ -131,7 +131,7 @@ export function AgentActivityList({
       {uniqueActivities.map((act) => (
         <div
           key={act.id}
-          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-3 text-sm shadow-2xs"
+          className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm shadow-2xs"
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ export function AgentActivityList({
                 <button
                   type="button"
                   onClick={() => void openTask(act.resourceId!)}
-                  className="font-medium text-[var(--color-primary)] hover:underline"
+                  className="font-medium text-[var(--color-accent)] hover:underline"
                 >
                   Xem chi tiết
                 </button>

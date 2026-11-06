@@ -1,13 +1,16 @@
 import { useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Plus,
   BookOpen,
   Search,
   Loader2,
-  Sparkles,
-  Layers,
+  ArrowUpRight,
+  ChevronRight,
+  SlidersHorizontal,
+  Check,
   AlertCircle,
+  X,
 } from "lucide-react";
 import {
   useSkills,
@@ -16,6 +19,7 @@ import {
   currentSessionKey,
 } from "./useSkillQueries";
 import { TemplateGallery } from "./TemplateGallery";
+import { AgentNavigation } from "../AgentNavigation";
 import type { SkillSummary } from "@/shared/types/skill";
 import "./skills.css";
 
@@ -26,256 +30,225 @@ export function SkillsPage() {
 
 function SkillsList() {
   const sessionKey = useSessionKey();
-  const navigate = useNavigate();
-  const { data: skills, isLoading, error } = useSkills();
+  const { data: skills, isLoading, error, refetch } = useSkills();
   const [searchQuery, setSearchQuery] = useState("");
-  const [isTemplateGalleryOpen, setIsTemplateGalleryOpen] = useState(false);
-  const [toggleNotice, setToggleNotice] = useState<string | null>(null);
-
-  const toggleMutation = useToggleSkillMutation();
-
-  const filteredSkills = useMemo(() => {
-    if (!skills) return [];
-    if (!searchQuery.trim()) return skills;
-    const query = searchQuery.toLowerCase().trim();
-    return skills.filter(
-      (s) =>
-        s.name.toLowerCase().includes(query) ||
-        s.description.toLowerCase().includes(query),
-    );
-  }, [skills, searchQuery]);
-
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState<string | null>(null);
-  const handleToggle = async (skill: SkillSummary, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const toggleMutation = useToggleSkillMutation();
+  const filtered = useMemo(
+    () =>
+      (skills ?? []).filter((s) =>
+        `${s.name} ${s.description}`
+          .toLocaleLowerCase()
+          .includes(searchQuery.trim().toLocaleLowerCase()),
+      ),
+    [skills, searchQuery],
+  );
+  const handleToggle = async (skill: SkillSummary) => {
     setToggleError(null);
     try {
-      await toggleMutation.mutateAsync({
-        skill,
-        enabled: !skill.enabled,
-      });
-      if (currentSessionKey() !== sessionKey) return;
-      setToggleNotice("Thay đổi áp dụng từ lượt chat tiếp theo");
-    } catch (error) {
-      if (currentSessionKey() !== sessionKey) return;
-      setToggleError(
-        error instanceof Error ? error.message : "Không thể cập nhật kỹ năng.",
-      );
+      await toggleMutation.mutateAsync({ skill, enabled: !skill.enabled });
+      if (currentSessionKey() === sessionKey)
+        setNotice("Thay đổi áp dụng từ lượt chat tiếp theo");
+    } catch (err) {
+      if (currentSessionKey() === sessionKey)
+        setToggleError(
+          err instanceof Error
+            ? err.message
+            : "Không thể cập nhật kỹ năng. Hãy thử lại.",
+        );
     }
   };
-
   return (
-    <div className="mx-auto max-w-5xl p-4 sm:p-6 space-y-6">
-      {/* Template Gallery Modal */}
+    <div className="ui-page-shell skills-page">
       <TemplateGallery
-        isOpen={isTemplateGalleryOpen}
-        onClose={() => setIsTemplateGalleryOpen(false)}
+        isOpen={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
       />
-
-      {toggleError && <p role="alert">{toggleError}</p>}
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--color-border)] pb-6">
+      <div className="skills-section-bar">
+        <span className="skills-section-name">
+          <span className="skills-orbit-dot" />
+          Orbit Agent
+        </span>
+        <AgentNavigation active="skills" />
+      </div>
+      <header className="skills-heading">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-[var(--color-primary)]" />
-              <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text)]">
-                Kỹ năng cá nhân
-              </h1>
-            </div>
-
-            <nav
-              aria-label="Điều hướng Agent"
-              className="flex items-center rounded-lg border border-[var(--color-border)] p-0.5 bg-[var(--color-bg-secondary)]"
-            >
-              <Link
-                to="/agent"
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-              >
-                <span>Trò chuyện</span>
-              </Link>
-              <Link
-                to="/agent/skills"
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold bg-[var(--color-bg-primary)] text-[var(--color-text)] shadow-xs"
-              >
-                <BookOpen className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-                <span>Kỹ năng</span>
-              </Link>
-            </nav>
-          </div>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            Tùy chỉnh hướng dẫn và phong cách làm việc của Orbit Agent cho riêng
-            bạn.
+          <h1 className="ui-page-title">Kỹ năng cá nhân</h1>
+          <p className="ui-page-description">
+            Để Agent hiểu cách bạn muốn làm việc.
           </p>
         </div>
-
-        <div className="flex items-center gap-2.5">
+        <div className="skills-actions">
           <button
-            type="button"
-            onClick={() => setIsTemplateGalleryOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-bg-hover)]"
+            className="ui-btn-secondary"
+            onClick={() => setGalleryOpen(true)}
           >
-            <BookOpen className="h-4 w-4" />
-            <span>Thêm từ mẫu</span>
+            <BookOpen size={16} />
+            Thêm từ mẫu
           </button>
-
-          <Link
-            to="/agent/skills/new"
-            className="flex items-center gap-1.5 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Tạo kỹ năng</span>
+          <Link className="ui-btn-primary" to="/agent/skills/new">
+            <Plus size={17} />
+            Tạo kỹ năng
           </Link>
         </div>
-      </div>
-
-      {/* Status Notice on toggle */}
-      {toggleNotice && (
+      </header>
+      {(toggleError || notice) && (
         <div
-          role="status"
-          className="rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-4 py-2.5 text-xs font-medium text-[var(--color-primary)] flex items-center gap-2"
+          className={`skills-notice ${toggleError ? "skills-notice--error" : ""}`}
+          role={toggleError ? "alert" : "status"}
         >
-          <Sparkles className="h-4 w-4 shrink-0" />
-          <span>{toggleNotice}</span>
+          {toggleError ? <AlertCircle size={17} /> : <Check size={17} />}
+          <span>{toggleError || notice}</span>
+          <button
+            className="skills-icon-button"
+            aria-label="Đóng thông báo"
+            onClick={() => {
+              setToggleError(null);
+              setNotice(null);
+            }}
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
-
-      {/* Controls Bar: Search & Quota */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm kỹ năng theo tên hoặc mô tả..."
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] pl-10 pr-4 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-hidden"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 text-xs font-medium text-[var(--color-text-muted)]">
-          <Layers className="h-4 w-4" />
-          <span>{skills ? `${skills.length}/50 kỹ năng` : "Đang tải..."}</span>
-        </div>
-      </div>
-
-      {/* Content */}
-      {isLoading ? (
-        <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
-        </div>
-      ) : error ? (
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6 text-center text-sm text-red-600 dark:text-red-400 flex flex-col items-center gap-2">
-          <AlertCircle className="h-8 w-8" />
-          <span className="font-semibold">Không thể tải danh sách kỹ năng</span>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Vui lòng thử làm mới trang hoặc kiểm tra kết nối mạng.
-          </p>
-        </div>
-      ) : filteredSkills.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[var(--color-border)] p-12 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
-            <BookOpen className="h-7 w-7" />
+      <section className="skill-library" aria-label="Thư viện kỹ năng cá nhân">
+        <div className="skill-library-toolbar">
+          <div>
+            <h2>
+              Kỹ năng của bạn{" "}
+              <span className="skill-count">{skills?.length ?? 0}</span>
+            </h2>
+            <p>
+              {skills?.filter((s) => s.enabled).length ?? 0} đang bật{" "}
+              <span aria-hidden="true">·</span> Tối đa 50 kỹ năng
+            </p>
           </div>
-          <h3 className="mt-4 text-base font-semibold text-[var(--color-text)]">
-            {searchQuery
-              ? "Không tìm thấy kỹ năng phù hợp"
-              : "Chưa có kỹ năng cá nhân nào"}
-          </h3>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)] max-w-md mx-auto">
-            {searchQuery
-              ? `Không có kết quả nào cho "${searchQuery}". Hãy thử tìm kiếm với từ khóa khác.`
-              : "Kỹ năng giúp Orbit Agent làm việc theo phong cách và hướng dẫn của riêng bạn. Bạn có thể tự tạo hoặc chọn từ các mẫu sẵn có."}
-          </p>
-          {!searchQuery && (
-            <div className="mt-6 flex justify-center gap-3">
+          <label className="skill-search">
+            <Search size={17} />
+            <span className="sr-only">Tìm kiếm kỹ năng</span>
+            <input
+              type="search"
+              placeholder="Tìm kiếm kỹ năng…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
+        </div>
+        {isLoading ? (
+          <div className="skills-empty" role="status">
+            <Loader2 className="animate-spin" />
+            Đang tải kỹ năng…
+          </div>
+        ) : error ? (
+          <div className="skills-empty" role="alert">
+            <AlertCircle />
+            <h3>Không thể tải danh sách kỹ năng</h3>
+            <p>Kiểm tra kết nối và thử lại.</p>
+            <button className="ui-btn-secondary" onClick={() => void refetch()}>
+              Thử lại
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="skills-empty">
+            <div className="skill-empty-symbol">
+              <BookOpen size={28} />
+            </div>
+            <h3>
+              {searchQuery
+                ? "Không tìm thấy kỹ năng phù hợp"
+                : "Chưa có kỹ năng cá nhân nào"}
+            </h3>
+            <p>
+              {searchQuery
+                ? "Thử một từ khóa khác hoặc xóa tìm kiếm để xem tất cả."
+                : "Lưu những hướng dẫn bạn thường nhắc lại. Agent sẽ đọc và áp dụng khi phù hợp với cuộc trò chuyện."}
+            </p>
+            {searchQuery ? (
               <button
-                type="button"
-                onClick={() => setIsTemplateGalleryOpen(true)}
-                className="rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-bg-hover)]"
+                className="ui-btn-secondary"
+                onClick={() => setSearchQuery("")}
               >
-                Thêm từ mẫu
+                Xóa tìm kiếm
               </button>
-              <Link
-                to="/agent/skills/new"
-                className="rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            ) : (
+              <button
+                className="skill-text-action"
+                onClick={() => setGalleryOpen(true)}
               >
-                Tạo kỹ năng
-              </Link>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredSkills.map((skill) => (
-            <div
-              key={skill.id}
-              onClick={() => navigate(`/agent/skills/${skill.id}`)}
-              className="group relative cursor-pointer rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-5 shadow-xs transition-all hover:border-[var(--color-primary)] hover:shadow-md flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-bg-secondary)] text-[var(--color-primary)] group-hover:bg-[var(--color-primary)]/10">
-                      <BookOpen className="h-4 w-4" />
-                    </span>
-                    <h3 className="font-semibold text-base text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">
-                      {skill.name}
-                    </h3>
-                  </div>
-
-                  {/* Toggle Button */}
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-2"
-                  >
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={skill.enabled}
-                      aria-label={`Bật/tắt ${skill.name}`}
-                      disabled={toggleMutation.isPending}
-                      onClick={(e) => handleToggle(skill, e)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                        skill.enabled
-                          ? "bg-[var(--color-primary)]"
-                          : "bg-[var(--color-border)]"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                          skill.enabled ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                <p className="mt-3 text-xs sm:text-sm text-[var(--color-text-muted)] line-clamp-3">
-                  {skill.description || "Chưa có mô tả."}
-                </p>
-              </div>
-
-              <div className="mt-5 flex items-center justify-between border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-text-muted)]">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-md bg-[var(--color-bg-secondary)] px-2 py-0.5 font-medium">
-                    v{skill.version}
+                Khám phá mẫu IELTS và Gym <ArrowUpRight size={16} />
+              </button>
+            )}
+          </div>
+        ) : (
+          <ul className="skill-list">
+            {filtered.map((skill) => (
+              <li
+                key={skill.id}
+                className={`skill-row ${!skill.enabled ? "skill-row--paused" : ""}`}
+              >
+                <Link
+                  to={`/agent/skills/${skill.id}`}
+                  className="skill-row-link"
+                >
+                  <span className="skill-document-icon">
+                    {skill.sourceTemplateId ? (
+                      <BookOpen size={21} />
+                    ) : (
+                      <SlidersHorizontal size={21} />
+                    )}
                   </span>
-                  {skill.sourceTemplateId && (
-                    <span className="rounded-md border border-[var(--color-border)] px-1.5 py-0.5 text-[10px]">
-                      Mẫu: {skill.sourceTemplateId}
-                    </span>
-                  )}
+                  <div className="skill-row-copy">
+                    <h3>{skill.name}</h3>
+                    <p>{skill.description}</p>
+                    <div className="skill-row-meta">
+                      <span>
+                        {skill.sourceTemplateId
+                          ? `Từ mẫu ${skill.sourceTemplateId === "ielts" ? "IELTS" : skill.sourceTemplateId === "gym" ? "Gym" : skill.sourceTemplateId}`
+                          : "Tự tạo"}
+                      </span>
+                      <span>v{skill.version}</span>
+                      <span>
+                        Cập nhật{" "}
+                        {new Intl.DateTimeFormat("vi-VN", {
+                          day: "2-digit",
+                          month: "2-digit",
+                        }).format(new Date(skill.updatedAt))}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+                <div className="skill-row-state">
+                  <span>{skill.enabled ? "Đang bật" : "Đang tắt"}</span>
+                  <button
+                    className="skill-switch"
+                    role="switch"
+                    aria-checked={skill.enabled}
+                    aria-label={`Bật/tắt ${skill.name}`}
+                    disabled={toggleMutation.isPending}
+                    onClick={() => void handleToggle(skill)}
+                  >
+                    <span />
+                  </button>
                 </div>
-
-                <span className="text-[11px]">
-                  Cập nhật: {new Date(skill.updatedAt).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          ))}
+                <ChevronRight
+                  className="skill-row-chevron"
+                  size={17}
+                  aria-hidden="true"
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="skill-library-footer">
+          <BookOpen size={15} />
+          <span>
+            Agent chỉ đọc kỹ năng phù hợp. Bạn có thể chỉnh sửa hoặc tắt bất cứ
+            lúc nào.
+          </span>
         </div>
-      )}
+      </section>
     </div>
   );
 }

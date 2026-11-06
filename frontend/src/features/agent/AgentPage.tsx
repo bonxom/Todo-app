@@ -1,11 +1,10 @@
+import { AgentNavigation } from "./AgentNavigation";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   History,
   PanelRightClose,
   PanelRightOpen,
   Sparkles,
-  BookOpen,
   X,
   AlertCircle,
   Plus,
@@ -118,7 +117,7 @@ export default function AgentPage() {
       {/* Desktop / Tablet Left Column: Conversation History */}
       {!isMobile && (
         <aside className="agent-history-col flex flex-col">
-          <div className="border-b border-[var(--color-border)] p-3">
+          <div className="border-b border-[var(--color-line)] p-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
               Lịch sử hội thoại
             </h2>
@@ -143,8 +142,8 @@ export default function AgentPage() {
           ref={historyDialogRef}
           className="fixed inset-0 z-50 flex bg-black/50"
         >
-          <div className="flex h-full w-4/5 max-w-xs flex-col bg-[var(--color-bg-primary)] shadow-xl">
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] p-3">
+          <div className="flex h-full w-4/5 max-w-xs flex-col bg-[var(--color-surface)] shadow-xl">
+            <div className="flex items-center justify-between border-b border-[var(--color-line)] p-3">
               <h2 className="text-sm font-semibold text-[var(--color-text)]">
                 Lịch sử hội thoại
               </h2>
@@ -154,7 +153,7 @@ export default function AgentPage() {
                   setHistoryDrawerOpen(false);
                   historyTriggerRef.current?.focus();
                 }}
-                className="rounded-md p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)]"
+                className="rounded-md p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
                 aria-label="Đóng lịch sử"
               >
                 <X className="h-5 w-5" />
@@ -190,50 +189,32 @@ export default function AgentPage() {
       {/* Center Column: Chat Field & Messages */}
       <section aria-label="Hội thoại Agent" className="agent-center-col">
         {/* Workspace Sub-header */}
-        <header className="flex h-14 items-center justify-between border-b border-[var(--color-border)] px-4">
-          <div className="flex items-center gap-2">
+        <header className="agent-chat-header">
+          <div className="agent-chat-identity">
             {isMobile && (
               <button
                 ref={historyTriggerRef}
                 type="button"
                 onClick={() => setHistoryDrawerOpen(true)}
-                className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)]"
+                className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
                 aria-label="Mở lịch sử hội thoại"
               >
                 <History className="h-5 w-5" />
               </button>
             )}
-            <Sparkles className="h-5 w-5 text-[var(--color-primary)]" />
+            <Sparkles className="h-5 w-5 text-[var(--color-accent)]" />
             <span className="font-semibold text-[var(--color-text)]">
               Orbit Agent
             </span>
-
-            <nav
-              aria-label="Điều hướng Agent"
-              className="ml-3 flex items-center rounded-lg border border-[var(--color-border)] p-0.5 bg-[var(--color-bg-secondary)]"
-            >
-              <Link
-                to="/agent"
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold bg-[var(--color-bg-primary)] text-[var(--color-text)] shadow-xs"
-              >
-                <span>Trò chuyện</span>
-              </Link>
-              <Link
-                to="/agent/skills"
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                <span>Kỹ năng</span>
-              </Link>
-            </nav>
           </div>
 
-          <div className="flex items-center gap-2">
+          <AgentNavigation active="chat" />
+          <div className="agent-chat-context-toggle">
             {isDesktop ? (
               <button
                 type="button"
                 onClick={() => setDesktopRightPanelOpen((open) => !open)}
-                className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text)]"
+                className="flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
                 aria-label={
                   desktopRightPanelOpen
                     ? "Đóng bảng ngữ cảnh"
@@ -257,7 +238,7 @@ export default function AgentPage() {
                 ref={contextTriggerRef}
                 type="button"
                 onClick={() => setContextDrawerOpen(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-bg-hover)]"
+                className="flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
                 aria-label="Mở bảng ngữ cảnh và kết quả"
               >
                 <PanelRightOpen className="h-4 w-4" />
@@ -271,7 +252,7 @@ export default function AgentPage() {
         <div className="flex flex-1 flex-col overflow-hidden">
           {chat.loading && !chat.conversationId ? (
             <div className="flex flex-1 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
+              <Loader2 className="h-8 w-8 animate-spin text-[var(--color-accent)]" />
             </div>
           ) : isUnavailable ? (
             <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
@@ -288,7 +269,7 @@ export default function AgentPage() {
               <button
                 type="button"
                 onClick={startNewChat}
-                className="mt-4 flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                className="ui-btn-primary mt-4"
               >
                 <Plus className="h-4 w-4" />
                 <span>Bắt đầu cuộc trò chuyện mới</span>
@@ -299,7 +280,7 @@ export default function AgentPage() {
               {/* Empty state starters when no messages yet */}
               {chat.messages.length === 0 && !chat.loading && (
                 <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] shadow-xs">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-accent)]/10 text-[var(--color-accent)] shadow-xs">
                     <Sparkles className="h-6 w-6" />
                   </div>
                   <h2 className="mt-3 text-lg font-semibold text-[var(--color-text)]">
@@ -314,7 +295,7 @@ export default function AgentPage() {
                         key={starter}
                         type="button"
                         onClick={() => handleSelectStarter(starter)}
-                        className="rounded-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-1.5 text-xs font-medium text-[var(--color-text)] transition-colors hover:border-[var(--color-primary)] hover:bg-[var(--color-bg-hover)]"
+                        className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-1.5 text-xs font-medium text-[var(--color-text)] transition-colors hover:border-[var(--color-accent)] hover:bg-[var(--color-surface-muted)]"
                       >
                         {starter}
                       </button>
@@ -341,7 +322,7 @@ export default function AgentPage() {
       {/* Desktop Right Column: Project Context & Verified Activity List */}
       {isDesktop && desktopRightPanelOpen && (
         <aside className="agent-right-col flex flex-col p-4">
-          <div className="mb-4 border-b border-[var(--color-border)] pb-3">
+          <div className="mb-4 border-b border-[var(--color-line)] pb-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
               Ngữ cảnh & Thao tác
             </h2>
@@ -377,8 +358,8 @@ export default function AgentPage() {
               contextTriggerRef.current?.focus();
             }}
           />
-          <div className="flex h-full w-4/5 max-w-sm flex-col bg-[var(--color-bg-primary)] p-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
+          <div className="flex h-full w-4/5 max-w-sm flex-col bg-[var(--color-surface)] p-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
               <h2 className="text-sm font-semibold text-[var(--color-text)]">
                 Ngữ cảnh & Thao tác
               </h2>
@@ -388,7 +369,7 @@ export default function AgentPage() {
                   setContextDrawerOpen(false);
                   contextTriggerRef.current?.focus();
                 }}
-                className="rounded-md p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)]"
+                className="rounded-md p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
                 aria-label="Đóng bảng ngữ cảnh"
               >
                 <X className="h-5 w-5" />

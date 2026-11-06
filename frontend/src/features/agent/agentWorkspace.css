@@ -2,18 +2,20 @@
 
 .agent-workspace {
   display: flex;
-  height: calc(100vh - var(--topbar-height, 64px));
+  height: calc(100dvh - var(--topbar-height, 64px) - 48px);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
   width: 100%;
   overflow: hidden;
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-surface);
   color: var(--color-text);
 }
 
 .agent-history-col {
-  width: 240px;
+  width: 220px;
   flex-shrink: 0;
-  border-right: 1px solid var(--color-border);
-  background-color: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-line);
+  background-color: var(--color-surface-muted);
   height: 100%;
 }
 
@@ -27,10 +29,10 @@
 }
 
 .agent-right-col {
-  width: 320px;
+  width: 280px;
   flex-shrink: 0;
-  border-left: 1px solid var(--color-border);
-  background-color: var(--color-bg-secondary);
+  border-left: 1px solid var(--color-line);
+  background-color: var(--color-surface-muted);
   height: 100%;
   overflow-y: auto;
   transition: width 0.2s ease-in-out;
@@ -54,5 +56,72 @@
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
+  }
+}
+
+.agent-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  min-height: 74px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-surface);
+}
+.agent-chat-identity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.agent-chat-context-toggle {
+  display: flex;
+  flex-shrink: 0;
+}
+.agent-new-chat-button {
+  width: 100%;
+  min-height: 40px;
+  font-size: 12px;
+  padding: 0 10px;
+}
+.agent-workspace :is(button, a):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+@media (max-width: 1100px) {
+  .agent-chat-header {
+    flex-wrap: wrap;
+  }
+  .agent-chat-header .agent-navigation {
+    order: 3;
+  }
+}
+@media (max-width: 767px) {
+  .agent-workspace {
+    height: calc(100dvh - var(--topbar-height, 64px) - 32px);
+    border-radius: 10px;
+  }
+  .agent-chat-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 12px;
+  }
+  .agent-chat-header .agent-navigation {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+  .agent-chat-header .agent-navigation a {
+    flex: 1;
+  }
+  .agent-chat-context-toggle {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .agent-workspace .chat-messages {
+    padding: 14px;
   }
 }
