@@ -81,7 +81,7 @@ export default function AgentPage() {
     : chat.loading
       ? "Loading conversation..."
       : chat.pending
-        ? "Processing..."
+        ? "..."
         : chat.error
           ? `Error: ${chat.error}`
           : "";

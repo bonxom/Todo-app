@@ -8,6 +8,7 @@ import {
   HelpCircle,
   ListTodo,
   FileEdit,
+  Trash2,
   FileSpreadsheet,
 } from "lucide-react";
 import type { AgentActivity } from "@/shared/types/domain";
@@ -68,6 +69,8 @@ export function AgentActivityList({
     switch (kind) {
       case "task_created":
         return <ListTodo className="h-4 w-4 text-emerald-500" />;
+      case "task_deleted":
+        return <Trash2 className="h-4 w-4 text-red-500" />;
       case "task_updated":
         return <FileEdit className="h-4 w-4 text-blue-500" />;
       case "proposal_created":
@@ -108,6 +111,8 @@ export function AgentActivityList({
     switch (kind) {
       case "task_created":
         return "Created task";
+      case "task_deleted":
+        return "Task deleted";
       case "task_updated":
         return "Updated task";
       case "proposal_created":
@@ -151,20 +156,22 @@ export function AgentActivityList({
             {act.title}
           </div>
 
-          {act.resourceType === "task" && act.resourceId && (
-            <div className="mt-2 flex items-center justify-between text-xs text-[var(--color-text-muted)]">
-              <span>ID: {act.resourceId}</span>
-              {act.status === "succeeded" && (
-                <button
-                  type="button"
-                  onClick={() => void openTask(act.resourceId!)}
-                  className="font-medium text-[var(--color-accent)] hover:underline"
-                >
-                  View details
-                </button>
-              )}
-            </div>
-          )}
+          {act.resourceType === "task" &&
+            act.kind !== "task_deleted" &&
+            act.resourceId && (
+              <div className="mt-2 flex items-center justify-between text-xs text-[var(--color-text-muted)]">
+                <span>ID: {act.resourceId}</span>
+                {act.status === "succeeded" && (
+                  <button
+                    type="button"
+                    onClick={() => void openTask(act.resourceId!)}
+                    className="font-medium text-[var(--color-accent)] hover:underline"
+                  >
+                    View details
+                  </button>
+                )}
+              </div>
+            )}
         </div>
       ))}
     </div>

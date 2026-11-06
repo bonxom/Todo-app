@@ -283,3 +283,25 @@ it("reconstructs committed proposal results deterministically without a projecti
   });
   expect(projectPersistedProposal(committed)).toEqual(result);
 });
+
+it("requires a verified deletion marker for task_deleted", () => {
+  const base = {
+    toolName: "orbit_delete_task",
+    requestId: "req",
+    toolCallId: "call",
+  };
+  const task = { id: "507f1f77bcf86cd799439011", title: "Deleted task" };
+  expect(
+    projectAgentActivity({
+      ...base,
+      result: { structuredContent: { task, deleted: true } },
+    }),
+  ).toMatchObject({
+    kind: "task_deleted",
+    status: "succeeded",
+    title: "Deleted task",
+  });
+  expect(
+    projectAgentActivity({ ...base, result: { structuredContent: { task } } }),
+  ).toMatchObject({ kind: "task_deleted", status: "unknown" });
+});

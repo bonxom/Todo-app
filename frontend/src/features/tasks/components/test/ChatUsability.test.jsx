@@ -87,3 +87,37 @@ it("offers a way to check a processing request without sending it again", async 
   );
   expect(reload).toHaveBeenCalledOnce();
 });
+
+it("shows default avatars for both senders and falls back safely when images fail", () => {
+  render(
+    <ChatField
+      messages={[
+        {
+          id: "user-avatar",
+          sender: "user",
+          text: "Hello",
+          timestamp: new Date().toISOString(),
+        },
+        {
+          id: "agent-avatar",
+          sender: "bot",
+          text: "Hi",
+          timestamp: new Date().toISOString(),
+        },
+      ]}
+      onSendMessage={vi.fn()}
+    />,
+  );
+  const fallback =
+    "https://i.pinimg.com/236x/16/d0/98/16d098f6a7b93394765e45962c0fb2d0.jpg";
+  expect(screen.getByRole("img", { name: "Your avatar" })).toHaveAttribute(
+    "src",
+    fallback,
+  );
+  const agent = screen.getByRole("img", { name: "Agent avatar" });
+  expect(agent).toHaveAttribute("src", fallback);
+  fireEvent.error(agent);
+  expect(screen.getByRole("img", { name: "Agent avatar" }).tagName).toBe(
+    "SPAN",
+  );
+});

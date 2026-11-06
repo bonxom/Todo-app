@@ -49,3 +49,8 @@ export const updateTaskInputSchema = z.strictObject({
 });
 export type CreateTaskInput = z.infer<typeof createTaskInputSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskInputSchema>;
+
+export const deleteTaskInputSchema = z.strictObject({
+  idempotencyKey,
+  taskId: id,
+});

@@ -210,7 +210,7 @@ export interface ApiEnvelope<T> {
   data: T;
 }
 export type AgentActivityKind =
-  "task_created" | "task_updated" | "proposal_created";
+  "task_created" | "task_updated" | "task_deleted" | "proposal_created";
 export type AgentActivityStatus = "succeeded" | "failed" | "unknown";
 
 export interface AgentActivity {

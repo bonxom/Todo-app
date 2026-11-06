@@ -1,3 +1,5 @@
+import ChatAvatar from "./ChatAvatar";
+import { useAuthStore } from "@/stores/useAuthStore";
 import AttachmentComposer from "./AttachmentComposer";
 import { FILE_ACCEPT, checkFiles } from "./attachmentFiles";
 import AttachmentList from "./AttachmentList";
@@ -22,6 +24,7 @@ const ChatField = ({
   disabled = false,
   chat,
 }) => {
+  const userAvatar = useAuthStore((state) => state.user?.avatarUrl);
   const agentSession = useContext(AgentSessionContext);
   const [localFiles, setLocalFiles] = useState([]);
   const [localInputValue, setLocalInputValue] = useState("");
@@ -349,8 +352,17 @@ const ChatField = ({
             .map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                className={`chat-message-row ${message.sender === "user" ? "chat-message-row--user" : "chat-message-row--agent"}`}
               >
+                <ChatAvatar
+                  key={
+                    message.sender === "user"
+                      ? userAvatar || "default"
+                      : "agent"
+                  }
+                  isUser={message.sender === "user"}
+                  src={message.sender === "user" ? userAvatar : undefined}
+                />
                 <div
                   className={`chat-message ${message.sender === "user" ? "chat-message--user" : "chat-message--bot"} rounded-2xl px-4 py-3 ${
                     message.sender === "user"
@@ -442,7 +454,8 @@ const ChatField = ({
         )}
 
         {isTyping && (
-          <div className="flex justify-start">
+          <div className="chat-message-row chat-message-row--agent">
+            <ChatAvatar />
             <div
               className="rounded-2xl rounded-bl-sm border px-4 py-3"
               style={botMessageStyle}

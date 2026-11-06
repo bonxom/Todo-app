@@ -10,7 +10,7 @@ The model chooses when to ask and which tools to call. After the user answers a 
 
 Orbit enforces an on-demand Markdown skill architecture combined with core business tools:
 
-- **Core Business Tools**: Tools managing the primary application domains (`orbit_get_me`, `orbit_list_*`, `orbit_get_task`, `orbit_create_task`, `orbit_update_task`) are core tools exposed and executable immediately in round 0 without requiring skill pre-loading, following rules defined in the system prompt.
+- **Core Business Tools**: Tools managing the primary application domains (`orbit_get_me`, `orbit_list_*`, `orbit_get_task`, `orbit_create_task`, `orbit_update_task`, `orbit_delete_task`) are core tools exposed and executable immediately in round 0 without requiring skill pre-loading, following rules defined in the system prompt.
 - **Skill Registry (`backend/skills/registry.ts`)**: Loads maintainer-authored advisory skill directories from `backend/skills/content/<skillId>/manifest.json` and Markdown files (e.g. `gym`, `ielts`). Manifests are validated with strict schemas, path traversal/symlinks are strictly blocked via `realpath` checks, and each skill's version is a deterministic SHA-256 hash over its normalized manifest and sorted document contents.
 - **Internal Loaders**: The model has access to `load_skill({ skillId })` and `read_skill_document({ skillId, document })` for specialist advisory guidance from the catalog.
 - **Request-Bound Gate**: In subsequent requests where the payload contains verified full Markdown, specialist tools mapped by policy (`backend/skills/policy.ts`) are exposed. When the provider returns a valid response and the response is successfully checkpointed, the session confirms that request's snapshot. Tool dispatches are verified against the exact `sourceRequestId` that originated the call. Unmapped tools, tools without required skills loaded, or calls in the same batch as the loader are blocked (`SKILL_REQUIRED` / `TOOL_NOT_ALLOWED`).
@@ -104,3 +104,7 @@ Backend Vitest suite: 26 test files passed (213 unit/integration tests). Integra
 - Monotonic budget timer, timeout clamping, and oversized batch execution limits.
 - Compacting old loader results in conversation history without mutating stored turns.
 - Ask writes, menu lifecycle, and final-round summaries.
+
+## Task deletion
+
+`orbit_delete_task` deletes one explicitly requested, owned task using `taskId` and `idempotencyKey`. Deletion, stats rebuild and receipt persistence share the existing per-user write transaction. A matching deletion retry returns the owned receipt without looking up the deleted resource. Verified results include `deleted: true` and produce `task_deleted` activities without a detail link. Explicit proposal-generation turns continue to forbid direct writes.

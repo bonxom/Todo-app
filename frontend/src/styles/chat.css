@@ -539,3 +539,31 @@
   background: inherit;
   border: 1px solid currentColor;
 }
+
+.chat-message-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.chat-message-row--user {
+  flex-direction: row-reverse;
+}
+.chat-avatar {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface-muted);
+  margin-top: 4px;
+}
+.chat-avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+.chat-message-row > .chat-message {
+  max-width: calc(100% - 36px);
+}

@@ -60,6 +60,28 @@ afterEach(() => {
 });
 
 describe("Personal Skills runtime integration", () => {
+  it("passes only cached attachment text to chat and checkpoints it for future turns", async () => {
+    const checkpoint = vi.fn();
+    completion.mockImplementationOnce(async (payload) => {
+      expect(JSON.stringify(payload.messages)).toContain("Green frog");
+      expect(JSON.stringify(payload.messages)).not.toContain("image_url");
+      expect(
+        payload.messages
+          .filter((m: { role: string }) => m.role === "user")
+          .at(-1).content,
+      ).toBe("Describe it\n\nAttachment descriptions: Green frog");
+      return done("A green frog");
+    });
+    await agentService.chatWithMcp("Describe it", context, {
+      personalSnapshot: [],
+      attachmentContext: "Attachment descriptions: Green frog",
+      checkpoint,
+    });
+    expect(JSON.stringify(checkpoint.mock.lastCall?.[0])).toContain(
+      "Green frog",
+    );
+  });
+
   it("replays provider reasoning across tool rounds and checkpoints", async () => {
     const checkpoint = vi.fn();
     completion

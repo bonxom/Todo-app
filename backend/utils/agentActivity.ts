@@ -34,19 +34,29 @@ export function projectAgentActivity(
   input: ProjectToolActivityInput,
 ): AgentActivity | null {
   const { toolName, requestId, toolCallId } = input;
-  if (toolName !== "orbit_create_task" && toolName !== "orbit_update_task")
+  if (
+    toolName !== "orbit_create_task" &&
+    toolName !== "orbit_update_task" &&
+    toolName !== "orbit_delete_task"
+  )
     return null;
   const kind: AgentActivityKind =
-    toolName === "orbit_create_task" ? "task_created" : "task_updated";
+    toolName === "orbit_create_task"
+      ? "task_created"
+      : toolName === "orbit_delete_task"
+        ? "task_deleted"
+        : "task_updated";
   const result = record(input.result);
-  let task = record(record(result?.structuredContent)?.task);
+  let structured = record(result?.structuredContent);
+  let task = record(structured?.task);
   if (!task && Array.isArray(result?.content)) {
     for (const item of result.content) {
       const content = record(item);
       if (content?.type !== "text" || typeof content.text !== "string")
         continue;
       try {
-        task = record(record(JSON.parse(content.text))?.task);
+        structured = record(JSON.parse(content.text));
+        task = record(structured?.task);
       } catch {
         /* Not a task result. */
       }
@@ -62,7 +72,8 @@ export function projectAgentActivity(
       ? "unknown"
       : result?.isError === true
         ? "failed"
-        : taskId
+        : taskId &&
+            (toolName !== "orbit_delete_task" || structured?.deleted === true)
           ? "succeeded"
           : "unknown";
   const resourceId = status === "succeeded" ? taskId : undefined;
@@ -74,7 +85,9 @@ export function projectAgentActivity(
         ? input.args.title
         : toolName === "orbit_create_task"
           ? "Tạo công việc"
-          : "Cập nhật công việc";
+          : toolName === "orbit_delete_task"
+            ? "Xóa công việc"
+            : "Cập nhật công việc";
   return {
     id: generateActivityId(requestId, toolCallId, kind, resourceId),
     requestId,

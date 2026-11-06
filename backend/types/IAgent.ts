@@ -28,6 +28,7 @@ import type { SkillReadMetadata } from "./IChatTurn.js";
 import type { PersonalSkillSnapshot } from "../services/agentPersonalSkillService.js";
 
 export interface AgentMemory {
+  attachmentContext?: string;
   budget?: AgentBudget;
   mode?: AgentMode;
   intent?: ProposalIntent;

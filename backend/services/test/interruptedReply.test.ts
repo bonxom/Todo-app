@@ -133,3 +133,19 @@ describe("interrupted reply", () => {
     }
   });
 });
+
+it("reports only confirmed deletions after an interrupted reply", () => {
+  const task = { id: "task-1", title: "Old task" };
+  expect(
+    interruptedReply(
+      transcript("orbit_delete_task", {
+        structuredContent: { task, deleted: true },
+      }),
+    ),
+  ).toContain("Đã xóa công việc: Old task");
+  expect(
+    interruptedReply(
+      transcript("orbit_delete_task", { structuredContent: { task } }),
+    ),
+  ).toBe(INTERRUPTED_REPLY);
+});

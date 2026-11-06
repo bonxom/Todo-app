@@ -53,7 +53,9 @@ test.describe("Agent Workspace E2E", () => {
 
     await page.goto("/agent?conversation=conv-e2e-1");
     await expect(
-      page.getByText("I have prepared the plan and created the required tasks."),
+      page.getByText(
+        "I have prepared the plan and created the required tasks.",
+      ),
     ).toBeVisible();
   });
 
@@ -89,7 +91,7 @@ test.describe("Agent Workspace E2E", () => {
     const dialog = page.getByRole("dialog").last();
     await expect(dialog).toContainText("Conversation History");
     const firstFocus = dialog.getByRole("textbox", {
-      name: "Search conversations...",
+      name: "Search conversations",
     });
     await expect(firstFocus).toBeFocused();
     const lastButton = dialog.getByRole("button").last();

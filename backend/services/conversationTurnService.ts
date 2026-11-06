@@ -1,3 +1,4 @@
+import { attachmentVisionService } from "./attachmentVisionService.js";
 import { createAgentBudget } from "../utils/agentBudget.js";
 import type { McpContext } from "../mcp/context.js";
 import type { ChatTurn, SkillReadMetadata } from "../types/IChatTurn.js";
@@ -67,6 +68,11 @@ export async function runConversationTurn(
         };
       }
     }
+    const attachmentContext = await attachmentVisionService.context(
+      String(context.user._id),
+      turn.conversationId,
+      turn.attachments ?? [],
+    );
     const response = await agentService.chatWithMcp(
       turn.userInput,
       {
@@ -81,6 +87,7 @@ export async function runConversationTurn(
       },
       {
         budget,
+        attachmentContext,
         mode: turn.mode ?? "auto",
         intent: turn.intent,
         projectContext,

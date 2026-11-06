@@ -66,7 +66,48 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
     await mongoose.disconnect();
   });
 
-  it("discovers six tools for internal chat and executes a write over the real SDK", async () => {
+  it("deletes atomically with stats and replays receipt after deletion", async () => {
+    const ctx = context();
+    const created = await taskWriteService.create(
+      { title: "delete integration", idempotencyKey: randomUUID() },
+      ctx,
+    );
+    const args = { taskId: created.task.id, idempotencyKey: randomUUID() };
+    await expect(
+      taskWriteService.delete(args, context(userB)),
+    ).rejects.toBeDefined();
+    expect(await Task.findById(args.taskId)).not.toBeNull();
+    const before = await statService.getStats(userA);
+    const deleted = await taskWriteService.delete(args, ctx);
+    expect(deleted).toMatchObject({ deleted: true, task: { id: args.taskId } });
+    expect(await Task.findById(args.taskId)).toBeNull();
+    expect(await taskWriteService.delete(args, ctx)).toEqual(deleted);
+    const after = await statService.getStats(userA);
+    expect(after).not.toEqual(before);
+    await expect(
+      taskWriteService.delete({ ...args, idempotencyKey: randomUUID() }, ctx),
+    ).rejects.toBeDefined();
+  });
+
+  it("rolls deletion back if saving its receipt fails", async () => {
+    const ctx = context();
+    const created = await taskWriteService.create(
+      { title: "rollback delete", idempotencyKey: randomUUID() },
+      ctx,
+    );
+    vi.spyOn(McpWriteReceipt, "create").mockRejectedValueOnce(
+      new Error("receipt unavailable"),
+    );
+    await expect(
+      taskWriteService.delete(
+        { taskId: created.task.id, idempotencyKey: randomUUID() },
+        ctx,
+      ),
+    ).rejects.toThrow("receipt unavailable");
+    expect(await Task.findById(created.task.id)).not.toBeNull();
+  });
+
+  it("discovers eight tools for internal chat and executes a write over the real SDK", async () => {
     const server = createOrbitMcpServer(context(userB));
     const client = new Client({ name: "write-test", version: "1" });
     const [s, c] = InMemoryTransport.createLinkedPair();
@@ -74,7 +115,7 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
       await server.connect(s);
       await client.connect(c);
       const tools = (await client.listTools()).tools;
-      expect(tools).toHaveLength(7);
+      expect(tools).toHaveLength(8);
       expect(tools.map((tool) => tool.name)).not.toEqual(
         expect.arrayContaining(["orbit_start_task"]),
       );
@@ -86,7 +127,7 @@ describe.skipIf(!uri)("Phase 4 MongoDB replica-set writes", () => {
       );
       expect(
         tools.filter((t) => t.annotations?.readOnlyHint === false),
-      ).toHaveLength(2);
+      ).toHaveLength(3);
       const result = await client.callTool({
         name: "orbit_create_task",
         arguments: { idempotencyKey: randomUUID(), title: "SDK task" },

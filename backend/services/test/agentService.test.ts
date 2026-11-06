@@ -349,6 +349,7 @@ describe("Task proposal agent mode", () => {
     expect(toolNames).toContain("propose_tasks");
     expect(toolNames).not.toContain("orbit_create_task");
     expect(toolNames).not.toContain("orbit_update_task");
+    expect(toolNames).not.toContain("orbit_delete_task");
     expect(toolNames).toContain("orbit_list_categories");
     expect(toolNames).toContain("orbit_list_projects");
   });
@@ -418,6 +419,7 @@ describe("Automatic task proposal selection", () => {
       expect(names).toContain("propose_tasks");
       expect(names).not.toContain("orbit_create_task");
       expect(names).toContain("orbit_update_task");
+      expect(names).toContain("orbit_delete_task");
     },
   );
 
