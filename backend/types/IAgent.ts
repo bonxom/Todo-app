@@ -24,6 +24,8 @@ export type AgentInteraction = {
 };
 
 import type { AgentActivity } from "./IAgentActivity.js";
+import type { SkillReadMetadata } from "./IChatTurn.js";
+import type { PersonalSkillSnapshot } from "../services/agentPersonalSkillService.js";
 
 export interface AgentMemory {
   budget?: AgentBudget;
@@ -32,8 +34,11 @@ export interface AgentMemory {
   approvedInteraction?: AgentInteraction;
   projectContext?: { id: string; name: string } | null;
   history?: ChatCompletionMessageParam[];
+  personalSnapshot?: PersonalSkillSnapshot;
+  onSkillsRead?: (skills: SkillReadMetadata[]) => void;
   checkpoint?: (
     messages: ChatCompletionMessageParam[],
     activities?: AgentActivity[],
+    skillsRead?: SkillReadMetadata[],
   ) => Promise<void>;
 }

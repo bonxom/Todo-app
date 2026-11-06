@@ -36,7 +36,11 @@ export function resultFor(
     | "response"
     | "interactions"
     | "expiresAt"
-  > & { messages?: ChatTurn["messages"]; activities?: AgentActivity[] },
+  > & {
+    messages?: ChatTurn["messages"];
+    activities?: AgentActivity[];
+    skillsRead?: ChatTurn["skillsRead"];
+  },
   envelope?: { proposal?: ProposalView; a2ui?: unknown; text?: string },
 ) {
   const expired =
@@ -54,6 +58,7 @@ export function resultFor(
         ? ("completed" as const)
         : turn.status,
     activities: turn.activities ?? [],
+    skillsRead: turn.skillsRead ?? [],
     ...((turn.status === "completed" || turn.status === "awaiting_user") &&
     interaction
       ? { interaction: publicInteraction(interaction) }
@@ -93,6 +98,7 @@ export function turnMessages(
       text: i.question,
       timestamp: turn.updatedAt.toISOString(),
       interaction: publicInteraction(i),
+      skillsRead: turn.skillsRead ?? [],
     })),
     ...((turn.response && !turn.interactions?.length) || expired
       ? [
@@ -103,6 +109,7 @@ export function turnMessages(
               envelope?.text ??
               (turn.response || interruptedReply(turn.messages)),
             timestamp: turn.updatedAt.toISOString(),
+            skillsRead: turn.skillsRead ?? [],
             ...(envelope?.proposal ? { proposal: envelope.proposal } : {}),
             ...(envelope?.a2ui ? { a2ui: envelope.a2ui } : {}),
           },

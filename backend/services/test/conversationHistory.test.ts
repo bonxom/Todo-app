@@ -54,6 +54,52 @@ it("compacts old successful loader results before the history limit without muta
   expect(turns).toEqual(before);
 });
 
+it("compacts old successful personal read_skill results and removes full instructions", () => {
+  const turns = [
+    {
+      messages: [
+        {
+          role: "assistant" as const,
+          tool_calls: [
+            {
+              id: "read-old",
+              type: "function" as const,
+              function: {
+                name: "read_skill",
+                arguments:
+                  '{"skillId":"11111111-1111-4111-8111-111111111111","version":1}',
+              },
+            },
+          ],
+        },
+        {
+          role: "tool" as const,
+          tool_call_id: "read-old",
+          content: JSON.stringify({
+            id: "11111111-1111-4111-8111-111111111111",
+            name: "My Grammar",
+            version: 1,
+            instructions: "SUPER_SECRET_OLD_INSTRUCTIONS",
+          }),
+        },
+      ],
+      status: "completed",
+    },
+  ];
+  const result = prepareHistory(turns);
+  expect(result).toHaveLength(2);
+  const toolMsg = JSON.parse(result[1].content as string);
+  expect(toolMsg).toMatchObject({
+    id: "11111111-1111-4111-8111-111111111111",
+    name: "My Grammar",
+    version: 1,
+    previouslyLoaded: true,
+    validForCurrentTurn: false,
+  });
+  expect(toolMsg.instructions).toBeUndefined();
+  expect(JSON.stringify(result)).not.toContain("SUPER_SECRET_OLD_INSTRUCTIONS");
+});
+
 it("preserves task proposal turns with propose_tasks tool calls and assistant summary", () => {
   const turns = [
     {

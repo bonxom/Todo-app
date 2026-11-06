@@ -5,6 +5,12 @@ import type { AgentInteraction, AgentMode } from "./IAgent.js";
 import type { ProposalIntent } from "./A2UI/ITaskProposal.js";
 import type { AgentActivity } from "./IAgentActivity.js";
 
+export interface SkillReadMetadata {
+  id: string;
+  name: string;
+  version: number;
+}
+
 export interface ChatTurn {
   _id: string;
   conversationId: string;
@@ -25,6 +31,7 @@ export interface ChatTurn {
   response: string;
   messages: ChatCompletionMessageParam[];
   activities?: AgentActivity[];
+  skillsRead?: SkillReadMetadata[];
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;

@@ -59,7 +59,8 @@ export function prepareHistory(
           if (
             call.type === "function" &&
             (call.function.name === "load_skill" ||
-              call.function.name === "read_skill_document")
+              call.function.name === "read_skill_document" ||
+              call.function.name === "read_skill")
           ) {
             loaderCallIds.add(call.id);
           }
@@ -78,21 +79,32 @@ export function prepareHistory(
             parsed &&
             typeof parsed === "object" &&
             !parsed.isError &&
-            parsed.executed !== false &&
-            parsed.skillId &&
-            parsed.document &&
-            parsed.version
+            parsed.executed !== false
           ) {
-            return {
-              ...message,
-              content: JSON.stringify({
-                skillId: parsed.skillId,
-                document: parsed.document,
-                version: parsed.version,
-                previouslyLoaded: true,
-                validForCurrentTurn: false,
-              }),
-            };
+            if (parsed.skillId && parsed.document && parsed.version) {
+              return {
+                ...message,
+                content: JSON.stringify({
+                  skillId: parsed.skillId,
+                  document: parsed.document,
+                  version: parsed.version,
+                  previouslyLoaded: true,
+                  validForCurrentTurn: false,
+                }),
+              };
+            }
+            if (parsed.id && parsed.name && parsed.version) {
+              return {
+                ...message,
+                content: JSON.stringify({
+                  id: parsed.id,
+                  name: parsed.name,
+                  version: parsed.version,
+                  previouslyLoaded: true,
+                  validForCurrentTurn: false,
+                }),
+              };
+            }
           }
         } catch {
           // not JSON, keep unchanged

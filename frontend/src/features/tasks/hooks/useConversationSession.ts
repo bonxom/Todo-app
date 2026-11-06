@@ -202,13 +202,15 @@ export function useConversationSession(options?: ConversationSessionOptions) {
         return [...previous, ...newOnes];
       });
     }
-    if (result.data && !result.interaction)
+    if (result.data || result.interaction)
       setMessages((previous) => [
         ...previous.filter((message) => message.id !== `${requestId}:bot`),
         {
           id: `${requestId}:bot`,
           sender: "bot",
-          text: result.data,
+          skillsRead: result.skillsRead ?? [],
+          text: result.interaction?.question ?? result.data,
+          interaction: result.interaction,
           proposal: result.proposal,
           a2ui: result.a2ui,
           timestamp: new Date().toISOString(),

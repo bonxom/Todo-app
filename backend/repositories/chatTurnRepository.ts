@@ -6,7 +6,10 @@ import mongoose from "mongoose";
 import { createHash, randomUUID } from "node:crypto";
 import Conversation from "../models/Conversation.js";
 import ChatTurn from "../models/ChatTurn.js";
-import type { InteractionSelection } from "../types/IChatTurn.js";
+import type {
+  InteractionSelection,
+  SkillReadMetadata,
+} from "../types/IChatTurn.js";
 import type { AgentInteraction, AgentMode } from "../types/IAgent.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
 import { AppError } from "../error/AppError.js";
@@ -211,6 +214,7 @@ export const chatTurnRepository = {
     messages: ChatCompletionMessageParam[],
     executionToken?: string,
     activities?: AgentActivity[],
+    skillsRead?: SkillReadMetadata[],
   ) {
     const result = await ChatTurn.updateOne(
       {
@@ -225,6 +229,7 @@ export const chatTurnRepository = {
           ...(activities !== undefined
             ? { activities: deduplicateActivities(activities) }
             : {}),
+          ...(skillsRead !== undefined ? { skillsRead } : {}),
         },
       },
     );
@@ -257,6 +262,7 @@ export const chatTurnRepository = {
     status: "completed" | "failed",
     executionToken?: string,
     interaction?: AgentInteraction,
+    skillsRead?: SkillReadMetadata[],
   ) {
     // Commit final response and release the conversation together.
     await mongoose.connection.transaction(async (session) => {
@@ -268,7 +274,11 @@ export const chatTurnRepository = {
           ...(executionToken === undefined ? {} : { executionToken }),
         },
         {
-          $set: { response, status },
+          $set: {
+            response,
+            status,
+            ...(skillsRead !== undefined ? { skillsRead } : {}),
+          },
           ...(interaction ? { $push: { interactions: interaction } } : {}),
         },
         { session },
@@ -286,6 +296,7 @@ export const chatTurnRepository = {
     executionToken: string,
     preparedItems: ProposalItem[],
     response: string,
+    skillsRead?: SkillReadMetadata[],
   ): Promise<ITaskProposal | null> {
     await taskProposalRepository.initIndexes();
     return mongoose.connection.transaction(async (session) => {
@@ -321,6 +332,7 @@ export const chatTurnRepository = {
             response,
             status: "completed",
             proposalId,
+            ...(skillsRead !== undefined ? { skillsRead } : {}),
           },
         },
         { session },

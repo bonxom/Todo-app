@@ -245,3 +245,11 @@ pnpm run build
 Nếu full formatting check có baseline failures, chạy thêm `pnpm exec prettier --check` với chính xác từng file feature đã đổi và báo cả hai kết quả; không format unrelated files. Actual Mongo concurrency/provider smoke phải được ghi riêng với environment, result hoặc blocker.
 
 Coverage: S1→1,3,4,5,6; S2→1,5,6; S3→2,5,6; S4→3,4; S5→3,4; S6→2,4; S7→5,6; S8→4,5,6; S9→4,6.
+
+## Review sau implementation — 2026-11-06
+
+Task 1–6 đã có implementation và được review/sửa lỗi trên `feat/agent-workspace`. Checklist phía trên giữ nguyên lịch sử kế hoạch; kết quả thực thi, regression tests và các gate thực tế được ghi tại [báo cáo review](../../ai/2026-11-06-personal-skills-review.vi.md).
+
+Các sửa chữa trọng yếu: bắt buộc transaction quota, tách trusted loader khỏi template mặc định, giữ draft/version gốc và chặn navigation, đồng bộ skillsRead live/history, bảo vệ session khi mutation hoàn tất muộn, sửa mobile gallery và modal keyboard.
+
+Provider smoke thật hai tài khoản chưa chạy. Full format check còn baseline ở file ngoài phạm vi; scoped format check được dùng để xác minh tất cả file thay đổi. Chưa commit các thay đổi Personal Skills.

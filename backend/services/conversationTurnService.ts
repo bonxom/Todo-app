@@ -1,6 +1,6 @@
 import { createAgentBudget } from "../utils/agentBudget.js";
 import type { McpContext } from "../mcp/context.js";
-import type { ChatTurn } from "../types/IChatTurn.js";
+import type { ChatTurn, SkillReadMetadata } from "../types/IChatTurn.js";
 import type { AgentInteraction } from "../types/IAgent.js";
 import type { ProposalItem } from "../types/A2UI/ITaskProposal.js";
 import type { AgentActivity } from "../types/IAgentActivity.js";
@@ -28,6 +28,7 @@ export async function runConversationTurn(
   const budget = createAgentBudget();
   let latestMessages = turn.messages;
   let latestActivities: AgentActivity[] = turn.activities ?? [];
+  let latestSkillsRead: SkillReadMetadata[] = turn.skillsRead ?? [];
   try {
     if (selectedInteraction?.status === "cancelled") {
       const response = "";
@@ -36,12 +37,15 @@ export async function runConversationTurn(
         response,
         "completed",
         turn.executionToken,
+        undefined,
+        latestSkillsRead,
       );
       return resultFor({
         ...turn,
         activities: latestActivities,
         status: "completed",
         response,
+        skillsRead: latestSkillsRead,
       });
     }
     const previous = await repository.turns(
@@ -85,17 +89,24 @@ export async function runConversationTurn(
           selectedInteraction?.kind === "confirmation"
             ? selectedInteraction
             : undefined,
-        checkpoint: async (messages, activities) => {
+        checkpoint: async (messages, activities, skillsRead) => {
           latestMessages = [...messages];
           if (activities) {
             latestActivities = [...activities];
+          }
+          if (skillsRead) {
+            latestSkillsRead = [...skillsRead];
           }
           await repository.checkpoint(
             turn._id,
             messages,
             turn.executionToken,
             activities,
+            skillsRead,
           );
+        },
+        onSkillsRead: (skillsRead) => {
+          latestSkillsRead = [...skillsRead];
         },
       },
     );
@@ -107,6 +118,7 @@ export async function runConversationTurn(
           "completed",
           turn.executionToken,
           response.interaction,
+          latestSkillsRead,
         );
         return resultFor({
           ...turn,
@@ -114,6 +126,7 @@ export async function runConversationTurn(
           status: "completed",
           response: response.interaction.question,
           interactions: [...(turn.interactions ?? []), response.interaction],
+          skillsRead: latestSkillsRead,
         });
       }
       if ("proposalItems" in response) {
@@ -131,12 +144,15 @@ export async function runConversationTurn(
             guidance,
             "completed",
             turn.executionToken,
+            undefined,
+            latestSkillsRead,
           );
           return resultFor({
             ...turn,
             activities: latestActivities,
             status: "completed",
             response: guidance,
+            skillsRead: latestSkillsRead,
           });
         }
         const finalResponse =
@@ -147,6 +163,7 @@ export async function runConversationTurn(
           turn.executionToken,
           preparedItems,
           finalResponse,
+          latestSkillsRead,
         );
         if (proposal)
           latestActivities = [
@@ -165,6 +182,7 @@ export async function runConversationTurn(
             activities: latestActivities,
             status: "completed",
             response: finalResponse,
+            skillsRead: latestSkillsRead,
           },
           envelope
             ? { proposal: envelope.proposal, a2ui: envelope.a2ui }
@@ -177,16 +195,26 @@ export async function runConversationTurn(
       response,
       "completed",
       turn.executionToken,
+      undefined,
+      latestSkillsRead,
     );
     return resultFor({
       ...turn,
       activities: latestActivities,
       status: "completed",
       response,
+      skillsRead: latestSkillsRead,
     });
   } catch (error) {
     const response = interruptedReply(latestMessages);
-    await repository.finish(turn._id, response, "failed", turn.executionToken);
+    await repository.finish(
+      turn._id,
+      response,
+      "failed",
+      turn.executionToken,
+      undefined,
+      latestSkillsRead,
+    );
     console.warn({
       event: "chat_turn_failed",
       requestId: context.requestId,
@@ -197,6 +225,7 @@ export async function runConversationTurn(
       activities: latestActivities,
       status: "failed",
       response,
+      skillsRead: latestSkillsRead,
     });
   }
 }

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   History,
   PanelRightClose,
   PanelRightOpen,
   Sparkles,
+  BookOpen,
   X,
   AlertCircle,
   Plus,
@@ -203,8 +205,27 @@ export default function AgentPage() {
             )}
             <Sparkles className="h-5 w-5 text-[var(--color-primary)]" />
             <span className="font-semibold text-[var(--color-text)]">
-              Orbit Agent Workspace
+              Orbit Agent
             </span>
+
+            <nav
+              aria-label="Điều hướng Agent"
+              className="ml-3 flex items-center rounded-lg border border-[var(--color-border)] p-0.5 bg-[var(--color-bg-secondary)]"
+            >
+              <Link
+                to="/agent"
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold bg-[var(--color-bg-primary)] text-[var(--color-text)] shadow-xs"
+              >
+                <span>Trò chuyện</span>
+              </Link>
+              <Link
+                to="/agent/skills"
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>Kỹ năng</span>
+              </Link>
+            </nav>
           </div>
 
           <div className="flex items-center gap-2">

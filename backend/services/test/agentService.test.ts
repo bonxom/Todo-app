@@ -1,3 +1,6 @@
+vi.mock("../personalSkillService.js", () => ({
+  personalSkillService: { getEnabledSnapshot: async () => [] },
+}));
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
 const completionCreate = vi.hoisted(() => vi.fn());
@@ -144,7 +147,7 @@ describe("Ask runner", () => {
     expect(read).toHaveBeenCalledTimes(1);
     expect(completionCreate).toHaveBeenCalledTimes(1);
     const results = saved.filter((message) => message.role === "tool");
-    expect(results).toHaveLength(3);
+    expect(results).toHaveLength(4);
     expect(
       results.find((message) => message.tool_call_id === "ask1")?.content,
     ).toContain("question_displayed");

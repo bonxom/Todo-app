@@ -1,3 +1,6 @@
+vi.mock("../personalSkillService.js", () => ({
+  personalSkillService: { getEnabledSnapshot: async () => [] },
+}));
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Types } from "mongoose";
 

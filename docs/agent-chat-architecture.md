@@ -82,6 +82,18 @@ Specification: `docs/superpowers/specs/2026-11-06-agent-workspace.md`
 - Persisted with deterministic deduplication keys `(requestId, toolCallId, kind, resourceId)`.
 - If an LLM call fails or times out after tools have successfully executed, the confirmed activities remain recorded and available in `resultFor` and `GET /api/ai/conversations/:id`.
 
+## Personal Skills & Advisory Guidance
+
+Specification: `docs/superpowers/specs/2026-11-06-personal-skills.md`
+Operational Reference: `docs/ai/personal-skills.md`
+
+- **Advisory Only**: Personal skills provide customizable user Markdown instructions to the Orbit Agent. They are strictly advisory context and cannot satisfy security prerequisites or alter tool permissions.
+- **Per-Turn Snapshot**: At the beginning of each turn in `chatWithMcp`, an immutable snapshot of enabled user skills is captured. Changes to skills apply starting on the next turn.
+- **In-Turn Discovery**: Model messages are pre-seeded with a valid `list_skills` assistant and tool exchange providing catalog overview without full instruction text, preserving provider rounds.
+- **On-Demand Reading & Deduplication**: Model calls `read_skill({ skillId, version })` to read full instructions within a 30,000-character turn budget. Repeated reads of the same version deduplicate content without inflating budget.
+- **History Sanitization**: Prior turn `read_skill` tool responses are compacted to metadata-only summaries (`validForCurrentTurn: false`) to prevent stale instructions from re-executing.
+- **Read Badges**: Persisted read records (`skillsRead: [{ id, name, version }]`) are projected on bot chat messages, linking directly to the editor with version change indicators.
+
 ## Verification
 
 Backend Vitest suite: 26 test files passed (213 unit/integration tests). Integration tests cover:

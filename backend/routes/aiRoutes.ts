@@ -1,4 +1,5 @@
 import attachmentRoutes from "./attachmentRoutes.js";
+import skillRoutes from "./skillRoutes.js";
 import express from "express";
 import {
   generateTasksWithRequirement,
@@ -34,6 +35,7 @@ router.use((_req, res, next) => {
 });
 
 router.use(attachmentRoutes);
+router.use(skillRoutes);
 
 router.post(
   "/generate-tasks",

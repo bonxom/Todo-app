@@ -22,7 +22,7 @@ test.describe("Agent Workspace E2E", () => {
 
     // On /agent
     await page.goto("/agent");
-    await expect(page.getByText("Orbit Agent Workspace")).toBeVisible();
+    await expect(page.getByText("Orbit Agent", { exact: true })).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Open assistant" }),
     ).not.toBeVisible();

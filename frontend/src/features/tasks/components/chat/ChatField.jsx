@@ -13,6 +13,7 @@ import SlashCommandMenu from "./SlashCommandMenu";
 import { filterTools } from "./toolCatalog";
 import { formatDateTime } from "@/shared/utils/dateTime";
 import { TaskProposalMessage } from "./A2UI/TaskProposalMessage";
+import { SkillReadBadge } from "@/features/agent/skills/SkillReadBadge";
 
 const ChatField = ({
   messages,
@@ -409,6 +410,18 @@ const ChatField = ({
                       </>
                     )}
                   </div>
+                  {message.sender !== "user" &&
+                    message.skillsRead &&
+                    message.skillsRead.length > 0 && (
+                      <div className="mt-2 mb-1 flex flex-wrap gap-1.5">
+                        {message.skillsRead.map((skill) => (
+                          <SkillReadBadge
+                            key={`${skill.id}:${skill.version}`}
+                            skill={skill}
+                          />
+                        ))}
+                      </div>
+                    )}
                   <AttachmentList
                     conversationId={chat?.conversationId}
                     files={message.attachments}
@@ -581,6 +594,20 @@ const ChatField = ({
               ← Back to question
             </button>
             <span>Your new message will replace the pending question.</span>
+          </div>
+        )}
+        {chat?.interaction && !showChatInput && (
+          <div className="flex flex-wrap gap-2">
+            {(
+              messages.find(
+                (message) => message.interaction?.id === chat.interaction.id,
+              )?.skillsRead ?? []
+            ).map((skill) => (
+              <SkillReadBadge
+                key={`${skill.id}:${skill.version}`}
+                skill={skill}
+              />
+            ))}
           </div>
         )}
         {chat?.interaction && !showChatInput && (

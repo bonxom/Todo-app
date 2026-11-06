@@ -52,6 +52,29 @@ export const routes: RouteObject[] = [
               Component: (await import("../features/agent/AgentPage")).default,
             }),
           },
+          {
+            path: "/agent/skills",
+            lazy: async () => ({
+              Component: (await import("../features/agent/skills/SkillsPage"))
+                .SkillsPage,
+            }),
+          },
+          {
+            path: "/agent/skills/new",
+            lazy: async () => ({
+              Component: (
+                await import("../features/agent/skills/SkillEditorPage")
+              ).SkillEditorPage,
+            }),
+          },
+          {
+            path: "/agent/skills/:skillId",
+            lazy: async () => ({
+              Component: (
+                await import("../features/agent/skills/SkillEditorPage")
+              ).SkillEditorPage,
+            }),
+          },
         ],
       },
     ],

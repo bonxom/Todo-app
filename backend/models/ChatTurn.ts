@@ -43,6 +43,17 @@ const schema = new Schema<ChatTurn>(
     response: { type: String, default: "" },
     messages: { type: Schema.Types.Mixed, default: [] },
     activities: { type: Schema.Types.Mixed, default: [] },
+    skillsRead: {
+      type: [
+        {
+          _id: false,
+          id: String,
+          name: String,
+          version: Number,
+        },
+      ],
+      default: [],
+    },
     expiresAt: { type: Date, required: true },
   },
   { timestamps: true },

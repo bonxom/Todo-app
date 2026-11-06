@@ -1,3 +1,4 @@
+import type { SkillReadRecord } from "./skill";
 export type EntityId = string;
 export type TaskStatus = "pending" | "in-progress" | "completed" | "given-up";
 export type TaskPriority = "Low" | "Medium" | "High";
@@ -226,6 +227,7 @@ export interface AgentActivity {
 
 export type GenerateTasksResponse = ApiEnvelope<Task[]>;
 export interface ChatResponse extends ApiEnvelope<string> {
+  skillsRead?: SkillReadRecord[];
   status?: "processing" | "completed" | "failed" | "cancelled";
   conversationId?: string;
   requestId?: string;
@@ -236,6 +238,7 @@ export interface ChatResponse extends ApiEnvelope<string> {
 }
 
 export interface ConversationMessage {
+  skillsRead?: SkillReadRecord[];
   attachments?: ChatAttachment[];
   replyToInteractionId?: string;
   interaction?: AgentInteraction;
