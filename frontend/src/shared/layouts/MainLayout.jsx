@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar, {
   DESKTOP_BREAKPOINT,
   drawerWidthCollapsed,
@@ -56,8 +56,17 @@ const MainLayout = ({ children = null, assistant = null }) => {
       : drawerWidthCollapsed
     : 0;
 
+  const location = useLocation();
+  const isAgentRoute = location.pathname.startsWith("/agent");
+
   return (
-    <div className="ui-workspace-layout" style={{ "--sidebar-w": `${sidebarWidth}px`, "--topbar-height": `${TOPBAR_HEIGHT}px` }}>
+    <div
+      className="ui-workspace-layout"
+      style={{
+        "--sidebar-w": `${sidebarWidth}px`,
+        "--topbar-height": `${TOPBAR_HEIGHT}px`,
+      }}
+    >
       <Sidebar
         isDesktop={isDesktop}
         isExpanded={isSidebarExpanded}
@@ -81,7 +90,7 @@ const MainLayout = ({ children = null, assistant = null }) => {
       >
         <div className="ui-main-content">{children || <Outlet />}</div>
       </main>
-      {assistant}
+      {!isAgentRoute && assistant}
     </div>
   );
 };

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { AgentSessionContext } from "@/features/agent/agentSessionContext";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useTaskProposal } from "../../../hooks/A2UI/useTaskProposal";
 import type { ProposalEnvelope } from "@/shared/types/A2UI/taskProposal";
 import { TaskProposalSurface } from "./TaskProposalSurface";
@@ -16,7 +17,13 @@ export function TaskProposalMessage({
   onDirtyChange,
   disabled,
 }: Props) {
+  const session = useContext(AgentSessionContext);
+  const reloadConversation = session?.chat.reload;
+  const onSuccess = useCallback(() => {
+    void reloadConversation?.();
+  }, [reloadConversation]);
   const proposal = useTaskProposal({
+    onSuccess,
     conversationId: initialEnvelope.proposal.conversationId,
     initialEnvelope,
   });

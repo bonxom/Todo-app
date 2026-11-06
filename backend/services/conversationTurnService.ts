@@ -3,6 +3,7 @@ import type { McpContext } from "../mcp/context.js";
 import type { ChatTurn } from "../types/IChatTurn.js";
 import type { AgentInteraction } from "../types/IAgent.js";
 import type { ProposalItem } from "../types/A2UI/ITaskProposal.js";
+import type { AgentActivity } from "../types/IAgentActivity.js";
 import { agentService } from "./agentService.js";
 import { chatTurnRepository as repository } from "../repositories/chatTurnRepository.js";
 import { interruptedReply } from "../utils/interruptedReply.js";
@@ -16,6 +17,8 @@ import {
 } from "./A2UI/taskProposalGenerationService.js";
 import { taskProposalUiService } from "./A2UI/taskProposalUiService.js";
 import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
+import { projectPersistedProposal } from "../utils/agentActivity.js";
+import { projectRepository } from "../repositories/projectRepository.js";
 
 export async function runConversationTurn(
   turn: ChatTurn,
@@ -24,6 +27,7 @@ export async function runConversationTurn(
 ) {
   const budget = createAgentBudget();
   let latestMessages = turn.messages;
+  let latestActivities: AgentActivity[] = turn.activities ?? [];
   try {
     if (selectedInteraction?.status === "cancelled") {
       const response = "";
@@ -33,7 +37,12 @@ export async function runConversationTurn(
         "completed",
         turn.executionToken,
       );
-      return resultFor({ ...turn, status: "completed", response });
+      return resultFor({
+        ...turn,
+        activities: latestActivities,
+        status: "completed",
+        response,
+      });
     }
     const previous = await repository.turns(
       String(context.user._id),
@@ -41,6 +50,19 @@ export async function runConversationTurn(
       turn.sequence,
       20,
     );
+    let projectContext: { id: string; name: string } | null = null;
+    if (turn.contextProjectId) {
+      const project = await projectRepository.findOwnedById(
+        turn.contextProjectId,
+        context.user._id,
+      );
+      if (project) {
+        projectContext = {
+          id: String(project._id),
+          name: project.name,
+        };
+      }
+    }
     const response = await agentService.chatWithMcp(
       turn.userInput,
       {
@@ -57,14 +79,23 @@ export async function runConversationTurn(
         budget,
         mode: turn.mode ?? "auto",
         intent: turn.intent,
+        projectContext,
         history: prepareHistory(previous),
         approvedInteraction:
           selectedInteraction?.kind === "confirmation"
             ? selectedInteraction
             : undefined,
-        checkpoint: async (messages) => {
+        checkpoint: async (messages, activities) => {
           latestMessages = [...messages];
-          await repository.checkpoint(turn._id, messages, turn.executionToken);
+          if (activities) {
+            latestActivities = [...activities];
+          }
+          await repository.checkpoint(
+            turn._id,
+            messages,
+            turn.executionToken,
+            activities,
+          );
         },
       },
     );
@@ -79,6 +110,7 @@ export async function runConversationTurn(
         );
         return resultFor({
           ...turn,
+          activities: latestActivities,
           status: "completed",
           response: response.interaction.question,
           interactions: [...(turn.interactions ?? []), response.interaction],
@@ -102,6 +134,7 @@ export async function runConversationTurn(
           );
           return resultFor({
             ...turn,
+            activities: latestActivities,
             status: "completed",
             response: guidance,
           });
@@ -115,6 +148,11 @@ export async function runConversationTurn(
           preparedItems,
           finalResponse,
         );
+        if (proposal)
+          latestActivities = [
+            ...latestActivities,
+            ...projectPersistedProposal(proposal),
+          ];
         const envelope = proposal
           ? taskProposalUiService.present(
               toProposalView(proposal),
@@ -124,6 +162,7 @@ export async function runConversationTurn(
         return resultFor(
           {
             ...turn,
+            activities: latestActivities,
             status: "completed",
             response: finalResponse,
           },
@@ -139,7 +178,12 @@ export async function runConversationTurn(
       "completed",
       turn.executionToken,
     );
-    return resultFor({ ...turn, status: "completed", response });
+    return resultFor({
+      ...turn,
+      activities: latestActivities,
+      status: "completed",
+      response,
+    });
   } catch (error) {
     const response = interruptedReply(latestMessages);
     await repository.finish(turn._id, response, "failed", turn.executionToken);
@@ -150,6 +194,7 @@ export async function runConversationTurn(
     });
     return resultFor({
       ...turn,
+      activities: latestActivities,
       status: "failed",
       response,
     });

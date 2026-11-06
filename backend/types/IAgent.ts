@@ -23,11 +23,17 @@ export type AgentInteraction = {
   };
 };
 
+import type { AgentActivity } from "./IAgentActivity.js";
+
 export interface AgentMemory {
   budget?: AgentBudget;
   mode?: AgentMode;
   intent?: ProposalIntent;
   approvedInteraction?: AgentInteraction;
+  projectContext?: { id: string; name: string } | null;
   history?: ChatCompletionMessageParam[];
-  checkpoint?: (messages: ChatCompletionMessageParam[]) => Promise<void>;
+  checkpoint?: (
+    messages: ChatCompletionMessageParam[],
+    activities?: AgentActivity[],
+  ) => Promise<void>;
 }

@@ -208,6 +208,22 @@ export interface ApiEnvelope<T> {
   message: string;
   data: T;
 }
+export type AgentActivityKind =
+  "task_created" | "task_updated" | "proposal_created";
+export type AgentActivityStatus = "succeeded" | "failed" | "unknown";
+
+export interface AgentActivity {
+  id: string;
+  requestId: string;
+  toolCallId: string;
+  kind: AgentActivityKind;
+  status: AgentActivityStatus;
+  title: string;
+  resourceType?: "task" | "proposal";
+  resourceId?: string;
+  occurredAt: string;
+}
+
 export type GenerateTasksResponse = ApiEnvelope<Task[]>;
 export interface ChatResponse extends ApiEnvelope<string> {
   status?: "processing" | "completed" | "failed" | "cancelled";
@@ -216,6 +232,7 @@ export interface ChatResponse extends ApiEnvelope<string> {
   interaction?: AgentInteraction;
   proposal?: ProposalView;
   a2ui?: ProposalEnvelope["a2ui"];
+  activities?: AgentActivity[];
 }
 
 export interface ConversationMessage {
@@ -236,6 +253,11 @@ export interface ConversationSnapshot {
   messages: ConversationMessage[];
   mode: AgentMode;
   interaction?: AgentInteraction;
+  context?: {
+    projectId: string | null;
+    available: boolean;
+  };
+  activities?: AgentActivity[];
   capabilities?: {
     taskProposals?: boolean;
   };
@@ -247,4 +269,9 @@ export interface ConversationSnapshot {
     intent?: "task_proposal";
     selection?: InteractionSelection;
   }>;
+}
+
+export interface ConversationContextResponse {
+  conversationId: string;
+  contextProjectId: string | null;
 }

@@ -60,6 +60,7 @@ export interface ProposalEnvelope {
 }
 
 export interface ITaskProposal {
+  createdRequestId?: string;
   _id?: string;
   userId: mongoose.Types.ObjectId;
   conversationId: string;

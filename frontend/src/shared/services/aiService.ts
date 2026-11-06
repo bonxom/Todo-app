@@ -2,6 +2,7 @@ import axiosInstance from "./httpClient";
 import type {
   ChatPayload,
   ConversationSnapshot,
+  ConversationContextResponse,
   ChatResponse,
   GenerateTasksPayload,
   GenerateTasksResponse,
@@ -59,6 +60,15 @@ export const aiService = {
       { conversationId },
     );
     return response.data.conversationId;
+  },
+  updateConversationContext: async (
+    conversationId: string,
+    projectId: string | null,
+  ): Promise<ConversationContextResponse> => {
+    const response = await axiosInstance.patch<{
+      data: ConversationContextResponse;
+    }>(`/api/ai/conversations/${conversationId}/context`, { projectId });
+    return response.data.data;
   },
   // Generate tasks based on user requirement
   generateTasks: async (

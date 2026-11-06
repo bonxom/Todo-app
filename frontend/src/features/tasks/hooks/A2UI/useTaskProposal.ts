@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { AgentSessionContext } from "@/features/agent/agentSessionContext";
+import { useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type {
   ProposalAction,
@@ -19,15 +20,22 @@ export function useTaskProposal({
   onSuccess,
 }: UseTaskProposalOptions) {
   const queryClient = useQueryClient();
-  const [saved, setSaved] = useState<ProposalEnvelope>();
-  const [dirty, setDirty] = useState(false);
+  const agentSession = useContext(AgentSessionContext);
+  const sessions = agentSession?.proposalSessions;
+  const proposalKey = initialEnvelope.proposal.id;
+  const [saved, setSaved] = useState<ProposalEnvelope | undefined>(
+    () => sessions?.get(proposalKey)?.saved,
+  );
+  const [dirty, setDirty] = useState(
+    () => sessions?.get(proposalKey)?.dirty ?? false,
+  );
   const [pendingAction, setPendingAction] = useState<ProposalAction | null>(
-    null,
+    () => sessions?.get(proposalKey)?.pendingAction ?? null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
-  const pending = useRef<ProposalAction | null>(null);
+  const pending = useRef<ProposalAction | null>(pendingAction);
   const busy = useRef(false);
   const active = useRef(true);
   const sessionRevision = useAuthStore((state) => state.sessionRevision);
@@ -40,7 +48,10 @@ export function useTaskProposal({
       active.current = false;
     };
   }, [identity]);
-  const baseline = useRef(initialEnvelope);
+  useEffect(() => {
+    sessions?.set(proposalKey, { saved, dirty, pendingAction });
+  }, [sessions, proposalKey, saved, dirty, pendingAction]);
+  const baseline = useRef(saved ?? initialEnvelope);
   // Preserve dirty/uncertain drafts across unrelated history refreshes.
   useEffect(() => {
     if (

@@ -5,4 +5,6 @@ export const TaskProposalContext = createContext<{
   disabled?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
   onOpenTask?: (id: string) => void;
+  proposalDraft?: unknown;
+  onProposalDraftChange?: (draft: unknown) => void;
 } | null>(null);

@@ -1,6 +1,7 @@
 import type { AgentInteraction } from "../types/IAgent.js";
 import type { ChatTurn } from "../types/IChatTurn.js";
 import type { ProposalView } from "../types/A2UI/ITaskProposal.js";
+import type { AgentActivity } from "../types/IAgentActivity.js";
 import { interruptedReply } from "./interruptedReply.js";
 import { decodeFilename } from "./attachmentFile.js";
 
@@ -35,7 +36,7 @@ export function resultFor(
     | "response"
     | "interactions"
     | "expiresAt"
-  > & { messages?: ChatTurn["messages"] },
+  > & { messages?: ChatTurn["messages"]; activities?: AgentActivity[] },
   envelope?: { proposal?: ProposalView; a2ui?: unknown; text?: string },
 ) {
   const expired =
@@ -52,6 +53,7 @@ export function resultFor(
       : turn.status === "awaiting_user"
         ? ("completed" as const)
         : turn.status,
+    activities: turn.activities ?? [],
     ...((turn.status === "completed" || turn.status === "awaiting_user") &&
     interaction
       ? { interaction: publicInteraction(interaction) }

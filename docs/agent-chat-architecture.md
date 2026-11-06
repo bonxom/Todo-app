@@ -9,6 +9,7 @@ The model chooses when to ask and which tools to call. After the user answers a 
 ## Skills and Execution Policy Gate
 
 Orbit enforces an on-demand Markdown skill architecture combined with core business tools:
+
 - **Core Business Tools**: Tools managing the primary application domains (`orbit_get_me`, `orbit_list_*`, `orbit_get_task`, `orbit_create_task`, `orbit_update_task`) are core tools exposed and executable immediately in round 0 without requiring skill pre-loading, following rules defined in the system prompt.
 - **Skill Registry (`backend/skills/registry.ts`)**: Loads maintainer-authored advisory skill directories from `backend/skills/content/<skillId>/manifest.json` and Markdown files (e.g. `gym`, `ielts`). Manifests are validated with strict schemas, path traversal/symlinks are strictly blocked via `realpath` checks, and each skill's version is a deterministic SHA-256 hash over its normalized manifest and sorted document contents.
 - **Internal Loaders**: The model has access to `load_skill({ skillId })` and `read_skill_document({ skillId, document })` for specialist advisory guidance from the catalog.
@@ -16,6 +17,7 @@ Orbit enforces an on-demand Markdown skill architecture combined with core busin
 - **MCP Resources Adapter (`backend/mcp/resources/skills.ts`)**: Independent read-only adapter exposing `skill://{skillId}/{document}` for external MCP clients using the same Registry snapshot. External client resource reads do not mutate or grant agent session execution permissions.
 
 ### Operational Guidelines for Skills
+
 - **Adding a skill**: Create `backend/skills/content/<skillId>/manifest.json` with `id`, `description`, `entrypoint` (e.g. `SKILL.md`), and `documents` list. Add the matching `.md` files in that folder. Restart the server to reload the immutable registry.
 - **Mapping tools to skills**: Add new tools to `backend/skills/policy.ts`. By default, unmapped business tools are denied execution.
 - **Versioning**: Any edit to a skill manifest or document content automatically updates its deterministic SHA-256 version hash upon registry initialization.
@@ -51,9 +53,39 @@ Normal replies are always written by the model after it receives tool results. T
 
 On an actual error, confirmed tool results may supply a concise factual fallback. The previous verbose “Đã lưu thành công / Phần trả lời ... bị gián đoạn” wrapper has been removed. Unknown outcomes are not reported as successful. This does not eliminate real provider or hosting timeouts.
 
+## Agent Workspace and Shared Session Architecture
+
+Specification: `docs/superpowers/specs/2026-11-06-agent-workspace.md`
+
+### 1. Single Shared Session (`AgentSessionProvider`)
+
+- Chat session ownership is lifted to `AgentSessionProvider` wrapping the protected application layout in `router.tsx`.
+- `ChatBubble` and `AgentPage` (`/agent`) are mutually exclusive views of the same underlying session context. When navigating to `/agent`, `ChatBubble` is suppressed from the DOM, preventing duplicate fetches, concurrent requests, duplicate pending turn recoveries, and conflicting keyboard shortcuts.
+- In-memory draft management (`AgentDraft`) stores composer draft text, unuploaded files, and A2UI proposal drafts in memory, keyed by `conversationId` (or `'new'`). No raw files or sensitive drafts are serialized into browser `localStorage`.
+- Browser Back/Forward between conversations checks drafts before changing the URL. Moving between bubble and workspace uses client-side navigation and preserves drafts. Proposal receipts and pending request IDs also survive surface changes.
+- Account switching (`sessionRevision` change) immediately resets all in-memory drafts, conversation sessions, and cached responses to prevent cross-account data leakage.
+
+### 2. Conversation Project Context
+
+- `Conversation` models persist `contextProjectId: ObjectId | null`, default `null`.
+- Updated via `PATCH /api/ai/conversations/:conversationId/context` with strict Zod validation (`{ projectId: string | null }`).
+- Enforces strict project and conversation ownership checks: users can only assign projects they own to conversations they own.
+- Context mutations require an idle conversation lease. If a turn is currently processing (`busyUntil > now`), the context mutation is rejected with `409 CONVERSATION_BUSY`.
+- When claiming a turn, `chatTurnRepository.claim` snapshots `contextProjectId` atomically into `ChatTurn`. Retry turns reuse the exact context of the original claim.
+- Project context is JSON-encoded and labeled as data (`Active project context data: ...`). This guides the model but is not a prompt-injection security boundary; server-side tool authorization and ownership remain authoritative.
+- Completed projects can be chosen as conversational context, but domain invariants reject task creation in completed projects.
+
+### 3. Verified Activity Projections (`AgentActivity`)
+
+- Confirmed tool operations (`task_created`, `task_updated`) are checkpointed with turn messages. Proposal creation and confirmed proposal tasks are projected from committed TaskProposal records, including the saved confirmation request ID, so no best-effort secondary write can lose or falsely report a business outcome.
+- Filtered through a strict allowlist projection adapter: only supported action metadata and confirmed task ID/title are exposed; raw tool errors, traces, and connection details are excluded. Input task IDs alone never establish success.
+- Persisted with deterministic deduplication keys `(requestId, toolCallId, kind, resourceId)`.
+- If an LLM call fails or times out after tools have successfully executed, the confirmed activities remain recorded and available in `resultFor` and `GET /api/ai/conversations/:id`.
+
 ## Verification
 
 Backend Vitest suite: 26 test files passed (213 unit/integration tests). Integration tests cover:
+
 - Skill Registry discovery, path containment, traversal/symlink blocking, and deterministic versioning.
 - Internal loaders, request-bound snapshots, batching enforcement, and gate bypass prevention.
 - MCP Resources read-only adapter and metadata hashes.

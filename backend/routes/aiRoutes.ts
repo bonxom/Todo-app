@@ -8,6 +8,7 @@ import {
   getConversation,
   listConversations,
   getConversationCapabilities,
+  updateConversationContext,
 } from "../controllers/aiController.js";
 import { handleProposalAction } from "../controllers/A2UI/taskProposalController.js";
 import { protect } from "../middlewares/auth.js";
@@ -19,6 +20,7 @@ import {
   conversationCreateSchema,
   conversationParamsSchema,
   conversationQuerySchema,
+  conversationContextSchema,
 } from "../validations/aiValidation.js";
 import {
   proposalActionSchema,
@@ -52,6 +54,15 @@ router.post(
   protect,
   validate({ body: conversationCreateSchema }),
   createConversation,
+);
+router.patch(
+  "/conversations/:conversationId/context",
+  protect,
+  validate({
+    params: conversationParamsSchema,
+    body: conversationContextSchema,
+  }),
+  updateConversationContext,
 );
 router.get("/conversations/capabilities", protect, getConversationCapabilities);
 router.get("/conversations/latest", protect, getConversation);

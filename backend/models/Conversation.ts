@@ -10,6 +10,11 @@ const schema = new Schema(
     busyUntil: { type: Date, default: null },
     mode: { type: String, enum: ["auto", "ask"], default: "auto" },
     executionRevision: { type: Number, default: 0 },
+    contextProjectId: {
+      type: Schema.Types.ObjectId,
+      ref: "Project",
+      default: null,
+    },
   },
   { timestamps: true },
 );

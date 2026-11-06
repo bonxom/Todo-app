@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   X,
   Maximize2,
@@ -8,13 +8,20 @@ import {
   History,
   ArrowLeft,
   Sparkles,
+  ExternalLink,
 } from "lucide-react";
 import { useConversationChat } from "../../hooks/useConversationChat";
+import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import ChatField from "./ChatField";
 import RecentConversations from "./RecentConversations";
 import "@/styles/chat.css";
 
-const SmallChat = ({ onClose, isOpen = true }) => {
+const SmallChatView = ({
+  onClose,
+  isOpen = true,
+  onOpenInAgent = undefined,
+  chat,
+}) => {
   const [historyOpen, setHistoryOpen] = useState(false);
   const historyButton = useRef(null);
   const [displayMode, setDisplayMode] = useState("compact");
@@ -89,7 +96,6 @@ const SmallChat = ({ onClose, isOpen = true }) => {
     expanded: "Dock chat to right",
     docked: "Restore chat size",
   }[displayMode];
-  const chat = useConversationChat();
   const [chatRevision, setChatRevision] = useState(0);
 
   const handleOpenConversation = async (id) => {
@@ -239,6 +245,19 @@ const SmallChat = ({ onClose, isOpen = true }) => {
             </button>
             <button
               type="button"
+              onClick={() => {
+                if (onOpenInAgent) {
+                  onOpenInAgent();
+                }
+              }}
+              className="ui-icon-button ui-focus-ring h-8 w-8"
+              aria-label="Open in Agent"
+              title="Open in Agent"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
               onClick={() =>
                 setDisplayMode((current) => nextDisplayMode[current])
               }
@@ -339,4 +358,15 @@ const SmallChat = ({ onClose, isOpen = true }) => {
   );
 };
 
-export default SmallChat;
+function StandaloneChat(props) {
+  const chat = useConversationChat();
+  return <SmallChatView {...props} chat={chat} />;
+}
+export default function SmallChat(props) {
+  const session = useContext(AgentSessionContext);
+  return session ? (
+    <SmallChatView {...props} chat={session.chat} />
+  ) : (
+    <StandaloneChat {...props} />
+  );
+}

@@ -1,24 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ApiError } from "@/shared/services/apiError";
 import { aiService } from "@/shared/services/aiService";
 import { generateUUID } from "@/shared/utils/id";
 import { useAuthStore } from "@/stores/useAuthStore";
 import type {
   AgentMode,
   AgentInteraction,
+  AgentActivity,
   ChatPayload,
   ChatResponse,
   ConversationMessage,
 } from "@/shared/types/domain";
 
+export type ConversationSessionOptions = {
+  initialConversationId?: string;
+  skipInitialLoad?: boolean;
+};
+
 // Owns the current conversation snapshot and guards asynchronous session updates.
-export function useConversationSession() {
+export function useConversationSession(options?: ConversationSessionOptions) {
   const sessionRevision = useAuthStore((state) => state.sessionRevision);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
-  const [conversationId, setConversationId] = useState<string>();
+  const [conversationId, setConversationId] = useState<string | undefined>(
+    options?.initialConversationId,
+  );
   const [mode, setMode] = useState<AgentMode>("auto");
   const [interaction, setInteraction] = useState<AgentInteraction>();
   const [before, setBefore] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!options?.skipInitialLoad);
   const [sending, setSending] = useState(false);
   const [capabilities, setCapabilities] = useState<{ taskProposals?: boolean }>(
     {
@@ -27,6 +36,10 @@ export function useConversationSession() {
   );
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<ChatPayload | null>(null);
+  const [context, setContext] = useState<
+    { projectId: string | null; available: boolean } | undefined
+  >();
+  const [activities, setActivities] = useState<AgentActivity[]>([]);
   const active = useRef(true);
   const busy = useRef(false);
   const loadVersion = useRef(0);
@@ -53,6 +66,8 @@ export function useConversationSession() {
       setBefore(result?.before ?? null);
       setMode(result?.mode ?? "auto");
       setInteraction(result?.interaction);
+      setContext(result?.context);
+      setActivities(result?.activities ?? []);
       const turn = result?.pending[0];
       setPending(
         turn ? { ...turn, conversationId: result!.conversationId } : null,
@@ -61,13 +76,52 @@ export function useConversationSession() {
     [isCurrent],
   );
 
+  const lastRevision = useRef(sessionRevision);
+  useEffect(() => {
+    if (lastRevision.current !== sessionRevision) {
+      lastRevision.current = sessionRevision;
+      setMessages([]);
+      setConversationId(undefined);
+      setInteraction(undefined);
+      setPending(null);
+      setError(null);
+      setContext(undefined);
+      setActivities([]);
+      setBefore(null);
+      busy.current = true;
+      setLoading(true);
+      void load()
+        .catch(() => {
+          if (isCurrent())
+            setError("Unable to load the conversation. Please try again.");
+        })
+        .finally(() => {
+          busy.current = false;
+          if (isCurrent()) setLoading(false);
+        });
+    }
+  }, [sessionRevision, load, isCurrent]);
+
   useEffect(() => {
     active.current = true;
+    if (options?.skipInitialLoad) {
+      setLoading(false);
+      return () => {
+        active.current = false;
+      };
+    }
     busy.current = true;
-    void load()
-      .catch(() => {
-        if (isCurrent())
-          setError("Unable to load the conversation. Please try again.");
+    void load(options?.initialConversationId)
+      .catch((err: unknown) => {
+        if (isCurrent()) {
+          const isNotFound =
+            err instanceof ApiError && [400, 404].includes(err.status ?? 0);
+          setError(
+            isNotFound
+              ? "Hội thoại không khả dụng hoặc đã bị xóa."
+              : "Unable to load the conversation. Please try again.",
+          );
+        }
       })
       .finally(() => {
         busy.current = false;
@@ -76,7 +130,12 @@ export function useConversationSession() {
     return () => {
       active.current = false;
     };
-  }, [load, isCurrent]);
+  }, [
+    load,
+    isCurrent,
+    options?.initialConversationId,
+    options?.skipInitialLoad,
+  ]);
 
   const openConversation = async (id?: string) => {
     if (busy.current) return;
@@ -86,9 +145,16 @@ export function useConversationSession() {
       await load(id);
       if (isCurrent()) setError(null);
       return isCurrent();
-    } catch {
-      if (isCurrent())
-        setError("Unable to load the conversation. Please try again.");
+    } catch (err: unknown) {
+      if (isCurrent()) {
+        const isNotFound =
+          err instanceof ApiError && [400, 404].includes(err.status ?? 0);
+        setError(
+          isNotFound
+            ? "Hội thoại không khả dụng hoặc đã bị xóa."
+            : "Unable to load the conversation. Please try again.",
+        );
+      }
       return false;
     } finally {
       busy.current = false;
@@ -108,6 +174,8 @@ export function useConversationSession() {
       setConversationId(id);
       setMessages([]);
       setInteraction(undefined);
+      setContext(undefined);
+      setActivities([]);
       setBefore(null);
       setPending(null);
       setError(null);
@@ -125,6 +193,15 @@ export function useConversationSession() {
   const receive = (result: ChatResponse, requestId?: string) => {
     setInteraction(result.interaction);
     if (result.status !== "processing") setPending(null);
+    if (result.activities && result.activities.length > 0) {
+      setActivities((previous) => {
+        const existingIds = new Set(previous.map((a) => a.id));
+        const newOnes = result.activities!.filter(
+          (a) => !existingIds.has(a.id),
+        );
+        return [...previous, ...newOnes];
+      });
+    }
     if (result.data && !result.interaction)
       setMessages((previous) => [
         ...previous.filter((message) => message.id !== `${requestId}:bot`),
@@ -148,6 +225,15 @@ export function useConversationSession() {
       if (isCurrent() && result) {
         setMessages((previous) => [...result.messages, ...previous]);
         setBefore(result.before);
+        if (result.activities && result.activities.length > 0) {
+          setActivities((previous) => {
+            const existingIds = new Set(previous.map((a) => a.id));
+            const newOnes = result.activities!.filter(
+              (a) => !existingIds.has(a.id),
+            );
+            return [...newOnes, ...previous];
+          });
+        }
       }
     } catch {
       if (isCurrent()) setError("Unable to load earlier messages.");
@@ -180,6 +266,10 @@ export function useConversationSession() {
     receive,
     reload,
     openConversation,
+    context,
+    setContext,
+    activities,
+    setActivities,
     loadEarlier,
     newConversation,
   };

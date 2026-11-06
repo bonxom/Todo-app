@@ -1,8 +1,9 @@
 import AttachmentComposer from "./AttachmentComposer";
 import { FILE_ACCEPT, checkFiles } from "./attachmentFiles";
 import AttachmentList from "./AttachmentList";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext, useCallback } from "react";
 import { Send, ArrowUpRight, Sparkles } from "lucide-react";
+import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import ChatToolbar from "./ChatToolbar";
 import InteractionCard from "./InteractionCard";
 import RecentConversations from "./RecentConversations";
@@ -20,7 +21,40 @@ const ChatField = ({
   disabled = false,
   chat,
 }) => {
-  const [files, setFiles] = useState([]);
+  const agentSession = useContext(AgentSessionContext);
+  const [localFiles, setLocalFiles] = useState([]);
+  const [localInputValue, setLocalInputValue] = useState("");
+
+  const files = agentSession ? agentSession.draft.files : localFiles;
+  const setFiles = useCallback(
+    (action) => {
+      if (agentSession) {
+        agentSession.setDraft((prev) => ({
+          ...prev,
+          files: typeof action === "function" ? action(prev.files) : action,
+        }));
+      } else {
+        setLocalFiles(action);
+      }
+    },
+    [agentSession],
+  );
+
+  const inputValue = agentSession ? agentSession.draft.text : localInputValue;
+  const setInputValue = useCallback(
+    (action) => {
+      if (agentSession) {
+        agentSession.setDraft((prev) => ({
+          ...prev,
+          text: typeof action === "function" ? action(prev.text) : action,
+        }));
+      } else {
+        setLocalInputValue(action);
+      }
+    },
+    [agentSession],
+  );
+
   const [fileError, setFileError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
@@ -31,14 +65,16 @@ const ChatField = ({
       previousConversation.current &&
       previousConversation.current !== chat?.conversationId
     ) {
-      setFiles([]);
+      if (!agentSession) {
+        setFiles([]);
+        setInputValue("");
+      }
       setFileError(null);
-      setInputValue("");
       setSelectedTool(null);
       setIsSlashMenuOpen(false);
     }
     previousConversation.current = chat?.conversationId;
-  }, [chat?.conversationId]);
+  }, [chat?.conversationId, agentSession, setFiles, setInputValue]);
   const chooseFiles = (event) => {
     const next = [...files, ...Array.from(event.target.files || [])];
     event.target.value = "";
@@ -76,7 +112,6 @@ const ChatField = ({
       if (!error) setFiles(next);
     }
   };
-  const [inputValue, setInputValue] = useState("");
   const [selectedTool, setSelectedTool] = useState(null);
   const [slashQuery, setSlashQuery] = useState("");
   const [isSlashMenuOpen, setIsSlashMenuOpen] = useState(false);

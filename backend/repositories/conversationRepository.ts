@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Conversation from "../models/Conversation.js";
 import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
@@ -26,4 +27,37 @@ export const conversationRepository = {
   },
   latest: (userId: string) =>
     Conversation.findOne({ userId }).sort({ updatedAt: -1, _id: -1 }),
+  async updateContext(
+    userId: string,
+    conversationId: string,
+    projectId: string | null,
+  ) {
+    const updated = await Conversation.findOneAndUpdate(
+      {
+        _id: conversationId,
+        userId,
+        $or: [{ busyUntil: null }, { busyUntil: { $lte: new Date() } }],
+      },
+      {
+        $set: {
+          contextProjectId: projectId
+            ? new mongoose.Types.ObjectId(projectId)
+            : null,
+        },
+      },
+      { new: true },
+    ).lean();
+
+    if (!updated) {
+      const exists = await Conversation.findById(conversationId)
+        .select("userId busyUntil")
+        .lean();
+      if (!exists || String(exists.userId) !== String(userId)) {
+        throw new AppError(AI_ERROR.CONVERSATION_NOT_FOUND);
+      }
+      throw new AppError(AI_ERROR.CONVERSATION_BUSY);
+    }
+
+    return updated;
+  },
 };

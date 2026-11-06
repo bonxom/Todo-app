@@ -1,7 +1,8 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import { RootGuard, PublicOnlyGuard, ProtectedGuard } from "./routeGuards";
 import MainLayout from "../shared/layouts/MainLayout";
-import ChatBubble from "../features/tasks/components/chat";
+import { AgentChatBubble } from "../features/agent/AgentChatBubble";
+import { AgentSessionProvider } from "../features/agent/AgentSessionProvider";
 import ErrorPage from "../features/errors/ErrorPage";
 import { landingRoutes } from "../features/landing/routes";
 import { authRoutes } from "../features/auth/routes";
@@ -34,13 +35,23 @@ export const routes: RouteObject[] = [
     errorElement: <ErrorPage code="500" />,
     children: [
       {
-        element: <MainLayout assistant={<ChatBubble />} />,
+        element: (
+          <AgentSessionProvider>
+            <MainLayout assistant={<AgentChatBubble />} />
+          </AgentSessionProvider>
+        ),
         children: [
           ...taskRoutes,
           ...categoryRoutes,
           ...calendarRoutes,
           ...statisticsRoutes,
           ...profileRoutes,
+          {
+            path: "/agent",
+            lazy: async () => ({
+              Component: (await import("../features/agent/AgentPage")).default,
+            }),
+          },
         ],
       },
     ],

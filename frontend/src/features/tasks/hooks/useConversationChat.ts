@@ -10,12 +10,16 @@ import type {
   InteractionSelection,
 } from "@/shared/types/domain";
 import { useAgenticChatMutation } from "../api/aiMutations";
-import { useConversationSession } from "./useConversationSession";
+import {
+  useConversationSession,
+  type ConversationSessionOptions,
+} from "./useConversationSession";
 
-// Public chat hook: composes session recovery, message sending, and human answers.
-export function useConversationChat() {
+export type ConversationChatOptions = ConversationSessionOptions;
+
+export function useConversationChat(options?: ConversationChatOptions) {
   const mutation = useAgenticChatMutation();
-  const session = useConversationSession();
+  const session = useConversationSession(options);
   const uploadedFiles = useRef(
     new WeakMap<File, { conversationId: string; metadata: ChatAttachment }>(),
   );
@@ -30,6 +34,15 @@ export function useConversationChat() {
       previous[id] === dirty ? previous : { ...previous, [id]: dirty },
     );
   }, []);
+  const draftChecker = useRef<(() => boolean) | null>(null);
+  const onDiscardConfirmed = useRef<(() => void) | null>(null);
+  const registerDraftCheck = useCallback(
+    (checker: () => boolean, onClear: () => void) => {
+      draftChecker.current = checker;
+      onDiscardConfirmed.current = onClear;
+    },
+    [],
+  );
   const [discardRequest, setDiscardRequest] = useState(false);
   const discardResolver = useRef<((answer: boolean) => void) | null>(null);
   const resolveDiscard = (answer: boolean) => {
@@ -38,16 +51,26 @@ export function useConversationChat() {
     discardResolver.current = null;
   };
   const confirmDiscard = async () => {
-    if (!proposalDirty) return true;
+    const hasAnyDraft =
+      proposalDirty || (draftChecker.current ? draftChecker.current() : false);
+    if (!hasAnyDraft) return true;
     if (discardResolver.current) return false;
     return new Promise<boolean>((resolve) => {
-      discardResolver.current = resolve;
+      discardResolver.current = (confirmed) => {
+        if (confirmed) {
+          onDiscardConfirmed.current?.();
+        }
+        resolve(confirmed);
+      };
       setDiscardRequest(true);
     });
   };
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
-      if (proposalDirty) {
+      const hasAnyDraft =
+        proposalDirty ||
+        (draftChecker.current ? draftChecker.current() : false);
+      if (hasAnyDraft) {
         event.preventDefault();
         event.returnValue = "";
       }
@@ -217,12 +240,17 @@ export function useConversationChat() {
     error,
     pending,
     before,
+    context: session.context,
+    setContext: session.setContext,
+    activities: session.activities,
+    setActivities: session.setActivities,
     send,
     answer,
     reload,
     loadEarlier,
-    newConversation: async () => {
-      if (!(await confirmDiscard())) return false;
+    newConversation: async (discardConfirmed = false) => {
+      if (busy.current || pending) return false;
+      if (!discardConfirmed && !(await confirmDiscard())) return false;
       const result = await newConversation();
       if (result) {
         setDirtyProposals({});
@@ -230,13 +258,17 @@ export function useConversationChat() {
       return result;
     },
     locked,
-    openConversation: async (id?: string) => {
-      if (!(await confirmDiscard())) return false;
+    openConversation: async (id?: string, discardConfirmed = false) => {
+      if (busy.current || pending) return false;
+      if (!discardConfirmed && !(await confirmDiscard())) return false;
       const result = await session.openConversation(id);
       if (result) {
         setDirtyProposals({});
       }
       return result;
     },
+    registerDraftCheck,
   };
 }
+
+export type ConversationChat = ReturnType<typeof useConversationChat>;

@@ -22,6 +22,7 @@ const taskProposalSchema = new Schema<ITaskProposal>(
     },
     items: { type: Schema.Types.Mixed, required: true, default: [] },
     selectedItemIds: { type: [String], required: true, default: [] },
+    createdRequestId: { type: String },
     createdTasks: { type: Schema.Types.Mixed, required: true, default: [] },
   },
   { timestamps: true },

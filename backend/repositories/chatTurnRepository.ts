@@ -13,6 +13,8 @@ import { AppError } from "../error/AppError.js";
 import { completeMenuMessages } from "../utils/agentMessages.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
 import TaskProposal from "../models/A2UI/TaskProposal.js";
+import { deduplicateActivities } from "../utils/agentActivity.js";
+import type { AgentActivity } from "../types/IAgentActivity.js";
 import type {
   ITaskProposal,
   ProposalItem,
@@ -190,6 +192,7 @@ export const chatTurnRepository = {
               requestIntent: intent ?? null,
               executionToken: randomUUID(),
               messages: [{ role: "user", content: userInput }],
+              contextProjectId: conversation.contextProjectId ?? null,
             },
           ],
           { session },
@@ -207,6 +210,7 @@ export const chatTurnRepository = {
     id: string,
     messages: ChatCompletionMessageParam[],
     executionToken?: string,
+    activities?: AgentActivity[],
   ) {
     const result = await ChatTurn.updateOne(
       {
@@ -215,7 +219,14 @@ export const chatTurnRepository = {
         expiresAt: { $gt: new Date() },
         ...(executionToken === undefined ? {} : { executionToken }),
       },
-      { $set: { messages } },
+      {
+        $set: {
+          messages,
+          ...(activities !== undefined
+            ? { activities: deduplicateActivities(activities) }
+            : {}),
+        },
+      },
     );
     if (!result.matchedCount) throw new AppError(AI_ERROR.PROVIDER_TIMEOUT);
   },
