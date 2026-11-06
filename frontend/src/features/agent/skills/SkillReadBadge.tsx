@@ -17,11 +17,11 @@ export function SkillReadBadge({ skill }: SkillReadBadgeProps) {
   const isDifferentVersion =
     currentSkill && currentSkill.version !== skill.version;
 
-  let tooltipText = `Phiên bản: ${skill.version}`;
+  let tooltipText = `Version: ${skill.version}`;
   if (isDeleted) {
-    tooltipText = "Skill không còn khả dụng";
+    tooltipText = "Skill is no longer available";
   } else if (isDifferentVersion) {
-    tooltipText = `Hội thoại dùng phiên bản ${skill.version} (hiện tại: v${currentSkill.version})`;
+    tooltipText = `Conversation used version ${skill.version} (current: v${currentSkill.version})`;
   }
 
   const badgeContent = (
@@ -43,7 +43,7 @@ export function SkillReadBadge({ skill }: SkillReadBadgeProps) {
       ) : (
         <BookOpen className="h-3 w-3 shrink-0 text-[var(--color-accent)]" />
       )}
-      <span>Đã đọc: {skill.name}</span>
+      <span>Read: {skill.name}</span>
     </span>
   );
 
@@ -56,12 +56,12 @@ export function SkillReadBadge({ skill }: SkillReadBadgeProps) {
       onBlur={() => setShowTooltip(false)}
     >
       {isDeleted ? (
-        <div aria-label={`Đã đọc: ${skill.name}`}>{badgeContent}</div>
+        <div aria-label={`Read: ${skill.name}`}>{badgeContent}</div>
       ) : (
         <Link
           to={`/agent/skills/${skill.id}`}
           className="focus:outline-hidden"
-          aria-label={`Đã đọc: ${skill.name}`}
+          aria-label={`Read: ${skill.name}`}
         >
           {badgeContent}
         </Link>

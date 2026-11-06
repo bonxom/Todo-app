@@ -50,13 +50,13 @@ function SkillsList() {
     try {
       await toggleMutation.mutateAsync({ skill, enabled: !skill.enabled });
       if (currentSessionKey() === sessionKey)
-        setNotice("Thay đổi áp dụng từ lượt chat tiếp theo");
+        setNotice("Changes apply from the next chat turn");
     } catch (err) {
       if (currentSessionKey() === sessionKey)
         setToggleError(
           err instanceof Error
             ? err.message
-            : "Không thể cập nhật kỹ năng. Hãy thử lại.",
+            : "Unable to update skill. Please try again.",
         );
     }
   };
@@ -75,9 +75,9 @@ function SkillsList() {
       </div>
       <header className="skills-heading">
         <div>
-          <h1 className="ui-page-title">Kỹ năng cá nhân</h1>
+          <h1 className="ui-page-title">Personal Skills</h1>
           <p className="ui-page-description">
-            Để Agent hiểu cách bạn muốn làm việc.
+            Customize how Agent works with you.
           </p>
         </div>
         <div className="skills-actions">
@@ -86,11 +86,11 @@ function SkillsList() {
             onClick={() => setGalleryOpen(true)}
           >
             <BookOpen size={16} />
-            Thêm từ mẫu
+            Add from template
           </button>
           <Link className="ui-btn-primary" to="/agent/skills/new">
             <Plus size={17} />
-            Tạo kỹ năng
+            Create skill
           </Link>
         </div>
       </header>
@@ -103,7 +103,7 @@ function SkillsList() {
           <span>{toggleError || notice}</span>
           <button
             className="skills-icon-button"
-            aria-label="Đóng thông báo"
+            aria-label="Close notice"
             onClick={() => {
               setToggleError(null);
               setNotice(null);
@@ -113,24 +113,24 @@ function SkillsList() {
           </button>
         </div>
       )}
-      <section className="skill-library" aria-label="Thư viện kỹ năng cá nhân">
+      <section className="skill-library" aria-label="Personal skills library">
         <div className="skill-library-toolbar">
           <div>
             <h2>
-              Kỹ năng của bạn{" "}
+              Your skills{" "}
               <span className="skill-count">{skills?.length ?? 0}</span>
             </h2>
             <p>
-              {skills?.filter((s) => s.enabled).length ?? 0} đang bật{" "}
-              <span aria-hidden="true">·</span> Tối đa 50 kỹ năng
+              {skills?.filter((s) => s.enabled).length ?? 0} active{" "}
+              <span aria-hidden="true">·</span> Max 50 skills
             </p>
           </div>
           <label className="skill-search">
             <Search size={17} />
-            <span className="sr-only">Tìm kiếm kỹ năng</span>
+            <span className="sr-only">Search skills</span>
             <input
               type="search"
-              placeholder="Tìm kiếm kỹ năng…"
+              placeholder="Search skills…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -139,15 +139,15 @@ function SkillsList() {
         {isLoading ? (
           <div className="skills-empty" role="status">
             <Loader2 className="animate-spin" />
-            Đang tải kỹ năng…
+            Loading skills…
           </div>
         ) : error ? (
           <div className="skills-empty" role="alert">
             <AlertCircle />
-            <h3>Không thể tải danh sách kỹ năng</h3>
-            <p>Kiểm tra kết nối và thử lại.</p>
+            <h3>Unable to load skills</h3>
+            <p>Check your connection and try again.</p>
             <button className="ui-btn-secondary" onClick={() => void refetch()}>
-              Thử lại
+              Try again
             </button>
           </div>
         ) : filtered.length === 0 ? (
@@ -157,27 +157,27 @@ function SkillsList() {
             </div>
             <h3>
               {searchQuery
-                ? "Không tìm thấy kỹ năng phù hợp"
-                : "Chưa có kỹ năng cá nhân nào"}
+                ? "No matching skills found"
+                : "No personal skills yet"}
             </h3>
             <p>
               {searchQuery
-                ? "Thử một từ khóa khác hoặc xóa tìm kiếm để xem tất cả."
-                : "Lưu những hướng dẫn bạn thường nhắc lại. Agent sẽ đọc và áp dụng khi phù hợp với cuộc trò chuyện."}
+                ? "Try a different keyword or clear your search to see all skills."
+                : "Save guidelines you frequently repeat. Agent will read and apply them when relevant to your conversation."}
             </p>
             {searchQuery ? (
               <button
                 className="ui-btn-secondary"
                 onClick={() => setSearchQuery("")}
               >
-                Xóa tìm kiếm
+                Clear search
               </button>
             ) : (
               <button
                 className="skill-text-action"
                 onClick={() => setGalleryOpen(true)}
               >
-                Khám phá mẫu IELTS và Gym <ArrowUpRight size={16} />
+                Explore IELTS and Gym templates <ArrowUpRight size={16} />
               </button>
             )}
           </div>
@@ -205,27 +205,27 @@ function SkillsList() {
                     <div className="skill-row-meta">
                       <span>
                         {skill.sourceTemplateId
-                          ? `Từ mẫu ${skill.sourceTemplateId === "ielts" ? "IELTS" : skill.sourceTemplateId === "gym" ? "Gym" : skill.sourceTemplateId}`
-                          : "Tự tạo"}
+                          ? `From ${skill.sourceTemplateId === "ielts" ? "IELTS" : skill.sourceTemplateId === "gym" ? "Gym" : skill.sourceTemplateId} template`
+                          : "Custom"}
                       </span>
                       <span>v{skill.version}</span>
                       <span>
-                        Cập nhật{" "}
-                        {new Intl.DateTimeFormat("vi-VN", {
-                          day: "2-digit",
-                          month: "2-digit",
+                        Updated{" "}
+                        {new Intl.DateTimeFormat("en-US", {
+                          month: "short",
+                          day: "numeric",
                         }).format(new Date(skill.updatedAt))}
                       </span>
                     </div>
                   </div>
                 </Link>
                 <div className="skill-row-state">
-                  <span>{skill.enabled ? "Đang bật" : "Đang tắt"}</span>
+                  <span>{skill.enabled ? "Enabled" : "Disabled"}</span>
                   <button
                     className="skill-switch"
                     role="switch"
                     aria-checked={skill.enabled}
-                    aria-label={`Bật/tắt ${skill.name}`}
+                    aria-label={`Toggle ${skill.name}`}
                     disabled={toggleMutation.isPending}
                     onClick={() => void handleToggle(skill)}
                   >
@@ -244,8 +244,7 @@ function SkillsList() {
         <div className="skill-library-footer">
           <BookOpen size={15} />
           <span>
-            Agent chỉ đọc kỹ năng phù hợp. Bạn có thể chỉnh sửa hoặc tắt bất cứ
-            lúc nào.
+            Agent only reads relevant skills. You can edit or disable them anytime.
           </span>
         </div>
       </section>

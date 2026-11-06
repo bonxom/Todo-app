@@ -28,18 +28,18 @@ export async function personalSkillsFixture(
         {
           id: "ielts",
           name: "IELTS",
-          description: "Chuẩn bị bài thi IELTS Speaking và Writing",
+          description: "Preparation guide for IELTS Speaking and Writing",
           version: "hash-ielts-v1",
           instructions:
-            "## Hướng dẫn ôn thi IELTS\n\n1. Coherence & Cohesion\n2. Lexical Resource",
+            "## IELTS Exam Preparation Guide\n\n1. Coherence & Cohesion\n2. Lexical Resource",
         },
         {
           id: "gym",
           name: "Gym",
-          description: "Lịch tập Gym và chế độ dinh dưỡng",
+          description: "Gym workout routine and nutrition plan",
           version: "hash-gym-v1",
           instructions:
-            "## Lịch tập Gym\n\n- Thứ 2: Ngực & Tay sau\n- Thứ 4: Lưng & Tay trước",
+            "## Gym Workout Routine\n\n- Monday: Chest & Triceps\n- Wednesday: Back & Biceps",
         },
       ]
     ).map((t) => [t.id, { ...t }]),

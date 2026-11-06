@@ -45,18 +45,18 @@ describe("SkillEditorPage", () => {
   it("validates form fields and disables submit if name or instructions are missing", async () => {
     renderEditor(["/agent/skills/new"]);
 
-    const saveButton = screen.getByRole("button", { name: /Lưu kỹ năng/i });
+    const saveButton = screen.getByRole("button", { name: /Save skill/i });
     expect(saveButton).toBeDisabled();
 
-    const nameInput = screen.getByLabelText(/Tên kỹ năng/i);
-    const instructionsInput = screen.getByLabelText(/Hướng dẫn chi tiết/i);
+    const nameInput = screen.getByLabelText(/Skill name/i);
+    const instructionsInput = screen.getByLabelText(/Instructions/i);
 
     const user = userEvent.setup();
     await user.type(nameInput, "My Skill");
     await user.type(instructionsInput, "Do something useful");
 
     expect(saveButton).toBeDisabled();
-    await user.type(screen.getByLabelText(/Mô tả kỹ năng/i), "When writing");
+    await user.type(screen.getByLabelText(/Skill description/i), "When writing");
     expect(saveButton).not.toBeDisabled();
   });
 
@@ -75,14 +75,14 @@ describe("SkillEditorPage", () => {
 
     renderEditor(["/agent/skills/new"]);
 
-    await user.type(screen.getByLabelText(/Tên kỹ năng/i), "Vocabulary Helper");
-    await user.type(screen.getByLabelText(/Mô tả kỹ năng/i), "Suggests words");
+    await user.type(screen.getByLabelText(/Skill name/i), "Vocabulary Helper");
+    await user.type(screen.getByLabelText(/Skill description/i), "Suggests words");
     await user.type(
-      screen.getByLabelText(/Hướng dẫn chi tiết/i),
+      screen.getByLabelText(/Instructions/i),
       "Always suggest 3 C1 words",
     );
 
-    const saveButton = screen.getByRole("button", { name: /Lưu kỹ năng/i });
+    const saveButton = screen.getByRole("button", { name: /Save skill/i });
     await user.click(saveButton);
 
     expect(skillService.create).toHaveBeenCalledWith({
@@ -115,20 +115,20 @@ describe("SkillEditorPage", () => {
       expect(screen.getByDisplayValue("Writing Guide")).toBeInTheDocument();
     });
 
-    const instructionsInput = screen.getByLabelText(/Hướng dẫn chi tiết/i);
+    const instructionsInput = screen.getByLabelText(/Instructions/i);
     await user.clear(instructionsInput);
     await user.type(
       instructionsInput,
       "Newly edited instructions that conflicted",
     );
 
-    const saveButton = screen.getByRole("button", { name: /Lưu thay đổi/i });
+    const saveButton = screen.getByRole("button", { name: /Save changes/i });
     await user.click(saveButton);
 
     // 409 conflict alert must be shown
     await waitFor(() => {
       expect(
-        screen.getByText(/Phiên bản kỹ năng đã thay đổi trên máy chủ/i),
+        screen.getByText(/Skill version has changed on the server/i),
       ).toBeInTheDocument();
     });
 
@@ -160,12 +160,12 @@ describe("SkillEditorPage", () => {
       expect(screen.getByDisplayValue("Obsolete Skill")).toBeInTheDocument();
     });
 
-    const deleteButton = screen.getByRole("button", { name: /Xóa kỹ năng/i });
+    const deleteButton = screen.getByRole("button", { name: /Delete skill/i });
     await user.click(deleteButton);
 
     // Confirm dialog appears
     const confirmButton = screen.getByRole("button", {
-      name: /Xác nhận xóa/i,
+      name: /Confirm delete/i,
     });
     await user.click(confirmButton);
 
@@ -197,10 +197,10 @@ describe("SkillEditorPage", () => {
     await router.navigate("/agent/skills");
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     await user.click(
-      screen.getByRole("button", { name: "Tiếp tục chỉnh sửa" }),
+      screen.getByRole("button", { name: "Keep editing" }),
     );
     expect(input).toHaveValue("Unsaved draft");
-    await user.click(screen.getByRole("button", { name: "Lưu thay đổi" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
     expect(skillService.update).toHaveBeenCalledWith(
       "one",
       expect.objectContaining({ expectedVersion: 1 }),
@@ -225,9 +225,9 @@ describe("SkillEditorPage", () => {
     const input = await screen.findByDisplayValue("Initial");
     const user = userEvent.setup();
     await user.type(input, " draft");
-    await user.click(screen.getByRole("button", { name: "Lưu thay đổi" }));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
     await user.click(
-      await screen.findByRole("button", { name: "Tải bản mới" }),
+      await screen.findByRole("button", { name: "Reload latest" }),
     );
     expect(input).toHaveValue("Initial draft");
     vi.mocked(skillService.get).mockResolvedValue({
@@ -235,7 +235,7 @@ describe("SkillEditorPage", () => {
       instructions: "Remote",
       version: 2,
     });
-    await user.click(screen.getByRole("button", { name: "Bỏ thay đổi" }));
+    await user.click(screen.getByRole("button", { name: "Discard changes" }));
     await waitFor(() => expect(input).toHaveValue("Remote"));
   });
 });

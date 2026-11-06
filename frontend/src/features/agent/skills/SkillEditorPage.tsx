@@ -160,11 +160,11 @@ function SkillEditorForm() {
       if (!isCurrent()) return;
       if (err instanceof ApiError && err.status === 409) {
         setConflictError(
-          "Phiên bản kỹ năng đã thay đổi trên máy chủ bởi phiên làm việc khác.",
+          "Skill version has changed on the server by another session.",
         );
       } else {
         setGeneralError(
-          err instanceof Error ? err.message : "Đã xảy ra lỗi khi lưu kỹ năng.",
+          err instanceof Error ? err.message : "An error occurred while saving the skill.",
         );
       }
     }
@@ -186,10 +186,10 @@ function SkillEditorForm() {
       setIsDeleteDialogOpen(false);
       if (err instanceof ApiError && err.status === 409)
         setConflictError(
-          "Phiên bản kỹ năng đã thay đổi trên máy chủ bởi phiên làm việc khác.",
+          "Skill version has changed on the server by another session.",
         );
       setGeneralError(
-        err instanceof Error ? err.message : "Không thể xóa kỹ năng.",
+        err instanceof Error ? err.message : "Unable to delete skill.",
       );
     }
   };
@@ -201,7 +201,7 @@ function SkillEditorForm() {
     const result = await refetch();
     if (!isCurrent()) return;
     if (result.error || !result.data) {
-      setGeneralError("Không thể tải phiên bản mới. Bản nháp vẫn được giữ.");
+      setGeneralError("Unable to load latest version. Your draft is preserved.");
       return;
     }
     const latest = result.data;
@@ -224,8 +224,8 @@ function SkillEditorForm() {
   if (!isNew && loadError && !baseline)
     return (
       <div role="alert" className="p-6">
-        Kỹ năng không khả dụng.{" "}
-        <button onClick={handleBack}>Quay lại danh sách</button>
+        Skill is not available.{" "}
+        <button onClick={handleBack}>Back to list</button>
       </div>
     );
 
@@ -252,23 +252,23 @@ function SkillEditorForm() {
           ref={deleteRef}
           role="dialog"
           aria-modal="true"
-          aria-label="Xác nhận xóa kỹ năng"
+          aria-label="Confirm skill deletion"
         >
           <div className="skill-delete-dialog">
             <span className="skill-delete-icon">
               <Trash2 size={23} />
             </span>
-            <h2>Xóa kỹ năng này?</h2>
+            <h2>Delete this skill?</h2>
             <p>
-              <strong>{name}</strong> sẽ bị xóa khỏi thư viện. Các câu trả lời
-              trước đây vẫn được giữ nguyên.
+              <strong>{name}</strong> will be removed from your library. Past
+              conversation responses remain unchanged.
             </p>
             <div className="skills-actions">
               <button
                 className="ui-btn-secondary"
                 onClick={() => setIsDeleteDialogOpen(false)}
               >
-                Hủy
+                Cancel
               </button>
               <button
                 className="skill-danger-button"
@@ -278,7 +278,7 @@ function SkillEditorForm() {
                 {deleteMutation.isPending && (
                   <Loader2 size={16} className="animate-spin" />
                 )}
-                Xác nhận xóa
+                Confirm delete
               </button>
             </div>
           </div>
@@ -288,28 +288,28 @@ function SkillEditorForm() {
         <button
           className="skill-back-link"
           onClick={handleBack}
-          aria-label="Quay lại danh sách"
+          aria-label="Back to skills"
         >
           <ArrowLeft size={17} />
-          Kỹ năng cá nhân
+          Personal Skills
         </button>
         <span className="skill-editor-status">
           {isSaving
-            ? "Đang lưu…"
+            ? "Saving…"
             : isDirty
-              ? "Có thay đổi chưa lưu"
+              ? "Unsaved changes"
               : isNew
-                ? "Bản nháp mới"
-                : "Đã lưu"}
+                ? "New draft"
+                : "Saved"}
         </span>
       </div>
       <header className="skills-heading skill-editor-heading">
         <div>
           <h1 className="ui-page-title">
-            {isNew ? "Tạo kỹ năng mới" : name || "Chỉnh sửa kỹ năng"}
+            {isNew ? "Create new skill" : name || "Edit skill"}
           </h1>
           <p className="ui-page-description">
-            Một hướng dẫn rõ ràng, nhiều cuộc trò chuyện tốt hơn.
+            Clear guidance for better conversations.
           </p>
         </div>
         <button
@@ -322,7 +322,7 @@ function SkillEditorForm() {
           ) : (
             <Save size={17} />
           )}
-          {isNew ? "Lưu kỹ năng" : "Lưu thay đổi"}
+          {isNew ? "Save skill" : "Save changes"}
         </button>
       </header>
       {conflictError && (
@@ -331,8 +331,8 @@ function SkillEditorForm() {
           <div>
             <strong>{conflictError}</strong>
             <p>
-              Bản nháp vẫn được giữ nguyên. Sao chép nội dung hoặc tải bản mới
-              để tiếp tục.
+              Your draft is preserved. Copy your changes or reload the latest
+              version to continue.
             </p>
           </div>
           <button
@@ -340,7 +340,7 @@ function SkillEditorForm() {
             onClick={handleReloadServerVersion}
           >
             <RotateCcw size={15} />
-            Tải bản mới
+            Reload latest
           </button>
         </div>
       )}
@@ -356,13 +356,13 @@ function SkillEditorForm() {
           aria-labelledby="skill-info-heading"
         >
           <div className="skill-panel-heading">
-            <h2 id="skill-info-heading">Thông tin kỹ năng</h2>
-            <p>Giúp Agent nhận ra khi nào cần dùng.</p>
+            <h2 id="skill-info-heading">Skill Information</h2>
+            <p>Helps Agent know when to use this skill.</p>
           </div>
           <div className="skill-field">
             <div className="skill-field-label">
               <label htmlFor="skill-name">
-                Tên kỹ năng <span>*</span>
+                Skill name <span>*</span>
               </label>
               <span>{name.length}/80</span>
             </div>
@@ -373,13 +373,13 @@ function SkillEditorForm() {
               maxLength={80}
               disabled={isSaving || deleteMutation.isPending}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ví dụ: IELTS Writing"
+              placeholder="e.g. IELTS Writing"
             />
           </div>
           <div className="skill-field">
             <div className="skill-field-label">
               <label htmlFor="skill-description">
-                Mô tả kỹ năng <span>*</span>
+                Skill description <span>*</span>
               </label>
               <span>{description.length}/500</span>
             </div>
@@ -391,19 +391,19 @@ function SkillEditorForm() {
               maxLength={500}
               disabled={isSaving || deleteMutation.isPending}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Khi nào Agent nên dùng hướng dẫn này?"
+              placeholder="When should Agent use this guidance?"
             />
             <p className="skill-field-hint">
-              Ví dụ: Khi tôi cần nhận xét và cải thiện bài viết IELTS Task 2.
+              e.g. When I need feedback and improvement suggestions on IELTS Task 2 writing.
             </p>
           </div>
           <div className="skill-enabled-setting">
             <div>
-              <label id="skill-enabled-label">Kích hoạt kỹ năng</label>
+              <label id="skill-enabled-label">Enable skill</label>
               <p>
                 {enabled
-                  ? "Sẵn sàng cho cuộc trò chuyện tiếp theo."
-                  : "Agent sẽ không đọc kỹ năng này."}
+                  ? "Ready for your next conversation."
+                  : "Agent will not read this skill."}
               </p>
             </div>
             <button
@@ -420,49 +420,46 @@ function SkillEditorForm() {
           <div className="skill-editor-help">
             <BookOpen size={17} />
             <p>
-              Chỉ dẫn càng cụ thể, Agent càng dễ áp dụng. Viết như cách bạn
-              hướng dẫn một người cùng làm việc.
+              The more specific the instructions, the better Agent can apply
+              them. Write as if guiding a collaborator.
             </p>
           </div>
           {!isNew && (
             <div className="skill-editor-danger-zone">
-              <span>Phiên bản hiện tại: v{baseline?.version}</span>
+              <span>Current version: v{baseline?.version}</span>
               <button
                 className="skill-text-action skill-text-danger"
                 disabled={isSaving || deleteMutation.isPending}
                 onClick={() => setIsDeleteDialogOpen(true)}
               >
                 <Trash2 size={15} />
-                Xóa kỹ năng
+                Delete skill
               </button>
             </div>
           )}
         </section>
-        <section
-          className="skill-instructions-panel"
-          aria-label="Soạn hướng dẫn cho Agent"
-        >
+        <section className="skill-instructions-panel">
           <div className="skill-instructions-header">
             <div>
               <label id="skill-instructions-label" htmlFor="skill-instructions">
-                Hướng dẫn chi tiết <span>*</span>
+                Instructions <span>*</span>
               </label>
-              <p>Agent sẽ làm theo hướng dẫn này khi đọc kỹ năng.</p>
+              <p>Agent will follow these instructions when reading the skill.</p>
             </div>
-            <div className="skill-editor-tabs" aria-label="Chế độ soạn thảo">
+            <div className="skill-editor-tabs" aria-label="Editor mode">
               <button
                 aria-pressed={!previewMode}
                 onClick={() => setPreviewMode(false)}
               >
                 <Edit3 size={14} />
-                Soạn thảo
+                Edit
               </button>
               <button
                 aria-pressed={previewMode}
                 onClick={() => setPreviewMode(true)}
               >
                 <Eye size={14} />
-                Xem trước
+                Preview
               </button>
             </div>
           </div>
@@ -472,7 +469,7 @@ function SkillEditorForm() {
                 <MarkdownText text={instructions} />
               ) : (
                 <p className="skill-preview-empty">
-                  Nội dung xem trước sẽ xuất hiện khi bạn thêm hướng dẫn.
+                  Preview content will appear once you add instructions.
                 </p>
               )}
             </div>
@@ -485,20 +482,20 @@ function SkillEditorForm() {
               disabled={isSaving || deleteMutation.isPending}
               onChange={(e) => setInstructions(e.target.value)}
               placeholder={
-                "Mô tả cách bạn muốn Agent hỗ trợ…\n\nVí dụ:\n- Giữ nguyên ý chính khi sửa bài.\n- Giải thích ngắn gọn từng thay đổi.\n- Kết thúc bằng một gợi ý thực hành."
+                "Describe how you want Agent to assist…\n\nFor example:\n- Preserve original meaning when editing.\n- Briefly explain each change.\n- Conclude with an actionable practice prompt."
               }
             />
           )}
           <div className="skill-instructions-footer">
-            <span>Hỗ trợ Markdown</span>
+            <span>Markdown supported</span>
             <span>
-              {instructions.length.toLocaleString("vi-VN")} / 10.000 ký tự
+              {instructions.length.toLocaleString("en-US")} / 10,000 characters
             </span>
           </div>
         </section>
       </div>
       <p className="skill-editor-footnote">
-        Thay đổi áp dụng từ lượt chat tiếp theo.
+        Changes apply from the next chat turn.
       </p>
     </div>
   );

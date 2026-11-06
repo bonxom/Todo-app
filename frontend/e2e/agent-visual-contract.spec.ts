@@ -6,7 +6,7 @@ test("primary action, switch and modal use opaque theme surfaces", async ({
 }) => {
   await personalSkillsFixture(page);
   await page.goto("/agent/skills/new");
-  const save = page.getByRole("button", { name: "Lưu kỹ năng", exact: true });
+  const save = page.getByRole("button", { name: "Save skill", exact: true });
   expect(
     await save.evaluate((el) => getComputedStyle(el).backgroundColor),
   ).not.toBe("rgba(0, 0, 0, 0)");
@@ -15,13 +15,13 @@ test("primary action, switch and modal use opaque theme surfaces", async ({
     await toggle.evaluate((el) => getComputedStyle(el).backgroundColor),
   ).not.toBe("rgba(0, 0, 0, 0)");
   await page
-    .getByRole("button", { name: "Quay lại danh sách", exact: true })
+    .getByRole("button", { name: "Back to skills", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Thêm từ mẫu", exact: true })
+    .getByRole("button", { name: "Add from template", exact: true })
     .first()
     .click();
-  const dialog = page.getByRole("dialog", { name: "Thư viện mẫu kỹ năng" });
+  const dialog = page.getByRole("dialog", { name: "Skill templates gallery" });
   const surface = dialog.locator(".skill-gallery");
   await expect(surface).toBeVisible();
   expect(
@@ -50,7 +50,7 @@ test("skill entries are keyboard links and primary actions remain visible at 390
   await expect(page.getByRole("link", { name: /Writing/ })).toBeVisible();
   await page.getByRole("link", { name: /Writing/ }).focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByLabel(/Tên kỹ năng/)).toHaveValue("Writing");
+  await expect(page.getByLabel(/Skill name/)).toHaveValue("Writing");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -77,14 +77,14 @@ test("editor remains usable at 320px with save in the viewport", async ({
   await page.setViewportSize({ width: 320, height: 720 });
   await personalSkillsFixture(page);
   await page.goto("/agent/skills/new");
-  await page.getByLabel(/Hướng dẫn chi tiết/).scrollIntoViewIfNeeded();
+  await page.getByLabel(/Instructions/).scrollIntoViewIfNeeded();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
   const save = await page
-    .getByRole("button", { name: "Lưu kỹ năng", exact: true })
+    .getByRole("button", { name: "Save skill", exact: true })
     .boundingBox();
   expect(save?.y).toBeGreaterThan(0);
   expect(save!.y + save!.height).toBeLessThanOrEqual(720);

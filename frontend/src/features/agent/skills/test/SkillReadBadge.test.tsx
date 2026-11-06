@@ -48,7 +48,7 @@ describe("SkillReadBadge", () => {
       version: 1,
     });
 
-    expect(screen.getByText(/Đã đọc: IELTS Writing/i)).toBeInTheDocument();
+    expect(screen.getByText(/Read: IELTS Writing/i)).toBeInTheDocument();
   });
 
   it("indicates when skill version has changed since it was read", async () => {
@@ -69,13 +69,13 @@ describe("SkillReadBadge", () => {
       version: 1,
     });
 
-    const badge = screen.getByRole("link", { name: /Đã đọc: IELTS Writing/i });
+    const badge = screen.getByRole("link", { name: /Read: IELTS Writing/i });
     expect(badge).toBeInTheDocument();
 
     await user.hover(badge);
     await waitFor(() => {
       expect(
-        screen.getByText(/Hội thoại dùng phiên bản 1/i),
+        screen.getByText(/Conversation used version 1/i),
       ).toBeInTheDocument();
     });
   });
@@ -92,12 +92,12 @@ describe("SkillReadBadge", () => {
       version: 2,
     });
 
-    const badge = screen.getByText(/Đã đọc: Old Removed Skill/i);
+    const badge = screen.getByText(/Read: Old Removed Skill/i);
     expect(badge).toBeInTheDocument();
 
     await user.hover(badge);
     await waitFor(() => {
-      expect(screen.getByText(/Skill không còn khả dụng/i)).toBeInTheDocument();
+      expect(screen.getByText(/Skill is no longer available/i)).toBeInTheDocument();
     });
   });
 });

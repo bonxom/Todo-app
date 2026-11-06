@@ -26,9 +26,9 @@ const TABLET_BP = 768;
 const isMobileWidth = (width: number) => width < TABLET_BP;
 
 const STARTER_SUGGESTIONS = [
-  "Lập kế hoạch hôm nay",
-  "Chia nhỏ công việc",
-  "Xem việc cần ưu tiên",
+  "Plan today's schedule",
+  "Break down tasks",
+  "Review priority tasks",
 ];
 
 export default function AgentPage() {
@@ -77,13 +77,13 @@ export default function AgentPage() {
 
   // Accessible live status text
   const liveStatus = chat.sending
-    ? "Đang gửi tin nhắn..."
+    ? "Sending message..."
     : chat.loading
-      ? "Đang tải hội thoại..."
+      ? "Loading conversation..."
       : chat.pending
-        ? "Đang xử lý..."
+        ? "Processing..."
         : chat.error
-          ? `Lỗi: ${chat.error}`
+          ? `Error: ${chat.error}`
           : "";
 
   const handleSelectStarter = (text: string) => {
@@ -93,6 +93,7 @@ export default function AgentPage() {
   const isUnavailable = Boolean(
     chat.error &&
     (chat.error.includes("không khả dụng") ||
+      chat.error.includes("unavailable") ||
       chat.error.includes("Unable to load")),
   );
 
@@ -119,7 +120,7 @@ export default function AgentPage() {
         <aside className="agent-history-col flex flex-col">
           <div className="border-b border-[var(--color-line)] p-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-              Lịch sử hội thoại
+              Conversation History
             </h2>
           </div>
           <div className="flex-1 overflow-hidden">
@@ -138,14 +139,14 @@ export default function AgentPage() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Lịch sử hội thoại"
+          aria-label="Conversation history"
           ref={historyDialogRef}
           className="fixed inset-0 z-50 flex bg-black/50"
         >
           <div className="flex h-full w-4/5 max-w-xs flex-col bg-[var(--color-surface)] shadow-xl">
             <div className="flex items-center justify-between border-b border-[var(--color-line)] p-3">
               <h2 className="text-sm font-semibold text-[var(--color-text)]">
-                Lịch sử hội thoại
+                Conversation History
               </h2>
               <button
                 type="button"
@@ -154,7 +155,7 @@ export default function AgentPage() {
                   historyTriggerRef.current?.focus();
                 }}
                 className="rounded-md p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
-                aria-label="Đóng lịch sử"
+                aria-label="Close history"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -187,7 +188,7 @@ export default function AgentPage() {
       )}
 
       {/* Center Column: Chat Field & Messages */}
-      <section aria-label="Hội thoại Agent" className="agent-center-col">
+      <section aria-label="Agent conversation" className="agent-center-col">
         {/* Workspace Sub-header */}
         <header className="agent-chat-header">
           <div className="agent-chat-identity">
@@ -197,7 +198,7 @@ export default function AgentPage() {
                 type="button"
                 onClick={() => setHistoryDrawerOpen(true)}
                 className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
-                aria-label="Mở lịch sử hội thoại"
+                aria-label="Open conversation history"
               >
                 <History className="h-5 w-5" />
               </button>
@@ -217,19 +218,19 @@ export default function AgentPage() {
                 className="flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
                 aria-label={
                   desktopRightPanelOpen
-                    ? "Đóng bảng ngữ cảnh"
-                    : "Mở bảng ngữ cảnh"
+                    ? "Close context panel"
+                    : "Open context panel"
                 }
               >
                 {desktopRightPanelOpen ? (
                   <>
                     <PanelRightClose className="h-4 w-4" />
-                    <span>Thu gọn</span>
+                    <span>Collapse</span>
                   </>
                 ) : (
                   <>
                     <PanelRightOpen className="h-4 w-4" />
-                    <span>Ngữ cảnh & Thao tác</span>
+                    <span>Context & Actions</span>
                   </>
                 )}
               </button>
@@ -239,10 +240,10 @@ export default function AgentPage() {
                 type="button"
                 onClick={() => setContextDrawerOpen(true)}
                 className="flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
-                aria-label="Mở bảng ngữ cảnh và kết quả"
+                aria-label="Open context and actions panel"
               >
                 <PanelRightOpen className="h-4 w-4" />
-                <span className="hidden sm:inline">Ngữ cảnh & Thao tác</span>
+                <span className="hidden sm:inline">Context & Actions</span>
               </button>
             )}
           </div>
@@ -260,11 +261,10 @@ export default function AgentPage() {
                 <AlertCircle className="h-6 w-6" />
               </div>
               <h3 className="mt-3 text-base font-semibold text-[var(--color-text)]">
-                Hội thoại không khả dụng
+                Conversation unavailable
               </h3>
               <p className="mt-1 max-w-sm text-sm text-[var(--color-text-muted)]">
-                Hội thoại bạn đang cố truy cập không tồn tại, đã bị xóa hoặc bạn
-                không có quyền xem.
+                The conversation you are trying to access does not exist, was deleted, or you do not have permission to view it.
               </p>
               <button
                 type="button"
@@ -272,7 +272,7 @@ export default function AgentPage() {
                 className="ui-btn-primary mt-4"
               >
                 <Plus className="h-4 w-4" />
-                <span>Bắt đầu cuộc trò chuyện mới</span>
+                <span>Start new conversation</span>
               </button>
             </div>
           ) : (
@@ -284,10 +284,10 @@ export default function AgentPage() {
                     <Sparkles className="h-6 w-6" />
                   </div>
                   <h2 className="mt-3 text-lg font-semibold text-[var(--color-text)]">
-                    Xin chào! Tôi có thể giúp gì cho bạn?
+                    Hello! How can I help you today?
                   </h2>
                   <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                    Chọn gợi ý dưới đây hoặc nhập yêu cầu để bắt đầu:
+                    Choose a prompt below or type your request to get started:
                   </p>
                   <div className="mt-4 flex flex-wrap justify-center gap-2">
                     {STARTER_SUGGESTIONS.map((starter) => (
@@ -324,14 +324,14 @@ export default function AgentPage() {
         <aside className="agent-right-col flex flex-col p-4">
           <div className="mb-4 border-b border-[var(--color-line)] pb-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-              Ngữ cảnh & Thao tác
+              Context & Actions
             </h2>
           </div>
           <div className="space-y-6">
             <AgentContextPanel chat={chat} />
             <div>
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                Kết quả thao tác
+                Verified Activities
               </h3>
               <AgentActivityList
                 key={chat.conversationId}
@@ -347,7 +347,7 @@ export default function AgentPage() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Ngữ cảnh và kết quả thao tác"
+          aria-label="Context and verified activities"
           ref={contextDialogRef}
           className="fixed inset-0 z-50 flex justify-end bg-black/50"
         >
@@ -361,7 +361,7 @@ export default function AgentPage() {
           <div className="flex h-full w-4/5 max-w-sm flex-col bg-[var(--color-surface)] p-4 shadow-xl">
             <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
               <h2 className="text-sm font-semibold text-[var(--color-text)]">
-                Ngữ cảnh & Thao tác
+                Context & Actions
               </h2>
               <button
                 type="button"
@@ -370,7 +370,7 @@ export default function AgentPage() {
                   contextTriggerRef.current?.focus();
                 }}
                 className="rounded-md p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
-                aria-label="Đóng bảng ngữ cảnh"
+                aria-label="Close context panel"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -379,7 +379,7 @@ export default function AgentPage() {
               <AgentContextPanel chat={chat} />
               <div>
                 <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                  Kết quả thao tác
+                  Verified Activities
                 </h3>
                 <AgentActivityList
                   key={chat.conversationId}

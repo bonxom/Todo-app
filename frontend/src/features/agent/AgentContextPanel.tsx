@@ -77,10 +77,10 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
       });
       if (err instanceof ApiError && err.status === 409) {
         setContextError(
-          "Hội thoại đang bận xử lý, không thể đổi ngữ cảnh dự án.",
+          "Conversation is busy processing, cannot change project context.",
         );
       } else {
-        setContextError("Không thể cập nhật dự án ngữ cảnh. Vui lòng thử lại.");
+        setContextError("Unable to update project context. Please try again.");
       }
     } finally {
       if (mounted.current) setSavingContext(false);
@@ -96,27 +96,27 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
             htmlFor="agent-context-project-select"
             className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]"
           >
-            Dự án ngữ cảnh
+            Project Context
           </label>
         </div>
         <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-          Agent tham chiếu dự án này; bạn vẫn có thể chỉ định dự án khác.
+          Agent references this project; you can still specify other projects.
         </p>
 
         <div className="mt-2">
           <select
             id="agent-context-project-select"
-            aria-label="Dự án ngữ cảnh"
+            aria-label="Project Context"
             disabled={isPending || loadingProjects || !chat.conversationId}
             value={currentProjectId}
             onChange={handleProjectChange}
             className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <option value="">Không chọn dự án (Mặc định)</option>
+            <option value="">No project selected (Default)</option>
             {projects.map((proj) => (
               <option key={proj._id} value={proj._id}>
                 {proj.name}
-                {proj.status === "completed" ? " (Đã hoàn thành)" : ""}
+                {proj.status === "completed" ? " (Completed)" : ""}
               </option>
             ))}
           </select>
@@ -129,7 +129,7 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
           >
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
-              Dự án đã chọn trước đó không còn khả dụng hoặc đã bị xóa.
+              Previously selected project is no longer available or was deleted.
             </span>
           </div>
         )}

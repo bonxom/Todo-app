@@ -70,10 +70,10 @@ export function TemplateGallery({
         await reloadTemplates();
         await reloadDetail();
         setImportError(
-          "Kiểm tra giới hạn kỹ năng và xem lại phiên bản mẫu mới trước khi thử lại.",
+          "Check your skill limit and review the updated template version before trying again.",
         );
       } else
-        setImportError("Không thể thêm mẫu. Hãy kiểm tra kết nối rồi thử lại.");
+        setImportError("Unable to add template. Check your connection and try again.");
     }
   };
   if (!isOpen) return null;
@@ -83,7 +83,7 @@ export function TemplateGallery({
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Thư viện mẫu kỹ năng"
+      aria-label="Skill templates gallery"
     >
       <div
         className={`skill-gallery ${showPreview ? "skill-gallery--preview" : ""}`}
@@ -91,34 +91,34 @@ export function TemplateGallery({
         <header className="skill-gallery-header">
           <div>
             <span className="skill-eyebrow">
-              Bắt đầu từ một hướng dẫn có sẵn
+              Start from a pre-built guideline
             </span>
-            <h2>Thư viện mẫu kỹ năng</h2>
+            <h2>Skill Templates Gallery</h2>
           </div>
           <button
             className="skills-icon-button"
             onClick={close}
-            aria-label="Đóng thư viện mẫu"
+            aria-label="Close templates gallery"
           >
             <X size={21} />
           </button>
         </header>
         <div className="skill-gallery-body">
-          <aside className="skill-template-list" aria-label="Mẫu kỹ năng">
-            <p>Chọn một mẫu, sau đó chỉnh lại theo cách của bạn.</p>
+          <aside className="skill-template-list" aria-label="Skill templates">
+            <p>Select a template, then customize it to your needs.</p>
             {isLoading ? (
               <p role="status">
                 <Loader2 className="animate-spin" size={20} />
-                Đang tải mẫu…
+                Loading templates…
               </p>
             ) : error ? (
               <div role="alert">
-                <p>Không thể tải danh sách mẫu.</p>
+                <p>Unable to load templates.</p>
                 <button
                   className="ui-btn-secondary"
                   onClick={() => void reloadTemplates()}
                 >
-                  Thử lại
+                  Try again
                 </button>
               </div>
             ) : (
@@ -126,7 +126,7 @@ export function TemplateGallery({
                 <button
                   className="skill-template-choice"
                   key={template.id}
-                  aria-label={`Xem mẫu ${template.name}`}
+                  aria-label={`View template ${template.name}`}
                   aria-pressed={activeId === template.id}
                   onClick={() => {
                     setSelectedId(template.id);
@@ -147,36 +147,36 @@ export function TemplateGallery({
             )}
             <div className="skill-template-note">
               <Check size={16} />
-              <span>Bản sao của riêng bạn. Chỉnh sửa tự do sau khi thêm.</span>
+              <span>Your own private copy. Edit freely after adding.</span>
             </div>
           </aside>
-          <section className="skill-template-preview" aria-label="Nội dung mẫu">
+          <section className="skill-template-preview" aria-label="Template content">
             <button
               className="skill-back-link skill-template-back"
               onClick={() => setShowPreview(false)}
             >
               <ArrowLeft size={16} />
-              Quay lại danh sách mẫu
+              Back to templates
             </button>
             {loadingDetail ? (
               <div className="skills-empty" role="status">
                 <Loader2 className="animate-spin" />
-                Đang tải nội dung…
+                Loading template content…
               </div>
             ) : detailError ? (
               <div className="skills-empty" role="alert">
-                <p>Không thể tải nội dung mẫu.</p>
+                <p>Unable to load template content.</p>
                 <button
                   className="ui-btn-secondary"
                   onClick={() => void reloadDetail()}
                 >
-                  Thử lại
+                  Try again
                 </button>
               </div>
             ) : detail ? (
               <>
                 <div className="skill-template-preview-heading">
-                  <span className="skill-eyebrow">Xem trước hướng dẫn</span>
+                  <span className="skill-eyebrow">Instruction preview</span>
                   <h3>{detail.name}</h3>
                   <p>{detail.description}</p>
                 </div>
@@ -187,7 +187,7 @@ export function TemplateGallery({
             ) : (
               <div className="skills-empty">
                 <BookOpen />
-                <p>Chọn mẫu để xem hướng dẫn.</p>
+                <p>Select a template to view instructions.</p>
               </div>
             )}
           </section>
@@ -198,7 +198,7 @@ export function TemplateGallery({
           </p>
         )}
         <footer className="skill-gallery-footer">
-          <p>Mẫu chỉ được dùng sau khi bạn thêm vào thư viện.</p>
+          <p>Templates are only used after you add them to your library.</p>
           <button
             className="ui-btn-primary"
             onClick={() => void handleImport()}
@@ -209,7 +209,7 @@ export function TemplateGallery({
             ) : (
               <Plus size={17} />
             )}
-            Thêm vào kỹ năng của tôi
+            Add to my skills
           </button>
         </footer>
       </div>

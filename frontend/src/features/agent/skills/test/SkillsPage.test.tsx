@@ -60,11 +60,11 @@ describe("SkillsPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Chưa có kỹ năng cá nhân nào/i),
+        screen.getByText(/No personal skills yet/i),
       ).toBeInTheDocument();
     });
-    expect(screen.getAllByText(/Tạo kỹ năng/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Thêm từ mẫu/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Create skill/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Add from template/i).length).toBeGreaterThan(0);
   });
 
   it("renders list of skills and filters by search query", async () => {
@@ -78,7 +78,7 @@ describe("SkillsPage", () => {
       expect(screen.getByText("Gym Workout")).toBeInTheDocument();
     });
 
-    const searchInput = screen.getByPlaceholderText(/Tìm kiếm kỹ năng/i);
+    const searchInput = screen.getByPlaceholderText(/Search skills/i);
     await user.type(searchInput, "IELTS");
 
     expect(screen.getByText("IELTS Speaking")).toBeInTheDocument();
@@ -106,7 +106,7 @@ describe("SkillsPage", () => {
     });
 
     const toggleButton = screen.getByRole("switch", {
-      name: /Bật\/tắt IELTS Speaking/i,
+      name: /Toggle IELTS Speaking/i,
     });
     expect(toggleButton).toHaveAttribute("aria-checked", "true");
 

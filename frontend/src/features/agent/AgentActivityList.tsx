@@ -43,7 +43,7 @@ export function AgentActivityList({
       if (active.current && request.current === version) setDetail(task);
     } catch {
       if (active.current && request.current === version)
-        setError("Công việc không còn khả dụng.");
+        setError("Task is no longer available.");
     }
   };
   // Deduplicate activities by id
@@ -59,7 +59,7 @@ export function AgentActivityList({
   if (uniqueActivities.length === 0) {
     return (
       <div className="py-6 text-center text-sm text-[var(--color-text-muted)]">
-        Chưa có kết quả thao tác
+        No activity results yet
       </div>
     );
   }
@@ -83,14 +83,14 @@ export function AgentActivityList({
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="h-3 w-3" />
-            Thành công
+            Success
           </span>
         );
       case "failed":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">
             <XCircle className="h-3 w-3" />
-            Thất bại
+            Failed
           </span>
         );
       case "unknown":
@@ -98,7 +98,7 @@ export function AgentActivityList({
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-gray-500/10 px-2 py-0.5 text-xs font-medium text-gray-500">
             <HelpCircle className="h-3 w-3" />
-            Chưa rõ
+            Unknown
           </span>
         );
     }
@@ -107,13 +107,13 @@ export function AgentActivityList({
   const formatKindLabel = (kind: AgentActivity["kind"]) => {
     switch (kind) {
       case "task_created":
-        return "Đã tạo công việc";
+        return "Created task";
       case "task_updated":
-        return "Đã cập nhật công việc";
+        return "Updated task";
       case "proposal_created":
-        return "Đề xuất công việc";
+        return "Task proposal";
       default:
-        return "Thao tác";
+        return "Action";
     }
   };
 
@@ -140,8 +140,8 @@ export function AgentActivityList({
                 {act.status === "succeeded"
                   ? formatKindLabel(act.kind)
                   : act.kind === "task_created"
-                    ? "Tạo công việc"
-                    : "Cập nhật công việc"}
+                    ? "Create task"
+                    : "Update task"}
               </span>
             </div>
             {renderStatusBadge(act.status)}
@@ -153,14 +153,14 @@ export function AgentActivityList({
 
           {act.resourceType === "task" && act.resourceId && (
             <div className="mt-2 flex items-center justify-between text-xs text-[var(--color-text-muted)]">
-              <span>Mã: {act.resourceId}</span>
+              <span>ID: {act.resourceId}</span>
               {act.status === "succeeded" && (
                 <button
                   type="button"
                   onClick={() => void openTask(act.resourceId!)}
                   className="font-medium text-[var(--color-accent)] hover:underline"
                 >
-                  Xem chi tiết
+                  View details
                 </button>
               )}
             </div>

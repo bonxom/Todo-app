@@ -38,7 +38,7 @@ export async function agentWorkspaceFixture(
         toolCallId: "call-1",
         kind: "task_created",
         status: "succeeded",
-        title: "Tạo cấu trúc dự án",
+        title: "Create project structure",
         resourceType: "task",
         resourceId: "1",
         occurredAt: "2026-11-06T00:00:00.000Z",
@@ -48,13 +48,13 @@ export async function agentWorkspaceFixture(
       {
         id: "msg-1",
         sender: "user",
-        text: "Kế hoạch tuần này là gì?",
+        text: "What is the plan for this week?",
         timestamp: "2026-11-06T00:00:00.000Z",
       },
       {
         id: "msg-2",
         sender: "bot",
-        text: "Tôi đã lên kế hoạch và tạo nhiệm vụ cần thiết.",
+        text: "I have prepared the plan and created the required tasks.",
         timestamp: "2026-11-06T00:00:05.000Z",
       },
     ],
@@ -69,7 +69,7 @@ export async function agentWorkspaceFixture(
     },
     {
       id: "conv-other-2",
-      title: "Hội thoại cá nhân",
+      title: "Personal conversation",
       createdAt: "2026-11-05T00:00:00.000Z",
       updatedAt: "2026-11-05T00:00:00.000Z",
     },

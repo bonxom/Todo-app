@@ -45,7 +45,7 @@ export function AgentHistoryList({
   }, [activeConversationId]);
 
   const filtered = conversations.filter((c) =>
-    (c.title || "Cuộc trò chuyện mới")
+    (c.title || "New conversation")
       .toLowerCase()
       .includes(searchQuery.toLowerCase()),
   );
@@ -60,7 +60,7 @@ export function AgentHistoryList({
           className="ui-btn-primary agent-new-chat-button"
         >
           <Plus className="h-4 w-4" />
-          <span>Cuộc trò chuyện mới</span>
+          <span>New conversation</span>
         </button>
 
         <div className="relative mt-3">
@@ -69,8 +69,8 @@ export function AgentHistoryList({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm hội thoại..."
-            aria-label="Tìm kiếm hội thoại"
+            placeholder="Search conversations..."
+            aria-label="Search conversations"
             className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] py-1.5 pl-8 pr-3 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-hidden"
           />
         </div>
@@ -83,7 +83,7 @@ export function AgentHistoryList({
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-6 text-center text-xs text-[var(--color-text-muted)]">
-            {searchQuery ? "Không tìm thấy hội thoại" : "Chưa có hội thoại nào"}
+            {searchQuery ? "No conversations found" : "No conversations yet"}
           </div>
         ) : (
           <div className="space-y-1">
@@ -103,7 +103,7 @@ export function AgentHistoryList({
                 >
                   <MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-70" />
                   <span className="truncate">
-                    {item.title || "Cuộc trò chuyện mới"}
+                    {item.title || "New conversation"}
                   </span>
                 </button>
               );

@@ -53,7 +53,7 @@ test.describe("Agent Workspace E2E", () => {
 
     await page.goto("/agent?conversation=conv-e2e-1");
     await expect(
-      page.getByText("Tôi đã lên kế hoạch và tạo nhiệm vụ cần thiết."),
+      page.getByText("I have prepared the plan and created the required tasks."),
     ).toBeVisible();
   });
 
@@ -64,10 +64,10 @@ test.describe("Agent Workspace E2E", () => {
 
     await page.goto("/agent?conversation=unowned-or-invalid");
     await expect(
-      page.getByRole("heading", { name: "Hội thoại không khả dụng" }),
+      page.getByRole("heading", { name: "Conversation unavailable" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Bắt đầu cuộc trò chuyện mới" }),
+      page.getByRole("button", { name: "Start new conversation" }),
     ).toBeVisible();
   });
 
@@ -79,17 +79,17 @@ test.describe("Agent Workspace E2E", () => {
 
     // Open history drawer
     const historyBtn = page.getByRole("button", {
-      name: "Mở lịch sử hội thoại",
+      name: "Open conversation history",
     });
     await historyBtn.click();
     await expect(
-      page.getByRole("dialog", { name: "Lịch sử hội thoại" }),
+      page.getByRole("dialog", { name: "Conversation history" }),
     ).toBeVisible();
 
     const dialog = page.getByRole("dialog").last();
-    await expect(dialog).toContainText("Lịch sử");
+    await expect(dialog).toContainText("Conversation History");
     const firstFocus = dialog.getByRole("textbox", {
-      name: "Tìm kiếm hội thoại",
+      name: "Search conversations...",
     });
     await expect(firstFocus).toBeFocused();
     const lastButton = dialog.getByRole("button").last();
@@ -99,23 +99,23 @@ test.describe("Agent Workspace E2E", () => {
     // Escape closes it
     await page.keyboard.press("Escape");
     await expect(
-      page.getByRole("dialog", { name: "Lịch sử hội thoại" }),
+      page.getByRole("dialog", { name: "Conversation history" }),
     ).not.toBeVisible();
     await expect(historyBtn).toBeFocused();
 
     // Open context drawer
     const contextBtn = page.getByRole("button", {
-      name: "Mở bảng ngữ cảnh và kết quả",
+      name: "Open context and actions panel",
     });
     await contextBtn.click();
     await expect(
-      page.getByRole("dialog", { name: "Ngữ cảnh và kết quả thao tác" }),
+      page.getByRole("dialog", { name: "Context and verified activities" }),
     ).toBeVisible();
 
     // Escape closes it
     await page.keyboard.press("Escape");
     await expect(
-      page.getByRole("dialog", { name: "Ngữ cảnh và kết quả thao tác" }),
+      page.getByRole("dialog", { name: "Context and verified activities" }),
     ).not.toBeVisible();
   });
 
@@ -132,7 +132,7 @@ test.describe("Agent Workspace E2E", () => {
           toolCallId: "call-1",
           kind: "task_created",
           status: "succeeded",
-          title: "Tạo cấu trúc dự án",
+          title: "Create project structure",
           resourceType: "task",
           resourceId: "1",
           occurredAt: "2026-11-06T00:00:00.000Z",
@@ -143,11 +143,11 @@ test.describe("Agent Workspace E2E", () => {
     await page.goto("/agent?conversation=conv-e2e-1");
 
     // Activity is visible
-    await expect(page.getByText("Tạo cấu trúc dự án")).toBeVisible();
-    await expect(page.getByText("Thành công")).toBeVisible();
+    await expect(page.getByText("Create project structure")).toBeVisible();
+    await expect(page.getByText("Success")).toBeVisible();
 
     // Project context select
-    const projectSelect = page.getByLabel("Dự án ngữ cảnh");
+    const projectSelect = page.getByLabel("Project Context");
     await expect(projectSelect).toBeVisible();
     await projectSelect.selectOption({ label: "Website refresh" });
     await expect(projectSelect).toHaveValue("website");

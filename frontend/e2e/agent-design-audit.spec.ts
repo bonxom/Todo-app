@@ -97,11 +97,11 @@ test("design walkthrough: skill library, template and editor", async ({
     animations: "disabled",
   });
   await page
-    .getByRole("button", { name: "Thêm từ mẫu", exact: true })
+    .getByRole("button", { name: "Add from template", exact: true })
     .first()
     .click();
-  await page.getByRole("button", { name: /Xem mẫu IELTS/i }).click();
-  await expect(page.getByText("Hướng dẫn ôn thi IELTS")).toBeVisible();
+  await page.getByRole("button", { name: /View template IELTS/i }).click();
+  await expect(page.getByText("IELTS Exam Preparation Guide")).toBeVisible();
   await page.screenshot({
     path: resolve(out, "04-template-desktop.png"),
     fullPage: true,
@@ -109,7 +109,7 @@ test("design walkthrough: skill library, template and editor", async ({
   });
   await page.keyboard.press("Escape");
   await page.getByText("IELTS Writing", { exact: true }).click();
-  await expect(page.getByLabel(/Tên kỹ năng/i)).toHaveValue("IELTS Writing");
+  await expect(page.getByLabel(/Skill name/i)).toHaveValue("IELTS Writing");
   await page.screenshot({
     path: resolve(out, "05-editor-desktop.png"),
     fullPage: true,
@@ -122,7 +122,7 @@ test("design walkthrough: skill library, template and editor", async ({
     animations: "disabled",
   });
   await page
-    .getByLabel("Hướng dẫn chi tiết", { exact: false })
+    .getByLabel("Instructions", { exact: false })
     .scrollIntoViewIfNeeded();
   await page.screenshot({
     path: resolve(out, "06b-editor-mobile-writing.png"),
@@ -130,7 +130,7 @@ test("design walkthrough: skill library, template and editor", async ({
     animations: "disabled",
   });
   await page
-    .getByRole("button", { name: "Quay lại danh sách", exact: true })
+    .getByRole("button", { name: "Back to skills", exact: true })
     .click();
   await expect(page.getByText("IELTS Writing", { exact: true })).toBeVisible();
   await page.screenshot({
@@ -139,10 +139,10 @@ test("design walkthrough: skill library, template and editor", async ({
     animations: "disabled",
   });
   await page
-    .getByRole("button", { name: "Thêm từ mẫu", exact: true })
+    .getByRole("button", { name: "Add from template", exact: true })
     .first()
     .click();
-  await page.getByRole("button", { name: /Xem mẫu IELTS/i }).click();
+  await page.getByRole("button", { name: /View template IELTS/i }).click();
   await page.screenshot({
     path: resolve(out, "08-template-mobile.png"),
     fullPage: false,
@@ -162,7 +162,7 @@ test("design walkthrough: empty library and dark theme", async ({ page }) => {
     animations: "disabled",
   });
   await page
-    .getByRole("link", { name: "Tạo kỹ năng", exact: true })
+    .getByRole("link", { name: "Create skill", exact: true })
     .first()
     .click();
   await page.screenshot({

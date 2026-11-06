@@ -38,11 +38,11 @@ export function AgentDiscardDialog({
               id="discard-dialog-title"
               className="text-base font-semibold text-[var(--color-text)]"
             >
-              Bỏ thay đổi hiện tại?
+              Discard current changes?
             </h3>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              Bạn có bản nháp chưa gửi hoặc đề xuất chưa lưu. Chuyển hội thoại
-              hoặc rời đi sẽ xóa các thay đổi này.
+              You have unsent drafts or unsaved proposals. Switching
+              conversations or leaving will discard these changes.
             </p>
           </div>
         </div>
@@ -52,14 +52,14 @@ export function AgentDiscardDialog({
             onClick={onCancel}
             className="rounded-lg border border-[var(--color-line)] px-4 py-2 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
           >
-            Tiếp tục chỉnh sửa
+            Keep editing
           </button>
           <button
             type="button"
             onClick={onConfirm}
             className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
           >
-            Bỏ thay đổi
+            Discard changes
           </button>
         </div>
       </div>

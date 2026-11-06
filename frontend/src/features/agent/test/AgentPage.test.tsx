@@ -230,11 +230,11 @@ describe("AgentPage and Agent routing", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /hội thoại không khả dụng/i }),
+        screen.getByRole("heading", { name: /conversation unavailable/i }),
       ).toBeInTheDocument();
     });
     expect(
-      screen.getByRole("button", { name: "Bắt đầu cuộc trò chuyện mới" }),
+      screen.getByRole("button", { name: "Start new conversation" }),
     ).toBeInTheDocument();
   });
 
@@ -260,9 +260,9 @@ describe("AgentPage and Agent routing", () => {
     render(<RouterProvider router={router} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Lập kế hoạch hôm nay/i)).toBeInTheDocument();
-      expect(screen.getByText(/Chia nhỏ công việc/i)).toBeInTheDocument();
-      expect(screen.getByText(/Xem việc cần ưu tiên/i)).toBeInTheDocument();
+      expect(screen.getByText(/Plan today's schedule/i)).toBeInTheDocument();
+      expect(screen.getByText(/Break down tasks/i)).toBeInTheDocument();
+      expect(screen.getByText(/Review priority tasks/i)).toBeInTheDocument();
     });
   });
 
@@ -299,11 +299,11 @@ describe("AgentPage and Agent routing", () => {
     render(<RouterProvider router={router} />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/Dự án ngữ cảnh/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Project Context/i)).toBeInTheDocument();
     });
 
     const select = screen.getByLabelText(
-      /Dự án ngữ cảnh/i,
+      /Project Context/i,
     ) as HTMLSelectElement;
     expect(select.value).toBe("");
 
@@ -312,7 +312,7 @@ describe("AgentPage and Agent routing", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/Hội thoại đang bận/i)).toBeInTheDocument();
+      expect(screen.getByText(/Conversation is busy/i)).toBeInTheDocument();
       // Reverted to original value
       expect(select.value).toBe("");
     });
@@ -332,7 +332,7 @@ describe("AgentPage and Agent routing", () => {
           toolCallId: "call-1",
           kind: "task_created",
           status: "succeeded",
-          title: "Thiết kế giao diện Agent",
+          title: "Design Agent UI",
           resourceType: "task",
           resourceId: "t-1",
           occurredAt: "2026-11-06T00:00:00.000Z",
@@ -360,8 +360,8 @@ describe("AgentPage and Agent routing", () => {
     render(<RouterProvider router={router} />);
 
     await waitFor(() => {
-      expect(screen.getByText("Thiết kế giao diện Agent")).toBeInTheDocument();
-      expect(screen.getByText(/Thành công/i)).toBeInTheDocument();
+      expect(screen.getByText("Design Agent UI")).toBeInTheDocument();
+      expect(screen.getByText(/Success/i)).toBeInTheDocument();
     });
   });
 
@@ -406,7 +406,7 @@ describe("AgentPage and Agent routing", () => {
       ).toBeInTheDocument();
     });
 
-    const searchInput = screen.getByPlaceholderText(/Tìm kiếm hội thoại/i);
+    const searchInput = screen.getByPlaceholderText(/Search conversations/i);
     await act(async () => {
       fireEvent.change(searchInput, { target: { value: "Work" } });
     });
