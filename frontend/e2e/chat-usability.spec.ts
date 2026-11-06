@@ -180,10 +180,14 @@ test("mode is visible, welcome fills the draft, and new chat retains Ask", async
   await page
     .getByRole("button", { name: "Agent mode: auto", exact: true })
     .click();
-  const askColor = await page
-    .getByRole("button", { name: "Agent mode: ask" })
-    .evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(askColor).not.toBe(autoColor);
+  // The label updates before the CSS background transition finishes.
+  await expect
+    .poll(() =>
+      page
+        .getByRole("button", { name: "Agent mode: ask" })
+        .evaluate((el) => getComputedStyle(el).backgroundColor),
+    )
+    .not.toBe(autoColor);
   await expect(page.getByRole("combobox", { name: "Agent mode" })).toHaveCount(
     0,
   );
@@ -217,6 +221,8 @@ test("mode is visible, welcome fills the draft, and new chat retains Ask", async
     .getByRole("button", { name: "Collapse options", exact: true })
     .click();
   await page.getByRole("button", { name: "New chat", exact: true }).click();
+  await expect(page.getByRole("alertdialog")).toBeVisible();
+  await page.getByRole("button", { name: "Bỏ thay đổi và tiếp tục" }).click();
   await expect(input).toHaveValue("");
   await page
     .getByRole("button", { name: "Expand options", exact: true })

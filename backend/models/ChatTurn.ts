@@ -33,10 +33,27 @@ const schema = new Schema<ChatTurn>(
     intent: { type: String, enum: ["task_proposal"] },
     requestIntent: { type: String, enum: ["task_proposal", null] },
     proposalId: { type: String },
+    contextProjectId: {
+      type: Schema.Types.ObjectId,
+      ref: "Project",
+      default: null,
+    },
     executionToken: { type: String, default: "" },
     interactions: { type: Schema.Types.Mixed, default: [] },
     response: { type: String, default: "" },
     messages: { type: Schema.Types.Mixed, default: [] },
+    activities: { type: Schema.Types.Mixed, default: [] },
+    skillsRead: {
+      type: [
+        {
+          _id: false,
+          id: String,
+          name: String,
+          version: Number,
+        },
+      ],
+      default: [],
+    },
     expiresAt: { type: Date, required: true },
   },
   { timestamps: true },

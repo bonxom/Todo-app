@@ -10,6 +10,12 @@ import { taskProposalRepository } from "../repositories/A2UI/taskProposalReposit
 import { toProposalView } from "./A2UI/taskProposalGenerationService.js";
 import { taskProposalUiService } from "./A2UI/taskProposalUiService.js";
 import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
+import {
+  deduplicateActivities,
+  projectPersistedProposal,
+} from "../utils/agentActivity.js";
+import type { AgentActivity } from "../types/IAgentActivity.js";
+import { projectRepository } from "../repositories/projectRepository.js";
 import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
 import {
@@ -54,11 +60,41 @@ export const conversationService = {
     const interaction = menuTurn?.interactions.find(
       (i) => i.status === "pending",
     );
+    let contextResult: { projectId: string | null; available: boolean } = {
+      projectId: null,
+      available: true,
+    };
+    if (conversation.contextProjectId) {
+      const project = await projectRepository.findOwnedById(
+        conversation.contextProjectId,
+        userId,
+      );
+      if (project) {
+        contextResult = {
+          projectId: String(project._id),
+          available: true,
+        };
+      } else {
+        contextResult = {
+          projectId: null,
+          available: false,
+        };
+      }
+    }
     return {
       capabilities: { taskProposals: isTaskProposalsEnabled() },
       conversationId: conversation._id,
       title: conversation.title,
       mode: conversation.mode ?? "auto",
+      context: contextResult,
+      activities: deduplicateActivities(
+        visible.flatMap((turn) => [
+          ...((turn.activities as AgentActivity[]) ?? []),
+          ...(proposalsByTurn.has(turn._id)
+            ? projectPersistedProposal(proposalsByTurn.get(turn._id)!)
+            : []),
+        ]),
+      ),
       ...(interaction ? { interaction: publicInteraction(interaction) } : {}),
       before: hasMore ? visible[0].sequence : null,
       messages: visible.flatMap((turn) => {
@@ -157,7 +193,13 @@ export const conversationService = {
           )
         : undefined;
       return resultFor(
-        turn,
+        {
+          ...turn.toObject(),
+          activities: deduplicateActivities([
+            ...((turn.activities as AgentActivity[]) ?? []),
+            ...(proposal ? projectPersistedProposal(proposal) : []),
+          ]),
+        },
         envelope
           ? {
               proposal: envelope.proposal,

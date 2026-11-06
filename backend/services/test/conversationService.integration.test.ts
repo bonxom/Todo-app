@@ -1,3 +1,6 @@
+import { personalSkillService } from "../personalSkillService.js";
+import UserSkill from "../../models/UserSkill.js";
+import UserSkillQuota from "../../models/UserSkillQuota.js";
 import express from "express";
 import request from "supertest";
 import jwt from "jsonwebtoken";
@@ -22,6 +25,7 @@ import { errorHandler } from "../../error/errorHandler.js";
 import { requestContext } from "../../error/requestContext.js";
 import User from "../../models/User.js";
 import Category from "../../models/Category.js";
+import Project from "../../models/Project.js";
 import Task from "../../models/Task.js";
 import Stat from "../../models/Stat.js";
 import Conversation from "../../models/Conversation.js";
@@ -50,6 +54,11 @@ const post = (path: string, body: object, user = 0) =>
     .send(body);
 const get = (path: string, user = 0) =>
   request(app).get(`/api/ai/${path}`).set("Authorization", token(user));
+const patch = (path: string, body: object, user = 0) =>
+  request(app)
+    .patch(`/api/ai/${path}`)
+    .set("Authorization", token(user))
+    .send(body);
 const answer = (content: string) => ({
   choices: [{ message: { role: "assistant", content } }],
 });
@@ -100,6 +109,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     );
     await Conversation.init();
     await ChatTurn.init();
+    await Project.init();
     await Task.init();
     await Stat.init();
     await McpWriteReceipt.init();
@@ -114,6 +124,91 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     await mongoose.disconnect();
     vi.unstubAllEnvs();
   });
+
+  it.each(["answer", "question", "failure"])(
+    "persists successful skill reads through %s and exposes metadata only",
+    async (ending) => {
+      await Promise.all([UserSkill.init(), UserSkillQuota.init()]);
+      const skill = await personalSkillService.create(String(users[0]), {
+        name: "Writing",
+        description: "Writing advice",
+        instructions: "SECRET_PERSONAL_SKILL_INSTRUCTIONS",
+      });
+      const conversationId = await create();
+      const expected = [{ id: skill.id, name: skill.name, version: 1 }];
+      try {
+        completion.mockResolvedValueOnce(
+          tool("read_skill", { skillId: skill.id, version: 1 }),
+        );
+        if (ending === "failure")
+          completion.mockRejectedValueOnce(new Error("provider unavailable"));
+        else if (ending === "question")
+          completion.mockResolvedValueOnce(
+            tool("grill_user", {
+              question: "Which style?",
+              options: [
+                { id: "short", label: "Short" },
+                { id: "long", label: "Long" },
+              ],
+            }),
+          );
+        else completion.mockResolvedValueOnce(answer("Done"));
+        const result = await post("chat-mcp", {
+          conversationId,
+          requestId: randomUUID(),
+          userInput: "Help me write",
+        });
+        expect(result.status).toBe(200);
+        expect(result.body.skillsRead).toEqual(expected);
+        const persisted = await ChatTurn.findOne({ conversationId });
+        expect(
+          persisted?.skillsRead?.map((read) => ({
+            id: read.id,
+            name: read.name,
+            version: read.version,
+          })),
+        ).toEqual(expected);
+        const history = await get(`conversations/${conversationId}`);
+        expect(
+          history.body.data.messages
+            .filter((m: { sender: string }) => m.sender === "bot")
+            .at(-1).skillsRead,
+        ).toEqual(expected);
+        expect(JSON.stringify(history.body)).not.toContain(skill.instructions);
+        if (ending === "answer") {
+          await personalSkillService.update(String(users[0]), skill.id, 1, {
+            ...skill,
+            enabled: false,
+          });
+          completion
+            .mockImplementationOnce(async ({ messages }) => {
+              expect(JSON.stringify(messages)).not.toContain(
+                skill.instructions,
+              );
+              const overview = messages.at(-1);
+              expect(JSON.parse(overview.content).skills).toEqual([]);
+              return tool("read_skill", { skillId: skill.id, version: 1 });
+            })
+            .mockImplementationOnce(async ({ messages }) => {
+              expect(JSON.parse(messages.at(-1).content).code).toBe(
+                "SKILL_NOT_FOUND",
+              );
+              return answer("Disabled");
+            });
+          const next = await post("chat-mcp", {
+            conversationId,
+            requestId: randomUUID(),
+            userInput: "Write again",
+          });
+          expect(next.body.status).toBe("completed");
+          expect(next.body.skillsRead).toEqual([]);
+        }
+      } finally {
+        await UserSkill.deleteMany({ userId: users[0] });
+        await UserSkillQuota.deleteMany({ userId: users[0] });
+      }
+    },
+  );
 
   it("remembers actual tool IDs in the next turn and restores visible history", async () => {
     const conversationId = await create();
@@ -141,7 +236,9 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
           expect.arrayContaining([{ role: "user", content: first.userInput }]),
         );
         const result = messages.find(
-          (m: { role: string }) => m.role === "tool",
+          (m: { role: string; content?: string }) =>
+            m.role === "tool" &&
+            !!JSON.parse(m.content ?? "{}").structuredContent?.task,
         );
         const rememberedId = JSON.parse(result.content).structuredContent.task
           .id;
@@ -171,6 +268,12 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     const restored = await get(`conversations/${conversationId}`);
     expect(restored.headers["cache-control"]).toBe("no-store");
     const history = restored.body.data;
+    expect(history.activities).toHaveLength(3);
+    expect(
+      history.activities.every(
+        (activity: { status: string }) => activity.status === "succeeded",
+      ),
+    ).toBe(true);
     expect(history.messages.map((m: { text: string }) => m.text)).toEqual([
       "Create reading task",
       "Created your reading task.",
@@ -441,7 +544,9 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
       "Create a reading task",
     );
     completion.mockImplementationOnce(async ({ messages }) => {
-      expect(messages.at(-1)).toEqual({
+      expect(
+        messages.findLast((m: { role: string }) => m.role === "user"),
+      ).toEqual({
         role: "user",
         content: selected.userInput,
       });
@@ -492,7 +597,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
       mode: "ask",
     });
     const oldTurn = await ChatTurn.findOne({ conversationId });
-    expect(oldTurn!.messages.filter((m) => m.role === "tool")).toHaveLength(2);
+    expect(oldTurn!.messages.filter((m) => m.role === "tool")).toHaveLength(3);
     const payload = choose(
       conversationId,
       menu.body.interaction,
@@ -801,6 +906,15 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
 
     expect(proposalTurn.body.status).toBe("completed");
     expect(proposalTurn.body.proposal).toBeDefined();
+    expect(proposalTurn.body.activities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "proposal_created",
+          status: "succeeded",
+          resourceId: proposalTurn.body.proposal.id,
+        }),
+      ]),
+    );
     expect(proposalTurn.body.proposal.items).toHaveLength(1);
     expect(proposalTurn.body.proposal.items[0].title).toBe("Read chapter 1");
     expect(writeSpy).not.toHaveBeenCalled();
@@ -956,5 +1070,133 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     expect(replay.status).toBe(200);
     expect(replay.body.proposal.id).toBe(first.body.proposal.id);
     expect(completion).toHaveBeenCalledTimes(2);
+  });
+
+  it("snapshots project context into claimed ChatTurn and returns context status", async () => {
+    const conversationId = await create();
+    const project = await Project.create({
+      userId: users[0],
+      name: "Integration Project",
+      color: "#ff0000",
+      status: "active",
+    });
+    const projectId = String(project._id);
+
+    const patchRes = await patch(
+      `conversations/${conversationId}/context`,
+      { projectId },
+      0,
+    );
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.data).toEqual({
+      conversationId,
+      contextProjectId: projectId,
+    });
+
+    completion.mockResolvedValueOnce(answer("Hello with context"));
+    const chatRes = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Check context",
+    });
+    expect(chatRes.status).toBe(200);
+
+    const turn = await ChatTurn.findOne({ conversationId });
+    expect(String(turn?.contextProjectId)).toBe(projectId);
+
+    const getRes = await get(`conversations/${conversationId}`);
+    expect(getRes.body.data.context).toEqual({
+      projectId,
+      available: true,
+    });
+
+    const crossPatch = await patch(
+      `conversations/${conversationId}/context`,
+      { projectId },
+      1,
+    );
+    expect(crossPatch.status).toBe(404);
+
+    await Project.deleteOne({ _id: project._id });
+    const afterDeleteGet = await get(`conversations/${conversationId}`);
+    expect(afterDeleteGet.body.data.context).toEqual({
+      projectId: null,
+      available: false,
+    });
+  });
+
+  it("serializes context PATCH racing with claim and retains a stable retry snapshot", async () => {
+    const conversationId = await create();
+    const project = await Project.create({
+      userId: users[0],
+      name: "Race context",
+      color: "#00ff00",
+      status: "completed",
+    });
+    const requestId = randomUUID();
+    const payload = {
+      conversationId,
+      requestId,
+      userInput: "Discuss this project",
+    };
+    completion.mockResolvedValue(answer("Discussion only"));
+    const [patchResult, sent] = await Promise.all([
+      patch(`conversations/${conversationId}/context`, {
+        projectId: String(project._id),
+      }),
+      post("chat-mcp", payload),
+    ]);
+    expect([200, 409]).toContain(patchResult.status);
+    expect(sent.status).toBe(200);
+    const saved = await ChatTurn.findOne({ requestId });
+    const originalContext = saved?.contextProjectId
+      ? String(saved.contextProjectId)
+      : null;
+    if (patchResult.status === 409) expect(originalContext).toBeNull();
+    await patch(`conversations/${conversationId}/context`, { projectId: null });
+    const providerCalls = completion.mock.calls.length;
+    expect((await post("chat-mcp", payload)).body).toEqual(sent.body);
+    expect(completion).toHaveBeenCalledTimes(providerCalls);
+    const retried = await ChatTurn.findOne({ requestId });
+    expect(
+      retried?.contextProjectId ? String(retried.contextProjectId) : null,
+    ).toBe(originalContext);
+  });
+
+  it("rejects context update during an active turn with 409", async () => {
+    const conversationId = await create();
+    const project = await Project.create({
+      userId: users[0],
+      name: "Active Turn Project",
+      color: "#00ff00",
+      status: "active",
+    });
+
+    let release!: (value: unknown) => void;
+    let entered!: () => void;
+    const started = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    completion.mockImplementationOnce(() => {
+      entered();
+      return new Promise((resolve) => {
+        release = resolve;
+      });
+    });
+
+    const first = post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Holding lease",
+    }).then((response) => response);
+    await started;
+
+    const busyPatch = await patch(`conversations/${conversationId}/context`, {
+      projectId: String(project._id),
+    });
+    expect(busyPatch.status).toBe(409);
+
+    release(answer("Finished holding"));
+    await first;
   });
 });

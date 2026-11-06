@@ -1,8 +1,11 @@
+import ChatAvatar from "./ChatAvatar";
+import { useAuthStore } from "@/stores/useAuthStore";
 import AttachmentComposer from "./AttachmentComposer";
 import { FILE_ACCEPT, checkFiles } from "./attachmentFiles";
 import AttachmentList from "./AttachmentList";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext, useCallback } from "react";
 import { Send, ArrowUpRight, Sparkles } from "lucide-react";
+import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import ChatToolbar from "./ChatToolbar";
 import InteractionCard from "./InteractionCard";
 import RecentConversations from "./RecentConversations";
@@ -12,6 +15,7 @@ import SlashCommandMenu from "./SlashCommandMenu";
 import { filterTools } from "./toolCatalog";
 import { formatDateTime } from "@/shared/utils/dateTime";
 import { TaskProposalMessage } from "./A2UI/TaskProposalMessage";
+import { SkillReadBadge } from "@/features/agent/skills/SkillReadBadge";
 
 const ChatField = ({
   messages,
@@ -20,7 +24,41 @@ const ChatField = ({
   disabled = false,
   chat,
 }) => {
-  const [files, setFiles] = useState([]);
+  const userAvatar = useAuthStore((state) => state.user?.avatarUrl);
+  const agentSession = useContext(AgentSessionContext);
+  const [localFiles, setLocalFiles] = useState([]);
+  const [localInputValue, setLocalInputValue] = useState("");
+
+  const files = agentSession ? agentSession.draft.files : localFiles;
+  const setFiles = useCallback(
+    (action) => {
+      if (agentSession) {
+        agentSession.setDraft((prev) => ({
+          ...prev,
+          files: typeof action === "function" ? action(prev.files) : action,
+        }));
+      } else {
+        setLocalFiles(action);
+      }
+    },
+    [agentSession],
+  );
+
+  const inputValue = agentSession ? agentSession.draft.text : localInputValue;
+  const setInputValue = useCallback(
+    (action) => {
+      if (agentSession) {
+        agentSession.setDraft((prev) => ({
+          ...prev,
+          text: typeof action === "function" ? action(prev.text) : action,
+        }));
+      } else {
+        setLocalInputValue(action);
+      }
+    },
+    [agentSession],
+  );
+
   const [fileError, setFileError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef(null);
@@ -31,14 +69,16 @@ const ChatField = ({
       previousConversation.current &&
       previousConversation.current !== chat?.conversationId
     ) {
-      setFiles([]);
+      if (!agentSession) {
+        setFiles([]);
+        setInputValue("");
+      }
       setFileError(null);
-      setInputValue("");
       setSelectedTool(null);
       setIsSlashMenuOpen(false);
     }
     previousConversation.current = chat?.conversationId;
-  }, [chat?.conversationId]);
+  }, [chat?.conversationId, agentSession, setFiles, setInputValue]);
   const chooseFiles = (event) => {
     const next = [...files, ...Array.from(event.target.files || [])];
     event.target.value = "";
@@ -76,7 +116,6 @@ const ChatField = ({
       if (!error) setFiles(next);
     }
   };
-  const [inputValue, setInputValue] = useState("");
   const [selectedTool, setSelectedTool] = useState(null);
   const [slashQuery, setSlashQuery] = useState("");
   const [isSlashMenuOpen, setIsSlashMenuOpen] = useState(false);
@@ -313,8 +352,17 @@ const ChatField = ({
             .map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                className={`chat-message-row ${message.sender === "user" ? "chat-message-row--user" : "chat-message-row--agent"}`}
               >
+                <ChatAvatar
+                  key={
+                    message.sender === "user"
+                      ? userAvatar || "default"
+                      : "agent"
+                  }
+                  isUser={message.sender === "user"}
+                  src={message.sender === "user" ? userAvatar : undefined}
+                />
                 <div
                   className={`chat-message ${message.sender === "user" ? "chat-message--user" : "chat-message--bot"} rounded-2xl px-4 py-3 ${
                     message.sender === "user"
@@ -374,6 +422,18 @@ const ChatField = ({
                       </>
                     )}
                   </div>
+                  {message.sender !== "user" &&
+                    message.skillsRead &&
+                    message.skillsRead.length > 0 && (
+                      <div className="mt-2 mb-1 flex flex-wrap gap-1.5">
+                        {message.skillsRead.map((skill) => (
+                          <SkillReadBadge
+                            key={`${skill.id}:${skill.version}`}
+                            skill={skill}
+                          />
+                        ))}
+                      </div>
+                    )}
                   <AttachmentList
                     conversationId={chat?.conversationId}
                     files={message.attachments}
@@ -394,7 +454,8 @@ const ChatField = ({
         )}
 
         {isTyping && (
-          <div className="flex justify-start">
+          <div className="chat-message-row chat-message-row--agent">
+            <ChatAvatar />
             <div
               className="rounded-2xl rounded-bl-sm border px-4 py-3"
               style={botMessageStyle}
@@ -546,6 +607,20 @@ const ChatField = ({
               ← Back to question
             </button>
             <span>Your new message will replace the pending question.</span>
+          </div>
+        )}
+        {chat?.interaction && !showChatInput && (
+          <div className="flex flex-wrap gap-2">
+            {(
+              messages.find(
+                (message) => message.interaction?.id === chat.interaction.id,
+              )?.skillsRead ?? []
+            ).map((skill) => (
+              <SkillReadBadge
+                key={`${skill.id}:${skill.version}`}
+                skill={skill}
+              />
+            ))}
           </div>
         )}
         {chat?.interaction && !showChatInput && (

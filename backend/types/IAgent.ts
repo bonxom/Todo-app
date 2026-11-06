@@ -23,11 +23,23 @@ export type AgentInteraction = {
   };
 };
 
+import type { AgentActivity } from "./IAgentActivity.js";
+import type { SkillReadMetadata } from "./IChatTurn.js";
+import type { PersonalSkillSnapshot } from "../services/agentPersonalSkillService.js";
+
 export interface AgentMemory {
+  attachmentContext?: string;
   budget?: AgentBudget;
   mode?: AgentMode;
   intent?: ProposalIntent;
   approvedInteraction?: AgentInteraction;
+  projectContext?: { id: string; name: string } | null;
   history?: ChatCompletionMessageParam[];
-  checkpoint?: (messages: ChatCompletionMessageParam[]) => Promise<void>;
+  personalSnapshot?: PersonalSkillSnapshot;
+  onSkillsRead?: (skills: SkillReadMetadata[]) => void;
+  checkpoint?: (
+    messages: ChatCompletionMessageParam[],
+    activities?: AgentActivity[],
+    skillsRead?: SkillReadMetadata[],
+  ) => Promise<void>;
 }

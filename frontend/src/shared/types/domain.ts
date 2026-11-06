@@ -1,3 +1,4 @@
+import type { SkillReadRecord } from "./skill";
 export type EntityId = string;
 export type TaskStatus = "pending" | "in-progress" | "completed" | "given-up";
 export type TaskPriority = "Low" | "Medium" | "High";
@@ -208,17 +209,36 @@ export interface ApiEnvelope<T> {
   message: string;
   data: T;
 }
+export type AgentActivityKind =
+  "task_created" | "task_updated" | "task_deleted" | "proposal_created";
+export type AgentActivityStatus = "succeeded" | "failed" | "unknown";
+
+export interface AgentActivity {
+  id: string;
+  requestId: string;
+  toolCallId: string;
+  kind: AgentActivityKind;
+  status: AgentActivityStatus;
+  title: string;
+  resourceType?: "task" | "proposal";
+  resourceId?: string;
+  occurredAt: string;
+}
+
 export type GenerateTasksResponse = ApiEnvelope<Task[]>;
 export interface ChatResponse extends ApiEnvelope<string> {
+  skillsRead?: SkillReadRecord[];
   status?: "processing" | "completed" | "failed" | "cancelled";
   conversationId?: string;
   requestId?: string;
   interaction?: AgentInteraction;
   proposal?: ProposalView;
   a2ui?: ProposalEnvelope["a2ui"];
+  activities?: AgentActivity[];
 }
 
 export interface ConversationMessage {
+  skillsRead?: SkillReadRecord[];
   attachments?: ChatAttachment[];
   replyToInteractionId?: string;
   interaction?: AgentInteraction;
@@ -236,6 +256,11 @@ export interface ConversationSnapshot {
   messages: ConversationMessage[];
   mode: AgentMode;
   interaction?: AgentInteraction;
+  context?: {
+    projectId: string | null;
+    available: boolean;
+  };
+  activities?: AgentActivity[];
   capabilities?: {
     taskProposals?: boolean;
   };
@@ -247,4 +272,9 @@ export interface ConversationSnapshot {
     intent?: "task_proposal";
     selection?: InteractionSelection;
   }>;
+}
+
+export interface ConversationContextResponse {
+  conversationId: string;
+  contextProjectId: string | null;
 }

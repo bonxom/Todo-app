@@ -8,6 +8,7 @@ import {
   registerListCategoriesTool,
   registerCreateTaskTool,
   registerUpdateTaskTool,
+  registerDeleteTaskTool,
 } from "./tools/index.js";
 
 export function registerOrbitTools(
@@ -22,5 +23,6 @@ export function registerOrbitTools(
   if (context.user.role === "USER" && context.scopes?.includes("tasks:write")) {
     registerCreateTaskTool(server, context);
     registerUpdateTaskTool(server, context);
+    registerDeleteTaskTool(server, context);
   }
 }

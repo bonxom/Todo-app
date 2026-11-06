@@ -8,6 +8,22 @@ const schema = new Schema(
     name: { type: String, required: true },
     mimeType: { type: String, required: true },
     size: { type: Number, required: true },
+    analysis: {
+      type: new Schema(
+        {
+          status: {
+            type: String,
+            enum: ["processing", "succeeded", "failed"],
+            required: true,
+          },
+          description: String,
+          model: String,
+          updatedAt: Date,
+        },
+        { _id: false },
+      ),
+      default: undefined,
+    },
     state: {
       type: String,
       enum: ["staging", "uploaded", "attached", "deleting"],

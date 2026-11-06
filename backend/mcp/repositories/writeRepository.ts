@@ -11,7 +11,7 @@ interface Receipt {
   fingerprint: string;
   requestId: string;
   taskId: string;
-  output: { task: TaskDto };
+  output: { task: TaskDto; deleted?: true };
   createdAt: Date;
 }
 const receiptSchema = new Schema<Receipt>(

@@ -38,3 +38,7 @@ LAN endpoint: http://192.168.1.17:9000. Native same-host: http://127.0.0.1:9000.
 6. Run failing tests before implementation, then backend/frontend suites, lint, relevant Prettier checks, type-check/build and browser verification. Run disposable Mongo replica-set integration and a real MinIO roundtrip if available; distinguish mocked UI from live-service checks.
 
 Non-goals: AI vision/document parsing/OCR, public buckets, arbitrary executable/HTML attachments, changing conversation deletion/retention, production app deployment or migrating MongoDB.
+
+## Follow-up: cached image descriptions (2026-11-07)
+
+The image interpretation exclusion above is superseded by [cached vision descriptions](2026-11-07-cached-vision-descriptions.md). Images are sent once to a separate vision invocation; only persisted descriptions enter chat. Other files remain reference-only.

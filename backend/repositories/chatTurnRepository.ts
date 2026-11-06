@@ -6,13 +6,18 @@ import mongoose from "mongoose";
 import { createHash, randomUUID } from "node:crypto";
 import Conversation from "../models/Conversation.js";
 import ChatTurn from "../models/ChatTurn.js";
-import type { InteractionSelection } from "../types/IChatTurn.js";
+import type {
+  InteractionSelection,
+  SkillReadMetadata,
+} from "../types/IChatTurn.js";
 import type { AgentInteraction, AgentMode } from "../types/IAgent.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
 import { AppError } from "../error/AppError.js";
 import { completeMenuMessages } from "../utils/agentMessages.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
 import TaskProposal from "../models/A2UI/TaskProposal.js";
+import { deduplicateActivities } from "../utils/agentActivity.js";
+import type { AgentActivity } from "../types/IAgentActivity.js";
 import type {
   ITaskProposal,
   ProposalItem,
@@ -190,6 +195,7 @@ export const chatTurnRepository = {
               requestIntent: intent ?? null,
               executionToken: randomUUID(),
               messages: [{ role: "user", content: userInput }],
+              contextProjectId: conversation.contextProjectId ?? null,
             },
           ],
           { session },
@@ -207,6 +213,8 @@ export const chatTurnRepository = {
     id: string,
     messages: ChatCompletionMessageParam[],
     executionToken?: string,
+    activities?: AgentActivity[],
+    skillsRead?: SkillReadMetadata[],
   ) {
     const result = await ChatTurn.updateOne(
       {
@@ -215,7 +223,15 @@ export const chatTurnRepository = {
         expiresAt: { $gt: new Date() },
         ...(executionToken === undefined ? {} : { executionToken }),
       },
-      { $set: { messages } },
+      {
+        $set: {
+          messages,
+          ...(activities !== undefined
+            ? { activities: deduplicateActivities(activities) }
+            : {}),
+          ...(skillsRead !== undefined ? { skillsRead } : {}),
+        },
+      },
     );
     if (!result.matchedCount) throw new AppError(AI_ERROR.PROVIDER_TIMEOUT);
   },
@@ -246,6 +262,7 @@ export const chatTurnRepository = {
     status: "completed" | "failed",
     executionToken?: string,
     interaction?: AgentInteraction,
+    skillsRead?: SkillReadMetadata[],
   ) {
     // Commit final response and release the conversation together.
     await mongoose.connection.transaction(async (session) => {
@@ -257,7 +274,11 @@ export const chatTurnRepository = {
           ...(executionToken === undefined ? {} : { executionToken }),
         },
         {
-          $set: { response, status },
+          $set: {
+            response,
+            status,
+            ...(skillsRead !== undefined ? { skillsRead } : {}),
+          },
           ...(interaction ? { $push: { interactions: interaction } } : {}),
         },
         { session },
@@ -275,6 +296,7 @@ export const chatTurnRepository = {
     executionToken: string,
     preparedItems: ProposalItem[],
     response: string,
+    skillsRead?: SkillReadMetadata[],
   ): Promise<ITaskProposal | null> {
     await taskProposalRepository.initIndexes();
     return mongoose.connection.transaction(async (session) => {
@@ -310,6 +332,7 @@ export const chatTurnRepository = {
             response,
             status: "completed",
             proposalId,
+            ...(skillsRead !== undefined ? { skillsRead } : {}),
           },
         },
         { session },

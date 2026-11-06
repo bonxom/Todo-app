@@ -15,7 +15,8 @@ export function interruptedReply(messages: ChatCompletionMessageParam[] = []) {
   );
   const confirmed = new Map<string, string>();
   for (const message of messages) {
-    if (message.role !== "tool" || typeof message.content !== "string") continue;
+    if (message.role !== "tool" || typeof message.content !== "string")
+      continue;
     const name = calls.get(message.tool_call_id);
     if (!name || !WRITE_TOOLS.has(name)) continue;
     try {
@@ -23,12 +24,15 @@ export function interruptedReply(messages: ChatCompletionMessageParam[] = []) {
       const task = result?.structuredContent?.task;
       if (
         result.isError ||
+        (name === "orbit_delete_task" &&
+          result?.structuredContent?.deleted !== true) ||
         typeof task?.id !== "string" ||
         typeof task?.title !== "string"
-      ) continue;
+      )
+        continue;
       confirmed.set(
         message.tool_call_id,
-        `Đã ${name === "orbit_create_task" ? "tạo" : "cập nhật"} công việc: ${task.title.replace(/[\r\n]+/g, " ")}.`,
+        `Đã ${name === "orbit_create_task" ? "tạo" : name === "orbit_delete_task" ? "xóa" : "cập nhật"} công việc: ${task.title.replace(/[\r\n]+/g, " ")}.`,
       );
     } catch {
       // Truncated or malformed results cannot establish success.
@@ -41,7 +45,9 @@ export function interruptedReply(messages: ChatCompletionMessageParam[] = []) {
   return [
     ...confirmed.values(),
     ...(unresolved
-      ? ["Các thao tác còn lại chưa được xác nhận thành công. Hãy kiểm tra danh sách công việc trước khi yêu cầu thực hiện lại."]
+      ? [
+          "Các thao tác còn lại chưa được xác nhận thành công. Hãy kiểm tra danh sách công việc trước khi yêu cầu thực hiện lại.",
+        ]
       : []),
   ].join("\n");
 }

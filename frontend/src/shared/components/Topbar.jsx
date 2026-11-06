@@ -35,6 +35,8 @@ const getAvatarUrl = (user) => {
 };
 
 const getTopbarContext = (pathname) => {
+  if (pathname.startsWith("/agent"))
+    return { title: "Agent", subtitle: "Trò chuyện và kỹ năng cá nhân" };
   if (pathname.startsWith("/dashboard")) {
     return {
       title: "Todos",
@@ -92,6 +94,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
   const statusMenuRef = useRef(null);
   const showAvatar = Boolean(avatarUrl) && brokenAvatarUrl !== avatarUrl;
   const pageContext = getTopbarContext(location.pathname);
+  const isAgentPage = location.pathname.startsWith("/agent");
   const selectedStatusLabels = STATUS_OPTIONS.filter((option) =>
     selectedStatuses.includes(option.id),
   ).map((option) => option.label);
@@ -186,72 +189,76 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
 
       <div className="ui-topbar-actions">
         <ThemeToggle />
-        <div
-          className="ui-global-task-filter"
-          ref={statusMenuRef}
-          data-open={isStatusMenuOpen ? "true" : "false"}
-        >
-          <button
-            type="button"
-            onClick={() => setIsStatusMenuOpen((isOpen) => !isOpen)}
-            className="ui-global-task-filter__trigger ui-focus-ring"
-            aria-expanded={isStatusMenuOpen}
-            aria-haspopup="menu"
+        {!isAgentPage && (
+          <div
+            className="ui-global-task-filter"
+            ref={statusMenuRef}
+            data-open={isStatusMenuOpen ? "true" : "false"}
           >
-            <ListFilter className="h-4 w-4" aria-hidden="true" />
-            <span>{statusFilterLabel}</span>
-            <ChevronDown
-              className="ui-global-task-filter__chevron h-4 w-4"
-              aria-hidden="true"
-            />
-          </button>
-
-          {isStatusMenuOpen ? (
-            <div
-              className="ui-global-task-filter__menu"
-              role="menu"
-              aria-label="Filter tasks by status"
+            <button
+              type="button"
+              onClick={() => setIsStatusMenuOpen((isOpen) => !isOpen)}
+              className="ui-global-task-filter__trigger ui-focus-ring"
+              aria-expanded={isStatusMenuOpen}
+              aria-haspopup="menu"
             >
-              <div className="ui-global-task-filter__menu-header">
-                <span>Task status</span>
-                {selectedStatuses.length > 0 ? (
-                  <button
-                    type="button"
-                    onClick={handleClearStatuses}
-                    className="ui-global-task-filter__clear ui-focus-ring"
-                  >
-                    Clear
-                  </button>
-                ) : null}
-              </div>
-              <div className="ui-global-task-filter__options">
-                {STATUS_OPTIONS.map((option) => {
-                  const isSelected = selectedStatuses.includes(option.id);
+              <ListFilter className="h-4 w-4" aria-hidden="true" />
+              <span>{statusFilterLabel}</span>
+              <ChevronDown
+                className="ui-global-task-filter__chevron h-4 w-4"
+                aria-hidden="true"
+              />
+            </button>
 
-                  return (
+            {isStatusMenuOpen ? (
+              <div
+                className="ui-global-task-filter__menu"
+                role="menu"
+                aria-label="Filter tasks by status"
+              >
+                <div className="ui-global-task-filter__menu-header">
+                  <span>Task status</span>
+                  {selectedStatuses.length > 0 ? (
                     <button
-                      key={option.id}
                       type="button"
-                      role="menuitemcheckbox"
-                      aria-checked={isSelected}
-                      onClick={() => handleStatusToggle(option.id)}
-                      className="ui-global-task-filter__option ui-focus-ring"
-                      data-selected={isSelected ? "true" : "false"}
+                      onClick={handleClearStatuses}
+                      className="ui-global-task-filter__clear ui-focus-ring"
                     >
-                      <span
-                        className="ui-global-task-filter__check"
-                        aria-hidden="true"
-                      >
-                        {isSelected ? <Check className="h-3.5 w-3.5" /> : null}
-                      </span>
-                      <span>{option.label}</span>
+                      Clear
                     </button>
-                  );
-                })}
+                  ) : null}
+                </div>
+                <div className="ui-global-task-filter__options">
+                  {STATUS_OPTIONS.map((option) => {
+                    const isSelected = selectedStatuses.includes(option.id);
+
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        role="menuitemcheckbox"
+                        aria-checked={isSelected}
+                        onClick={() => handleStatusToggle(option.id)}
+                        className="ui-global-task-filter__option ui-focus-ring"
+                        data-selected={isSelected ? "true" : "false"}
+                      >
+                        <span
+                          className="ui-global-task-filter__check"
+                          aria-hidden="true"
+                        >
+                          {isSelected ? (
+                            <Check className="h-3.5 w-3.5" />
+                          ) : null}
+                        </span>
+                        <span>{option.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ) : null}
-        </div>
+            ) : null}
+          </div>
+        )}
 
         <button
           type="button"

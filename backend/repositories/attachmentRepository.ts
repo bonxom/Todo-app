@@ -2,6 +2,40 @@ import type { ClientSession } from "mongoose";
 import Attachment from "../models/Attachment.js";
 import type { AttachmentView } from "../types/IAttachment.js";
 export const attachmentRepository = {
+  claimAnalysis: (userId: string, conversationId: string, id: string) =>
+    Attachment.findOneAndUpdate(
+      {
+        _id: id,
+        userId,
+        conversationId,
+        state: "attached",
+        analysis: { $exists: false },
+      },
+      { $set: { analysis: { status: "processing", updatedAt: new Date() } } },
+      { new: true },
+    ).lean(),
+  async finishAnalysis(
+    userId: string,
+    conversationId: string,
+    id: string,
+    analysis: {
+      status: "succeeded" | "failed";
+      description?: string;
+      model?: string;
+    },
+  ) {
+    const result = await Attachment.updateOne(
+      {
+        _id: id,
+        userId,
+        conversationId,
+        state: "attached",
+        "analysis.status": "processing",
+      },
+      { $set: { analysis: { ...analysis, updatedAt: new Date() } } },
+    );
+    return result.matchedCount === 1;
+  },
   create: (
     record: Omit<AttachmentView, "id"> & {
       _id: string;

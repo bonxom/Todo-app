@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useContext, useMemo, useEffect, useCallback } from "react";
 import { A2uiHost } from "@/shared/A2UI/A2uiHost";
 import type {
   ProposalAction,
@@ -7,6 +7,7 @@ import type {
 import { taskProposalRegistry } from "./taskProposalCatalog";
 import { TaskProposalContext } from "./taskProposalContext";
 import { proposalViewSchema } from "./taskProposalSchema";
+import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 
 export interface TaskProposalSurfaceProps {
   envelope: ProposalEnvelope;
@@ -24,14 +25,44 @@ export function TaskProposalSurface({
   disabled,
   onOpenTask,
 }: TaskProposalSurfaceProps) {
+  const agentSession = useContext(AgentSessionContext);
+  const proposalId = envelope.proposal.id;
+  const proposalDraft = agentSession?.draft?.proposalDrafts?.[proposalId];
+  const setProposalDraft = agentSession?.setProposalDraft;
+  const onProposalDraftChange = useCallback(
+    (draft: unknown) => {
+      setProposalDraft?.(proposalId, draft);
+    },
+    [setProposalDraft, proposalId],
+  );
+  useEffect(() => {
+    if (
+      proposalDraft &&
+      (envelope.proposal.status !== "draft" ||
+        (proposalDraft as { revision?: number }).revision !==
+          envelope.proposal.revision)
+    ) {
+      setProposalDraft?.(proposalId, null);
+    }
+  }, [proposalDraft, envelope.proposal, proposalId, setProposalDraft]);
+
   const options = useMemo(
     () => ({
       baseline: envelope.proposal,
       disabled,
       onDirtyChange,
       onOpenTask,
+      proposalDraft,
+      onProposalDraftChange,
     }),
-    [envelope.proposal, disabled, onDirtyChange, onOpenTask],
+    [
+      envelope.proposal,
+      disabled,
+      onDirtyChange,
+      onOpenTask,
+      proposalDraft,
+      onProposalDraftChange,
+    ],
   );
   const fallback = (
     <section aria-label="Đề xuất công việc" className="p-3 space-y-2">

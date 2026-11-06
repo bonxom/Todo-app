@@ -3,6 +3,13 @@ import type mongoose from "mongoose";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
 import type { AgentInteraction, AgentMode } from "./IAgent.js";
 import type { ProposalIntent } from "./A2UI/ITaskProposal.js";
+import type { AgentActivity } from "./IAgentActivity.js";
+
+export interface SkillReadMetadata {
+  id: string;
+  name: string;
+  version: number;
+}
 
 export interface ChatTurn {
   _id: string;
@@ -18,10 +25,13 @@ export interface ChatTurn {
   intent?: ProposalIntent;
   requestIntent?: ProposalIntent | null;
   proposalId?: string;
+  contextProjectId?: mongoose.Types.ObjectId | null;
   executionToken: string;
   interactions: AgentInteraction[];
   response: string;
   messages: ChatCompletionMessageParam[];
+  activities?: AgentActivity[];
+  skillsRead?: SkillReadMetadata[];
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;

@@ -11,11 +11,12 @@ import { toTaskDto } from "../mapper/taskMapper.js";
 import { writeRepository } from "../repositories/writeRepository.js";
 import {
   createTaskInputSchema,
+  deleteTaskInputSchema,
   updateTaskInputSchema,
 } from "../models/TaskWrite.js";
 import { getStartOfToday } from "../../utils/dateTime.js";
 
-export type WriteOperation = "create" | "update";
+export type WriteOperation = "create" | "update" | "delete";
 export class WriteError extends Error {
   constructor(
     public readonly code: string,
@@ -75,7 +76,9 @@ async function executeWrite<T extends { idempotencyKey: string }>(
           "This key was already used for different arguments. Use the original arguments for a retry.",
         );
       }
-      await taskService.getById(previous.taskId, context.user);
+      // A committed deletion receipt is the owned result: the task no longer exists.
+      if (operation !== "delete")
+        await taskService.getById(previous.taskId, context.user);
       return previous.output;
     }
     await context.beforeWrite?.();
@@ -83,7 +86,10 @@ async function executeWrite<T extends { idempotencyKey: string }>(
     if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
     // Keep category totals accurate after content/category changes, too.
     await statService.getStats(context.user);
-    const output = { task: toTaskDto(task) };
+    const output = {
+      task: toTaskDto(task),
+      ...(operation === "delete" ? { deleted: true as const } : {}),
+    };
     await writeRepository.saveReceipt({
       _id: receiptId,
       userId,
@@ -98,6 +104,19 @@ async function executeWrite<T extends { idempotencyKey: string }>(
 }
 
 export const taskWriteService = {
+  delete(raw: unknown, context: McpContext) {
+    return executeWrite(
+      "delete",
+      raw,
+      deleteTaskInputSchema,
+      context,
+      async ({ taskId }) => {
+        const task = await taskService.getById(taskId, context.user);
+        await taskService.delete(taskId, context.user);
+        return task;
+      },
+    );
+  },
   create(raw: unknown, context: McpContext) {
     return executeWrite(
       "create",

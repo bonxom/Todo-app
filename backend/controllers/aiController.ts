@@ -3,6 +3,7 @@ import type { ProposalIntent } from "../types/A2UI/ITaskProposal.js";
 import type { Request, Response } from "express";
 import { createMcpContext } from "../mcp/context.js";
 import { conversationService } from "../services/conversationService.js";
+import { conversationContextService } from "../services/conversationContextService.js";
 import { aiService } from "../services/aiService.js";
 import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
 
@@ -102,4 +103,18 @@ export const getConversationCapabilities = async (
   res: Response,
 ): Promise<void> => {
   res.json({ taskProposals: isTaskProposalsEnabled() });
+};
+
+export const updateConversationContext = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const conversationId = req.validatedParams!.conversationId as string;
+  const { projectId } = req.validatedBody as { projectId: string | null };
+  const data = await conversationContextService.update(
+    String(req.user!._id),
+    conversationId,
+    projectId,
+  );
+  res.json({ data });
 };

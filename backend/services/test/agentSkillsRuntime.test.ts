@@ -6,6 +6,7 @@ vi.mock("../../libs/aiClient.js", () => ({
 }));
 vi.mock("../../config/env.js", () => ({ getAiModel: () => "test" }));
 import { agentService } from "../agentService.js";
+import { personalSkillService } from "../personalSkillService.js";
 import { categoryService } from "../categoryService.js";
 import * as policy from "../../skills/policy.js";
 import type { McpContext } from "../../mcp/context.js";
@@ -31,7 +32,10 @@ const results = (messages: ChatCompletionMessageParam[]) =>
   messages
     .filter((m) => m.role === "tool")
     .map((m) => JSON.parse(m.content as string));
-beforeEach(() => vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true"));
+beforeEach(() => {
+  vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
+  vi.spyOn(personalSkillService, "getEnabledSnapshot").mockResolvedValue([]);
+});
 afterEach(() => {
   completion.mockReset();
   vi.restoreAllMocks();
@@ -42,16 +46,16 @@ describe("request-bound skill gate", () => {
     const read = vi.spyOn(categoryService, "getAll").mockResolvedValue([]);
     completion
       .mockImplementationOnce(async (payload) => {
-        expect(toolNames(payload)).toContain("load_skill");
-        expect(toolNames(payload)).toContain("read_skill_document");
+        expect(toolNames(payload)).not.toContain("load_skill");
+        expect(toolNames(payload)).not.toContain("read_skill_document");
         expect(toolNames(payload)).toContain("orbit_list_categories");
         return response(call("read", "orbit_list_categories"));
       })
       .mockResolvedValueOnce(done);
     expect(await agentService.chatWithMcp("List", context)).toBe("Done");
     expect(read).toHaveBeenCalledOnce();
-    expect(completion.mock.calls[0][0].messages).toHaveLength(2);
-    expect(completion.mock.calls[1][0].messages).toHaveLength(4);
+    expect(completion.mock.calls[0][0].messages).toHaveLength(4);
+    expect(completion.mock.calls[1][0].messages).toHaveLength(6);
   });
   it("exposes specialist tools only after their required skill is loaded", async () => {
     vi.spyOn(policy, "requiredSkillDocuments").mockImplementation((name) =>
@@ -63,6 +67,8 @@ describe("request-bound skill gate", () => {
     completion
       .mockImplementationOnce(async (payload) => {
         expect(toolNames(payload)).toEqual([
+          "list_skills",
+          "read_skill",
           "load_skill",
           "read_skill_document",
           "grill_user",
@@ -187,7 +193,7 @@ describe("request-bound skill gate", () => {
       )
       .mockImplementationOnce(async (payload) => {
         expect(payload.tool_choice).toBe("none");
-        expect(results(payload.messages)).toHaveLength(42);
+        expect(results(payload.messages)).toHaveLength(43);
         expect(
           results(payload.messages).filter(
             (r) => r.code === "TOOL_CALL_LIMIT_EXCEEDED",

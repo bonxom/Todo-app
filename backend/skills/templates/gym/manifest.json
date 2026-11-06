@@ -1,0 +1,6 @@
+{
+  "id": "gym",
+  "name": "Gym Routine",
+  "description": "Help plan a gym routine around the user's goals, experience, schedule and available equipment.",
+  "entrypoint": "SKILL.md"
+}

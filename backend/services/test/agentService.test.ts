@@ -1,3 +1,6 @@
+vi.mock("../personalSkillService.js", () => ({
+  personalSkillService: { getEnabledSnapshot: async () => [] },
+}));
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
 const completionCreate = vi.hoisted(() => vi.fn());
@@ -144,7 +147,7 @@ describe("Ask runner", () => {
     expect(read).toHaveBeenCalledTimes(1);
     expect(completionCreate).toHaveBeenCalledTimes(1);
     const results = saved.filter((message) => message.role === "tool");
-    expect(results).toHaveLength(3);
+    expect(results).toHaveLength(4);
     expect(
       results.find((message) => message.tool_call_id === "ask1")?.content,
     ).toContain("question_displayed");
@@ -346,6 +349,7 @@ describe("Task proposal agent mode", () => {
     expect(toolNames).toContain("propose_tasks");
     expect(toolNames).not.toContain("orbit_create_task");
     expect(toolNames).not.toContain("orbit_update_task");
+    expect(toolNames).not.toContain("orbit_delete_task");
     expect(toolNames).toContain("orbit_list_categories");
     expect(toolNames).toContain("orbit_list_projects");
   });
@@ -415,6 +419,7 @@ describe("Automatic task proposal selection", () => {
       expect(names).toContain("propose_tasks");
       expect(names).not.toContain("orbit_create_task");
       expect(names).toContain("orbit_update_task");
+      expect(names).toContain("orbit_delete_task");
     },
   );
 

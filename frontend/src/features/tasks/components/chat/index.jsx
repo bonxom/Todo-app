@@ -3,7 +3,8 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import Bubble from "./Bubble";
 import SmallChat from "./SmallChat";
 
-const ChatBubble = () => {
+/** @param {{ onOpenInAgent?: () => void }} props */
+const ChatBubble = ({ onOpenInAgent = undefined }) => {
   const sessionRevision = useAuthStore((state) => state.sessionRevision);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
@@ -37,6 +38,7 @@ const ChatBubble = () => {
           key={sessionRevision}
           onClose={handleCloseChat}
           isOpen={isChatOpen}
+          onOpenInAgent={onOpenInAgent}
         />
       </div>
     </>

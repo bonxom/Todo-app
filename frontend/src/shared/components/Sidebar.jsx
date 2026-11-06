@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, X } from "lucide-react";
+import { Bot, LogOut, X } from "lucide-react";
 import { useLogoutMutation } from "@/features/auth/api/authMutations";
 import OrbitMark from "./OrbitMark";
 
@@ -84,6 +84,11 @@ const menuItems = [
         />
       </svg>
     ),
+  },
+  {
+    path: "/agent",
+    label: "Agent",
+    icon: <Bot className="h-5 w-5 flex-shrink-0" />,
   },
 ];
 

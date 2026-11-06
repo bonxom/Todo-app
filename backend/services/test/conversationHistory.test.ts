@@ -54,6 +54,52 @@ it("compacts old successful loader results before the history limit without muta
   expect(turns).toEqual(before);
 });
 
+it("compacts old successful personal read_skill results and removes full instructions", () => {
+  const turns = [
+    {
+      messages: [
+        {
+          role: "assistant" as const,
+          tool_calls: [
+            {
+              id: "read-old",
+              type: "function" as const,
+              function: {
+                name: "read_skill",
+                arguments:
+                  '{"skillId":"11111111-1111-4111-8111-111111111111","version":1}',
+              },
+            },
+          ],
+        },
+        {
+          role: "tool" as const,
+          tool_call_id: "read-old",
+          content: JSON.stringify({
+            id: "11111111-1111-4111-8111-111111111111",
+            name: "My Grammar",
+            version: 1,
+            instructions: "SUPER_SECRET_OLD_INSTRUCTIONS",
+          }),
+        },
+      ],
+      status: "completed",
+    },
+  ];
+  const result = prepareHistory(turns);
+  expect(result).toHaveLength(2);
+  const toolMsg = JSON.parse(result[1].content as string);
+  expect(toolMsg).toMatchObject({
+    id: "11111111-1111-4111-8111-111111111111",
+    name: "My Grammar",
+    version: 1,
+    previouslyLoaded: true,
+    validForCurrentTurn: false,
+  });
+  expect(toolMsg.instructions).toBeUndefined();
+  expect(JSON.stringify(result)).not.toContain("SUPER_SECRET_OLD_INSTRUCTIONS");
+});
+
 it("preserves task proposal turns with propose_tasks tool calls and assistant summary", () => {
   const turns = [
     {
@@ -98,4 +144,51 @@ it("preserves task proposal turns with propose_tasks tool calls and assistant su
     role: "assistant",
     content: "Here is your proposal.",
   });
+});
+
+it("includes activities in resultFor with safe DTO and preserves them when final response is empty or awaiting_user", async () => {
+  const { resultFor } = await import("../../utils/conversationView.js");
+  const activity = {
+    id: "act-1",
+    requestId: "r1",
+    toolCallId: "c1",
+    kind: "task_created" as const,
+    status: "succeeded" as const,
+    title: "Created task",
+    resourceType: "task" as const,
+    resourceId: "t1",
+    occurredAt: "2026-11-06T00:00:00.000Z",
+  };
+
+  const completed = resultFor({
+    conversationId: "conv-1",
+    requestId: "r1",
+    status: "completed",
+    response: "Done",
+    interactions: [],
+    expiresAt: new Date(Date.now() + 60000),
+    activities: [activity],
+  });
+  expect(completed.activities).toEqual([activity]);
+
+  const awaitingUser = resultFor({
+    conversationId: "conv-1",
+    requestId: "r1",
+    status: "awaiting_user",
+    response: "",
+    interactions: [],
+    expiresAt: new Date(Date.now() + 60000),
+    activities: [activity],
+  });
+  expect(awaitingUser.activities).toEqual([activity]);
+
+  const legacy = resultFor({
+    conversationId: "conv-1",
+    requestId: "r1",
+    status: "completed",
+    response: "Old",
+    interactions: [],
+    expiresAt: new Date(Date.now() + 60000),
+  });
+  expect(legacy.activities).toEqual([]);
 });

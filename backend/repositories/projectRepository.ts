@@ -3,6 +3,12 @@ import Project from "../models/Project.js";
 import { IProjectDocument } from "../types/IProject.js";
 
 export const projectRepository = {
+  findOwnedById(
+    id: mongoose.Types.ObjectId | string,
+    userId: mongoose.Types.ObjectId | string,
+  ) {
+    return Project.findOne({ _id: id, userId }).lean();
+  },
   findById(
     id: mongoose.Types.ObjectId | string,
   ): Promise<IProjectDocument | null> {

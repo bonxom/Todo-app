@@ -221,6 +221,7 @@ export const taskProposalActionService = {
             items: action.items,
             selectedItemIds: action.selectedItemIds,
             createdTasks,
+            createdRequestId: action.requestId,
           },
         );
         if (!updated) {

@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { z } from "zod";
 import { Catalog, CommonSchemas } from "@a2ui/web_core/v0_9";
 import {
@@ -28,13 +28,27 @@ const api = {
 const form = createBinderlessComponentImplementation(api, ({ context }) => {
   const options = useContext(TaskProposalContext);
   const model = context.dataContext.dataModel;
-  const proposal = useSignalValue(model.getSignal<ProposalView>("/proposal"));
+  const signal = model.getSignal<ProposalView>("/proposal");
+  const proposal = useSignalValue(signal);
+
+  useEffect(() => {
+    if (
+      options?.proposalDraft &&
+      JSON.stringify(options.proposalDraft) !== JSON.stringify(proposal)
+    ) {
+      model.set("/proposal", options.proposalDraft);
+    }
+  }, [options?.proposalDraft, model, proposal]);
+
   if (!options || !proposal) throw new Error("Missing proposal context");
   return (
     <TaskProposalForm
       proposal={options.baseline}
-      draft={proposal}
-      onChange={(value) => model.set("/proposal", value)}
+      draft={(options.proposalDraft as ProposalView) || proposal}
+      onChange={(value) => {
+        model.set("/proposal", value);
+        options.onProposalDraftChange?.(value);
+      }}
       onDirtyChange={options.onDirtyChange}
       disabled={options.disabled}
       onOpenTask={options.onOpenTask}
