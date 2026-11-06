@@ -16,6 +16,7 @@ import {
 } from "./agentPersonalSkillService.js";
 import { personalSkillService } from "./personalSkillService.js";
 import { createAgentBudget } from "../utils/agentBudget.js";
+import { prepareAgentProviderMessages } from "../utils/agentProviderMessages.js";
 import { validateAgentResponse } from "../utils/agentProviderResponse.js";
 import type {
   ChatCompletionMessageParam,
@@ -573,7 +574,10 @@ ${
         const timeout = Math.floor(budget.providerTimeoutMs(finalOnly));
         if (timeout <= 0) throw new AppError(AI_ERROR.PROVIDER_TIMEOUT);
         const providerRequestId = randomUUID();
-        const payloadMessages = structuredClone(messages);
+        const payloadMessages = prepareAgentProviderMessages(
+          messages,
+          ai.baseURL,
+        );
         const snapshot = session.snapshot(providerRequestId, payloadMessages);
         const tools = [
           ...personalSkillToolDefinitions,

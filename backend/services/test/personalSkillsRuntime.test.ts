@@ -10,7 +10,10 @@ import type { PersonalSkillSnapshot } from "../agentPersonalSkillService.js";
 
 const completion = vi.hoisted(() => vi.fn());
 vi.mock("../../libs/aiClient.js", () => ({
-  getAiClient: () => ({ chat: { completions: { create: completion } } }),
+  getAiClient: () => ({
+    baseURL: "https://api.deepseek.com/v1",
+    chat: { completions: { create: completion } },
+  }),
 }));
 vi.mock("../../config/env.js", () => ({ getAiModel: () => "test-model" }));
 
@@ -57,6 +60,58 @@ afterEach(() => {
 });
 
 describe("Personal Skills runtime integration", () => {
+  it("replays provider reasoning across tool rounds and checkpoints", async () => {
+    const checkpoint = vi.fn();
+    completion
+      .mockImplementationOnce(async (payload) => {
+        const synthetic = payload.messages.find(
+          (m: { role: string }) => m.role === "assistant",
+        );
+        expect(synthetic.reasoning_content).toBe("");
+        return {
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: null,
+                reasoning_content: "provider tool state",
+                tool_calls: [call("reasoned-list", "list_skills")],
+              },
+            },
+          ],
+        };
+      })
+      .mockImplementationOnce(async (payload) => {
+        expect(
+          payload.messages.find(
+            (m: { reasoning_content?: string }) =>
+              m.reasoning_content === "provider tool state",
+          ),
+        ).toBeDefined();
+        return {
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: "Done",
+                reasoning_content: "provider final state",
+              },
+            },
+          ],
+        };
+      });
+    expect(
+      await agentService.chatWithMcp("List my skills", context, {
+        personalSnapshot: [],
+        checkpoint,
+      }),
+    ).toBe("Done");
+    expect(checkpoint.mock.lastCall?.[0].at(-1)).toHaveProperty(
+      "reasoning_content",
+      "provider final state",
+    );
+  });
+
   it("injects valid list_skills exchange before provider round 1 without unread full instructions", async () => {
     let capturedFirstPayload:
       { messages: ChatCompletionMessageParam[] } | undefined;
