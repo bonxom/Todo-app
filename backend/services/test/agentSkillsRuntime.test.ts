@@ -223,4 +223,26 @@ describe("request-bound skill gate", () => {
       log.mock.calls.filter(([entry]) => entry.event === "agent_turn_metrics"),
     ).toHaveLength(1);
   });
+
+  it("exposes load_skill for ui-composition when A2UI_COMPOSITION_ENABLED=true without specialist MCP tools", async () => {
+    vi.stubEnv("A2UI_COMPOSITION_ENABLED", "true");
+    completion
+      .mockImplementationOnce(async (payload) => {
+        expect(toolNames(payload)).toContain("load_skill");
+        expect(toolNames(payload)).not.toContain("present_ui");
+        expect(payload.messages[0].content).toContain("ui-composition");
+        return response(
+          call("load-ui", "load_skill", { skillId: "ui-composition" }),
+        );
+      })
+      .mockImplementationOnce(async (payload) => {
+        expect(
+          results(payload.messages).some(
+            (r) => r.skillId === "ui-composition" && r.text?.includes("Column"),
+          ),
+        ).toBe(true);
+        return done;
+      });
+    expect(await agentService.chatWithMcp("Show a plan", context)).toBe("Done");
+  });
 });
