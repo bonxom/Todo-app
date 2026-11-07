@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import FormDialog from "@/shared/components/FormDialog";
 import { CircleDot } from "lucide-react";
 import TaskDetailForm from "./Form/TaskDetailForm";
@@ -32,16 +33,27 @@ const TaskDetailButton = ({
   onTaskUpdated,
   onProjectCreated,
 }) => {
+  const { t } = useTranslation("workspace");
+
   if (!isOpen || !task) return null;
   const status = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
   return (
-    <FormDialog title="Edit Task" kind="task" onClose={onClose}>
+    <FormDialog
+      title={t("editTaskCasedEditTask")}
+      kind="task"
+      onClose={onClose}
+    >
       <div className="mb-5">
         <span
           className={`inline-flex items-center gap-2 rounded-md px-3 py-1 text-xs ${status.badgeClass}`}
         >
           <CircleDot size={13} aria-hidden="true" />
-          {status.label}
+          {t(
+            status.label
+              .replaceAll(" ", "")
+              .replace(/^./, (c) => c.toLowerCase()),
+            { defaultValue: status.label },
+          )}
         </span>
       </div>
       <TaskDetailForm

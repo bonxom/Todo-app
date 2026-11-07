@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useRef } from "react";
 import { useModalKeyboard } from "@/shared/hooks/useModalKeyboard";
 import { AlertTriangle } from "lucide-react";
@@ -13,6 +14,8 @@ export function AgentDiscardDialog({
   onConfirm,
   onCancel,
 }: AgentDiscardDialogProps) {
+  const { t } = useTranslation("agent");
+
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useModalKeyboard(isOpen, dialogRef, onCancel);
@@ -38,11 +41,12 @@ export function AgentDiscardDialog({
               id="discard-dialog-title"
               className="text-base font-semibold text-[var(--color-text)]"
             >
-              Discard current changes?
+              {t("discardCurrentChanges")}
             </h3>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              You have unsent drafts or unsaved proposals. Switching
-              conversations or leaving will discard these changes.
+              {t(
+                "youHaveUnsentDraftsOrUnsavedProposalsSwitchingConversationsOrLeavingWillDiscardTheseChanges",
+              )}
             </p>
           </div>
         </div>
@@ -52,14 +56,14 @@ export function AgentDiscardDialog({
             onClick={onCancel}
             className="rounded-lg border border-[var(--color-line)] px-4 py-2 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
           >
-            Keep editing
+            {t("keepEditing")}
           </button>
           <button
             type="button"
             onClick={onConfirm}
             className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
           >
-            Discard changes
+            {t("discardChanges")}
           </button>
         </div>
       </div>

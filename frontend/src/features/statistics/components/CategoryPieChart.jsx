@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 import DonutChartCard from "./DonutChartCard";
 
@@ -13,6 +14,8 @@ const CATEGORY_COLORS = [
 ];
 
 const CategoryPieChart = ({ dailyStats }) => {
+  const { t } = useTranslation("workspace");
+
   const chartData = useMemo(() => {
     if (!dailyStats || dailyStats.length === 0) {
       return { items: [], total: 0 };
@@ -64,12 +67,12 @@ const CategoryPieChart = ({ dailyStats }) => {
 
   return (
     <DonutChartCard
-      title="Progress by category"
-      description="The areas you’ve been moving forward."
+      title={t("progressByCategory")}
+      description={t("theAreasYouVeBeenMovingForward")}
       total={chartData.total}
-      totalLabel="Completed"
+      totalLabel={t("completed")}
       items={chartData.items}
-      emptyMessage="No completed tasks yet."
+      emptyMessage={t("noCompletedTasksYet")}
     />
   );
 };

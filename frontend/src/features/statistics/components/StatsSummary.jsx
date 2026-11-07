@@ -1,8 +1,12 @@
+import { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 import { createElement } from "react";
 import { Check, CircleDot, ListTodo, TrendingUp } from "lucide-react";
 
-const number = new Intl.NumberFormat();
 const StatsSummary = ({ stats }) => {
+  const { t } = useTranslation("workspace");
+  const number = new Intl.NumberFormat(getLocale());
+
   if (!stats) return null;
   const rate = stats.totalTasks
     ? Math.round((stats.completedTasks / stats.totalTasks) * 100)
@@ -10,36 +14,36 @@ const StatsSummary = ({ stats }) => {
   return (
     <section
       className="statistics-overview"
-      aria-label="All-time task overview"
+      aria-label={t("allTimeTaskOverview")}
     >
       <div className="statistics-intro">
-        <p className="statistics-eyebrow">THE BIGGER PICTURE</p>
+        <p className="statistics-eyebrow">{t("theBiggerPicture")}</p>
         <h2>
-          Small efforts.
+          {t("smallEfforts")}
           <br />
-          <em>Visible progress.</em>
+          <em>{t("visibleProgress")}</em>
         </h2>
-        <p>A look at everything you’ve set in motion.</p>
+        <p>{t("aLookAtEverythingYouVeSetInMotion")}</p>
       </div>
       <div className="statistics-metrics">
         {[
           {
-            label: "Total tasks",
+            label: t("totalTasks"),
             value: stats.totalTasks,
             Icon: ListTodo,
-            note: "Ideas put into action",
+            note: t("ideasPutIntoAction"),
           },
           {
-            label: "Completed",
+            label: t("completed"),
             value: stats.completedTasks,
             Icon: Check,
-            note: "Steps in the right direction",
+            note: t("stepsInTheRightDirection"),
           },
           {
-            label: "In progress",
+            label: t("inProgress"),
             value: stats.inProgressTasks,
             Icon: CircleDot,
-            note: "Good things in motion",
+            note: t("goodThingsInMotion"),
           },
         ].map(({ label, value, Icon, note }) => (
           <div className="statistics-metric" key={label}>
@@ -54,11 +58,11 @@ const StatsSummary = ({ stats }) => {
       </div>
       <div className="statistics-progress">
         <TrendingUp size={17} />
-        <strong>{rate}% complete</strong>
+        <strong>{t("percentComplete", { percent: rate })}</strong>
         <div
           className="statistics-progress-track"
           role="progressbar"
-          aria-label="All-time completion"
+          aria-label={t("allTimeCompletion")}
           aria-valuenow={rate}
           aria-valuemin={0}
           aria-valuemax={100}
@@ -66,8 +70,8 @@ const StatsSummary = ({ stats }) => {
           <i style={{ width: `${rate}%` }} />
         </div>
         <span>
-          {number.format(stats.pendingTasks || 0)} pending <b>·</b>{" "}
-          {number.format(stats.givenUpTasks || 0)} given up
+          {number.format(stats.pendingTasks || 0)} {t("pending")}
+          <b>·</b> {number.format(stats.givenUpTasks || 0)} {t("givenUp")}
         </span>
       </div>
     </section>

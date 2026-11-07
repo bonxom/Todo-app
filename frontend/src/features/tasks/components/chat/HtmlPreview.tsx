@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   useEffect,
   useId,
@@ -16,6 +17,8 @@ import {
 import "./htmlPreview.css";
 
 export default function HtmlPreview({ code }: { code: string }) {
+  const { t } = useTranslation("agent");
+
   const [tab, setTab] = useState<"preview" | "code">("preview");
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -71,7 +74,7 @@ export default function HtmlPreview({ code }: { code: string }) {
   const preview =
     srcDoc !== null ? (
       <iframe
-        title="HTML preview"
+        title={t("htmlPreview")}
         className="html-preview-frame"
         sandbox="allow-scripts"
         referrerPolicy="no-referrer"
@@ -84,19 +87,18 @@ export default function HtmlPreview({ code }: { code: string }) {
     return (
       <div className="html-preview-fallback">
         <p className="html-preview-note" role="status">
-          HTML is too large to preview (128 KiB limit). You can still copy the
-          code.
+          {t("htmlIsTooLargeToPreview128KibLimitYouCanStillCopyTheCode")}
         </p>
         <CodeBlock code={code} language="html" />
       </div>
     );
 
   return (
-    <section className="html-preview" aria-label="HTML document">
+    <section className="html-preview" aria-label={t("htmlDocument")}>
       <div className="chat-rich-header html-preview-toolbar">
         <div
           role="tablist"
-          aria-label="HTML view"
+          aria-label={t("htmlView")}
           className="html-preview-tabs"
         >
           <button
@@ -112,7 +114,7 @@ export default function HtmlPreview({ code }: { code: string }) {
             className="ui-focus-ring"
           >
             <Eye size={14} aria-hidden="true" />
-            <span>Preview</span>
+            <span>{t("preview")}</span>
           </button>
           <button
             ref={codeTab}
@@ -127,7 +129,7 @@ export default function HtmlPreview({ code }: { code: string }) {
             className="ui-focus-ring"
           >
             <Code size={14} aria-hidden="true" />
-            <span>Code</span>
+            <span>{t("code")}</span>
           </button>
         </div>
         <div className="html-preview-actions">
@@ -136,29 +138,31 @@ export default function HtmlPreview({ code }: { code: string }) {
               ref={expandButton}
               type="button"
               onClick={() => setExpanded(true)}
-              aria-label="Expand HTML preview"
+              aria-label={t("expandHtmlPreview")}
               className="ui-focus-ring html-preview-expand"
             >
               <Maximize2 size={14} aria-hidden="true" />
-              <span>Expand</span>
+              <span>{t("expand")}</span>
             </button>
           )}
           <span className="html-preview-lang">html</span>
           <button
             type="button"
             onClick={handleCopy}
-            aria-label={copied ? "Copied" : "Copy code"}
+            aria-label={copied ? t("copied") : t("copyCode")}
             className="ui-focus-ring html-preview-copy"
           >
             {copied ? (
               <>
                 <Check size={14} className="text-emerald-500" />
-                <span className="text-emerald-500 font-medium">Copied</span>
+                <span className="text-emerald-500 font-medium">
+                  {t("copied")}
+                </span>
               </>
             ) : (
               <>
                 <Copy size={14} />
-                <span>Copy</span>
+                <span>{t("copy")}</span>
               </>
             )}
           </button>
@@ -174,7 +178,7 @@ export default function HtmlPreview({ code }: { code: string }) {
         {tab === "preview" ? (
           <>
             <p className="html-preview-note">
-              Self-contained preview · external resources are disabled
+              {t("selfContainedPreviewExternalResourcesAreDisabled")}
             </p>
             {!expanded && preview}
           </>
@@ -187,7 +191,7 @@ export default function HtmlPreview({ code }: { code: string }) {
       {createPortal(
         <dialog
           ref={dialog}
-          aria-label="HTML preview"
+          aria-label={t("htmlPreview")}
           className="html-preview-dialog"
           // Portal events still bubble through React's chat tree. Keep the
           // dialog's Escape/Tab handling separate from the chat panel's trap.
@@ -196,14 +200,14 @@ export default function HtmlPreview({ code }: { code: string }) {
           onClose={closeExpanded}
         >
           <div className="html-preview-toolbar">
-            <span>HTML preview</span>
+            <span>{t("htmlPreview")}</span>
             <button
               type="button"
-              aria-label="Close HTML preview"
+              aria-label={t("closeHtmlPreview")}
               className="ui-focus-ring html-preview-expand"
               onClick={() => dialog.current?.close()}
             >
-              <X size={18} aria-hidden="true" /> Close
+              <X size={18} aria-hidden="true" /> {t("close")}
             </button>
           </div>
           {expanded && preview}

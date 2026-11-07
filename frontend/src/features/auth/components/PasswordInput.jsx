@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useId, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -13,6 +14,7 @@ const PasswordInput = ({
   error,
   autoComplete = "current-password",
 }) => {
+  const { t } = useTranslation("account");
   const [showPassword, setShowPassword] = useState(false);
   const generatedId = useId();
   const inputId = id || `${name || "auth-password"}-${generatedId}`;
@@ -43,7 +45,7 @@ const PasswordInput = ({
           type="button"
           onClick={() => setShowPassword(!showPassword)}
           className="auth-password-toggle"
-          aria-label={showPassword ? "Hide password" : "Show password"}
+          aria-label={showPassword ? t("hidePassword") : t("showPassword")}
         >
           {showPassword ? (
             <EyeOff className="h-4 w-4" aria-hidden="true" />

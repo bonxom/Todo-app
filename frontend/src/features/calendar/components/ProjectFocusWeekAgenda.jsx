@@ -1,3 +1,5 @@
+import { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, CheckCircle2 } from "lucide-react";
 import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
@@ -18,6 +20,8 @@ const ProjectFocusWeekAgenda = ({
   compact = false,
   onAddTask,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -84,17 +88,17 @@ const ProjectFocusWeekAgenda = ({
             <div>
               <p className="text-sm font-medium text-[var(--color-accent)]">
                 {selectedProjectCount > 0
-                  ? "Your day · Filtered"
-                  : "Your day at a glance"}
+                  ? t("yourDayFiltered")
+                  : t("yourDayAtAGlance")}
               </p>
               <h3 className="mt-1 text-xl font-semibold text-[var(--color-text)]">
                 {selectedDate
-                  ? selectedDate.toLocaleDateString("en-US", {
+                  ? selectedDate.toLocaleDateString(getLocale(), {
                       weekday: "long",
                       month: "long",
                       day: "numeric",
                     })
-                  : "Pick a day from the week strip"}
+                  : t("pickADayFromTheWeekStrip")}
               </h3>
             </div>
           </div>
@@ -103,7 +107,7 @@ const ProjectFocusWeekAgenda = ({
             className={`flex flex-wrap gap-2 ${compact ? "" : "lg:justify-end"}`}
           >
             <span className="ui-chip ui-tabular">
-              {summary.completed}/{summary.total} complete
+              {summary.completed}/{summary.total} {t("complete")}{" "}
             </span>
             {onAddTask && (
               <button
@@ -111,13 +115,12 @@ const ProjectFocusWeekAgenda = ({
                 className="ui-btn-tertiary ui-focus-ring"
                 onClick={onAddTask}
               >
-                + Add task to this day
+                {t("addTaskToThisDay")}
               </button>
             )}
             {selectedProjectCount > 0 ? (
               <span className="ui-chip ui-tabular">
-                {selectedProjectCount} filtered project
-                {selectedProjectCount > 1 ? "s" : ""}
+                {t("filteredProjects", { count: selectedProjectCount })}
               </span>
             ) : null}
           </div>
@@ -167,12 +170,12 @@ const ProjectFocusWeekAgenda = ({
               aria-hidden="true"
             />
             <p className="mt-4 text-lg font-semibold text-[var(--color-text)]">
-              A little breathing room
+              {t("aLittleBreathingRoom")}
             </p>
             <p className="mt-2 text-sm text-[var(--color-text-muted)]">
               {selectedProjectCount > 0
-                ? "The selected projects have no due tasks on this exact day."
-                : "Nothing scheduled. Leave some space, or make a plan."}
+                ? t("theSelectedProjectsHaveNoDueTasksOnThisExactDay")
+                : t("nothingScheduledLeaveSomeSpaceOrMakeAPlan")}
             </p>
             {onAddTask && (
               <button
@@ -180,7 +183,7 @@ const ProjectFocusWeekAgenda = ({
                 className="ui-btn-secondary ui-focus-ring mt-5"
                 onClick={onAddTask}
               >
-                Plan a task
+                {t("planATask")}
               </button>
             )}
           </div>

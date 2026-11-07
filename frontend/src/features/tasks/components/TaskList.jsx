@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import TodoTaskCard from "./TodoTaskCard";
 import { ListTodo, Plus, Search } from "lucide-react";
 import { useTransitionTasks } from "../hooks/useTransitionTasks";
@@ -16,10 +17,16 @@ const TaskList = ({
   onClearFilters,
   onAddTask,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const visibleTasks = useTransitionTasks(tasks);
   if (isLoading) {
     return (
-      <div className="space-y-3" aria-live="polite" aria-label="Loading tasks">
+      <div
+        className="space-y-3"
+        aria-live="polite"
+        aria-label={t("loadingTasks")}
+      >
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={index}
@@ -53,7 +60,7 @@ const TaskList = ({
             onClick={onAddTask}
           >
             <Plus size={16} />
-            Add your first task
+            {t("addYourFirstTask")}
           </button>
         )}
         {emptyState?.isFiltered && onClearFilters && (
@@ -62,7 +69,7 @@ const TaskList = ({
             onClick={onClearFilters}
             className="ui-btn-secondary mt-4 cursor-pointer"
           >
-            Clear all filters
+            {t("clearAllFilters")}
           </button>
         )}
       </div>

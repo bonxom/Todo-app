@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import FormDialog from "@/shared/components/FormDialog";
 import { createElement, useEffect, useMemo, useState } from "react";
 import AddTaskButton from "./components/AddTaskButton";
@@ -37,6 +38,8 @@ const ALL_PROJECT_FILTER = "all-projects";
 const STANDALONE_PROJECT_FILTER = "standalone-projects";
 
 const TodoPage = () => {
+  const { t } = useTranslation("workspace");
+
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -125,9 +128,9 @@ const TodoPage = () => {
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading;
   const errorMessage = tasksQuery.isError
-    ? getApiErrorMessage(tasksQuery.error, "Failed to load tasks.")
+    ? getApiErrorMessage(tasksQuery.error, t("failedToLoadTasks"))
     : projectsQuery.isError
-      ? getApiErrorMessage(projectsQuery.error, "Failed to load projects.")
+      ? getApiErrorMessage(projectsQuery.error, t("failedToLoadProjects"))
       : "";
 
   // Lock body scroll on modals
@@ -161,7 +164,7 @@ const TodoPage = () => {
     try {
       await startTaskMutation.mutateAsync(taskId);
     } catch (err) {
-      alert(getApiErrorMessage(err, "Failed to accept task."));
+      alert(getApiErrorMessage(err, t("failedToAcceptTask")));
     }
   };
 
@@ -169,7 +172,7 @@ const TodoPage = () => {
     try {
       await finishTaskMutation.mutateAsync(taskId);
     } catch (err) {
-      alert(getApiErrorMessage(err, "Failed to complete task."));
+      alert(getApiErrorMessage(err, t("failedToCompleteTask")));
     }
   };
 
@@ -177,7 +180,7 @@ const TodoPage = () => {
     try {
       await restoreTaskMutation.mutateAsync(taskId);
     } catch (err) {
-      alert(getApiErrorMessage(err, "Failed to restore task."));
+      alert(getApiErrorMessage(err, t("failedToRestoreTask")));
     }
   };
 
@@ -192,7 +195,7 @@ const TodoPage = () => {
       setIsGiveUpModalOpen(false);
       setTaskToGiveUp(null);
     } catch (err) {
-      alert(getApiErrorMessage(err, "Failed to give up task."));
+      alert(getApiErrorMessage(err, t("failedToGiveUpTask")));
     }
   };
 
@@ -207,7 +210,7 @@ const TodoPage = () => {
       setIsDeleteModalOpen(false);
       setTaskToDelete(null);
     } catch (err) {
-      alert(getApiErrorMessage(err, "Failed to delete task."));
+      alert(getApiErrorMessage(err, t("failedToDeleteTask")));
     }
   };
 
@@ -221,7 +224,7 @@ const TodoPage = () => {
         setSelectedProjectId(ALL_PROJECT_FILTER);
       }
     } catch (err) {
-      alert(getApiErrorMessage(err, "Failed to complete project."));
+      alert(getApiErrorMessage(err, t("failedToCompleteProject")));
     }
   };
 
@@ -232,7 +235,7 @@ const TodoPage = () => {
         payload: { status: PROJECT_STATUS.ACTIVE },
       });
     } catch (err) {
-      alert(getApiErrorMessage(err, "Failed to restore project."));
+      alert(getApiErrorMessage(err, t("failedToRestoreProject")));
     }
   };
 
@@ -253,19 +256,21 @@ const TodoPage = () => {
   const emptyStateInfo = useMemo(() => {
     if (isFiltered) {
       return {
-        title: "No tasks match current filters",
-        description:
-          "Try adjusting your search query, status filters, or project selection.",
+        title: t("noTasksMatchCurrentFilters"),
+        description: t(
+          "tryAdjustingYourSearchQueryStatusFiltersOrProjectSelection",
+        ),
         isFiltered: true,
       };
     }
     return {
-      title: "No tasks in this workspace yet",
-      description:
-        "Add your first task to start building your daily list and project progress.",
+      title: t("noTasksInThisWorkspaceYet"),
+      description: t(
+        "addYourFirstTaskToStartBuildingYourDailyListAndProjectProgress",
+      ),
       isFiltered: false,
     };
-  }, [isFiltered]);
+  }, [isFiltered, t]);
 
   return (
     <>
@@ -290,17 +295,17 @@ const TodoPage = () => {
 
       <div className="ui-page-shell todo-page">
         <header className="ui-workspace-heading">
-          <h1 className="ui-page-title">Todos</h1>
+          <h1 className="ui-page-title">{t("todos")}</h1>
           <button
             type="button"
             onClick={() => openAddTask(selectedProject?._id)}
             className="ui-btn-primary ui-page-add-button"
           >
-            <Plus size={17} /> Add task
+            <Plus size={17} /> {t("addTask")}
           </button>
         </header>
 
-        <section className="todo-overview" aria-label="Workspace overview">
+        <section className="todo-overview" aria-label={t("workspaceOverview")}>
           <div className="todo-overview-intro">
             <div className="todo-orbit-art" aria-hidden="true">
               <i />
@@ -309,42 +314,42 @@ const TodoPage = () => {
               <span>✦</span>
             </div>
             <div>
-              <p className="todo-eyebrow">ONE THING AT A TIME</p>
+              <p className="todo-eyebrow">{t("oneThingAtATime")}</p>
               <h2>
-                Small steps.
+                {t("smallSteps")}
                 <br />
-                <em>Real progress.</em>
+                <em>{t("realProgress")}</em>
               </h2>
             </div>
           </div>
           {[
             {
-              label: "Total tasks",
+              label: t("totalTasks"),
               value: stats?.totalTasks,
               icon: ListTodo,
               status: "",
-              note: "Everything in one place",
+              note: t("everythingInOnePlace"),
             },
             {
-              label: "In progress",
+              label: t("inProgress"),
               value: stats?.inProgressTasks,
               icon: CircleDot,
               status: "in-progress",
-              note: "Keep the momentum going",
+              note: t("keepTheMomentumGoing"),
             },
             {
-              label: "Completed",
+              label: t("completed"),
               value: stats?.completedTasks,
               icon: Check,
               status: "completed",
-              note: "A little closer to your goals",
+              note: t("aLittleCloserToYourGoals"),
             },
           ].map(({ label, value, icon, status, note }) => (
             <button
               className="todo-stat"
               key={label}
               onClick={() => setSelectedStatuses(status ? [status] : [])}
-              aria-label={`Show ${label.toLowerCase()}`}
+              aria-label={t("messages.showV0", { v0: label.toLowerCase() })}
             >
               <span className="todo-stat-label">
                 {createElement(icon, { size: 15 })}
@@ -363,7 +368,7 @@ const TodoPage = () => {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-[var(--color-warning)]">
-                  Unable to load latest todo data
+                  {t("unableToLoadLatestTodoData")}
                 </p>
                 <p className="mt-1 text-sm text-[var(--color-text-muted)]">
                   {errorMessage}
@@ -377,7 +382,7 @@ const TodoPage = () => {
                 }}
                 className="ui-btn-secondary cursor-pointer"
               >
-                Retry
+                {t("retry")}
               </button>
             </div>
           </section>
@@ -386,20 +391,20 @@ const TodoPage = () => {
         {/* 2-Column Responsive Layout: Task Workspace (65-70%) vs Project Rail (30-35%, min 320px) */}
         <div className="todo-workspace">
           {/* Left Column: Main Task Workspace (~65–70%) */}
-          <section className="todo-task-panel" aria-label="Your tasks">
+          <section className="todo-task-panel" aria-label={t("yourTasks")}>
             <div className="todo-panel-heading">
               <div>
                 <h2>
                   {selectedProject?.name ||
                     (selectedProjectId === STANDALONE_PROJECT_FILTER
-                      ? "Standalone tasks"
-                      : "My tasks")}
+                      ? t("standaloneTasks")
+                      : t("myTasks"))}
                 </h2>
-                <span>Your next steps, all in one place.</span>
+                <span>{t("yourNextStepsAllInOnePlace")}</span>
               </div>
               <span className="todo-result-count" aria-live="polite">
                 {isLoading
-                  ? "Loading…"
+                  ? t("loading")
                   : `${totalCount} ${totalCount === 1 ? "task" : "tasks"}`}
               </span>
             </div>
@@ -411,7 +416,7 @@ const TodoPage = () => {
               activeProjectName={
                 selectedProject?.name ||
                 (selectedProjectId === STANDALONE_PROJECT_FILTER
-                  ? "Standalone tasks"
+                  ? t("standaloneTasks")
                   : "")
               }
               onClearProjectFilter={() =>
@@ -503,13 +508,14 @@ const TodoPage = () => {
                 id="giveup-dialog-title"
                 className="text-xl font-semibold text-[var(--color-text)]"
               >
-                Give Up Task
+                {t("giveUpTask")}
               </h2>
             </div>
             <div className="ui-modal-body">
               <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-                Are you sure you want to give up this task? You can restore it
-                to in-progress at any time.
+                {t(
+                  "areYouSureYouWantToGiveUpThisTaskYouCanRestoreItToInProgressAtAnyTime",
+                )}
               </p>
               <div className="flex gap-3">
                 <button
@@ -520,14 +526,14 @@ const TodoPage = () => {
                   }}
                   className="ui-btn-secondary flex-1 cursor-pointer"
                 >
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   type="button"
                   onClick={confirmGiveUp}
                   className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] hover:opacity-90 cursor-pointer"
                 >
-                  Give Up
+                  {t("giveUp")}
                 </button>
               </div>
             </div>
@@ -557,13 +563,12 @@ const TodoPage = () => {
                 id="delete-dialog-title"
                 className="text-xl font-semibold text-[var(--color-text)]"
               >
-                Delete Task
+                {t("deleteTask")}
               </h2>
             </div>
             <div className="ui-modal-body">
               <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-                Are you sure you want to delete this task? This action cannot be
-                undone.
+                {t("areYouSureYouWantToDeleteThisTaskThisActionCannotBeUndone")}
               </p>
               <div className="flex gap-3">
                 <button
@@ -574,14 +579,14 @@ const TodoPage = () => {
                   }}
                   className="ui-btn-secondary flex-1 cursor-pointer"
                 >
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   type="button"
                   onClick={confirmDelete}
                   className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] hover:opacity-90 cursor-pointer"
                 >
-                  Delete
+                  {t("delete")}
                 </button>
               </div>
             </div>
@@ -593,7 +598,7 @@ const TodoPage = () => {
       <FormDialog
         isOpen={isAddCategoryModalOpen}
         onClose={() => setIsAddCategoryModalOpen(false)}
-        title="Add Category"
+        title={t("addCategory")}
         kind="category"
       >
         <AddCategoryForm
@@ -606,7 +611,7 @@ const TodoPage = () => {
       <FormDialog
         isOpen={isAddProjectModalOpen}
         onClose={() => setIsAddProjectModalOpen(false)}
-        title="Add Project"
+        title={t("addProject")}
         kind="project"
       >
         <AddProjectForm

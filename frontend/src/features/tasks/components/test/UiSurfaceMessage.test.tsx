@@ -43,7 +43,7 @@ describe("UiSurfaceMessage", () => {
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getByText("Practice test 3")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Xác nhận/ }),
+      screen.queryByRole("button", { name: /Confirm/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -111,7 +111,7 @@ describe("UiSurfaceMessage", () => {
     ).toBeInTheDocument();
     await screen.findByRole("option", { name: "Work" });
 
-    await user.click(screen.getByRole("button", { name: /Xác nhận/ }));
+    await user.click(screen.getByRole("button", { name: /Confirm/ }));
     expect(applyAction).toHaveBeenCalledTimes(1);
   });
 });

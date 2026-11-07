@@ -1,7 +1,10 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 
 const CodeBlock = ({ code, language = "text" }) => {
+  const { t } = useTranslation("agent");
+
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -34,18 +37,20 @@ const CodeBlock = ({ code, language = "text" }) => {
         <button
           type="button"
           onClick={handleCopy}
-          aria-label={copied ? "Copied" : "Copy code"}
+          aria-label={copied ? t("copied") : t("copyCode")}
           className="ui-focus-ring flex items-center gap-1 rounded-md px-2 py-0.5 text-xs transition-colors hover:bg-[var(--color-line)] hover:text-[var(--color-text)] cursor-pointer"
         >
           {copied ? (
             <>
               <Check className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="text-emerald-500 font-medium">Copied</span>
+              <span className="text-emerald-500 font-medium">
+                {t("copied")}
+              </span>
             </>
           ) : (
             <>
               <Copy className="h-3.5 w-3.5" />
-              <span>Copy</span>
+              <span>{t("copy")}</span>
             </>
           )}
         </button>

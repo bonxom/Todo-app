@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useId } from "react";
 import {
   Check,
@@ -30,6 +31,8 @@ function InteractionCardContent({
   docked = false,
   onSwitchToMessage,
 }) {
+  const { t } = useTranslation("agent");
+
   const questionId = useId();
   const [optionId, setOptionId] = useState(interaction.answer?.optionId ?? "");
   const [customAnswer, setCustomAnswer] = useState(
@@ -57,7 +60,7 @@ function InteractionCardContent({
     (opt) => opt.id === effectiveAnswer?.optionId,
   );
   const selectedOptionLabel =
-    selectedOption?.label ?? effectiveAnswer?.optionId ?? "Selected";
+    selectedOption?.label ?? effectiveAnswer?.optionId ?? t("selected");
   const isCustomAnswer = Boolean(effectiveAnswer?.customAnswer);
   const customAnswerText = effectiveAnswer?.customAnswer;
 
@@ -119,12 +122,12 @@ function InteractionCardContent({
             <div className="text-xs sm:text-sm leading-relaxed text-[var(--color-text)]">
               {isCancelled ? (
                 <span className="text-[var(--color-text-muted)] italic">
-                  (Cancelled)
+                  {t("cancelledLabel")}
                 </span>
               ) : isCustomAnswer ? (
                 <div className="flex flex-wrap items-baseline gap-1.5">
                   <span className="text-[var(--color-text-muted)]">
-                    Your answer:
+                    {t("yourAnswer")}
                   </span>
                   <span className="font-medium text-[var(--color-text)] bg-[var(--color-surface-muted)] px-2 py-0.5 rounded border border-[var(--color-line)] break-words">
                     {customAnswerText}
@@ -133,7 +136,7 @@ function InteractionCardContent({
               ) : (
                 <div className="flex flex-wrap items-baseline gap-1.5">
                   <span className="text-[var(--color-text-muted)]">
-                    {confirmation ? "Confirmed" : "You selected"}
+                    {confirmation ? t("confirmed") : t("youSelected")}
                   </span>
                   <span className="font-semibold text-[var(--color-accent-strong)] dark:text-[var(--color-accent)] bg-[var(--color-accent-soft)] px-2 py-0.5 rounded border border-[var(--color-line)] break-words">
                     {selectedOptionLabel}
@@ -155,12 +158,12 @@ function InteractionCardContent({
               {showDetails ? (
                 <>
                   <ChevronUp className="h-3 w-3" />
-                  <span>Hide question details</span>
+                  <span>{t("hideQuestionDetails")}</span>
                 </>
               ) : (
                 <>
                   <ChevronDown className="h-3 w-3" />
-                  <span>Show question details</span>
+                  <span>{t("showQuestionDetails")}</span>
                 </>
               )}
             </button>
@@ -185,7 +188,7 @@ function InteractionCardContent({
                 {hasMultipleOptions && (
                   <div className="space-y-1.5">
                     <span className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold font-mono block">
-                      Options:
+                      {t("options")}
                     </span>
                     <div className="space-y-1">
                       {visibleOptions.map((opt) => {
@@ -245,19 +248,19 @@ function InteractionCardContent({
         <div className="inline-flex items-center gap-1.5 text-[var(--color-accent-strong)]">
           <MessageCircle className="h-4 w-4" aria-hidden="true" />
           <span className="font-medium">
-            {confirmation ? "Confirm action" : "Let's clarify your request"}
+            {confirmation ? t("confirmAction") : t("letSClarifyYourRequest")}
           </span>
         </div>
         {onSwitchToMessage && (
           <button
             type="button"
-            aria-label="Change request"
+            aria-label={t("changeRequest")}
             disabled={isBusy}
             onClick={onSwitchToMessage}
-            title="Send a new request instead of answering this question"
+            title={t("sendANewRequestInsteadOfAnsweringThisQuestion")}
             className="ui-focus-ring rounded-lg px-2 py-1.5 text-xs text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50"
           >
-            Change request →
+            {t("changeRequestLabel")}
           </button>
         )}
       </div>
@@ -269,7 +272,7 @@ function InteractionCardContent({
       {interaction.allowCustomAnswer && !confirmation && (
         <div
           className="mb-2 flex shrink-0 gap-1 rounded-lg bg-[var(--color-surface-muted)] p-1"
-          aria-label="Answer method"
+          aria-label={t("answerMethod")}
         >
           <button
             type="button"
@@ -278,7 +281,7 @@ function InteractionCardContent({
             onClick={() => setShowCustomAnswer(false)}
             className={`ui-focus-ring flex-1 rounded-md px-2 py-2 text-xs font-medium ${!showCustomAnswer ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-xs" : "text-[var(--color-text-muted)]"}`}
           >
-            Choose an option
+            {t("chooseAnOption")}
           </button>
           <button
             type="button"
@@ -287,7 +290,7 @@ function InteractionCardContent({
             onClick={() => setShowCustomAnswer(true)}
             className={`ui-focus-ring flex-1 rounded-md px-2 py-2 text-xs font-medium ${showCustomAnswer ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-xs" : "text-[var(--color-text-muted)]"}`}
           >
-            Other answer
+            {t("otherAnswer")}
           </button>
         </div>
       )}
@@ -315,14 +318,14 @@ function InteractionCardContent({
           {showCustomAnswer ? (
             <label className="block space-y-2">
               <span className="text-xs text-[var(--color-text-muted)]">
-                Your answer
+                {t("yourAnswerLabel")}
               </span>
               <textarea
-                aria-label="Other answer"
+                aria-label={t("otherAnswer")}
                 rows={3}
                 autoFocus
                 className="ui-input block w-full resize-none rounded-xl px-3 py-2 text-sm"
-                placeholder="Tell the assistant what works for you…"
+                placeholder={t("tellTheAssistantWhatWorksForYou")}
                 value={customAnswer}
                 maxLength={2000}
                 onChange={(event) => {
@@ -377,24 +380,24 @@ function InteractionCardContent({
         <button
           className="ui-btn-secondary ui-focus-ring rounded-lg px-3 text-xs font-medium disabled:opacity-50"
           type="button"
-          aria-label="Cancel"
+          aria-label={t("cancel")}
           disabled={isBusy}
           onClick={handleCancel}
         >
-          Cancel
+          {t("cancel")}
         </button>
         <button
           className="ui-btn-primary ui-focus-ring min-w-0 rounded-lg px-3 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
           type="submit"
-          aria-label={confirmation ? "Confirm" : "Send answer"}
+          aria-label={confirmation ? t("confirmLabel") : t("sendAnswer")}
           disabled={!canSubmit}
         >
           <Send className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span className="break-words leading-snug">
             {sending
-              ? "Sending…"
+              ? t("sending")
               : (directOption?.label ??
-                (confirmation ? "Confirm" : "Send answer"))}
+                (confirmation ? t("confirmLabel") : t("sendAnswer")))}
           </span>
         </button>
       </div>

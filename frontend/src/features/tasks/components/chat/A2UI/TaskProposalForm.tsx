@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useContext } from "react";
 import {
   useTaskProposalEditor,
@@ -11,6 +12,8 @@ import "./taskProposal.css";
 export type { TaskProposalEditorProps };
 
 export function TaskProposalForm(props: TaskProposalEditorProps) {
+  const { t } = useTranslation("agent");
+
   const existingEditor = useContext(TaskProposalEditorContext);
   const localEditor = useTaskProposalEditor(props, !existingEditor);
   const editor = existingEditor ?? localEditor;
@@ -19,23 +22,23 @@ export function TaskProposalForm(props: TaskProposalEditorProps) {
 
   return (
     <TaskProposalEditorContext.Provider value={editor}>
-      <section className="task-proposal" aria-label="Đề xuất công việc">
+      <section className="task-proposal" aria-label={t("taskProposal")}>
         <header className="task-proposal-header">
           <strong>
             {proposal.status === "created"
-              ? "Đã tạo công việc"
+              ? t("tasksCreated")
               : proposal.status === "cancelled"
-                ? "Đề xuất đã hủy"
-                : "Đề xuất công việc (Bản nháp)"}
+                ? t("proposalCancelled")
+                : t("taskProposalDraft")}
           </strong>
           <span role="status">
             {terminal
               ? proposal.status === "created"
-                ? `Đã tạo ${proposal.createdTasks.length} công việc`
-                : "Đã hủy"
+                ? t("createdCount", { count: proposal.createdTasks.length })
+                : t("cancelled")
               : dirty
-                ? "Chưa lưu thay đổi"
-                : "Đã lưu bản nháp"}
+                ? t("unsavedChanges")
+                : t("draftSaved")}
           </span>
         </header>
         {(error || choiceError) && <p role="alert">{error || choiceError}</p>}

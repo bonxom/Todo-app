@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import FormDialog from "@/shared/components/FormDialog";
 import { createElement, useMemo, useState } from "react";
 import {
@@ -44,6 +45,8 @@ const CalendarView = ({
   onTaskCopy,
   onProjectStatusChange,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const today = useMemo(() => startOfDay(new Date()), []);
   const [selectedDate, setSelectedDate] = useState(() =>
     startOfDay(currentDate || today),
@@ -183,53 +186,60 @@ const CalendarView = ({
   return (
     <section className="calendar-workspace">
       <header className="ui-workspace-heading">
-        <h1 className="ui-page-title">Calendar</h1>
+        <h1 className="ui-page-title">{t("calendar")}</h1>
         <div className="calendar-heading-actions">
           <button
             type="button"
             onClick={openGenerateTasks}
             className="ui-btn-secondary ui-focus-ring"
           >
-            <Sparkles size={16} aria-hidden="true" /> Generate
+            <Sparkles size={16} aria-hidden="true" /> {t("generate")}
           </button>
           <button
             type="button"
             onClick={openAddTask}
             className="ui-btn-primary ui-page-add-button ui-focus-ring"
           >
-            <Plus size={17} aria-hidden="true" /> Add Task
+            <Plus size={17} aria-hidden="true" /> {t("addTaskCasedAddTask")}
           </button>
         </div>
       </header>
 
-      <section className="calendar-overview" aria-label="Schedule overview">
+      <section className="calendar-overview" aria-label={t("scheduleOverview")}>
         <div className="calendar-overview-intro">
-          <span className="calendar-eyebrow">MAKE ROOM FOR WHAT MATTERS</span>
+          <span className="calendar-eyebrow">
+            {t("makeRoomForWhatMatters")}
+          </span>
           <h2>
-            A little structure.
+            {t("aLittleStructure")}
             <br />
-            <em>A clearer mind.</em>
+            <em>{t("aClearerMind")}</em>
           </h2>
-          <p>Your plans, at a comfortable pace.</p>
+          <p>{t("yourPlansAtAComfortablePace")}</p>
           <CalendarDays className="calendar-overview-art" aria-hidden="true" />
         </div>
         <div className="calendar-metrics">
           {[
-            [CalendarDays, filteredTasks.length, "Scheduled", "In this view"],
+            [
+              CalendarDays,
+              filteredTasks.length,
+              t("scheduled"),
+              t("inThisView"),
+            ],
             [
               CircleDot,
               filteredTasks.filter((task) =>
                 ["pending", "in-progress"].includes(task.status),
               ).length,
-              "To do",
-              "One step at a time",
+              t("toDo"),
+              t("oneStepAtATime"),
             ],
             [
               Check,
               filteredTasks.filter((task) => task.status === "completed")
                 .length,
-              "Completed",
-              "Progress to be proud of",
+              t("completed"),
+              t("progressToBeProudOf"),
             ],
           ].map(([Icon, count, label, note]) => (
             <div className="calendar-metric" key={label}>
@@ -246,11 +256,11 @@ const CalendarView = ({
 
       <div className="calendar-filter-bar">
         <div>
-          <span className="calendar-eyebrow">YOUR SCHEDULE</span>
+          <span className="calendar-eyebrow">{t("yourSchedule")}</span>
           <span className="calendar-filter-caption">
             {validSelectedProjectIds.length
-              ? `${validSelectedProjectIds.length} project${validSelectedProjectIds.length === 1 ? "" : "s"} selected`
-              : "All projects & personal tasks"}
+              ? t("selectedProjects", { count: validSelectedProjectIds.length })
+              : t("allProjectsPersonalTasks")}
           </span>
         </div>
         <button
@@ -259,13 +269,13 @@ const CalendarView = ({
           className="ui-btn-secondary ui-focus-ring"
           aria-label={
             isProjectFiltersOpen
-              ? "Hide project filters"
-              : "Show project filters"
+              ? t("hideProjectFilters")
+              : t("showProjectFilters")
           }
           aria-controls="calendar-project-filters"
           aria-expanded={isProjectFiltersOpen}
         >
-          <SlidersHorizontal size={15} aria-hidden="true" /> Projects
+          <SlidersHorizontal size={15} aria-hidden="true" /> {t("projects")}
           {validSelectedProjectIds.length > 0 && (
             <span className="calendar-filter-count">
               {validSelectedProjectIds.length}
@@ -338,7 +348,7 @@ const CalendarView = ({
       <FormDialog
         isOpen={isAddProjectModalOpen}
         onClose={() => setIsAddProjectModalOpen(false)}
-        title="Add Project"
+        title={t("addProject")}
         kind="project"
       >
         <AddProjectForm

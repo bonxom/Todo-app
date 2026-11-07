@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useMemo, useState } from "react";
 import "./calendar.css";
 import CalendarView from "./components/CalendarView";
@@ -14,6 +15,8 @@ import {
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const CalendarPage = () => {
+  const { t } = useTranslation("workspace");
+
   const today = useMemo(() => startOfDay(new Date()), []);
   const [currentDate, setCurrentDate] = useState(today);
   const [viewMode, setViewMode] = useState("week");
@@ -48,9 +51,9 @@ const CalendarPage = () => {
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading;
   const errorMessage = tasksQuery.isError
-    ? getApiErrorMessage(tasksQuery.error, "Failed to load calendar tasks.")
+    ? getApiErrorMessage(tasksQuery.error, t("failedToLoadCalendarTasks"))
     : projectsQuery.isError
-      ? getApiErrorMessage(projectsQuery.error, "Failed to load projects.")
+      ? getApiErrorMessage(projectsQuery.error, t("failedToLoadProjects"))
       : "";
 
   const handleTaskStatusChange = async (task, nextStatus) => {
@@ -58,7 +61,7 @@ const CalendarPage = () => {
       await calendarMutations.changeTaskStatus(task, nextStatus);
     } catch (error) {
       console.error("Failed to update task status:", error);
-      alert(getApiErrorMessage(error, "Failed to update task status."));
+      alert(getApiErrorMessage(error, t("failedToUpdateTaskStatus")));
     }
   };
 
@@ -67,7 +70,7 @@ const CalendarPage = () => {
       await calendarMutations.deleteTask(taskId);
     } catch (error) {
       console.error("Failed to delete task:", error);
-      alert(getApiErrorMessage(error, "Failed to delete task."));
+      alert(getApiErrorMessage(error, t("failedToDeleteTask")));
     }
   };
 
@@ -78,7 +81,7 @@ const CalendarPage = () => {
       await calendarMutations.changeTaskDueDate(task, nextDueDate);
     } catch (error) {
       console.error("Failed to update task deadline:", error);
-      alert(getApiErrorMessage(error, "Failed to update task deadline."));
+      alert(getApiErrorMessage(error, t("failedToUpdateTaskDeadline")));
     }
   };
 
@@ -87,7 +90,7 @@ const CalendarPage = () => {
       await calendarMutations.copyTask(taskCopyPayload, nextDueDate);
     } catch (error) {
       console.error("Failed to copy task:", error);
-      alert(getApiErrorMessage(error, "Failed to copy task."));
+      alert(getApiErrorMessage(error, t("failedToCopyTask")));
     }
   };
 
@@ -96,7 +99,7 @@ const CalendarPage = () => {
       await calendarMutations.changeProjectStatus(projectId, status);
     } catch (error) {
       console.error("Failed to update project status:", error);
-      alert(getApiErrorMessage(error, "Failed to update project status."));
+      alert(getApiErrorMessage(error, t("failedToUpdateProjectStatus")));
     }
   };
 
@@ -104,11 +107,11 @@ const CalendarPage = () => {
     return (
       <div className="ui-page-shell calendar-page-shell" aria-busy="true">
         <header className="ui-workspace-heading">
-          <h1 className="ui-page-title">Calendar</h1>
+          <h1 className="ui-page-title">{t("calendar")}</h1>
         </header>
         <div className="calendar-loading" role="status">
           <div className="calendar-loading-summary" />
-          <p>Loading your schedule…</p>
+          <p>{t("loadingYourSchedule")}</p>
           <div className="calendar-loading-grid">
             {Array.from({ length: 7 }, (_, index) => (
               <div key={index} />
@@ -123,13 +126,13 @@ const CalendarPage = () => {
     <div className="ui-page-shell calendar-page-shell">
       {errorMessage && (
         <header className="ui-workspace-heading">
-          <h1 className="ui-page-title">Calendar</h1>
+          <h1 className="ui-page-title">{t("calendar")}</h1>
         </header>
       )}
       {errorMessage ? (
         <div className="ui-section-card ui-card-padding text-center">
           <p className="text-lg font-semibold text-[var(--color-danger)]">
-            Unable to load the calendar
+            {t("unableToLoadTheCalendar")}
           </p>
           <p className="mt-2 text-sm text-[var(--color-text-muted)]">
             {errorMessage}
@@ -143,7 +146,7 @@ const CalendarPage = () => {
               }}
               className="ui-btn-secondary ui-focus-ring"
             >
-              Try Again
+              {t("tryAgain")}
             </button>
           </div>
         </div>

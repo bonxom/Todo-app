@@ -1,3 +1,4 @@
+import i18n from "../i18n";
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -14,7 +15,7 @@ export class ApiError extends Error {
 
 export const getApiErrorMessage = (
   error: unknown,
-  fallback = "An unexpected error occurred",
+  fallback = i18n.t("unexpectedError"),
 ): string => {
   if (error instanceof ApiError) {
     return error.message || fallback;

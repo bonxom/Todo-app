@@ -1,4 +1,7 @@
+import { useTranslation } from "react-i18next";
 const GiveUpDialog = ({ isOpen, onClose, onConfirm }) => {
+  const { t } = useTranslation("workspace");
+
   if (!isOpen) return null;
 
   return (
@@ -19,13 +22,14 @@ const GiveUpDialog = ({ isOpen, onClose, onConfirm }) => {
             id="giveup-task-title"
             className="text-xl font-semibold text-[var(--color-text)]"
           >
-            Give Up Task
+            {t("giveUpTask")}
           </h2>
         </div>
         <div className="ui-modal-body">
           <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-            Are you sure you want to give up this task? You are choosing not to
-            continue working on it.
+            {t(
+              "areYouSureYouWantToGiveUpThisTaskYouAreChoosingNotToContinueWorkingOnIt",
+            )}
           </p>
           <div className="flex gap-3">
             <button
@@ -33,14 +37,14 @@ const GiveUpDialog = ({ isOpen, onClose, onConfirm }) => {
               onClick={onClose}
               className="ui-btn-secondary flex-1"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="button"
               onClick={onConfirm}
               className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] transition-[background-color,border-color] duration-150 hover:opacity-90"
             >
-              Give Up
+              {t("giveUp")}
             </button>
           </div>
         </div>

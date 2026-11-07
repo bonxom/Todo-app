@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { ArrowUpRight, Folder, Trash2 } from "lucide-react";
 import CategoryTaskPreview from "./CategoryTaskPreview";
@@ -16,6 +17,8 @@ const CategoryCard = ({
   onTaskUpdated,
   categoryId,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -58,10 +61,7 @@ const CategoryCard = ({
     } catch (error) {
       console.error("Failed to delete category:", error);
       alert(
-        getApiErrorMessage(
-          error,
-          "Failed to delete category. Please try again.",
-        ),
+        getApiErrorMessage(error, t("failedToDeleteCategoryPleaseTryAgain")),
       );
     }
   };
@@ -107,7 +107,7 @@ const CategoryCard = ({
       onTaskUpdated?.();
     } catch (error) {
       console.error("Failed to move task:", error);
-      alert(getApiErrorMessage(error, "Failed to move task to this category."));
+      alert(getApiErrorMessage(error, t("failedToMoveTaskToThisCategory")));
     }
   };
 
@@ -155,7 +155,7 @@ const CategoryCard = ({
                 type="button"
                 className="category-delete"
                 onClick={handleDeleteClick}
-                aria-label={`Delete ${category}`}
+                aria-label={t("messages.deleteV0", { v0: category })}
               >
                 <Trash2 size={15} />
               </button>
@@ -173,15 +173,18 @@ const CategoryCard = ({
           <div className="category-progress-label">
             <span>
               {totalTasks
-                ? `${completedTasks} of ${totalTasks} completed`
-                : "Ready for a fresh start"}
+                ? t("messages.v0OfV1Completed", {
+                    v0: completedTasks,
+                    v1: totalTasks,
+                  })
+                : t("readyForAFreshStart")}
             </span>
             <strong>{completionRate}%</strong>
           </div>
           <div
             className="category-progress"
             role="progressbar"
-            aria-label={`${category} progress`}
+            aria-label={t("messages.v0Progress", { v0: category })}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={completionRate}
@@ -191,7 +194,7 @@ const CategoryCard = ({
         </div>
         <div className="category-task-preview">
           <p className="category-preview-label">
-            {displayTasks.length ? "A LOOK INSIDE" : "ROOM FOR SOMETHING GOOD"}
+            {displayTasks.length ? t("aLookInside") : t("roomForSomethingGood")}
           </p>
           {displayTasks.length ? (
             displayTasks.map((task) => (
@@ -204,7 +207,7 @@ const CategoryCard = ({
             ))
           ) : (
             <p className="category-empty-hint">
-              Assign a task to this category, or drag one here.
+              {t("assignATaskToThisCategoryOrDragOneHere")}
             </p>
           )}
         </div>

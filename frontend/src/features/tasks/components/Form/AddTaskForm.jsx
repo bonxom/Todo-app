@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import FormDialog from "@/shared/components/FormDialog";
 import CustomSelect from "@/shared/components/CustomSelect";
 import { useMemo, useState } from "react";
@@ -21,6 +22,8 @@ const AddTaskForm = ({
   initialDueDate = "",
   initialProjectId = "",
 }) => {
+  const { t } = useTranslation("workspace");
+
   const [title, setTitle] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [projectId, setProjectId] = useState(initialProjectId);
@@ -86,7 +89,7 @@ const AddTaskForm = ({
     } catch (error) {
       console.error("Failed to create task:", error);
       setSubmitError(
-        getApiErrorMessage(error, "Failed to create task. Please try again."),
+        getApiErrorMessage(error, t("failedToCreateTaskPleaseTryAgain")),
       );
     }
   };
@@ -99,14 +102,15 @@ const AddTaskForm = ({
             htmlFor="title"
             className="mb-2 block text-sm font-medium text-[var(--color-text)]"
           >
-            Task Title <span className="text-[var(--color-danger)]">*</span>
+            {t("taskTitle")}
+            <span className="text-[var(--color-danger)]">*</span>
           </label>
           <input
             id="title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="What needs to get done?"
+            placeholder={t("whatNeedsToGetDone")}
             className="ui-input"
             required
           />
@@ -118,7 +122,7 @@ const AddTaskForm = ({
               htmlFor="category"
               className="mb-2 block text-sm font-medium text-[var(--color-text)]"
             >
-              Category
+              {t("category")}
             </label>
             <CustomSelect
               id="category"
@@ -137,7 +141,7 @@ const AddTaskForm = ({
                   {cat.name}
                 </option>
               ))}
-              <option value="__add_more__">+ Add more</option>
+              <option value="__add_more__">{t("addMore")}</option>
             </CustomSelect>
           </div>
 
@@ -146,7 +150,7 @@ const AddTaskForm = ({
               htmlFor="project"
               className="mb-2 block text-sm font-medium text-[var(--color-text)]"
             >
-              Project
+              {t("project")}
             </label>
             <CustomSelect
               id="project"
@@ -160,13 +164,13 @@ const AddTaskForm = ({
               }}
               className="ui-input"
             >
-              <option value="">No project</option>
+              <option value="">{t("noProject")}</option>
               {activeProjects.map((project) => (
                 <option key={project._id} value={project._id}>
                   {project.name}
                 </option>
               ))}
-              <option value="__add_project__">+ Add project</option>
+              <option value="__add_project__">{t("addProject")}</option>
             </CustomSelect>
           </div>
         </div>
@@ -176,7 +180,7 @@ const AddTaskForm = ({
               htmlFor="priority"
               className="mb-2 block text-sm font-medium text-[var(--color-text)]"
             >
-              Priority
+              {t("priority")}
             </label>
             <CustomSelect
               id="priority"
@@ -184,9 +188,9 @@ const AddTaskForm = ({
               onChange={(e) => setPriority(e.target.value)}
               className="ui-input"
             >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
+              <option value="Low">{t("low")}</option>
+              <option value="Medium">{t("medium")}</option>
+              <option value="High">{t("high")}</option>
             </CustomSelect>
           </div>
           <div>
@@ -194,7 +198,8 @@ const AddTaskForm = ({
               htmlFor="dueDate"
               className="mb-2 block text-sm font-medium text-[var(--color-text)]"
             >
-              Due Date <span className="text-[var(--color-danger)]">*</span>
+              {t("dueDate")}
+              <span className="text-[var(--color-danger)]">*</span>
             </label>
             <DateTimeInput
               id="dueDate"
@@ -210,13 +215,13 @@ const AddTaskForm = ({
             htmlFor="description"
             className="mb-2 block text-sm font-medium text-[var(--color-text)]"
           >
-            Description
+            {t("description")}
           </label>
           <textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add a few details, links, or a helpful reminder…"
+            placeholder={t("addAFewDetailsLinksOrAHelpfulReminder")}
             rows={3}
             className="ui-input"
           />
@@ -236,14 +241,14 @@ const AddTaskForm = ({
             }}
             className="ui-btn-secondary"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
             className="ui-btn-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "Adding…" : "Add Task"}
+            {isSubmitting ? t("adding") : t("addTaskCasedAddTask")}
           </button>
         </div>
       </form>
@@ -251,7 +256,7 @@ const AddTaskForm = ({
       <FormDialog
         isOpen={showAddCategory}
         onClose={() => setShowAddCategory(false)}
-        title="Add Category"
+        title={t("addCategory")}
         kind="category"
       >
         <AddCategoryForm
@@ -265,7 +270,7 @@ const AddTaskForm = ({
       <FormDialog
         isOpen={showAddProject}
         onClose={() => setShowAddProject(false)}
-        title="Add Project"
+        title={t("addProject")}
         kind="project"
       >
         <AddProjectForm

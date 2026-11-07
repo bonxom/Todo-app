@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ArrowUpRight, ChartNoAxesCombined } from "lucide-react";
 import { Link } from "react-router-dom";
 import "./statistics.css";
@@ -12,13 +13,15 @@ import { normalizeDailyStats } from "./components/statsUtils";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const StatisticsPage = () => {
+  const { t } = useTranslation("workspace");
+
   const statsQuery = useStatsQuery();
   const stats = statsQuery.data || null;
   const loading = statsQuery.isLoading;
   const error = statsQuery.isError
     ? getApiErrorMessage(
         statsQuery.error,
-        "Failed to load statistics. Please try again later.",
+        t("failedToLoadStatisticsPleaseTryAgainLater"),
       )
     : null;
 
@@ -33,10 +36,10 @@ const StatisticsPage = () => {
         <section className="ui-section-card ui-card-padding text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-[color:var(--color-line)] border-t-[color:var(--color-accent)]" />
           <p className="text-lg font-semibold text-[color:var(--color-text)]">
-            Loading statistics…
+            {t("loadingStatistics")}
           </p>
           <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
-            Preparing summaries, charts, and the last year of activity.
+            {t("preparingSummariesChartsAndTheLastYearOfActivity")}
           </p>
         </section>
       </div>
@@ -48,7 +51,7 @@ const StatisticsPage = () => {
       <div className="ui-page-shell statistics-page">
         <section className="ui-section-card ui-card-padding text-center">
           <p className="text-lg font-semibold text-[color:var(--color-danger)]">
-            Unable to load statistics
+            {t("unableToLoadStatistics")}
           </p>
           <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
             {error}
@@ -58,7 +61,7 @@ const StatisticsPage = () => {
             onClick={() => statsQuery.refetch()}
             className="ui-btn-secondary mt-6"
           >
-            Try Again
+            {t("tryAgain")}
           </button>
         </section>
       </div>
@@ -70,10 +73,10 @@ const StatisticsPage = () => {
       <div className="ui-page-shell statistics-page">
         <section className="ui-section-card ui-card-padding text-center">
           <p className="text-lg font-semibold text-[color:var(--color-text)]">
-            No statistics available yet
+            {t("noStatisticsAvailableYet")}
           </p>
           <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
-            Create and complete tasks to populate this page.
+            {t("createAndCompleteTasksToPopulateThisPage")}
           </p>
         </section>
       </div>
@@ -84,7 +87,7 @@ const StatisticsPage = () => {
     <div className="ui-page-shell statistics-page">
       <header className="ui-workspace-heading">
         <div>
-          <h1 className="ui-page-title">Statistics</h1>
+          <h1 className="ui-page-title">{t("statistics")}</h1>
         </div>
       </header>
 
@@ -92,7 +95,7 @@ const StatisticsPage = () => {
 
       <div className="statistics-section-label">
         <span>
-          <ChartNoAxesCombined size={15} /> Your momentum
+          <ChartNoAxesCombined size={15} /> {t("yourMomentum")}
         </span>
       </div>
       <LineChart dailyStats={normalizedDailyStats} />

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 import DonutChartCard from "./DonutChartCard";
 
@@ -9,19 +10,39 @@ const STATUS_COLORS = {
 };
 
 const StatusPieChart = ({ stats }) => {
+  const { t } = useTranslation("workspace");
+
   const chartData = useMemo(() => {
     if (!stats) {
       return { items: [], total: 0 };
     }
 
     const items = [
-      { label: "Pending", value: stats.pendingTasks || 0 },
-      { label: "In Progress", value: stats.inProgressTasks || 0 },
-      { label: "Completed", value: stats.completedTasks || 0 },
-      { label: "Given Up", value: stats.givenUpTasks || 0 },
+      { label: t("pending"), value: stats.pendingTasks || 0 },
+      {
+        label: t("inProgressCasedInProgress"),
+        value: stats.inProgressTasks || 0,
+      },
+      { label: t("completed"), value: stats.completedTasks || 0 },
+      { label: t("givenUpCasedGivenUp"), value: stats.givenUpTasks || 0 },
     ]
       .filter((item) => item.value > 0)
-      .map((item) => ({ ...item, color: STATUS_COLORS[item.label] }));
+      .map((item) => ({
+        ...item,
+        color: [
+          STATUS_COLORS.Pending,
+          STATUS_COLORS["In Progress"],
+          STATUS_COLORS.Completed,
+          STATUS_COLORS["Given Up"],
+        ][
+          [
+            t("pending"),
+            t("inProgressCasedInProgress"),
+            t("completed"),
+            t("givenUpCasedGivenUp"),
+          ].indexOf(item.label)
+        ],
+      }));
 
     const total = items.reduce((sum, item) => sum + item.value, 0);
 
@@ -32,16 +53,16 @@ const StatusPieChart = ({ stats }) => {
       })),
       total,
     };
-  }, [stats]);
+  }, [stats, t]);
 
   return (
     <DonutChartCard
-      title="Where things stand"
-      description="A snapshot of your task collection."
+      title={t("whereThingsStand")}
+      description={t("aSnapshotOfYourTaskCollection")}
       total={chartData.total}
-      totalLabel="Tasks"
+      totalLabel={t("tasks")}
       items={chartData.items}
-      emptyMessage="No tasks yet."
+      emptyMessage={t("noTasksYet")}
     />
   );
 };

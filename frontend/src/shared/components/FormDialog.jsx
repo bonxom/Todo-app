@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   createContext,
   createElement,
@@ -18,12 +19,6 @@ const icons = {
   project: FolderKanban,
   generate: Sparkles,
 };
-const descriptions = {
-  task: "A small step toward something that matters.",
-  category: "Give related tasks a place to belong.",
-  project: "Bring your tasks together around a shared goal.",
-  generate: "Turn an idea into a manageable plan for your day.",
-};
 let openDialogs = 0;
 let previousOverflow = "";
 
@@ -36,6 +31,7 @@ export default function FormDialog({
   busy = false,
   closeLabel,
 }) {
+  const { t } = useTranslation("common");
   const id = useId();
   const dialogRef = useRef(null);
   const depth = useContext(DialogDepth);
@@ -76,9 +72,7 @@ export default function FormDialog({
             </span>
             <div>
               <p className="workspace-dialog-eyebrow">
-                {kind === "generate"
-                  ? "A LITTLE HELP TO GET STARTED"
-                  : "YOUR WORKSPACE"}
+                {kind === "generate" ? t("dialog.help") : t("dialog.workspace")}
               </p>
               <h2 id={`${id}-title`}>{title}</h2>
             </div>
@@ -87,7 +81,9 @@ export default function FormDialog({
               className="workspace-dialog-close"
               onClick={onClose}
               disabled={busy}
-              aria-label={closeLabel || `Close ${title.toLowerCase()} dialog`}
+              aria-label={
+                closeLabel || t("dialog.close", { title: title.toLowerCase() })
+              }
             >
               <X size={18} />
             </button>
@@ -95,7 +91,7 @@ export default function FormDialog({
               className="workspace-dialog-description"
               id={`${id}-description`}
             >
-              {descriptions[kind]}
+              {t(`dialog.${kind}`)}
             </p>
           </header>
           <div className="workspace-dialog-body">{children}</div>

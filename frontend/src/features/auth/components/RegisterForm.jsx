@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { UserPlus } from "lucide-react";
 import Button from "./Button";
@@ -5,6 +6,7 @@ import Input from "./Input";
 import PasswordInput from "./PasswordInput";
 
 const RegisterForm = ({ onSubmit, isLoading }) => {
+  const { t } = useTranslation("account");
   const [credentials, setCredentials] = useState({
     name: "",
     email: "",
@@ -18,27 +20,27 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
     const newErrors = {};
 
     if (!credentials.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = { key: "nameIsRequired" };
     }
 
     if (!credentials.dob) {
-      newErrors.dob = "Date of birth is required";
+      newErrors.dob = { key: "dateOfBirthIsRequired" };
     }
 
     if (!credentials.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = { key: "emailIsRequired" };
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email)) {
-      newErrors.email = "Invalid email format";
+      newErrors.email = { key: "invalidEmailFormat" };
     }
 
     if (!credentials.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = { key: "passwordIsRequired" };
     } else if (credentials.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = { key: "passwordMustBeAtLeast6Characters" };
     }
 
     if (credentials.confirmPassword !== credentials.password) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = { key: "passwordsDoNotMatch" };
     }
 
     setErrors(newErrors);
@@ -62,21 +64,21 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
   return (
     <form onSubmit={handleSubmit} className="auth-form" noValidate>
       <Input
-        label="Full Name"
+        label={t("fullName")}
         name="name"
         value={credentials.name}
         onChange={(e) => {
           setCredentials({ ...credentials, name: e.target.value });
           if (errors.name) setErrors({ ...errors, name: undefined });
         }}
-        placeholder="Jane Doe…"
+        placeholder={t("namePlaceholder")}
         autoComplete="name"
         fullWidth
-        error={errors.name}
+        error={errors.name?.key ? t(errors.name.key) : errors.name}
       />
 
       <Input
-        label="Date of Birth"
+        label={t("dateOfBirth")}
         name="dob"
         type="date"
         value={credentials.dob}
@@ -86,11 +88,11 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
         }}
         autoComplete="bday"
         fullWidth
-        error={errors.dob}
+        error={errors.dob?.key ? t(errors.dob.key) : errors.dob}
       />
 
       <Input
-        label="Email"
+        label={t("email")}
         name="email"
         type="email"
         value={credentials.email}
@@ -98,30 +100,30 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
           setCredentials({ ...credentials, email: e.target.value });
           if (errors.email) setErrors({ ...errors, email: undefined });
         }}
-        placeholder="you@example.com…"
+        placeholder={t("emailPlaceholder")}
         autoComplete="email"
         inputMode="email"
         spellCheck={false}
         fullWidth
-        error={errors.email}
+        error={errors.email?.key ? t(errors.email.key) : errors.email}
       />
 
       <PasswordInput
-        label="Password"
+        label={t("password")}
         name="password"
         value={credentials.password}
         onChange={(e) => {
           setCredentials({ ...credentials, password: e.target.value });
           if (errors.password) setErrors({ ...errors, password: undefined });
         }}
-        placeholder="At least 6 characters…"
+        placeholder={t("atLeast6Characters")}
         autoComplete="new-password"
         fullWidth
-        error={errors.password}
+        error={errors.password?.key ? t(errors.password.key) : errors.password}
       />
 
       <PasswordInput
-        label="Confirm Password"
+        label={t("confirmPassword")}
         name="confirmPassword"
         value={credentials.confirmPassword || ""}
         onChange={(e) => {
@@ -129,10 +131,14 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
           if (errors.confirmPassword)
             setErrors({ ...errors, confirmPassword: undefined });
         }}
-        placeholder="Re-enter your password…"
+        placeholder={t("reenterYourPassword")}
         autoComplete="new-password"
         fullWidth
-        error={errors.confirmPassword}
+        error={
+          errors.confirmPassword?.key
+            ? t(errors.confirmPassword.key)
+            : errors.confirmPassword
+        }
       />
 
       <Button
@@ -143,7 +149,7 @@ const RegisterForm = ({ onSubmit, isLoading }) => {
         loading={isLoading}
         icon={<UserPlus className="h-4 w-4" aria-hidden="true" />}
       >
-        {isLoading ? "Creating account…" : "Create Account"}
+        {isLoading ? t("creatingAccount") : t("createAccount")}
       </Button>
     </form>
   );

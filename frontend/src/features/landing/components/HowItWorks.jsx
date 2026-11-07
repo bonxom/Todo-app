@@ -1,27 +1,32 @@
+import { useTranslation } from "react-i18next";
 import { CheckSquare, LayoutDashboard, PlusCircle } from "lucide-react";
 
 const HowItWorks = () => {
+  const { t } = useTranslation("account");
   const steps = [
     {
       number: "01",
       Icon: LayoutDashboard,
-      title: "Open Your Workspace",
-      description:
-        "Create an account and land in the same dashboard used for everyday planning.",
+      title: t("openYourWorkspace"),
+      description: t(
+        "createAnAccountAndLandInTheSameDashboardUsedForEverydayPlanning",
+      ),
     },
     {
       number: "02",
       Icon: PlusCircle,
-      title: "Capture the Work",
-      description:
-        "Add tasks with projects, categories, dates, and the details you need later.",
+      title: t("captureTheWork"),
+      description: t(
+        "addTasksWithProjectsCategoriesDatesAndTheDetailsYouNeedLater",
+      ),
     },
     {
       number: "03",
       Icon: CheckSquare,
-      title: "Review Progress",
-      description:
-        "Use calendar and statistics views to keep your next actions honest.",
+      title: t("reviewProgress"),
+      description: t(
+        "useCalendarAndStatisticsViewsToKeepYourNextActionsHonest",
+      ),
     },
   ];
 
@@ -29,10 +34,12 @@ const HowItWorks = () => {
     <section className="landing-section" id="how-it-works">
       <div className="how-it-works-container">
         <header className="landing-section-header">
-          <p className="ui-page-kicker">Workflow</p>
-          <h2 className="how-it-works-title">How It Works</h2>
+          <p className="ui-page-kicker">{t("workflow")}</p>
+          <h2 className="how-it-works-title">
+            {t("howItWorksCasedHowItWorks")}
+          </h2>
           <p className="how-it-works-subtitle">
-            A short path from account setup to a working task system.
+            {t("aShortPathFromAccountSetupToAWorkingTaskSystem")}
           </p>
         </header>
         <div className="steps-container">

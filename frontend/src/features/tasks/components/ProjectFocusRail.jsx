@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   ArrowUpRight,
   Check,
@@ -27,15 +28,17 @@ const ProjectFocusRail = ({
   completedCount,
   totalCount,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const visibleProjects = filterProjectsByVisibility(
     projects,
     showCompletedProjects,
   );
   return (
-    <aside className="todo-project-rail" aria-label="Projects and progress">
+    <aside className="todo-project-rail" aria-label={t("projectsAndProgress")}>
       <section className="todo-progress-card">
         <div className="todo-progress-heading">
-          <span className="todo-eyebrow">THE BIG PICTURE</span>
+          <span className="todo-eyebrow">{t("theBigPicture")}</span>
           <ArrowUpRight size={17} />
         </div>
         <div className="todo-progress-body">
@@ -47,21 +50,19 @@ const ProjectFocusRail = ({
           </div>
           <div>
             <h2>
-              {completion === 100
-                ? "Look at you go."
-                : "You’re moving forward."}
+              {completion === 100 ? t("lookAtYouGo") : t("youReMovingForward")}
             </h2>
             <p>
               {completion === null ? (
-                "Your progress will appear here."
+                t("yourProgressWillAppearHere")
               ) : (
                 <>
                   <strong>
-                    {completedCount} of {totalCount}
+                    {completedCount} {t("of")} {totalCount}
                   </strong>{" "}
-                  tasks complete.
+                  {t("tasksComplete")}
                   <br />
-                  Every small win counts.
+                  {t("everySmallWinCounts")}
                 </>
               )}
             </p>
@@ -72,16 +73,16 @@ const ProjectFocusRail = ({
         <div className="todo-panel-heading">
           <div>
             <h2>
-              Projects{" "}
+              {t("projects")}{" "}
               <span className="todo-count">{visibleProjects.length}</span>
             </h2>
-            <span>A home for the bigger picture.</span>
+            <span>{t("aHomeForTheBiggerPicture")}</span>
           </div>
           <button
             type="button"
             className="todo-icon-button"
             onClick={onCreateProject}
-            aria-label="Add project"
+            aria-label={t("addProjectCasedAddproject")}
           >
             <Plus size={18} />
           </button>
@@ -93,7 +94,7 @@ const ProjectFocusRail = ({
             onClick={() => onSelectProject("all-projects")}
           >
             <Layers size={15} />
-            All projects
+            {t("allProjects")}
           </button>
           <button
             type="button"
@@ -101,21 +102,22 @@ const ProjectFocusRail = ({
             onClick={() => onSelectProject("standalone-projects")}
           >
             <Folder size={15} />
-            Standalone
+            {t("standalone")}
           </button>
         </div>
         <div className="todo-project-list">
           {isLoading ? (
             <p className="todo-project-empty" role="status">
-              Loading your projects…
+              {t("loadingYourProjects")}
             </p>
           ) : visibleProjects.length === 0 ? (
             <div className="todo-project-empty">
               <Folder size={25} />
-              <h3>Big ideas start here.</h3>
+              <h3>{t("bigIdeasStartHere")}</h3>
               <p>
-                Group related tasks into a project and give your plans a little
-                direction.
+                {t(
+                  "groupRelatedTasksIntoAProjectAndGiveYourPlansALittleDirection",
+                )}
               </p>
             </div>
           ) : (
@@ -139,7 +141,7 @@ const ProjectFocusRail = ({
                     className="todo-project-select"
                     onClick={() => onSelectProject(project._id)}
                     aria-pressed={selectedProjectId === project._id}
-                    aria-label={`Filter by ${project.name}`}
+                    aria-label={t("messages.filterByV0", { v0: project.name })}
                   >
                     <span className="todo-project-name">
                       <span className="todo-project-icon">
@@ -161,7 +163,7 @@ const ProjectFocusRail = ({
                         <span className="todo-project-metrics">
                           <span>
                             {summary.completedTasks} / {summary.totalTasks}{" "}
-                            tasks
+                            {t("tasksLower")}{" "}
                           </span>
                           <span>{progress}%</span>
                         </span>
@@ -175,7 +177,7 @@ const ProjectFocusRail = ({
                         onClick={() => onCompleteProject(project._id)}
                       >
                         <Check size={13} />
-                        Complete project
+                        {t("completeProject")}
                       </button>
                     )}
                     {done ? (
@@ -184,16 +186,18 @@ const ProjectFocusRail = ({
                         onClick={() => onRestoreProject(project._id)}
                       >
                         <RotateCcw size={13} />
-                        Restore project
+                        {t("restoreProject")}
                       </button>
                     ) : (
                       <button
                         type="button"
-                        aria-label={`Add task to ${project.name}`}
+                        aria-label={t("messages.addTaskToV0", {
+                          v0: project.name,
+                        })}
                         onClick={() => onAddTaskToProject(project._id)}
                       >
                         <Plus size={13} />
-                        Add task
+                        {t("addTask")}
                       </button>
                     )}
                   </div>
@@ -208,7 +212,7 @@ const ProjectFocusRail = ({
             checked={showCompletedProjects}
             onChange={(e) => onShowCompletedProjectsChange(e.target.checked)}
           />
-          Show completed projects
+          {t("showCompletedProjectsCasedShowcomplete")}
         </label>
       </section>
     </aside>

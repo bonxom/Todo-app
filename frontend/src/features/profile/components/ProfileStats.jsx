@@ -1,22 +1,25 @@
+import { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 const ProfileStats = ({ stats }) => {
+  const { t } = useTranslation("account");
   const statItems = [
     {
-      label: "Total Tasks",
+      label: t("totalTasks"),
       value: stats?.totalTasks || 0,
       tone: "text-[var(--color-accent)]",
     },
     {
-      label: "Completed",
+      label: t("completed"),
       value: stats?.completedTasks || 0,
       tone: "text-[var(--color-success)]",
     },
     {
-      label: "In Progress",
+      label: t("inProgress"),
       value: stats?.inProgressTasks || 0,
       tone: "text-[var(--color-warning)]",
     },
     {
-      label: "Categories",
+      label: t("categories"),
       value: stats?.totalCategories || 0,
       tone: "text-[var(--color-text)]",
     },
@@ -26,10 +29,10 @@ const ProfileStats = ({ stats }) => {
     <section className="ui-section-card ui-card-padding">
       <div className="mb-4">
         <h2 className="m-0 text-lg font-semibold tracking-[-0.02em] text-[var(--color-text)]">
-          Workspace Snapshot
+          {t("workspaceSnapshot")}
         </h2>
         <p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">
-          A quick view of your current task load and structure.
+          {t("aQuickViewOfYourCurrentTaskLoadAndStructure")}
         </p>
       </div>
 
@@ -38,7 +41,7 @@ const ProfileStats = ({ stats }) => {
           <div key={item.label} className="ui-compact-stat">
             <span className="ui-compact-stat__label">{item.label}</span>
             <span className={`ui-compact-stat__value ui-tabular ${item.tone}`}>
-              {item.value}
+              {item.value.toLocaleString(getLocale())}
             </span>
           </div>
         ))}

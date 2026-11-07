@@ -1,3 +1,6 @@
+import { useTranslation } from "react-i18next";
+import { getLocale } from "../i18n";
+import LanguageSelect from "./LanguageSelect";
 import ThemeToggle from "./ThemeToggle";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -34,51 +37,20 @@ const getAvatarUrl = (user) => {
   );
 };
 
-const getTopbarContext = (pathname) => {
-  if (pathname.startsWith("/agent"))
-    return { title: "Agent", subtitle: "Trò chuyện và kỹ năng cá nhân" };
-  if (pathname.startsWith("/dashboard")) {
-    return {
-      title: "Todos",
-      subtitle: "Tasks and focus for the day",
-    };
-  }
-
-  if (pathname.startsWith("/categories")) {
-    return {
-      title: "Categories",
-      subtitle: "Categories and work streams",
-    };
-  }
-
-  if (pathname.startsWith("/calendar")) {
-    return {
-      title: "Calendar",
-      subtitle: "Deadlines, plans, and schedule",
-    };
-  }
-
-  if (pathname.startsWith("/statistics")) {
-    return {
-      title: "Statistics",
-      subtitle: "Progress and completion trends",
-    };
-  }
-
-  if (pathname.startsWith("/profile")) {
-    return {
-      title: "Account",
-      subtitle: "Profile and settings",
-    };
-  }
-
-  return {
-    title: "Workspace",
-    subtitle: "Plan, review, and adjust",
+const getTopbarTitle = (pathname) => {
+  const routes = {
+    agent: "agent",
+    dashboard: "todos",
+    categories: "categories",
+    calendar: "calendar",
+    statistics: "statistics",
+    profile: "account",
   };
+  return `navigation.${routes[pathname.split("/")[1]] || "workspace"}`;
 };
 
 const Topbar = ({ isDesktop, onOpenSidebar }) => {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
@@ -93,17 +65,17 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const statusMenuRef = useRef(null);
   const showAvatar = Boolean(avatarUrl) && brokenAvatarUrl !== avatarUrl;
-  const pageContext = getTopbarContext(location.pathname);
+  const pageTitle = t(getTopbarTitle(location.pathname));
   const isAgentPage = location.pathname.startsWith("/agent");
   const selectedStatusLabels = STATUS_OPTIONS.filter((option) =>
     selectedStatuses.includes(option.id),
-  ).map((option) => option.label);
+  ).map((option) => t(`status.${option.id}`));
   const statusFilterLabel =
     selectedStatusLabels.length === 0
-      ? "All tasks"
+      ? t("status.all")
       : selectedStatusLabels.length === 1
         ? selectedStatusLabels[0]
-        : `${selectedStatusLabels.length} statuses`;
+        : t("status.count", { count: selectedStatusLabels.length });
 
   useEffect(() => {
     const handlePointerDown = (event) => {
@@ -138,7 +110,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
   const handleClearStatuses = () => {
     setSelectedStatuses([]);
   };
-  const todayLabel = new Intl.DateTimeFormat("en-US", {
+  const todayLabel = new Intl.DateTimeFormat(getLocale(), {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -164,7 +136,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
             type="button"
             onClick={onOpenSidebar}
             className="ui-icon-button ui-focus-ring"
-            aria-label="Open navigation"
+            aria-label={t("navigation.open")}
           >
             <Menu className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -174,13 +146,13 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
           type="button"
           onClick={handleBack}
           className="ui-icon-button ui-focus-ring"
-          aria-label="Go back"
+          aria-label={t("navigation.back")}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         </button>
 
         <div className="ui-topbar-meta">
-          <p className="ui-topbar-title">{pageContext.title}</p>
+          <p className="ui-topbar-title">{pageTitle}</p>
           <p className="ui-topbar-subtitle">
             <span className="ui-tabular">{todayLabel}</span>
           </p>
@@ -188,6 +160,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
       </div>
 
       <div className="ui-topbar-actions">
+        <LanguageSelect />
         <ThemeToggle />
         {!isAgentPage && (
           <div
@@ -214,17 +187,17 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
               <div
                 className="ui-global-task-filter__menu"
                 role="menu"
-                aria-label="Filter tasks by status"
+                aria-label={t("status.filter")}
               >
                 <div className="ui-global-task-filter__menu-header">
-                  <span>Task status</span>
+                  <span>{t("status.title")}</span>
                   {selectedStatuses.length > 0 ? (
                     <button
                       type="button"
                       onClick={handleClearStatuses}
                       className="ui-global-task-filter__clear ui-focus-ring"
                     >
-                      Clear
+                      {t("status.clear")}
                     </button>
                   ) : null}
                 </div>
@@ -250,7 +223,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
                             <Check className="h-3.5 w-3.5" />
                           ) : null}
                         </span>
-                        <span>{option.label}</span>
+                        <span>{t(`status.${option.id}`)}</span>
                       </button>
                     );
                   })}
@@ -264,12 +237,16 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
           type="button"
           onClick={() => navigate("/profile")}
           className="ui-avatar-button ui-focus-ring"
-          aria-label="Go to profile"
+          aria-label={t("navigation.profile")}
         >
           {showAvatar ? (
             <img
               src={avatarUrl}
-              alt={user?.name ? `${user.name} avatar` : "User avatar"}
+              alt={
+                user?.name
+                  ? t("navigation.avatar", { name: user.name })
+                  : t("navigation.userAvatar")
+              }
               className="h-full w-full rounded-full object-cover"
               width={40}
               height={40}

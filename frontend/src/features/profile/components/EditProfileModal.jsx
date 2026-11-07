@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
+  const { t } = useTranslation("account");
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -41,17 +43,17 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
               id="edit-profile-title"
               className="m-0 text-xl font-semibold text-[var(--color-text)]"
             >
-              Edit Profile
+              {t("editProfile")}
             </h2>
             <p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">
-              Update the details shown across your account.
+              {t("updateTheDetailsShownAcrossYourAccount")}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="ui-modal-close-button ui-focus-ring"
-            aria-label="Close edit profile dialog"
+            aria-label={t("closeEditProfileDialog")}
           >
             <X className="w-6 h-6" />
           </button>
@@ -64,7 +66,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                 htmlFor="profile-name"
                 className="mb-2 block text-sm font-medium text-[var(--color-text)]"
               >
-                Full Name
+                {t("fullName")}
               </label>
               <input
                 id="profile-name"
@@ -85,7 +87,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                 htmlFor="profile-email"
                 className="mb-2 block text-sm font-medium text-[var(--color-text)]"
               >
-                Email
+                {t("email")}
               </label>
               <input
                 id="profile-email"
@@ -107,7 +109,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                 htmlFor="profile-dob"
                 className="mb-2 block text-sm font-medium text-[var(--color-text)]"
               >
-                Birthday
+                {t("birthday")}
               </label>
               <input
                 id="profile-dob"
@@ -129,13 +131,13 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
               onClick={onClose}
               className="ui-btn-secondary ui-focus-ring min-w-[8.5rem] flex-1"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="submit"
               className="ui-btn-primary ui-focus-ring min-w-[8.5rem] flex-1"
             >
-              Save Changes
+              {t("saveChanges")}
             </button>
           </div>
         </form>

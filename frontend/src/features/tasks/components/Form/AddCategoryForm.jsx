@@ -1,8 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { useCreateCategoryMutation } from "@/features/categories/api/categoryMutations";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
+  const { t } = useTranslation("workspace");
+
   const [name, setName] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [description, setDescription] = useState("");
@@ -35,10 +38,7 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
     } catch (error) {
       console.error("Failed to create category:", error);
       setSubmitError(
-        getApiErrorMessage(
-          error,
-          "Failed to create category. Please try again.",
-        ),
+        getApiErrorMessage(error, t("failedToCreateCategoryPleaseTryAgain")),
       );
     }
   };
@@ -50,7 +50,7 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
           htmlFor="category-name"
           className="mb-2 block text-sm font-medium text-[color:var(--color-text)]"
         >
-          Category Name{" "}
+          {t("categoryName")}{" "}
           <span className="text-[color:var(--color-danger)]">*</span>
         </label>
         <input
@@ -59,7 +59,7 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Work, Personal, Learning"
+          placeholder={t("eGWorkPersonalLearning")}
           className="ui-input"
           required
           autoFocus
@@ -73,14 +73,14 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
           htmlFor="category-description"
           className="mb-2 block text-sm font-medium text-[color:var(--color-text)]"
         >
-          Description
+          {t("description")}
         </label>
         <textarea
           id="category-description"
           name="category_description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Describe what belongs in this category…"
+          placeholder={t("describeWhatBelongsInThisCategory")}
           rows={3}
           className="ui-input"
           autoComplete="off"
@@ -101,14 +101,14 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
           }}
           className="ui-btn-secondary"
         >
-          Cancel
+          {t("cancel")}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
           className="ui-btn-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? "Adding…" : "Add Category"}
+          {isSubmitting ? t("adding") : t("addCategory")}
         </button>
       </div>
     </form>

@@ -1,11 +1,14 @@
+import i18n, { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import AvatarUpload from "./AvtUpload";
 
-const memberSinceFormatter = new Intl.DateTimeFormat(undefined, {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-});
+const memberSinceFormatter = () =>
+  new Intl.DateTimeFormat(getLocale(), {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 
 const formatMemberSince = (value) => {
   if (!value) {
@@ -15,14 +18,15 @@ const formatMemberSince = (value) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? null
-    : memberSinceFormatter.format(date);
+    : memberSinceFormatter().format(date);
 };
 
 const formatRoleLabel = (value) => {
   if (!value) {
-    return "User";
+    return i18n.t("account:user");
   }
 
+  if (value === "admin" || value === "user") return i18n.t(`account:${value}`);
   return value
     .toLowerCase()
     .split(/[_-\s]+/)
@@ -32,6 +36,7 @@ const formatRoleLabel = (value) => {
 };
 
 const ProfileHeader = ({ user, onAvatarUpdate }) => {
+  const { t } = useTranslation("account");
   const [failedAvatarUrls, setFailedAvatarUrls] = useState(() => new Set());
   const hasAvatarImage =
     Boolean(user?.avatarUrl) && !failedAvatarUrls.has(user.avatarUrl);
@@ -45,7 +50,7 @@ const ProfileHeader = ({ user, onAvatarUpdate }) => {
             {hasAvatarImage ? (
               <img
                 src={user.avatarUrl}
-                alt={user?.name || "Profile avatar"}
+                alt={user?.name || t("profileAvatar")}
                 width="96"
                 height="96"
                 className="h-24 w-24 rounded-full border object-cover"
@@ -81,10 +86,10 @@ const ProfileHeader = ({ user, onAvatarUpdate }) => {
           <div className="min-w-0 space-y-3">
             <div className="space-y-1">
               <p className="m-0 text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-muted)]">
-                Account Summary
+                {t("accountSummary")}
               </p>
               <h2 className="m-0 text-[clamp(1.5rem,2vw,1.875rem)] font-semibold tracking-[-0.02em] text-[var(--color-text)] text-balance">
-                {user?.name || "User"}
+                {user?.name || t("user")}
               </h2>
               <p className="m-0 break-words text-sm text-[var(--color-text-muted)]">
                 {user?.email || "user@example.com"}
@@ -96,7 +101,9 @@ const ProfileHeader = ({ user, onAvatarUpdate }) => {
                 {formatRoleLabel(user?.role)}
               </span>
               {memberSince ? (
-                <span className="ui-badge">Member since {memberSince}</span>
+                <span className="ui-badge">
+                  {t("memberSinceDate", { date: memberSince })}
+                </span>
               ) : null}
             </div>
           </div>
@@ -112,11 +119,12 @@ const ProfileHeader = ({ user, onAvatarUpdate }) => {
           }}
         >
           <p className="m-0 text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-muted)]">
-            Planner Identity
+            {t("plannerIdentity")}
           </p>
           <p className="mt-2 mb-0 text-sm leading-6 text-[var(--color-text-muted)]">
-            Keep your profile and sign-in details current so the workspace stays
-            personal, recognizable, and easy to trust across devices.
+            {t(
+              "keepYourProfileAndSigninDetailsCurrentSoTheWorkspaceStaysPersonalRecognizableAndEasyToTrustAcrossDevices",
+            )}
           </p>
         </div>
       </div>

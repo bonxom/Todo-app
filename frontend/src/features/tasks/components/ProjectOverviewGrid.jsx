@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Check, Plus, RotateCcw } from "lucide-react";
 import ProgressBar from "./ProgressBar";
 import { isCompletedProject } from "@/shared/utils/projectStatus";
@@ -13,20 +14,23 @@ const ProjectOverviewGrid = ({
   onCompleteProject,
   onRestoreProject,
 }) => {
+  const { t } = useTranslation("workspace");
+
   return (
     <section className="space-y-4" aria-labelledby="project-overview-heading">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="ui-page-kicker">Project Focus</p>
+          <p className="ui-page-kicker">{t("projectFocus")}</p>
           <h2
             id="project-overview-heading"
             className="text-xl font-semibold text-[var(--color-text)]"
           >
-            Track work by project
+            {t("trackWorkByProject")}
           </h2>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            Pick a project to focus the list, or keep tasks standalone when they
-            do not belong to a larger effort.
+            {t(
+              "pickAProjectToFocusTheListOrKeepTasksStandaloneWhenTheyDoNotBelongToALargerEffort",
+            )}
           </p>
         </div>
 
@@ -40,7 +44,7 @@ const ProjectOverviewGrid = ({
               }
               className="h-4 w-4 rounded border-[var(--color-line)] accent-[var(--color-accent)]"
             />
-            Show Completed Projects
+            {t("showCompletedProjects")}
           </label>
           <button
             type="button"
@@ -48,7 +52,7 @@ const ProjectOverviewGrid = ({
             className="ui-btn-secondary ui-btn-opposite-corners"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
-            <span>Add Project</span>
+            <span>{t("addProject")}</span>
           </button>
         </div>
       </div>
@@ -71,7 +75,7 @@ const ProjectOverviewGrid = ({
                 type="button"
                 onClick={() => onSelectProject(item.id)}
                 className="absolute inset-0 rounded-[var(--radius-lg)] focus-visible:outline-2 focus-visible:outline-[var(--ring-focus-outline)] focus-visible:outline-offset-2"
-                aria-label={`View tasks for ${item.name}`}
+                aria-label={t("messages.viewTasksForV0", { v0: item.name })}
                 aria-pressed={isSelected}
               />
 
@@ -109,10 +113,12 @@ const ProjectOverviewGrid = ({
                     type="button"
                     onClick={() => onCompleteProject?.(item.id)}
                     className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-success)] bg-[var(--color-success-soft)] px-4 text-sm font-semibold text-[var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-[var(--color-on-status,#fff)]"
-                    aria-label={`Complete and hide ${item.name}`}
+                    aria-label={t("messages.completeAndHideV0", {
+                      v0: item.name,
+                    })}
                   >
                     <Check className="h-4 w-4" aria-hidden="true" />
-                    <span>Complete</span>
+                    <span> {t("completeCasedComplete")} </span>
                   </button>
                 ) : null}
                 {item.isProject && isCompleted ? (
@@ -120,10 +126,10 @@ const ProjectOverviewGrid = ({
                     type="button"
                     onClick={() => onRestoreProject?.(item.id)}
                     className="ui-btn-secondary flex-1"
-                    aria-label={`Restore ${item.name}`}
+                    aria-label={t("messages.restoreV0", { v0: item.name })}
                   >
                     <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                    <span>Restore</span>
+                    <span>{t("restore")}</span>
                   </button>
                 ) : null}
                 {item.isProject && !isCompleted ? (
@@ -131,10 +137,10 @@ const ProjectOverviewGrid = ({
                     type="button"
                     onClick={() => onAddTaskToProject?.(item.id)}
                     className="ui-btn-primary ui-btn-opposite-corners flex-1"
-                    aria-label={`Add task to ${item.name}`}
+                    aria-label={t("messages.addTaskToV0", { v0: item.name })}
                   >
                     <Plus className="h-4 w-4" aria-hidden="true" />
-                    <span>Add Task</span>
+                    <span>{t("addTaskCasedAddTask")}</span>
                   </button>
                 ) : null}
               </div>

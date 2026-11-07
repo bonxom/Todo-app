@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
 
 const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
+  const { t } = useTranslation("account");
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -28,7 +30,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.newPassword !== formData.confirmPassword) {
-      setFormError("Confirm the same new password in both fields.");
+      setFormError("confirmTheSameNewPasswordInBothFields");
       return;
     }
 
@@ -66,17 +68,17 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
               id="change-password-title"
               className="m-0 text-xl font-semibold text-[var(--color-text)]"
             >
-              Change Password
+              {t("changePassword")}
             </h2>
             <p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">
-              Update the password you use to sign in to your account.
+              {t("updateThePasswordYouUseToSignInToYourAccount")}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="ui-modal-close-button ui-focus-ring"
-            aria-label="Close change password dialog"
+            aria-label={t("closeChangePasswordDialog")}
           >
             <X className="w-6 h-6" />
           </button>
@@ -89,7 +91,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                 htmlFor="current-password"
                 className="mb-2 block text-sm font-medium text-[var(--color-text)]"
               >
-                Current Password
+                {t("currentPassword")}
               </label>
               <div className="relative">
                 <input
@@ -110,8 +112,8 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                   className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
                   aria-label={
                     showPasswords.current
-                      ? "Hide current password"
-                      : "Show current password"
+                      ? t("hideCurrentPassword")
+                      : t("showCurrentPassword")
                   }
                 >
                   {showPasswords.current ? (
@@ -128,7 +130,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                 htmlFor="new-password"
                 className="mb-2 block text-sm font-medium text-[var(--color-text)]"
               >
-                New Password
+                {t("newPassword")}
               </label>
               <div className="relative">
                 <input
@@ -147,8 +149,8 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                   className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
                   aria-label={
                     showPasswords.new
-                      ? "Hide new password"
-                      : "Show new password"
+                      ? t("hideNewPassword")
+                      : t("showNewPassword")
                   }
                 >
                   {showPasswords.new ? (
@@ -165,7 +167,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                 htmlFor="confirm-password"
                 className="mb-2 block text-sm font-medium text-[var(--color-text)]"
               >
-                Confirm New Password
+                {t("confirmNewPassword")}
               </label>
               <div className="relative">
                 <input
@@ -189,8 +191,8 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                   className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
                   aria-label={
                     showPasswords.confirm
-                      ? "Hide confirm new password"
-                      : "Show confirm new password"
+                      ? t("hideConfirmNewPassword")
+                      : t("showConfirmNewPassword")
                   }
                 >
                   {showPasswords.confirm ? (
@@ -206,7 +208,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                   className="mt-2 mb-0 text-sm text-[var(--color-danger)]"
                   aria-live="polite"
                 >
-                  {formError}
+                  {t(formError)}
                 </p>
               ) : null}
             </div>
@@ -218,13 +220,13 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
               onClick={onClose}
               className="ui-btn-secondary ui-focus-ring min-w-[8.5rem] flex-1"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="submit"
               className="ui-btn-primary ui-focus-ring min-w-[8.5rem] flex-1"
             >
-              Change Password
+              {t("changePassword")}
             </button>
           </div>
         </form>

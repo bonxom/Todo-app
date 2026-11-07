@@ -1,8 +1,10 @@
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import { ToolIcon } from "./SlashCommandMenu";
 import { TOOL_CATALOG } from "./toolCatalog";
 
 export const ToolBadge = ({ tool, onRemove, size = "md", className = "" }) => {
+  const { t } = useTranslation("agent");
   const toolData =
     typeof tool === "string"
       ? TOOL_CATALOG.find((t) => t.id === tool) || {
@@ -35,7 +37,7 @@ export const ToolBadge = ({ tool, onRemove, size = "md", className = "" }) => {
             e.stopPropagation();
             onRemove();
           }}
-          aria-label={`Remove skill ${toolData.name}`}
+          aria-label={t("removeSkill", { name: toolData.name })}
           className="ml-0.5 -mr-1 flex h-4 w-4 items-center justify-center rounded-full hover:bg-[var(--color-accent)]/20 hover:text-[var(--color-accent-strong)] cursor-pointer transition-colors"
         >
           <X className="h-3 w-3" />

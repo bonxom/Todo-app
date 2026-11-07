@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useContext, useMemo, useEffect, useCallback, useRef } from "react";
 import { A2uiHost } from "@/shared/A2UI/A2uiHost";
 import type {
@@ -33,6 +34,8 @@ export function TaskProposalSurface({
   disabled,
   onOpenTask,
 }: TaskProposalSurfaceProps) {
+  const { t } = useTranslation("agent");
+
   const agentSession = useContext(AgentSessionContext);
   const proposalId = envelope.proposal.id;
   const rawProposalDraft = agentSession?.draft?.proposalDrafts?.[proposalId] as
@@ -95,12 +98,12 @@ export function TaskProposalSurface({
   );
 
   const textFallback = (
-    <section aria-label="Đề xuất công việc" className="p-3 space-y-2">
-      <p role="status">Không thể hiển thị giao diện tương tác.</p>
+    <section aria-label={t("taskProposal")} className="p-3 space-y-2">
+      <p role="status">{t("unableToDisplayTheInteractiveInterface")}</p>
       <p className="whitespace-pre-wrap">{envelope.text}</p>
       {onReload && (
         <button type="button" onClick={onReload}>
-          Tải lại
+          {t("reload")}
         </button>
       )}
     </section>
@@ -144,14 +147,14 @@ export function TaskProposalSurface({
           onAction={(event) => {
             const work = (async () => {
               if (!onAction || disabled)
-                throw new Error("Thao tác hiện không khả dụng.");
+                throw new Error(t("proposalActionUnavailable"));
               const proposal = proposalViewSchema.parse(event.context.proposal);
               if (
                 proposal.id !== envelope.proposal.id ||
                 proposal.conversationId !== envelope.proposal.conversationId ||
                 proposal.revision !== envelope.proposal.revision
               )
-                throw new Error("Đề xuất đã thay đổi. Vui lòng tải lại.");
+                throw new Error(t("proposalChanged"));
               const requestId = String(event.context.requestId);
               if (event.name === "cancel")
                 await onAction({

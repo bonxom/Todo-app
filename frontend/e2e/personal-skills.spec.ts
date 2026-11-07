@@ -100,7 +100,9 @@ test.describe("Personal Skills E2E", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await personalSkillsFixture(page);
     await page.goto("/agent/skills");
-    const trigger = page.getByRole("button", { name: /Add from template/i }).first();
+    const trigger = page
+      .getByRole("button", { name: /Add from template/i })
+      .first();
     await trigger.click();
     await page.getByRole("button", { name: /View template IELTS/i }).click();
     await expect(

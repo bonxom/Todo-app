@@ -1,12 +1,15 @@
+import { useTranslation } from "react-i18next";
 import CustomSelect from "@/shared/components/CustomSelect";
 
 const FilterBar = ({ selectedStatus, onStatusChange }) => {
+  const { t } = useTranslation("workspace");
+
   const statusOptions = [
-    { value: "all", label: "All Tasks" },
-    { value: "pending", label: "Pending Tasks" },
-    { value: "in-progress", label: "In Progress Tasks" },
-    { value: "completed", label: "Completed Tasks" },
-    { value: "given-up", label: "Given Up Tasks" },
+    { value: "all", label: t("allTasksCasedAllTasks") },
+    { value: "pending", label: t("pendingTasks") },
+    { value: "in-progress", label: t("inProgressTasks") },
+    { value: "completed", label: t("completedTasks") },
+    { value: "given-up", label: t("givenUpTasks") },
   ];
 
   return (
@@ -14,7 +17,7 @@ const FilterBar = ({ selectedStatus, onStatusChange }) => {
       <CustomSelect
         value={selectedStatus}
         onChange={(e) => onStatusChange(e.target.value)}
-        aria-label="Filter by status"
+        aria-label={t("filterByStatus")}
         className="ui-input min-w-[200px]"
       >
         {statusOptions.map((option) => (

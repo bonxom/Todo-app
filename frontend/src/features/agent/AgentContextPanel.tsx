@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ApiError } from "@/shared/services/apiError";
 import React, { useEffect, useState, useRef } from "react";
 import { Folder, AlertCircle } from "lucide-react";
@@ -12,6 +13,8 @@ interface AgentContextPanelProps {
 }
 
 export function AgentContextPanel({ chat }: AgentContextPanelProps) {
+  const { t } = useTranslation("agent");
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [savingContext, setSavingContext] = useState(false);
@@ -78,10 +81,10 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
       });
       if (err instanceof ApiError && err.status === 409) {
         setContextError(
-          "Conversation is busy processing, cannot change project context.",
+          t("conversationIsBusyProcessingCannotChangeProjectContext"),
         );
       } else {
-        setContextError("Unable to update project context. Please try again.");
+        setContextError(t("unableToUpdateProjectContextPleaseTryAgain"));
       }
     } finally {
       if (mounted.current) setSavingContext(false);
@@ -97,27 +100,27 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
             htmlFor="agent-context-project-select"
             className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]"
           >
-            Project Context
+            {t("projectContext")}
           </label>
         </div>
         <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-          Agent references this project; you can still specify other projects.
+          {t("agentReferencesThisProjectYouCanStillSpecifyOtherProjects")}
         </p>
 
         <div className="mt-2">
           <CustomSelect
             id="agent-context-project-select"
-            aria-label="Project Context"
+            aria-label={t("projectContext")}
             disabled={isPending || loadingProjects || !chat.conversationId}
             value={currentProjectId}
             onChange={handleProjectChange}
             className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
           >
-            <option value="">No project selected (Default)</option>
+            <option value="">{t("noProjectSelectedDefault")}</option>
             {projects.map((proj) => (
               <option key={proj._id} value={proj._id}>
                 {proj.name}
-                {proj.status === "completed" ? " (Completed)" : ""}
+                {proj.status === "completed" ? t("completedSuffix") : ""}
               </option>
             ))}
           </CustomSelect>
@@ -130,7 +133,7 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
           >
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
-              Previously selected project is no longer available or was deleted.
+              {t("previouslySelectedProjectIsNoLongerAvailableOrWasDeleted")}
             </span>
           </div>
         )}

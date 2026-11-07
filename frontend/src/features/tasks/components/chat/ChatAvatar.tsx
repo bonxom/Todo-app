@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Bot, UserRound } from "lucide-react";
 
@@ -11,10 +12,12 @@ export default function ChatAvatar({
   src?: string;
   isUser?: boolean;
 }) {
+  const { t } = useTranslation("agent");
+
   const [failed, setFailed] = useState<string[]>([]);
   const preferred = src?.trim() || DEFAULT_CHAT_AVATAR;
   const current = failed.includes(preferred) ? DEFAULT_CHAT_AVATAR : preferred;
-  const label = isUser ? "Your avatar" : "Agent avatar";
+  const label = isUser ? t("yourAvatar") : t("agentAvatar");
   const Icon = isUser ? UserRound : Bot;
   if (failed.includes(current))
     return (

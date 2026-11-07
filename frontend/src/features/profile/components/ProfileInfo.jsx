@@ -1,44 +1,49 @@
-const birthdayFormatter = new Intl.DateTimeFormat(undefined, {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-});
+import i18n, { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
+const birthdayFormatter = () =>
+  new Intl.DateTimeFormat(getLocale(), {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 
-const memberSinceFormatter = new Intl.DateTimeFormat(undefined, {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
+const memberSinceFormatter = () =>
+  new Intl.DateTimeFormat(getLocale(), {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
 const formatDateOnly = (value) => {
   if (!value) {
-    return "Not set";
+    return i18n.t("account:notSet");
   }
 
   const date = new Date(value);
   return Number.isNaN(date.getTime())
-    ? "Not set"
-    : birthdayFormatter.format(date);
+    ? i18n.t("account:notSet")
+    : birthdayFormatter().format(date);
 };
 
 const formatDateTime = (value) => {
   if (!value) {
-    return "Not available";
+    return i18n.t("account:notAvailable");
   }
 
   const date = new Date(value);
   return Number.isNaN(date.getTime())
-    ? "Not available"
-    : memberSinceFormatter.format(date);
+    ? i18n.t("account:notAvailable")
+    : memberSinceFormatter().format(date);
 };
 
 const formatRoleLabel = (value) => {
   if (!value) {
-    return "User";
+    return i18n.t("account:user");
   }
 
+  if (value === "admin" || value === "user") return i18n.t(`account:${value}`);
   return value
     .toLowerCase()
     .split(/[_-\s]+/)
@@ -48,25 +53,26 @@ const formatRoleLabel = (value) => {
 };
 
 const ProfileInfo = ({ user }) => {
+  const { t } = useTranslation("account");
   const fields = [
     {
-      label: "Full Name",
-      value: user?.name || "Not set",
+      label: t("fullName"),
+      value: user?.name || t("notSet"),
     },
     {
-      label: "Email",
-      value: user?.email || "Not set",
+      label: t("email"),
+      value: user?.email || t("notSet"),
     },
     {
-      label: "Role",
+      label: t("role"),
       value: formatRoleLabel(user?.role),
     },
     {
-      label: "Birthday",
+      label: t("birthday"),
       value: formatDateOnly(user?.dob),
     },
     {
-      label: "Member Since",
+      label: t("memberSince"),
       value: formatDateTime(user?.createdAt),
     },
   ];
@@ -75,10 +81,10 @@ const ProfileInfo = ({ user }) => {
     <section className="ui-section-card ui-card-padding">
       <div className="mb-4">
         <h2 className="m-0 text-lg font-semibold tracking-[-0.02em] text-[var(--color-text)]">
-          Personal Information
+          {t("personalInformation")}
         </h2>
         <p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">
-          These details are used across your workspace and account screens.
+          {t("theseDetailsAreUsedAcrossYourWorkspaceAndAccountScreens")}
         </p>
       </div>
 

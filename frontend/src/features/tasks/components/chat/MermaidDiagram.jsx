@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect, useRef } from "react";
 import mermaid from "mermaid";
 import { generateUUID } from "@/shared/utils/id";
@@ -5,6 +6,8 @@ import { useTheme } from "@/shared/theme/theme";
 import { AlertCircle, Check, Code, Copy, Eye, Minus, Plus } from "lucide-react";
 
 const MermaidDiagram = ({ code }) => {
+  const { t } = useTranslation("agent");
+
   const { theme } = useTheme();
   const [zoom, setZoom] = useState(100);
   const [activeTab, setActiveTab] = useState("diagram");
@@ -55,7 +58,7 @@ const MermaidDiagram = ({ code }) => {
         }
       } catch (err) {
         if (!isCancelled) {
-          setError(err?.message || "Invalid Mermaid syntax");
+          setError(err?.message || t("invalidMermaidSyntax"));
           setActiveTab("code");
         }
       } finally {
@@ -70,7 +73,7 @@ const MermaidDiagram = ({ code }) => {
     return () => {
       isCancelled = true;
     };
-  }, [code, theme]);
+  }, [code, theme, t]);
 
   return (
     <div className="chat-diagram my-3 overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] shadow-xs">
@@ -80,7 +83,7 @@ const MermaidDiagram = ({ code }) => {
           <button
             type="button"
             role="tab"
-            aria-label="Diagram"
+            aria-label={t("diagram")}
             aria-selected={activeTab === "diagram"}
             onClick={() => setActiveTab("diagram")}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
@@ -90,12 +93,12 @@ const MermaidDiagram = ({ code }) => {
             }`}
           >
             <Eye className="h-3.5 w-3.5" />
-            <span>Diagram</span>
+            <span>{t("diagram")}</span>
           </button>
           <button
             type="button"
             role="tab"
-            aria-label="Code"
+            aria-label={t("code")}
             aria-selected={activeTab === "code"}
             onClick={() => setActiveTab("code")}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
@@ -105,7 +108,7 @@ const MermaidDiagram = ({ code }) => {
             }`}
           >
             <Code className="h-3.5 w-3.5" />
-            <span>Code</span>
+            <span>{t("code")}</span>
           </button>
         </div>
 
@@ -116,18 +119,20 @@ const MermaidDiagram = ({ code }) => {
           <button
             type="button"
             onClick={handleCopy}
-            aria-label={copied ? "Copied" : "Copy code"}
+            aria-label={copied ? t("copied") : t("copyCode")}
             className="ui-focus-ring flex items-center gap-1 rounded-md px-2 py-0.5 text-xs transition-colors hover:bg-[var(--color-line)] hover:text-[var(--color-text)] cursor-pointer"
           >
             {copied ? (
               <>
                 <Check className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="text-emerald-500 font-medium">Copied</span>
+                <span className="text-emerald-500 font-medium">
+                  {t("copied")}
+                </span>
               </>
             ) : (
               <>
                 <Copy className="h-3.5 w-3.5" />
-                <span>Copy</span>
+                <span>{t("copy")}</span>
               </>
             )}
           </button>
@@ -136,11 +141,11 @@ const MermaidDiagram = ({ code }) => {
 
       {activeTab === "diagram" && !rendering && !error && (
         <div className="chat-diagram-zoom">
-          <span>Zoom in for a closer look</span>
+          <span>{t("zoomInForACloserLook")}</span>
           <button
             type="button"
-            aria-label="Zoom out diagram"
-            title="Zoom out"
+            aria-label={t("zoomOutDiagram")}
+            title={t("zoomOut")}
             disabled={zoom <= 100}
             onClick={() => setZoom((value) => Math.max(100, value - 25))}
           >
@@ -148,16 +153,16 @@ const MermaidDiagram = ({ code }) => {
           </button>
           <button
             type="button"
-            aria-label="Reset diagram zoom"
-            title="Fit to view"
+            aria-label={t("resetDiagramZoom")}
+            title={t("fitToView")}
             onClick={() => setZoom(100)}
           >
             {zoom}%
           </button>
           <button
             type="button"
-            aria-label="Zoom in diagram"
-            title="Zoom in"
+            aria-label={t("zoomInDiagram")}
+            title={t("zoomIn")}
             disabled={zoom >= 200}
             onClick={() => setZoom((value) => Math.min(200, value + 25))}
           >
@@ -171,12 +176,12 @@ const MermaidDiagram = ({ code }) => {
           {rendering ? (
             <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
               <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--color-accent)] border-t-transparent" />
-              <span>Rendering diagram…</span>
+              <span>{t("renderingDiagram")}</span>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center gap-1.5 text-center text-xs text-amber-600 dark:text-amber-400">
               <AlertCircle className="h-4 w-4" />
-              <span>Unable to render the diagram. You can view the code.</span>
+              <span>{t("unableToRenderTheDiagramYouCanViewTheCode")}</span>
             </div>
           ) : (
             <div

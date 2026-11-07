@@ -1,3 +1,5 @@
+import i18n, { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 import { Fragment } from "react";
 import { z } from "zod";
 import { CommonSchemas } from "@a2ui/web_core/v0_9";
@@ -31,8 +33,11 @@ const CHART_PALETTE = [
 
 export function formatDisplayScalar(value: DisplayScalar | undefined): string {
   if (value === null || value === undefined) return "—";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  return String(value);
+  if (typeof value === "boolean")
+    return value ? i18n.t("agent:yes") : i18n.t("agent:no");
+  return typeof value === "number"
+    ? value.toLocaleString(getLocale())
+    : String(value);
 }
 
 const columnApi = {
@@ -198,6 +203,7 @@ export const cardComponent = createBinderlessComponentImplementation(
 export const textComponent = createBinderlessComponentImplementation(
   textApi,
   ({ context }) => {
+    useTranslation("agent");
     const props = textApi.schema.parse(context.componentModel.properties);
     const bindingPath =
       typeof props.value === "object" &&
@@ -225,6 +231,7 @@ export const textComponent = createBinderlessComponentImplementation(
 export const statComponent = createBinderlessComponentImplementation(
   statApi,
   ({ context }) => {
+    useTranslation("agent");
     const props = statApi.schema.parse(context.componentModel.properties);
     const bindingPath =
       typeof props.value === "object" &&
@@ -279,6 +286,7 @@ export const statComponent = createBinderlessComponentImplementation(
 export const tableComponent = createBinderlessComponentImplementation(
   tableApi,
   ({ context }) => {
+    useTranslation("agent");
     const props = tableApi.schema.parse(context.componentModel.properties);
     const signal = context.dataContext.dataModel.getSignal<
       Record<string, DisplayScalar>[]
@@ -330,6 +338,7 @@ export const tableComponent = createBinderlessComponentImplementation(
 export const chartComponent = createBinderlessComponentImplementation(
   chartApi,
   ({ context }) => {
+    useTranslation("agent");
     const props = chartApi.schema.parse(context.componentModel.properties);
     const signal = context.dataContext.dataModel.getSignal<
       Record<string, DisplayScalar>[]
@@ -339,13 +348,15 @@ export const chartComponent = createBinderlessComponentImplementation(
       throw new Error("Invalid chart rows binding");
     }
 
-    const ariaTitle = props.title ?? `${props.chartType} chart`;
+    const ariaTitle = props.title ?? i18n.t(`agent:${props.chartType}Chart`);
 
     if (rows.length === 0) {
       return (
         <div className="a2ui-chart">
           {props.title && <h4 className="a2ui-chart-title">{props.title}</h4>}
-          <p className="a2ui-chart-empty">No chart data available</p>
+          <p className="a2ui-chart-empty">
+            {i18n.t("agent:noChartDataAvailable")}
+          </p>
         </div>
       );
     }
@@ -383,7 +394,9 @@ export const chartComponent = createBinderlessComponentImplementation(
               aria-hidden="true"
             >
               <div className="a2ui-donut-center">
-                <strong>{Number(total.toFixed(1)).toLocaleString()}</strong>
+                <strong>
+                  {Number(total.toFixed(1)).toLocaleString(getLocale())}
+                </strong>
                 <span>{props.series[0].label}</span>
               </div>
             </div>
@@ -395,7 +408,7 @@ export const chartComponent = createBinderlessComponentImplementation(
                   <div className="a2ui-chart-legendRow" key={idx}>
                     <i style={{ background: item.color }} aria-hidden="true" />
                     <span className="a2ui-chart-legendLabel">{item.label}</span>
-                    <strong>{item.value.toLocaleString()}</strong>
+                    <strong>{item.value.toLocaleString(getLocale())}</strong>
                     <small>{pct}%</small>
                   </div>
                 );
@@ -566,7 +579,7 @@ export const chartComponent = createBinderlessComponentImplementation(
                         />
                       </div>
                       <span className="a2ui-bar-val">
-                        {val.toLocaleString()}
+                        {val.toLocaleString(getLocale())}
                       </span>
                     </div>
                   );
@@ -583,6 +596,7 @@ export const chartComponent = createBinderlessComponentImplementation(
 export const diagramComponent = createBinderlessComponentImplementation(
   diagramApi,
   ({ context }) => {
+    useTranslation("agent");
     const props = diagramApi.schema.parse(context.componentModel.properties);
     const bindingPath =
       typeof props.value === "object" &&

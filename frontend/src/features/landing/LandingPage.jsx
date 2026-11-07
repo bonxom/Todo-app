@@ -1,3 +1,5 @@
+import LanguageSelect from "@/shared/components/LanguageSelect";
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -22,31 +24,37 @@ import ThemeToggle from "@/shared/components/ThemeToggle";
 import WorkspacePreview from "./components/WorkspacePreview";
 import "@/styles/landing.css";
 
-const features = [
-  {
-    icon: ListTodo,
-    title: "Out of your head. Into a plan.",
-    text: "Capture the little things and the big ideas. Give every task a priority, a due date, and a place to land.",
-    label: "TASKS, WITHOUT THE TANGLE",
-    className: "capture",
-  },
-  {
-    icon: Folder,
-    title: "Everything in its right place.",
-    text: "Bring related work together with projects and categories. Less searching. More moving things forward.",
-    label: "A HOME FOR EVERY PROJECT",
-    className: "organize",
-  },
-  {
-    icon: ChartNoAxesColumnIncreasing,
-    title: "See how far you’ve come.",
-    text: "Turn finished tasks into visible progress. Find your rhythm and make a little more room for what’s next.",
-    label: "PROGRESS YOU CAN FEEL",
-    className: "progress",
-  },
-];
-
 export default function LandingPage() {
+  const { t } = useTranslation("account");
+  const features = [
+    {
+      icon: ListTodo,
+      title: t("outOfYourHeadIntoAPlan"),
+      text: t(
+        "captureTheLittleThingsAndTheBigIdeasGiveEveryTaskAPriorityADueDateAndAPlaceToLand",
+      ),
+      label: t("tasksWithoutTheTangle"),
+      className: "capture",
+    },
+    {
+      icon: Folder,
+      title: t("everythingInItsRightPlace"),
+      text: t(
+        "bringRelatedWorkTogetherWithProjectsAndCategoriesLessSearchingMoreMovingThingsForward",
+      ),
+      label: t("aHomeForEveryProject"),
+      className: "organize",
+    },
+    {
+      icon: ChartNoAxesColumnIncreasing,
+      title: t("seeHowFarYouveCome"),
+      text: t(
+        "turnFinishedTasksIntoVisibleProgressFindYourRhythmAndMakeALittleMoreRoomForWhatsNext",
+      ),
+      label: t("progressYouCanFeel"),
+      className: "progress",
+    },
+  ];
   const [menuOpen, setMenuOpen] = useState(false);
   const [motionPaused, setMotionPaused] = useState(false);
   return (
@@ -55,11 +63,11 @@ export default function LandingPage() {
       data-motion={motionPaused ? "paused" : "playing"}
     >
       <a className="landing-skip" href="#landing-main">
-        Skip to main content
+        {t("skipToMainContent")}
       </a>
       <header className="landing-navbar">
         <div className="landing-container nav-inner">
-          <Link to="/" aria-label="Orbit home">
+          <Link to="/" aria-label={t("orbitHome")}>
             <Brand />
           </Link>
           <nav
@@ -73,34 +81,37 @@ export default function LandingPage() {
             className={
               menuOpen ? "landing-nav-links is-open" : "landing-nav-links"
             }
-            aria-label="Main navigation"
+            aria-label={t("mainNavigation")}
           >
             <a href="#features" onClick={() => setMenuOpen(false)}>
-              Why Orbit
+              {t("whyOrbit")}
             </a>
             <a href="#how-it-works" onClick={() => setMenuOpen(false)}>
-              How it works
+              {t("howItWorks")}
             </a>
             <a href="#preview" onClick={() => setMenuOpen(false)}>
-              Take a look <ArrowUpRight size={13} />
+              {t("takeALook")}
+              <ArrowUpRight size={13} />
             </a>
             <Link className="mobile-sign-in" to="/login">
-              Sign in
+              {t("signInCasedSignin")}
             </Link>
           </nav>
           <div className="nav-actions">
+            <LanguageSelect />
             <ThemeToggle />
             <Link className="sign-in" to="/login">
-              Sign in
+              {t("signInCasedSignin")}
             </Link>
             <Link className="landing-button button-dark nav-cta" to="/register">
-              Get started <ArrowUpRight size={15} />
+              {t("getStarted")}
+              <ArrowUpRight size={15} />
             </Link>
             <button
               id="landing-menu-toggle"
               aria-controls="landing-navigation"
               className="mobile-menu"
-              aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+              aria-label={menuOpen ? t("closeNavigation") : t("openNavigation")}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(!menuOpen)}
             >
@@ -114,33 +125,34 @@ export default function LandingPage() {
           <section className="landing-hero landing-container">
             <div className="hero-copy" data-reveal="left">
               <div className="hero-eyebrow">
-                <span className="live-dot" /> A LITTLE CLARITY. A LOT OF
-                POSSIBILITY.
+                <span className="live-dot" />{" "}
+                {t("aLittleClarityALotOfPossibility")}
               </div>
               <h1>
-                Everything to do.
+                {t("everythingToDo")}
                 <br />
                 <span>
-                  One place
+                  {t("onePlace")}
                   <br />
-                  to focus.
+                  {t("toFocus")}
                 </span>
               </h1>
               <p>
-                Bring your tasks, projects, and calendar into Orbit.
-                <br className="desktop-break" /> Less on your mind. More room to
-                move forward.
+                {t("bringYourTasksProjectsAndCalendarIntoOrbit")}
+                <br className="desktop-break" />{" "}
+                {t("lessOnYourMindMoreRoomToMoveForward")}
               </p>
               <div className="hero-actions">
                 <Link className="landing-button button-primary" to="/register">
-                  Find your focus <ArrowUpRight size={18} />
+                  {t("findYourFocus")}
+                  <ArrowUpRight size={18} />
                 </Link>
                 <a className="hero-demo-link" href="#preview">
-                  <span className="play-icon">▶</span> See Orbit in action
+                  <span className="play-icon">▶</span> {t("seeOrbitInAction")}
                 </a>
               </div>
               <div className="hero-footnote">
-                <Check size={14} /> Your ideas. Your pace. Your space.
+                <Check size={14} /> {t("yourIdeasYourPaceYourSpace")}
               </div>
             </div>
             <HeroOrbit
@@ -154,16 +166,16 @@ export default function LandingPage() {
         </Reveal>
         <Reveal>
           <div className="benefit-strip landing-container">
-            <span data-reveal="left">Built for your everyday orbit.</span>
+            <span data-reveal="left">{t("builtForYourEverydayOrbit")}</span>
             <div data-reveal="right">
               <span>
-                <ListTodo size={17} /> Thoughtful task management
+                <ListTodo size={17} /> {t("thoughtfulTaskManagement")}
               </span>
               <span>
-                <CalendarDays size={17} /> A clearer calendar
+                <CalendarDays size={17} /> {t("aClearerCalendar")}
               </span>
               <span>
-                <Sparkles size={17} /> A little help from AI
+                <Sparkles size={17} /> {t("aLittleHelpFromAi")}
               </span>
             </div>
           </div>
@@ -173,17 +185,18 @@ export default function LandingPage() {
             <div className="section-heading">
               <div data-reveal="left">
                 <p className="section-eyebrow">
-                  <span /> ROOM TO THINK. SPACE TO DO.
+                  <span /> {t("roomToThinkSpaceToDo")}
                 </p>
                 <h2>
-                  Life has enough moving parts.
+                  {t("lifeHasEnoughMovingParts")}
                   <br />
-                  <span>Keep your work simple.</span>
+                  <span>{t("keepYourWorkSimple")}</span>
                 </h2>
               </div>
               <p data-reveal="right" style={{ "--reveal-delay": "100ms" }}>
-                From the first “what if” to the final checkmark,
-                <br />a little clarity goes a long way.
+                {t("fromTheFirstWhatIfToTheFinalCheckmark")}
+                <br />
+                {t("aLittleClarityGoesALongWay")}
               </p>
             </div>
             <div className="feature-grid">
@@ -204,32 +217,32 @@ export default function LandingPage() {
                     {index === 0 ? (
                       <div className="mini-task-stack">
                         <div>
-                          <Circle size={14} /> The next big idea{" "}
-                          <span>Today</span>
+                          <Circle size={14} /> {t("theNextBigIdea")}{" "}
+                          <span>{t("today")}</span>
                         </div>
                         <div>
-                          <CircleCheck size={14} /> One small step forward{" "}
+                          <CircleCheck size={14} /> {t("oneSmallStepForward")}{" "}
                           <Check size={13} />
                         </div>
                         <div>
-                          <Plus size={14} /> Make room for something new
+                          <Plus size={14} /> {t("makeRoomForSomethingNew")}
                         </div>
                       </div>
                     ) : index === 1 ? (
                       <div className="mini-folders">
                         <div>
-                          <Folder /> <span>Work</span>
-                          <small>Space to build</small>
+                          <Folder /> <span>{t("work")}</span>
+                          <small>{t("spaceToBuild")}</small>
                         </div>
                         <div>
-                          <Folder /> <span>Life</span>
-                          <small>Room to breathe</small>
+                          <Folder /> <span>{t("life")}</span>
+                          <small>{t("roomToBreathe")}</small>
                         </div>
                       </div>
                     ) : (
                       <div className="mini-chart">
                         <div className="chart-top">
-                          <span>Little wins add up.</span>
+                          <span>{t("littleWinsAddUp")}</span>
                           <strong>↗</strong>
                         </div>
                         <div className="chart-bars">
@@ -238,13 +251,13 @@ export default function LandingPage() {
                           ))}
                         </div>
                         <div className="chart-days">
-                          <span>M</span>
-                          <span>T</span>
-                          <span>W</span>
-                          <span>T</span>
-                          <span>F</span>
-                          <span>S</span>
-                          <span>S</span>
+                          <span>{t("mon")}</span>
+                          <span>{t("tue")}</span>
+                          <span>{t("wed")}</span>
+                          <span>{t("thu")}</span>
+                          <span>{t("fri")}</span>
+                          <span>{t("sat")}</span>
+                          <span>{t("sun")}</span>
                         </div>
                       </div>
                     )}
@@ -260,35 +273,40 @@ export default function LandingPage() {
             <div className="landing-container how-inner">
               <div className="how-copy" data-reveal="left">
                 <p className="section-eyebrow">
-                  <span /> SMALL STEPS. BIG DIFFERENCE.
+                  <span /> {t("smallStepsBigDifference")}
                 </p>
                 <h2>
-                  Find your rhythm.
+                  {t("findYourRhythm")}
                   <br />
-                  <span>Make it your own.</span>
+                  <span>{t("makeItYourOwn")}</span>
                 </h2>
                 <p>
-                  You don’t need a whole new system.
+                  {t("youDontNeedAWholeNewSystem")}
                   <br />
-                  Just a good place to start.
+                  {t("justAGoodPlaceToStart")}
                 </p>
                 <Link className="text-link" to="/register">
-                  Let’s make some room <ArrowUpRight size={17} />
+                  {t("letsMakeSomeRoom")}
+                  <ArrowUpRight size={17} />
                 </Link>
               </div>
               <div className="how-steps">
                 {[
                   [
-                    "Get it out of your head.",
-                    "A task, a reminder, a half-formed idea. Capture it before it slips away.",
+                    t("getItOutOfYourHead"),
+                    t(
+                      "aTaskAReminderAHalfformedIdeaCaptureItBeforeItSlipsAway",
+                    ),
                   ],
                   [
-                    "Give it a little direction.",
-                    "Pick a project. Set a priority. Make the next step a little clearer.",
+                    t("giveItALittleDirection"),
+                    t("pickAProjectSetAPriorityMakeTheNextStepALittleClearer"),
                   ],
                   [
-                    "Do your thing. Then take a breath.",
-                    "Check it off, see your progress, and keep going at a pace that works for you.",
+                    t("doYourThingThenTakeABreath"),
+                    t(
+                      "checkItOffSeeYourProgressAndKeepGoingAtAPaceThatWorksForYou",
+                    ),
                   ],
                 ].map(([title, text], i) => (
                   <div
@@ -323,17 +341,18 @@ export default function LandingPage() {
               <OrbitMark />
             </div>
             <p className="section-eyebrow" data-reveal="right">
-              A LITTLE CLARITY CHANGES EVERYTHING.
+              {t("aLittleClarityChangesEverything")}
             </p>
             <h2 data-reveal="left" style={{ "--reveal-delay": "80ms" }}>
-              Good things start
+              {t("goodThingsStart")}
               <br />
-              with a little <em>space.</em>
+              {t("withALittle")}
+              <em>{t("space")}</em>
             </h2>
             <p data-reveal="right" style={{ "--reveal-delay": "140ms" }}>
-              Your next idea deserves a place to grow.
+              {t("yourNextIdeaDeservesAPlaceToGrow")}
               <br />
-              Let’s put it in Orbit.
+              {t("letsPutItInOrbit")}
             </p>
             <Link
               data-reveal="left"
@@ -341,14 +360,15 @@ export default function LandingPage() {
               className="landing-button button-primary"
               to="/register"
             >
-              Create your workspace <ArrowUpRight size={18} />
+              {t("createYourWorkspace")}
+              <ArrowUpRight size={18} />
             </Link>
             <span
               className="closing-note"
               data-reveal="right"
               style={{ "--reveal-delay": "240ms" }}
             >
-              Start small. Make it yours.
+              {t("startSmallMakeItYours")}
             </span>
           </section>
         </Reveal>
@@ -356,20 +376,21 @@ export default function LandingPage() {
       <Reveal>
         <footer className="landing-footer landing-container">
           <div className="footer-top" data-reveal="left">
-            <Link to="/" aria-label="Orbit home">
+            <Link to="/" aria-label={t("orbitHome")}>
               <Brand />
             </Link>
-            <p>A calmer space for a fuller life.</p>
+            <p>{t("aCalmerSpaceForAFullerLife")}</p>
             <a href="#landing-main">
-              Back to the top <ArrowUpRight size={15} />
+              {t("backToTheTop")}
+              <ArrowUpRight size={15} />
             </a>
           </div>
           <div className="footer-bottom" data-reveal="right">
             <span>
-              © {new Date().getFullYear()} Orbit. Make space for what matters.
+              © {new Date().getFullYear()} {t("orbitMakeSpaceForWhatMatters")}
             </span>
             <span>
-              Made for humans with a lot on their minds.{" "}
+              {t("madeForHumansWithALotOnTheirMinds")}{" "}
               <span className="footer-star">✳</span>
             </span>
           </div>

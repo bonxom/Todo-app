@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { LogIn } from "lucide-react";
 import Button from "./Button";
@@ -5,6 +6,7 @@ import Input from "./Input";
 import PasswordInput from "./PasswordInput";
 
 const LoginForm = ({ onSubmit, isLoading }) => {
+  const { t } = useTranslation("account");
   const [credentials, setCredentials] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
 
@@ -12,15 +14,15 @@ const LoginForm = ({ onSubmit, isLoading }) => {
     const newErrors = {};
 
     if (!credentials.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = { key: "emailIsRequired" };
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email)) {
-      newErrors.email = "Invalid email format";
+      newErrors.email = { key: "invalidEmailFormat" };
     }
 
     if (!credentials.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = { key: "passwordIsRequired" };
     } else if (credentials.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = { key: "passwordMustBeAtLeast6Characters" };
     }
 
     setErrors(newErrors);
@@ -44,7 +46,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
   return (
     <form onSubmit={handleSubmit} className="auth-form" noValidate>
       <Input
-        label="Email"
+        label={t("email")}
         name="email"
         type="email"
         value={credentials.email}
@@ -52,32 +54,32 @@ const LoginForm = ({ onSubmit, isLoading }) => {
           setCredentials({ ...credentials, email: e.target.value });
           if (errors.email) setErrors({ ...errors, email: undefined });
         }}
-        placeholder="you@example.com…"
+        placeholder={t("emailPlaceholder")}
         autoComplete="email"
         inputMode="email"
         spellCheck={false}
         fullWidth
-        error={errors.email}
+        error={errors.email?.key ? t(errors.email.key) : errors.email}
       />
 
       <PasswordInput
-        label="Password"
+        label={t("password")}
         name="password"
         value={credentials.password}
         onChange={(e) => {
           setCredentials({ ...credentials, password: e.target.value });
           if (errors.password) setErrors({ ...errors, password: undefined });
         }}
-        placeholder="Enter your password…"
+        placeholder={t("enterYourPassword")}
         autoComplete="current-password"
         fullWidth
-        error={errors.password}
+        error={errors.password?.key ? t(errors.password.key) : errors.password}
       />
 
       <div className="auth-form-row">
         <label className="auth-checkbox-label">
           <input type="checkbox" name="remember" />
-          Remember me
+          {t("rememberMe")}
         </label>
       </div>
 
@@ -89,7 +91,7 @@ const LoginForm = ({ onSubmit, isLoading }) => {
         loading={isLoading}
         icon={<LogIn className="h-4 w-4" aria-hidden="true" />}
       >
-        {isLoading ? "Signing in…" : "Sign In"}
+        {isLoading ? t("signingIn") : t("signIn")}
       </Button>
     </form>
   );

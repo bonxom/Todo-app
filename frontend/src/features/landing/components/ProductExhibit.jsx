@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { Check, CircleDot, Clock3 } from "lucide-react";
 import { useInView } from "../hooks/useInView";
 
 const ProductExhibit = () => {
+  const { t } = useTranslation("account");
   const { ref, isVisible } = useInView({ threshold: 0.25 });
 
   return (
@@ -12,25 +14,26 @@ const ProductExhibit = () => {
         data-visible={isVisible}
       >
         <header className="product-exhibit__copy">
-          <p className="orbit-kicker">03 / Focus</p>
-          <h2>See what’s done and what’s next.</h2>
+          <p className="orbit-kicker">{t("focusSection")}</p>
+          <h2>{t("seeWhatsDoneAndWhatsNext")}</h2>
           <p>
-            Review completed tasks, check upcoming deadlines, and plan your next
-            session.
+            {t(
+              "reviewCompletedTasksCheckUpcomingDeadlinesAndPlanYourNextSession",
+            )}
           </p>
         </header>
         <div
           className="product-exhibit__panel"
-          aria-label="Orbit launch focus dashboard preview"
+          aria-label={t("orbitLaunchFocusDashboardPreview")}
         >
           <div className="product-exhibit__panel-top">
             <div>
-              <span>PROJECT / ORBIT LAUNCH</span>
-              <strong>Launch checklist</strong>
+              <span>{t("projectOrbitLaunch")}</span>
+              <strong>{t("launchChecklist")}</strong>
             </div>
             <span className="product-exhibit__live">
               <i />
-              On track
+              {t("onTrack")}
             </span>
           </div>
           <div className="product-exhibit__metrics">
@@ -46,48 +49,51 @@ const ProductExhibit = () => {
               </svg>
             </div>
             <div>
-              <span>Project completion</span>
+              <span>{t("projectCompletion")}</span>
               <strong>68%</strong>
-              <small>+12% this week</small>
+              <small>{t("weeklyGrowth")}</small>
             </div>
             <div className="product-exhibit__next">
-              <span>Next focus block</span>
+              <span>{t("nextFocusBlock")}</span>
               <strong>14:30</strong>
-              <small>Launch review</small>
+              <small>{t("launchReview")}</small>
             </div>
           </div>
           <div className="product-exhibit__body">
             <div className="product-exhibit__tasks">
-              <span className="product-exhibit__label">FOCUS TASKS</span>
+              <span className="product-exhibit__label">{t("focusTasks")}</span>
               <p>
                 <Check size={15} />
-                Review category plan <small>Done</small>
+                {t("reviewCategoryPlan")}
+                <small>{t("done")}</small>
               </p>
               <p>
                 <CircleDot size={15} />
-                Prepare launch checklist <small>Now</small>
+                {t("prepareLaunchChecklist")}
+                <small>{t("now")}</small>
               </p>
               <p>
                 <Clock3 size={15} />
-                Schedule weekly review <small>Next</small>
+                {t("scheduleWeeklyReview")}
+                <small>{t("next")}</small>
               </p>
             </div>
             <div className="product-exhibit__timeline">
-              <span className="product-exhibit__label">TIMELINE</span>
+              <span className="product-exhibit__label">{t("timeline")}</span>
               <div>
                 <i />
                 <span>09:00</span>
-                <b>Scope aligned</b>
+                <b>{t("scopeAligned")}</b>
               </div>
               <div>
                 <i />
                 <span>12:00</span>
-                <b>Review complete</b>
+                <b>{t("reviewComplete")}</b>
               </div>
               <div>
                 <i />
                 <span>14:30</span>
-                <b>Launch review</b>
+                <b>{t("launchReview")}</b>
               </div>
             </div>
           </div>

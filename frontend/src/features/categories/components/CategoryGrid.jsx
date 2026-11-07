@@ -1,21 +1,24 @@
+import { useTranslation } from "react-i18next";
 import CategoryCard from "./CategoryCard";
 
 const CategoryGrid = ({ items, onTaskUpdated, onCreateCategory }) => {
+  const { t } = useTranslation("workspace");
+
   if (items.length === 0) {
     return (
       <section className="ui-section-card border-dashed px-6 py-14 text-center">
         <p className="text-lg font-semibold text-[color:var(--color-text)]">
-          No categories to show
+          {t("noCategoriesToShow")}
         </p>
         <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
-          Create a category to keep related tasks grouped in one place.
+          {t("createACategoryToKeepRelatedTasksGroupedInOnePlace")}
         </p>
         <button
           type="button"
           onClick={onCreateCategory}
           className="ui-btn-primary ui-btn-opposite-corners mt-6"
         >
-          Add Category
+          {t("addCategory")}
         </button>
       </section>
     );
@@ -39,9 +42,9 @@ const CategoryGrid = ({ items, onTaskUpdated, onCreateCategory }) => {
         onClick={onCreateCategory}
       >
         <span aria-hidden="true">+</span>
-        <strong>A place for your next idea</strong>
-        <p>Create a category and make it yours.</p>
-        <b>Add Category ↗</b>
+        <strong>{t("aPlaceForYourNextIdea")}</strong>
+        <p>{t("createACategoryAndMakeItYours")}</p>
+        <b>{t("addCategory")}</b>
       </button>
     </div>
   );

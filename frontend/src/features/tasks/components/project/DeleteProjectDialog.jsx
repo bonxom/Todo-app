@@ -1,6 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { useRef } from "react";
 import { useModalKeyboard } from "@/shared/hooks/useModalKeyboard";
 const DeleteProjectDialog = ({ isOpen, onClose, onConfirm, projectName }) => {
+  const { t } = useTranslation("workspace");
+
   const ref = useRef(null);
   useModalKeyboard(isOpen, ref, onClose);
   if (!isOpen) return null;
@@ -24,16 +27,18 @@ const DeleteProjectDialog = ({ isOpen, onClose, onConfirm, projectName }) => {
             id="delete-project-title"
             className="text-xl font-semibold text-[color:var(--color-text)]"
           >
-            Delete Project
+            {t("deleteProjectCasedDeleteProjec")}
           </h2>
         </div>
         <div className="ui-modal-body">
           <p className="mb-3 text-[color:var(--color-text)]">
-            Delete <span className="font-semibold">“{projectName}”</span>?
+            {t("delete")}
+            <span className="font-semibold">“{projectName}”</span>?
           </p>
           <p className="mb-6 text-sm text-[color:var(--color-text-muted)]">
-            Tasks will stay in your account and their project assignment will be
-            cleared.
+            {t(
+              "tasksWillStayInYourAccountAndTheirProjectAssignmentWillBeCleared",
+            )}
           </p>
           <div className="flex gap-3">
             <button
@@ -41,14 +46,14 @@ const DeleteProjectDialog = ({ isOpen, onClose, onConfirm, projectName }) => {
               onClick={onClose}
               className="ui-btn-secondary flex-1"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="button"
               onClick={onConfirm}
               className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[10px] border border-[color:var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] transition-[background-color,border-color] duration-150 hover:bg-[var(--color-danger)]"
             >
-              Delete
+              {t("delete")}
             </button>
           </div>
         </div>

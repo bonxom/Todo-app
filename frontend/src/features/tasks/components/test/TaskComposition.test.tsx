@@ -74,9 +74,9 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
 
     const titleInput = screen.getByLabelText("Task 1 title");
     await user.clear(titleInput);
-    expect(screen.getByRole("button", { name: /Xác nhận/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Confirm/ })).toBeDisabled();
     await user.type(titleInput, "Read chapter 1");
-    await user.click(screen.getByRole("button", { name: /Xác nhận/ }));
+    await user.click(screen.getByRole("button", { name: /Confirm/ }));
     expect(onAction).toHaveBeenCalledTimes(1);
     expect(onAction).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -110,13 +110,13 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
 
     // Clear title -> disables Confirm and Save in separate TaskProposalActions node
     await user.clear(screen.getByLabelText("Task 1 title"));
-    expect(screen.getByRole("button", { name: /Xác nhận/ })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Lưu bản nháp" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Confirm/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save draft" })).toBeDisabled();
 
     // Type new title -> enables Confirm and Save and reports dirty state
     await user.type(screen.getByLabelText("Task 1 title"), "Read chapter 1");
     expect(onDirtyChange).toHaveBeenCalledWith(true);
-    expect(screen.getByText("Chưa lưu thay đổi")).toBeInTheDocument();
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
 
     // Edit category, project, and dates
     await user.selectOptions(
@@ -130,14 +130,14 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
 
     // Toggle selection off -> Confirm disabled, Save still enabled
     const checkbox = screen.getByRole("checkbox", {
-      name: /Chọn công việc/i,
+      name: /Select task/i,
     });
     await user.click(checkbox);
-    expect(screen.getByRole("button", { name: /Xác nhận/ })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Lưu bản nháp" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Confirm/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save draft" })).toBeEnabled();
 
     // Save draft with 0 selected items
-    await user.click(screen.getByRole("button", { name: "Lưu bản nháp" }));
+    await user.click(screen.getByRole("button", { name: "Save draft" }));
     expect(onAction).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "save",
@@ -155,7 +155,7 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
     // Re-select and confirm
     onAction.mockClear();
     await user.click(checkbox);
-    await user.click(screen.getByRole("button", { name: /Xác nhận/ }));
+    await user.click(screen.getByRole("button", { name: /Confirm/ }));
     expect(onAction).toHaveBeenCalledTimes(1);
     expect(onAction).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -166,7 +166,7 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
 
     // Cancel action
     onAction.mockClear();
-    await user.click(screen.getByRole("button", { name: "Hủy" }));
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onAction).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "cancel",
@@ -197,19 +197,19 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
     await screen.findByRole("option", { name: "Work" });
 
     expect(
-      screen.getByText("Danh mục không còn khả dụng. Hãy chọn lại."),
+      screen.getByText("Category is no longer available. Choose again."),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Xác nhận/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Confirm/ })).toBeDisabled();
 
     // Fix category to valid Work
     await user.selectOptions(
       screen.getByLabelText("Task 1 category"),
       "507f1f77bcf86cd799439011",
     );
-    expect(screen.getByRole("button", { name: /Xác nhận/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Confirm/ })).toBeEnabled();
 
     // Click confirm twice while pending -> only 1 call
-    const confirmBtn = screen.getByRole("button", { name: /Xác nhận/ });
+    const confirmBtn = screen.getByRole("button", { name: /Confirm/ });
     await user.click(confirmBtn);
     await user.click(confirmBtn);
     expect(onAction).toHaveBeenCalledTimes(1);
@@ -238,11 +238,11 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
 
     expect(await screen.findByLabelText("Task 1 title")).toBeDisabled();
     expect(
-      screen.queryByRole("button", { name: /Xác nhận/ }),
+      screen.queryByRole("button", { name: /Confirm/ }),
     ).not.toBeInTheDocument();
 
     const openBtn = screen.getByRole("button", {
-      name: "Đã tạo: Study Vocabulary",
+      name: "Created: Study Vocabulary",
     });
     await user.click(openBtn);
     expect(onOpenTask).toHaveBeenCalledWith("task-created-123");
@@ -267,9 +267,9 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
     await user.clear(titleInput);
     await user.type(titleInput, "Fallback edited task");
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /Xác nhận/ })).toBeEnabled(),
+      expect(screen.getByRole("button", { name: /Confirm/ })).toBeEnabled(),
     );
-    await user.click(screen.getByRole("button", { name: /Xác nhận/ }));
+    await user.click(screen.getByRole("button", { name: /Confirm/ }));
     expect(onAction).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "confirm",
@@ -375,13 +375,13 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
     await user.clear(titleInput);
     await user.type(titleInput, "Saved then confirmed");
 
-    await user.click(screen.getByRole("button", { name: "Lưu bản nháp" }));
+    await user.click(screen.getByRole("button", { name: "Save draft" }));
     await waitFor(() =>
-      expect(screen.getByText("Đã lưu bản nháp")).toBeInTheDocument(),
+      expect(screen.getByText("Draft saved")).toBeInTheDocument(),
     );
 
     // Immediately confirm without page reload
-    await user.click(screen.getByRole("button", { name: /Xác nhận/ }));
+    await user.click(screen.getByRole("button", { name: /Confirm/ }));
     await waitFor(() => expect(applyAction).toHaveBeenCalledTimes(2));
     expect(applyAction.mock.calls[0][2]).toEqual(
       expect.objectContaining({ action: "save", revision: 1 }),
@@ -487,15 +487,15 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
     await user.type(titleInput, "Stale local edit");
 
     // Attempt confirm -> 409 Conflict
-    await user.click(screen.getByRole("button", { name: /Xác nhận/ }));
+    await user.click(screen.getByRole("button", { name: /Confirm/ }));
     const reloadBtn = await screen.findByRole("button", {
-      name: "Tải lại đề xuất",
+      name: "Reload proposal",
     });
     await user.click(reloadBtn);
 
     // Confirm discarding dirty edits
     const discardAndReloadBtn = await screen.findByRole("button", {
-      name: "Bỏ thay đổi và tải lại",
+      name: "Discard changes and reload",
     });
     await user.click(discardAndReloadBtn);
 
@@ -506,7 +506,7 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
     );
 
     // Confirm now sends revision 2 with the reloaded items
-    await user.click(screen.getByRole("button", { name: /Xác nhận/ }));
+    await user.click(screen.getByRole("button", { name: /Confirm/ }));
     await waitFor(() => expect(applyAction).toHaveBeenCalledTimes(2));
     expect(applyAction.mock.calls[1][2]).toEqual(
       expect.objectContaining({

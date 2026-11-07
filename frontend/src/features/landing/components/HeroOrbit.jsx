@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   CalendarDays,
   Check,
@@ -10,6 +11,7 @@ import OrbitMark from "@/shared/components/OrbitMark";
 import { usePointerTilt } from "../hooks/usePointerTilt";
 
 export default function HeroOrbit({ paused, onToggleMotion }) {
+  const { t } = useTranslation("account");
   const tilt = usePointerTilt({ maxTilt: 5, maxShift: 12 });
   return (
     <div className="hero-visual" data-reveal="right" {...(paused ? {} : tilt)}>
@@ -29,15 +31,15 @@ export default function HeroOrbit({ paused, onToggleMotion }) {
         <div className="orbit-core">
           <div className="core-halo" />
           <OrbitMark />
-          <span>YOUR CENTER OF FOCUS</span>
+          <span>{t("yourCenterOfFocus")}</span>
         </div>
         <div className="satellite-card satellite-task">
           <span className="satellite-icon">
             <ListTodo size={18} />
           </span>
           <div>
-            <small>A CLEARER PLAN</small>
-            <strong>One thing at a time.</strong>
+            <small>{t("aClearerPlan")}</small>
+            <strong>{t("oneThingAtATime")}</strong>
             <span className="satellite-line">
               <i />
             </span>
@@ -49,14 +51,16 @@ export default function HeroOrbit({ paused, onToggleMotion }) {
             <CalendarDays size={17} />
           </span>
           <div>
-            <small>SPACE FOR WHAT MATTERS</small>
-            <strong>Your day, in balance.</strong>
+            <small>{t("spaceForWhatMatters")}</small>
+            <strong>{t("yourDayInBalance")}</strong>
             <div className="satellite-week">
-              {["M", "T", "W", "T", "F"].map((day, index) => (
-                <span key={index} className={index === 2 ? "today" : ""}>
-                  {day}
-                </span>
-              ))}
+              {[t("mon"), t("tue"), t("wed"), t("thu"), t("fri")].map(
+                (day, index) => (
+                  <span key={index} className={index === 2 ? "today" : ""}>
+                    {day}
+                  </span>
+                ),
+              )}
             </div>
           </div>
         </div>
@@ -65,21 +69,21 @@ export default function HeroOrbit({ paused, onToggleMotion }) {
             <Check size={17} />
           </span>
           <div>
-            <strong>A little progress.</strong>
-            <small>A little more possibility.</small>
+            <strong>{t("aLittleProgress")}</strong>
+            <small>{t("aLittleMorePossibility")}</small>
           </div>
           <Sparkles size={16} />
         </div>
-        <div className="orbit-coordinate">TASKS · PROJECTS · CALENDAR</div>
+        <div className="orbit-coordinate">{t("tasksProjectsCalendar")}</div>
       </div>
       <button
         className="motion-toggle"
         onClick={onToggleMotion}
-        aria-label={paused ? "Play animations" : "Pause animations"}
+        aria-label={paused ? t("playAnimations") : t("pauseAnimations")}
         aria-pressed={paused}
       >
         {paused ? <Play size={12} /> : <Pause size={12} />}
-        <span>{paused ? "Motion paused" : "A little momentum"}</span>
+        <span>{paused ? t("motionPaused") : t("aLittleMomentum")}</span>
       </button>
     </div>
   );

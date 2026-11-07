@@ -1,3 +1,5 @@
+import { enUS, vi } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
 import {
   CalendarDays,
@@ -29,6 +31,8 @@ const TodoTaskCard = ({
   onReject,
   showDueTime = false,
 }) => {
+  const { t, i18n } = useTranslation("workspace");
+
   const statusEffectRef = useTaskStatusEffect(task);
   const [busy, setBusy] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -44,20 +48,22 @@ const TodoTaskCard = ({
     date && isValid(date) ? differenceInCalendarDays(date, new Date()) : null;
   const dateLabel =
     days === null
-      ? "No due date"
+      ? t("noDueDate")
       : days < 0
-        ? `${Math.abs(days)}d overdue`
+        ? t("messages.v0DOverdue", { v0: Math.abs(days) })
         : days === 0
-          ? "Today"
+          ? t("today")
           : days === 1
-            ? "Tomorrow"
-            : format(date, "MMM d");
+            ? t("tomorrow")
+            : format(date, "MMM d", {
+                locale: i18n.language === "vi" ? vi : enUS,
+              });
   const action = closed ? onRestore : pending ? onAccept : onComplete;
   const actionLabel = closed
-    ? `Restore ${task.title} to in-progress`
+    ? t("messages.restoreV0ToInProgress", { v0: task.title })
     : pending
-      ? `Accept ${task.title}`
-      : `Mark ${task.title} as completed`;
+      ? t("messages.acceptV0", { v0: task.title })
+      : t("messages.markV0AsCompleted", { v0: task.title });
   const ActionIcon = busy
     ? Loader2
     : givenUp
@@ -92,7 +98,11 @@ const TodoTaskCard = ({
       ref={statusEffectRef}
       className="todo-task cursor-pointer"
       onClick={(event) => {
-        if (!event.target.closest("button, a, input, select, textarea, [role='menu']")) {
+        if (
+          !event.target.closest(
+            "button, a, input, select, textarea, [role='menu']",
+          )
+        ) {
           onEdit?.(task);
         }
       }}
@@ -108,7 +118,11 @@ const TodoTaskCard = ({
           disabled={busy}
           aria-label={actionLabel}
           title={
-            pending ? "Start task" : closed ? "Restore task" : "Complete task"
+            pending
+              ? t("startTask")
+              : closed
+                ? t("restoreTask")
+                : t("completeTask")
           }
           onClick={async () => {
             if (busy || !action) return;
@@ -127,8 +141,8 @@ const TodoTaskCard = ({
             type="button"
             className="todo-reject"
             disabled={busy}
-            aria-label={`Reject ${task.title}`}
-            title="Reject task"
+            aria-label={t("messages.rejectV0", { v0: task.title })}
+            title={t("rejectTask")}
             onClick={async (event) => {
               event.stopPropagation();
               if (busy) return;
@@ -139,7 +153,7 @@ const TodoTaskCard = ({
                 alert(
                   getApiErrorMessage(
                     error,
-                    "Unable to reject task. Please try again.",
+                    t("unableToRejectTaskPleaseTryAgain"),
                   ),
                 );
               } finally {
@@ -186,23 +200,35 @@ const TodoTaskCard = ({
             <Flag size={11} />
             {task.priority || "Medium"}
           </span>
-          {pending && <span className="todo-pending-label">Pending</span>}
-          {givenUp && <span>Given up</span>}
-          {completed && <span className="todo-completed-label">Completed</span>}
+          {pending && (
+            <span className="todo-pending-label">{t("pending")}</span>
+          )}
+          {givenUp && <span>{t("givenUp")}</span>}
+          {completed && (
+            <span className="todo-completed-label"> {t("completed")} </span>
+          )}
         </div>
       </div>
       <span
         className="todo-task-date"
         data-urgent={!closed && days !== null && days <= 0}
-        title={date && isValid(date) ? format(date, "PPP") : undefined}
+        title={
+          date && isValid(date)
+            ? format(date, "PPP", {
+                locale: i18n.language === "vi" ? vi : enUS,
+              })
+            : undefined
+        }
       >
         <CalendarDays size={13} />
         {showDueTime && date && isValid(date)
-          ? format(date, "HH:mm")
+          ? format(date, "HH:mm", {
+              locale: i18n.language === "vi" ? vi : enUS,
+            })
           : closed
             ? completed
-              ? "Done"
-              : "Paused"
+              ? t("done")
+              : t("paused")
             : dateLabel}
       </span>
       <div className="todo-task-menu" ref={menuRef}>
@@ -210,7 +236,7 @@ const TodoTaskCard = ({
           ref={triggerRef}
           type="button"
           className="todo-icon-button"
-          aria-label={`Actions for ${task.title}`}
+          aria-label={t("messages.actionsForV0", { v0: task.title })}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((v) => !v)}
         >
@@ -220,7 +246,7 @@ const TodoTaskCard = ({
           <div
             className="todo-action-popover"
             data-escape-boundary
-            aria-label={`Task actions for ${task.title}`}
+            aria-label={t("messages.taskActionsForV0", { v0: task.title })}
           >
             <button
               type="button"
@@ -230,7 +256,7 @@ const TodoTaskCard = ({
               }}
             >
               <Pencil size={14} />
-              Edit task
+              {t("editTask")}
             </button>
             {task.status === "in-progress" && (
               <button
@@ -241,7 +267,7 @@ const TodoTaskCard = ({
                 }}
               >
                 <Flag size={14} />
-                Give up task
+                {t("giveUpTaskCasedGiveuptask")}
               </button>
             )}
             <button
@@ -253,7 +279,7 @@ const TodoTaskCard = ({
               }}
             >
               <Trash2 size={14} />
-              Delete task
+              {t("deleteTaskCasedDeletetask")}
             </button>
           </div>
         )}

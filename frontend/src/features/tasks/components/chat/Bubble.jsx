@@ -1,7 +1,10 @@
+import { useTranslation } from "react-i18next";
 import { useRef } from "react";
 import { BotMessageSquare } from "lucide-react";
 
 const Bubble = ({ onClick, hasUnread = false }) => {
+  const { t } = useTranslation("agent");
+
   const hoverVideoRef = useRef(null);
 
   const handlePointerEnter = () => {
@@ -27,7 +30,8 @@ const Bubble = ({ onClick, hasUnread = false }) => {
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
       className="ui-assistant-bubble ui-focus-ring"
-      aria-label="Open assistant"
+      aria-label={t("openAssistant")}
+      data-assistant-trigger
     >
       <span className="ui-assistant-bubble__icon" aria-hidden="true">
         <video

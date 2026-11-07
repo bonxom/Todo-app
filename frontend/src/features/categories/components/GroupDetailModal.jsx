@@ -1,3 +1,5 @@
+import { workspaceKey } from "@/features/tasks/utils/workspaceTranslation";
+import { useTranslation } from "react-i18next";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -29,6 +31,8 @@ const rank = { "in-progress": 0, pending: 1, completed: 2, "given-up": 3 };
 const PAGE_SIZE = 8;
 
 function TaskConfirmation({ kind, busy, onClose, onConfirm }) {
+  const { t } = useTranslation("workspace");
+
   const ref = useRef(null);
   const id = useId();
   useModalKeyboard(true, ref, () => {
@@ -51,14 +55,14 @@ function TaskConfirmation({ kind, busy, onClose, onConfirm }) {
       >
         <div className="ui-modal-header">
           <h2 id={id} className="text-xl font-semibold">
-            {deleting ? "Delete Task" : "Give Up Task"}
+            {deleting ? t("deleteTask") : t("giveUpTask")}
           </h2>
         </div>
         <div className="ui-modal-body">
           <p className="mb-6 text-sm text-[color:var(--color-text-muted)]">
             {deleting
-              ? "This task will be permanently deleted. This action cannot be undone."
-              : "Mark this task as given up? It will remain in your task history."}
+              ? t("thisTaskWillBePermanentlyDeletedThisActionCannotBeUndone")
+              : t("markThisTaskAsGivenUpItWillRemainInYourTaskHistory")}
           </p>
           <div className="flex gap-3">
             <button
@@ -67,7 +71,7 @@ function TaskConfirmation({ kind, busy, onClose, onConfirm }) {
               disabled={busy}
               onClick={onClose}
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="button"
@@ -75,7 +79,7 @@ function TaskConfirmation({ kind, busy, onClose, onConfirm }) {
               disabled={busy}
               onClick={onConfirm}
             >
-              {busy ? "Saving…" : deleting ? "Delete" : "Give Up"}
+              {busy ? t("saving") : deleting ? t("delete") : t("giveUp")}
             </button>
           </div>
         </div>
@@ -94,6 +98,8 @@ export default function GroupDetailModal({
   onDelete,
   projectCompleted = false,
 }) {
+  const { t } = useTranslation("workspace");
+
   const titleId = useId();
   const ref = useRef(null);
   const listRef = useRef(null);
@@ -159,9 +165,7 @@ export default function GroupDetailModal({
       onTaskUpdated?.();
     } catch (err) {
       close(null);
-      setError(
-        getApiErrorMessage(err, "Unable to update task. Please try again."),
-      );
+      setError(getApiErrorMessage(err, t("unableToUpdateTaskPleaseTryAgain")));
     }
   };
   return createPortal(
@@ -195,7 +199,7 @@ export default function GroupDetailModal({
                 type="button"
                 className="group-icon-button"
                 onClick={onClose}
-                aria-label={`Close ${kind} details`}
+                aria-label={t("messages.closeV0Details", { v0: kind })}
               >
                 <X size={20} />
               </button>
@@ -203,24 +207,24 @@ export default function GroupDetailModal({
             <div className="group-detail-summary">
               <div>
                 <strong>{tasks.length}</strong>
-                <span>Tasks</span>
+                <span> {t("tasks")} </span>
               </div>
               <div>
                 <strong>{active}</strong>
-                <span>Active</span>
+                <span>{t("active")}</span>
               </div>
               <div>
                 <strong>{completed}</strong>
-                <span>Completed</span>
+                <span> {t("completed")} </span>
               </div>
               <div className="group-detail-progress">
                 <span>
-                  <b>{progress}%</b> complete
+                  <b>{progress}%</b> {t("complete")}{" "}
                 </span>
                 <div
                   className="category-progress"
                   role="progressbar"
-                  aria-label={`${name} progress`}
+                  aria-label={t("messages.v0Progress", { v0: name })}
                   aria-valuenow={progress}
                   aria-valuemin={0}
                   aria-valuemax={100}
@@ -234,8 +238,8 @@ export default function GroupDetailModal({
             <div className="category-search">
               <Search size={16} />
               <input
-                aria-label={`Search tasks in ${name}`}
-                placeholder="Find a task…"
+                aria-label={t("messages.searchTasksInV0", { v0: name })}
+                placeholder={t("findATask")}
                 value={search}
                 onChange={(event) => {
                   setSearch(event.target.value);
@@ -245,7 +249,7 @@ export default function GroupDetailModal({
               {search && (
                 <button
                   type="button"
-                  aria-label="Clear task search"
+                  aria-label={t("clearTaskSearch")}
                   onClick={() => {
                     setSearch("");
                     updatePage(1);
@@ -255,7 +259,7 @@ export default function GroupDetailModal({
                 </button>
               )}
             </div>
-            <div className="group-detail-filters" aria-label="Task status">
+            <div className="group-detail-filters" aria-label={t("taskStatus")}>
               {STATUS_FILTERS.map(([id, label]) => (
                 <button
                   key={id}
@@ -266,7 +270,7 @@ export default function GroupDetailModal({
                     updatePage(1);
                   }}
                 >
-                  {label}
+                  {t(workspaceKey(label), { defaultValue: label })}
                   <span>
                     {
                       tasks.filter(
@@ -306,13 +310,16 @@ export default function GroupDetailModal({
                 <FolderOpen size={32} />
                 <h3>
                   {tasks.length
-                    ? "No matching tasks"
-                    : `A fresh start for ${name}`}
+                    ? t("noMatchingTasks")
+                    : t("messages.aFreshStartForV0", { v0: name })}
                 </h3>
                 <p>
                   {tasks.length
-                    ? "Try another search or status filter."
-                    : `Assign a task to this ${kind} from your task list to get started.`}
+                    ? t("tryAnotherSearchOrStatusFilter")
+                    : t(
+                        "messages.assignATaskToThisV0FromYourTaskListToGetStarted",
+                        { v0: kind },
+                      )}
                 </p>
                 {tasks.length > 0 && (
                   <button
@@ -324,7 +331,7 @@ export default function GroupDetailModal({
                       updatePage(1);
                     }}
                   >
-                    Clear task filters
+                    {t("clearTaskFilters")}
                   </button>
                 )}
               </div>
@@ -333,7 +340,11 @@ export default function GroupDetailModal({
           <footer className="group-detail-footer">
             <p role="status">
               {filtered.length
-                ? `${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, filtered.length)} of ${filtered.length} tasks`
+                ? t("messages.v0V1OfV2Tasks", {
+                    v0: (currentPage - 1) * PAGE_SIZE + 1,
+                    v1: Math.min(currentPage * PAGE_SIZE, filtered.length),
+                    v2: filtered.length,
+                  })
                 : "0 tasks"}
             </p>
             <div className="group-detail-pagination">
@@ -342,7 +353,7 @@ export default function GroupDetailModal({
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => updatePage(currentPage - 1)}
-                aria-label="Previous task page"
+                aria-label={t("previousTaskPage")}
               >
                 <ArrowLeft size={16} />
               </button>
@@ -354,7 +365,7 @@ export default function GroupDetailModal({
                 type="button"
                 disabled={currentPage === pages}
                 onClick={() => updatePage(currentPage + 1)}
-                aria-label="Next task page"
+                aria-label={t("nextTaskPage")}
               >
                 <ArrowRight size={16} />
               </button>
@@ -365,8 +376,8 @@ export default function GroupDetailModal({
                   type="button"
                   className="group-icon-button"
                   onClick={onEdit}
-                  aria-label="Edit project"
-                  title="Edit project"
+                  aria-label={t("editProject")}
+                  title={t("editProject")}
                 >
                   <Pencil size={16} />
                 </button>
@@ -374,8 +385,8 @@ export default function GroupDetailModal({
                   type="button"
                   className="group-icon-button"
                   onClick={onDelete}
-                  aria-label="Delete project"
-                  title="Delete project"
+                  aria-label={t("deleteProject")}
+                  title={t("deleteProject")}
                 >
                   <Trash2 size={16} />
                 </button>

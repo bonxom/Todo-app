@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -16,28 +17,28 @@ import Brand from "./Brand";
 const initialTasks = [
   {
     id: 1,
-    title: "Make something worth sharing",
+    titleKey: "makeSomethingWorthSharing",
     category: "Website launch",
     time: "09:00",
     done: true,
   },
   {
     id: 2,
-    title: "Give the homepage a little love",
+    titleKey: "giveTheHomepageALittleLove",
     category: "Website launch",
     time: "10:30",
     done: false,
   },
   {
     id: 3,
-    title: "Take a walk. Find a new idea.",
+    titleKey: "takeAWalkFindANewIdea",
     category: "Personal",
     time: "12:00",
     done: false,
   },
   {
     id: 4,
-    title: "Put the finishing touches on the pitch",
+    titleKey: "putTheFinishingTouchesOnThePitch",
     category: "Brand refresh",
     time: "14:00",
     done: false,
@@ -45,6 +46,15 @@ const initialTasks = [
 ];
 
 export default function WorkspacePreview() {
+  const { t } = useTranslation("account");
+  const viewKeys = {
+    Today: "today",
+    Projects: "projects",
+    Calendar: "calendar",
+    "All tasks": "allTasks",
+    "To do": "toDo",
+  };
+  const taskTitle = (task) => (task.titleKey ? t(task.titleKey) : task.title);
   const [view, setView] = useState("Today");
   const [tasks, setTasks] = useState(initialTasks);
   const [adding, setAdding] = useState(false);
@@ -74,10 +84,11 @@ export default function WorkspacePreview() {
     <div className="workspace-stage" id="preview">
       <div className="preview-caption" data-reveal="left">
         <span>
-          <span className="live-dot" /> A LITTLE LESS CHAOS. A LOT MORE CLARITY.
+          <span className="live-dot" /> {t("aLittleLessChaosALotMoreClarity")}
         </span>
         <span>
-          YOUR WORKSPACE, IN ORBIT <ArrowDown />
+          {t("yourWorkspaceInOrbit")}
+          <ArrowDown />
         </span>
       </div>
       <div className="workspace-window">
@@ -87,18 +98,18 @@ export default function WorkspacePreview() {
             <i />
             <i />
           </div>
-          <span>One space for everything on your mind</span>
-          <span className="demo-pill">Interactive demo</span>
+          <span>{t("oneSpaceForEverythingOnYourMind")}</span>
+          <span className="demo-pill">{t("interactiveDemo")}</span>
         </div>
         <div className="workspace-layout">
           <aside className="demo-sidebar" data-reveal="left">
             <Brand />
             <div className="workspace-name">
-              <span className="workspace-avatar">S</span> My workspace{" "}
+              <span className="workspace-avatar">S</span> {t("myWorkspace")}{" "}
               <ChevronDown size={13} />
             </div>
-            <span className="sidebar-label">WORKSPACE</span>
-            <nav aria-label="Demo workspace views">
+            <span className="sidebar-label">{t("workspace")}</span>
+            <nav aria-label={t("demoWorkspaceViews")}>
               {[
                 ["Today", Sun],
                 ["Projects", Folder],
@@ -111,30 +122,33 @@ export default function WorkspacePreview() {
                   aria-pressed={view === name}
                 >
                   <_Icon size={16} />
-                  {name}
+                  {t(viewKeys[name])}
                   {name === "Today" && (
                     <small>{tasks.length - completed}</small>
                   )}
                 </button>
               ))}
             </nav>
-            <span className="sidebar-label project-label">MY PROJECTS</span>
+            <span className="sidebar-label project-label">
+              {t("myProjects")}
+            </span>
             <div className="sidebar-project">
               <i />
-              Website launch
+              {t("websiteLaunch")}
             </div>
             <div className="sidebar-project">
               <i />
-              Brand refresh
+              {t("brandRefresh")}
             </div>
             <div className="sidebar-project">
               <i />
-              Personal
+              {t("personal")}
             </div>
             <div className="sidebar-bottom">
               <span className="user-avatar">S</span>
               <div>
-                Sam’s space<small>A little more focused.</small>
+                {t("samsSpace")}
+                <small>{t("aLittleMoreFocused")}</small>
               </div>
               <span className="online-dot" />
             </div>
@@ -145,26 +159,27 @@ export default function WorkspacePreview() {
             style={{ "--reveal-delay": "120ms" }}
           >
             <div className="demo-breadcrumb">
-              My workspace <span>/</span> <strong>{view}</strong>
-              <span className="sample-date">Wednesday, October 7</span>
+              {t("myWorkspace")}
+              <span>/</span> <strong>{t(viewKeys[view])}</strong>
+              <span className="sample-date">{t("wednesdayOctober7")}</span>
             </div>
             <div className="demo-heading">
               <div>
-                <p>A FRESH START, EVERY DAY</p>
+                <p>{t("aFreshStartEveryDay")}</p>
                 <h2>
                   {view === "Today"
-                    ? "Make room for good work."
+                    ? t("makeRoomForGoodWork")
                     : view === "Projects"
-                      ? "The bigger picture."
-                      : "A little space to plan."}
+                      ? t("theBiggerPicture")
+                      : t("aLittleSpaceToPlan")}
                   <span className="heading-sun">✳</span>
                 </h2>
                 <span>
                   {view === "Today"
-                    ? "A clear head starts with a clear plan. You’ve got this."
+                    ? t("aClearHeadStartsWithAClearPlanYouveGotThis")
                     : view === "Projects"
-                      ? "A home for every idea, from first step to finish line."
-                      : "Your week, with room for work and everything else."}
+                      ? t("aHomeForEveryIdeaFromFirstStepToFinishLine")
+                      : t("yourWeekWithRoomForWorkAndEverythingElse")}
                 </span>
               </div>
               <button
@@ -174,7 +189,7 @@ export default function WorkspacePreview() {
                   setAdding(true);
                 }}
               >
-                <Plus size={15} /> Add task
+                <Plus size={15} /> {t("addTask")}
               </button>
             </div>
             {view === "Today" && (
@@ -182,25 +197,25 @@ export default function WorkspacePreview() {
                 <div className="demo-stats">
                   <div>
                     <span>
-                      <Sun size={15} /> On your list
+                      <Sun size={15} /> {t("onYourList")}
                     </span>
                     <strong>
                       {String(tasks.length).padStart(2, "0")}
-                      <small>things worth doing</small>
+                      <small>{t("thingsWorthDoing")}</small>
                     </strong>
                   </div>
                   <div>
                     <span>
-                      <CircleCheck size={15} /> Done & dusted
+                      <CircleCheck size={15} /> {t("doneDusted")}
                     </span>
                     <strong>
                       {String(completed).padStart(2, "0")}
-                      <small>small wins count</small>
+                      <small>{t("smallWinsCount")}</small>
                     </strong>
                   </div>
                   <div className="progress-stat">
                     <span>
-                      Your daily momentum{" "}
+                      {t("yourDailyMomentum")}{" "}
                       <span>
                         {Math.round((completed / tasks.length) * 100)}%
                       </span>
@@ -214,16 +229,20 @@ export default function WorkspacePreview() {
                     </div>
                     <small>
                       {completed === tasks.length
-                        ? "Everything done. Enjoy a little breathing room."
-                        : "One thing at a time. You’re moving forward."}
+                        ? t("everythingDoneEnjoyALittleBreathingRoom")
+                        : t("oneThingAtATimeYoureMovingForward")}
                     </small>
                   </div>
                 </div>
                 <div className="task-list-header">
                   <h3>
-                    Your focus today <span>{tasks.length - completed}</span>
+                    {t("yourFocusToday")}
+                    <span>{tasks.length - completed}</span>
                   </h3>
-                  <div className="task-filters" aria-label="Filter demo tasks">
+                  <div
+                    className="task-filters"
+                    aria-label={t("filterDemoTasks")}
+                  >
                     {["All tasks", "To do"].map((name) => (
                       <button
                         key={name}
@@ -231,7 +250,7 @@ export default function WorkspacePreview() {
                         className={filter === name ? "selected" : ""}
                         onClick={() => setFilter(name)}
                       >
-                        {name}
+                        {t(viewKeys[name])}
                       </button>
                     ))}
                   </div>
@@ -244,7 +263,10 @@ export default function WorkspacePreview() {
                     >
                       <button
                         className="task-checkbox"
-                        aria-label={`${task.done ? "Mark incomplete" : "Complete"}: ${task.title}`}
+                        aria-label={t(
+                          task.done ? "markTaskIncomplete" : "completeTask",
+                          { title: taskTitle(task) },
+                        )}
                         aria-pressed={task.done}
                         onClick={() =>
                           setTasks(
@@ -258,13 +280,21 @@ export default function WorkspacePreview() {
                       >
                         {task.done && <Check size={12} />}
                       </button>
-                      <span className="task-title">{task.title}</span>
+                      <span className="task-title">{taskTitle(task)}</span>
                       <span
                         className={`task-category ${task.category === "Personal" ? "personal" : task.category === "Brand refresh" ? "brand" : ""}`}
                       >
-                        {task.category}
+                        {t(
+                          {
+                            Personal: "personal",
+                            "Website launch": "websiteLaunch",
+                            "Brand refresh": "brandRefresh",
+                          }[task.category],
+                        )}
                       </span>
-                      <span className="task-time">{task.time}</span>
+                      <span className="task-time">
+                        {task.time === "Anytime" ? t("anytime") : task.time}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -272,18 +302,19 @@ export default function WorkspacePreview() {
                   <form className="demo-task-form" onSubmit={addTask}>
                     <input
                       autoFocus
-                      aria-label="New demo task"
-                      placeholder="What’s on your mind?"
+                      aria-label={t("newDemoTask")}
+                      placeholder={t("whatsOnYourMind")}
                       value={draft}
                       maxLength={100}
                       onChange={(event) => setDraft(event.target.value)}
                     />
                     <button type="submit" disabled={!draft.trim()}>
-                      Add task <ArrowRight size={14} />
+                      {t("addTask")}
+                      <ArrowRight size={14} />
                     </button>
                     <button
                       type="button"
-                      aria-label="Cancel new task"
+                      aria-label={t("cancelNewTask")}
                       onClick={() => setAdding(false)}
                     >
                       <X size={16} />
@@ -294,7 +325,7 @@ export default function WorkspacePreview() {
                     className="add-another"
                     onClick={() => setAdding(true)}
                   >
-                    <Plus size={15} /> A new idea? Give it a place.
+                    <Plus size={15} /> {t("aNewIdeaGiveItAPlace")}
                   </button>
                 )}
               </>
@@ -303,20 +334,20 @@ export default function WorkspacePreview() {
               <div className="demo-projects">
                 {[
                   [
-                    "Website launch",
-                    "A thoughtful home for our next big thing.",
+                    t("websiteLaunch"),
+                    t("aThoughtfulHomeForOurNextBigThing"),
                     "blue",
                     65,
                   ],
                   [
-                    "Brand refresh",
-                    "Same big idea. A fresh perspective.",
+                    t("brandRefresh"),
+                    t("sameBigIdeaAFreshPerspective"),
                     "purple",
                     40,
                   ],
                   [
-                    "Personal",
-                    "Make time for life outside the list.",
+                    t("personal"),
+                    t("makeTimeForLifeOutsideTheList"),
                     "green",
                     25,
                   ],
@@ -329,7 +360,8 @@ export default function WorkspacePreview() {
                       <i style={{ width: `${progress}%` }} />
                     </div>
                     <span>
-                      {progress}% complete <ArrowUpRight size={15} />
+                      {t("percentComplete", { percent: progress })}
+                      <ArrowUpRight size={15} />
                     </span>
                   </article>
                 ))}
@@ -338,36 +370,45 @@ export default function WorkspacePreview() {
             {view === "Calendar" && (
               <div className="demo-calendar">
                 <div className="calendar-title">
-                  <strong>October 2026</strong>
-                  <span>YOUR SAMPLE WEEK</span>
+                  <strong>{t("october2026")}</strong>
+                  <span>{t("yourSampleWeek")}</span>
                 </div>
                 <div className="calendar-week">
-                  {["MON", "TUE", "WED", "THU", "FRI"].map((day, index) => (
-                    <div key={day} className={index === 2 ? "current-day" : ""}>
-                      <span>{day}</span>
-                      <strong>{index + 5}</strong>
-                      {index === 2 && (
-                        <>
+                  {[t("mon"), t("tue"), t("wed"), t("thu"), t("fri")].map(
+                    (day, index) => (
+                      <div
+                        key={day}
+                        className={index === 2 ? "current-day" : ""}
+                      >
+                        <span>{day}</span>
+                        <strong>{index + 5}</strong>
+                        {index === 2 && (
+                          <>
+                            <p>
+                              {t("homepagePolish")}
+                              <small>10:30 – 11:30</small>
+                            </p>
+                            <p className="green-event">
+                              {t("aLittleFreshAir")}
+                              <small>12:00 – 12:30</small>
+                            </p>
+                          </>
+                        )}
+                        {index === 3 && (
+                          <p className="purple-event">
+                            {t("brandExploration")}
+                            <small>09:00 – 10:00</small>
+                          </p>
+                        )}
+                        {index === 4 && (
                           <p>
-                            Homepage polish<small>10:30 – 11:30</small>
+                            {t("weeklyWrapup")}
+                            <small>15:00 – 15:30</small>
                           </p>
-                          <p className="green-event">
-                            A little fresh air<small>12:00 – 12:30</small>
-                          </p>
-                        </>
-                      )}
-                      {index === 3 && (
-                        <p className="purple-event">
-                          Brand exploration<small>09:00 – 10:00</small>
-                        </p>
-                      )}
-                      {index === 4 && (
-                        <p>
-                          Weekly wrap-up<small>15:00 – 15:30</small>
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                        )}
+                      </div>
+                    ),
+                  )}
                 </div>
               </div>
             )}
@@ -375,10 +416,10 @@ export default function WorkspacePreview() {
               <span>
                 <span className="live-dot" />{" "}
                 {view === "Today"
-                  ? ` ${completed} of ${tasks.length} done. Try checking off your next task.`
-                  : "Explore the demo. Your real workspace starts with you."}
+                  ? t("demoProgress", { completed, total: tasks.length })
+                  : t("exploreTheDemoYourRealWorkspaceStartsWithYou")}
               </span>
-              <span>Demo only · nothing is saved</span>
+              <span>{t("demoOnlyNothingIsSaved")}</span>
             </div>
           </div>
         </div>
@@ -392,7 +433,8 @@ export default function WorkspacePreview() {
           <Check size={17} />
         </span>
         <div>
-          Less mental tabs.<strong>More headspace.</strong>
+          {t("lessMentalTabs")}
+          <strong>{t("moreHeadspace")}</strong>
         </div>
         <span className="note-sparkle">✧</span>
       </div>

@@ -1,3 +1,5 @@
+import { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -29,6 +31,8 @@ export function SkillsPage() {
 }
 
 function SkillsList() {
+  const { t } = useTranslation("agent");
+
   const sessionKey = useSessionKey();
   const { data: skills, isLoading, error, refetch } = useSkills();
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,13 +54,13 @@ function SkillsList() {
     try {
       await toggleMutation.mutateAsync({ skill, enabled: !skill.enabled });
       if (currentSessionKey() === sessionKey)
-        setNotice("Changes apply from the next chat turn");
+        setNotice(t("changesApplyFromTheNextChatTurnLabel"));
     } catch (err) {
       if (currentSessionKey() === sessionKey)
         setToggleError(
           err instanceof Error
             ? err.message
-            : "Unable to update skill. Please try again.",
+            : t("unableToUpdateSkillPleaseTryAgain"),
         );
     }
   };
@@ -69,15 +73,15 @@ function SkillsList() {
       <div className="skills-section-bar">
         <span className="skills-section-name">
           <span className="skills-orbit-dot" />
-          Orbit Agent
+          {t("orbitAgent")}
         </span>
         <AgentNavigation active="skills" />
       </div>
       <header className="skills-heading">
         <div>
-          <h1 className="ui-page-title">Personal Skills</h1>
+          <h1 className="ui-page-title">{t("personalSkills")}</h1>
           <p className="ui-page-description">
-            Customize how Agent works with you.
+            {t("customizeHowAgentWorksWithYou")}
           </p>
         </div>
         <div className="skills-actions">
@@ -86,11 +90,11 @@ function SkillsList() {
             onClick={() => setGalleryOpen(true)}
           >
             <BookOpen size={16} />
-            Add from template
+            {t("addFromTemplate")}
           </button>
           <Link className="ui-btn-primary" to="/agent/skills/new">
             <Plus size={17} />
-            Create skill
+            {t("createSkill")}
           </Link>
         </div>
       </header>
@@ -103,7 +107,7 @@ function SkillsList() {
           <span>{toggleError || notice}</span>
           <button
             className="skills-icon-button"
-            aria-label="Close notice"
+            aria-label={t("closeNotice")}
             onClick={() => {
               setToggleError(null);
               setNotice(null);
@@ -113,24 +117,27 @@ function SkillsList() {
           </button>
         </div>
       )}
-      <section className="skill-library" aria-label="Personal skills library">
+      <section
+        className="skill-library"
+        aria-label={t("personalSkillsLibrary")}
+      >
         <div className="skill-library-toolbar">
           <div>
             <h2>
-              Your skills{" "}
+              {t("yourSkills")}{" "}
               <span className="skill-count">{skills?.length ?? 0}</span>
             </h2>
             <p>
-              {skills?.filter((s) => s.enabled).length ?? 0} active{" "}
-              <span aria-hidden="true">·</span> Max 50 skills
+              {skills?.filter((s) => s.enabled).length ?? 0} {t("active")}{" "}
+              <span aria-hidden="true">·</span> {t("max50Skills")}
             </p>
           </div>
           <label className="skill-search">
             <Search size={17} />
-            <span className="sr-only">Search skills</span>
+            <span className="sr-only">{t("searchSkills")}</span>
             <input
               type="search"
-              placeholder="Search skills…"
+              placeholder={t("searchSkillsLabel")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -139,15 +146,15 @@ function SkillsList() {
         {isLoading ? (
           <div className="skills-empty" role="status">
             <Loader2 className="animate-spin" />
-            Loading skills…
+            {t("loadingSkills")}
           </div>
         ) : error ? (
           <div className="skills-empty" role="alert">
             <AlertCircle />
-            <h3>Unable to load skills</h3>
-            <p>Check your connection and try again.</p>
+            <h3>{t("unableToLoadSkills")}</h3>
+            <p>{t("checkYourConnectionAndTryAgain")}</p>
             <button className="ui-btn-secondary" onClick={() => void refetch()}>
-              Try again
+              {t("tryAgain")}
             </button>
           </div>
         ) : filtered.length === 0 ? (
@@ -157,27 +164,30 @@ function SkillsList() {
             </div>
             <h3>
               {searchQuery
-                ? "No matching skills found"
-                : "No personal skills yet"}
+                ? t("noMatchingSkillsFound")
+                : t("noPersonalSkillsYet")}
             </h3>
             <p>
               {searchQuery
-                ? "Try a different keyword or clear your search to see all skills."
-                : "Save guidelines you frequently repeat. Agent will read and apply them when relevant to your conversation."}
+                ? t("tryADifferentKeywordOrClearYourSearchToSeeAllSkills")
+                : t(
+                    "saveGuidelinesYouFrequentlyRepeatAgentWillReadAndApplyThemWhenRelevantToYourConversation",
+                  )}
             </p>
             {searchQuery ? (
               <button
                 className="ui-btn-secondary"
                 onClick={() => setSearchQuery("")}
               >
-                Clear search
+                {t("clearSearch")}
               </button>
             ) : (
               <button
                 className="skill-text-action"
                 onClick={() => setGalleryOpen(true)}
               >
-                Explore IELTS and Gym templates <ArrowUpRight size={16} />
+                {t("exploreIeltsAndGymTemplates")}
+                <ArrowUpRight size={16} />
               </button>
             )}
           </div>
@@ -205,13 +215,20 @@ function SkillsList() {
                     <div className="skill-row-meta">
                       <span>
                         {skill.sourceTemplateId
-                          ? `From ${skill.sourceTemplateId === "ielts" ? "IELTS" : skill.sourceTemplateId === "gym" ? "Gym" : skill.sourceTemplateId} template`
-                          : "Custom"}
+                          ? t("templateSource", {
+                              name:
+                                skill.sourceTemplateId === "ielts"
+                                  ? "IELTS"
+                                  : skill.sourceTemplateId === "gym"
+                                    ? t("gym")
+                                    : skill.sourceTemplateId,
+                            })
+                          : t("custom")}
                       </span>
                       <span>v{skill.version}</span>
                       <span>
-                        Updated{" "}
-                        {new Intl.DateTimeFormat("en-US", {
+                        {t("updated")}{" "}
+                        {new Intl.DateTimeFormat(getLocale(), {
                           month: "short",
                           day: "numeric",
                         }).format(new Date(skill.updatedAt))}
@@ -220,12 +237,12 @@ function SkillsList() {
                   </div>
                 </Link>
                 <div className="skill-row-state">
-                  <span>{skill.enabled ? "Enabled" : "Disabled"}</span>
+                  <span>{skill.enabled ? t("enabled") : t("disabled")}</span>
                   <button
                     className="skill-switch"
                     role="switch"
                     aria-checked={skill.enabled}
-                    aria-label={`Toggle ${skill.name}`}
+                    aria-label={t("toggleSkill", { name: skill.name })}
                     disabled={toggleMutation.isPending}
                     onClick={() => void handleToggle(skill)}
                   >
@@ -244,7 +261,7 @@ function SkillsList() {
         <div className="skill-library-footer">
           <BookOpen size={15} />
           <span>
-            Agent only reads relevant skills. You can edit or disable them anytime.
+            {t("agentOnlyReadsRelevantSkillsYouCanEditOrDisableThemAnytime")}
           </span>
         </div>
       </section>

@@ -1,14 +1,17 @@
+import LanguageSelect from "@/shared/components/LanguageSelect";
+import { useTranslation } from "react-i18next";
 import ThemeToggle from "@/shared/components/ThemeToggle";
 import { Link } from "react-router-dom";
 import OrbitMark from "@/shared/components/OrbitMark";
 
 const AuthLayout = ({ children, mode = "login" }) => {
+  const { t } = useTranslation("account");
   const isRegister = mode === "register";
 
   return (
     <main className="auth-page-shell">
       <a className="skip-link" href="#auth-form">
-        Skip to account form
+        {t("skipToAccountForm")}
       </a>
       <div className="auth-page-container">
         <div className="auth-page-header">
@@ -18,15 +21,18 @@ const AuthLayout = ({ children, mode = "login" }) => {
             </span>
             <span>Orbit</span>
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageSelect />
+            <ThemeToggle />
+          </div>
         </div>
 
         <section className="auth-shell ui-section-card">
-          <aside className="auth-aside" aria-label="Orbit workspace summary">
+          <aside className="auth-aside" aria-label={t("orbitWorkspaceSummary")}>
             <h1>
               {isRegister
-                ? "Build your task workspace."
-                : "Welcome back to your workspace."}
+                ? t("buildYourTaskWorkspace")
+                : t("welcomeBackToYourWorkspace")}
             </h1>
             <video
               className="auth-aside-video"

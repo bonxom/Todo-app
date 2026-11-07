@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   Children,
   isValidElement,
@@ -101,6 +102,7 @@ export default function CustomSelect({
   children,
   ...rest
 }: CustomSelectProps) {
+  const { t } = useTranslation("common");
   const [isOpen, setIsOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<MenuPosition>({
     top: 0,
@@ -306,7 +308,9 @@ export default function CustomSelect({
           <div
             ref={menuRef}
             role="listbox"
-            aria-label={rest["aria-label"] || selectedOption.label || "Options"}
+            aria-label={
+              rest["aria-label"] || selectedOption.label || t("options")
+            }
             className="ui-custom-select-menu"
             style={{
               top: menuPos.top !== undefined ? `${menuPos.top}px` : undefined,

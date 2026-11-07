@@ -14,7 +14,7 @@ test("renders a read-only present_ui surface with Card, Text, and Table on deskt
   ).toBeVisible();
   await expect(page.getByRole("table")).toBeVisible();
   await expect(page.getByText("Practice test 3")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Xác nhận/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Confirm/ })).toHaveCount(0);
 
   expect(
     await page.evaluate(
@@ -53,17 +53,17 @@ test("edits, saves, reloads, and confirms a composed propose_tasks surface with 
   await expect(title).toBeFocused();
   await title.fill("Master academic vocabulary");
 
-  await page.getByRole("button", { name: "Lưu bản nháp" }).click();
-  await expect(page.getByText("Đã lưu bản nháp")).toBeVisible();
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await expect(page.getByText("Draft saved")).toBeVisible();
 
   await page.reload();
   await page.getByRole("button", { name: "Open assistant" }).click();
   await expect(title).toHaveValue("Master academic vocabulary");
 
   await page
-    .getByRole("checkbox", { name: "Chọn công việc: Practice speaking" })
+    .getByRole("checkbox", { name: "Select task: Practice speaking" })
     .uncheck();
-  await page.getByRole("button", { name: "Xác nhận (1)" }).click();
+  await page.getByRole("button", { name: "Confirm (1)" }).click();
 
   await expect(title).toBeDisabled();
   expect(actions.map((action) => action.action)).toEqual(["save", "confirm"]);
@@ -90,13 +90,13 @@ test("edits, saves draft, and immediately confirms without reloading the page", 
   });
   await title.fill("Save then confirm without reload");
 
-  await page.getByRole("button", { name: "Lưu bản nháp" }).click();
-  await expect(page.getByText("Đã lưu bản nháp")).toBeVisible();
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await expect(page.getByText("Draft saved")).toBeVisible();
 
   await page
-    .getByRole("checkbox", { name: "Chọn công việc: Practice speaking" })
+    .getByRole("checkbox", { name: "Select task: Practice speaking" })
     .uncheck();
-  await page.getByRole("button", { name: "Xác nhận (1)" }).click();
+  await page.getByRole("button", { name: "Confirm (1)" }).click();
 
   await expect(title).toBeDisabled();
   expect(actions.map((action) => action.action)).toEqual(["save", "confirm"]);
@@ -119,7 +119,7 @@ test("falls back to legacy TaskProposalForm when composed proposal surface is in
   });
   await expect(title).toBeVisible();
   await title.fill("Recovered via legacy form");
-  await page.getByRole("button", { name: "Xác nhận (2)" }).click();
+  await page.getByRole("button", { name: "Confirm (2)" }).click();
   await expect(title).toBeDisabled();
   expect(actions).toHaveLength(1);
 

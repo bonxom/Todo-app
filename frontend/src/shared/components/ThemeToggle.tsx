@@ -1,10 +1,12 @@
+import { useTranslation } from "react-i18next";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "../theme/theme";
 
 export default function ThemeToggle() {
+  const { t } = useTranslation("common");
   const { theme, setTheme } = useTheme();
   const isDark = theme === "dark";
-  const label = isDark ? "Switch to light mode" : "Switch to dark mode";
+  const label = t(isDark ? "theme.light" : "theme.dark");
 
   return (
     <button

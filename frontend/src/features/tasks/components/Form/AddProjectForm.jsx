@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import {
   useCreateProjectMutation,
@@ -27,6 +28,8 @@ const AddProjectForm = ({
   onProjectSaved,
   project = null,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const projectId = project?._id;
   const projectName = project?.name || "";
   const projectDescription = project?.description || "";
@@ -70,7 +73,7 @@ const AddProjectForm = ({
     } catch (error) {
       console.error("Failed to create project:", error);
       setSubmitError(
-        getApiErrorMessage(error, "Failed to save project. Please try again."),
+        getApiErrorMessage(error, t("failedToSaveProjectPleaseTryAgain")),
       );
     }
   };
@@ -82,7 +85,7 @@ const AddProjectForm = ({
           htmlFor="project-name"
           className="mb-2 block text-sm font-medium text-[color:var(--color-text)]"
         >
-          Project Name{" "}
+          {t("projectName")}{" "}
           <span className="text-[color:var(--color-danger)]">*</span>
         </label>
         <input
@@ -91,7 +94,7 @@ const AddProjectForm = ({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Website refresh"
+          placeholder={t("eGWebsiteRefresh")}
           className="ui-input"
           required
           autoComplete="off"
@@ -105,12 +108,12 @@ const AddProjectForm = ({
       </div>
       <fieldset>
         <legend className="mb-2 block text-sm font-medium text-[color:var(--color-text)]">
-          Project Color
+          {t("projectColor")}
         </legend>
         <div
           className="workspace-color-options"
           role="radiogroup"
-          aria-label="Project color"
+          aria-label={t("projectColor")}
           onKeyDown={(event) => {
             const buttons = [
               ...event.currentTarget.querySelectorAll('[role="radio"]'),
@@ -152,7 +155,9 @@ const AddProjectForm = ({
                     ? 0
                     : -1
                 }
-                aria-label={`Select ${swatch} as project color`}
+                aria-label={t("messages.selectV0AsProjectColor", {
+                  v0: swatch,
+                })}
                 onClick={() => setColor(swatch)}
                 className="ui-focus-ring flex h-7 w-7 items-center justify-center rounded-full transition-[transform,box-shadow] duration-150 hover:scale-110"
                 style={{
@@ -165,7 +170,9 @@ const AddProjectForm = ({
                     : "none",
                 }}
               >
-                <span className="sr-only">{isSelected ? "Selected" : ""}</span>
+                <span className="sr-only">
+                  {isSelected ? t("selected") : ""}
+                </span>
               </button>
             );
           })}
@@ -176,7 +183,7 @@ const AddProjectForm = ({
             htmlFor="project-custom-color"
             className="text-sm font-medium text-[color:var(--color-text)]"
           >
-            Custom
+            {t("custom")}
           </label>
           <input
             id="project-custom-color"
@@ -196,14 +203,14 @@ const AddProjectForm = ({
           htmlFor="project-description"
           className="mb-2 block text-sm font-medium text-[color:var(--color-text)]"
         >
-          Description
+          {t("description")}
         </label>
         <textarea
           id="project-description"
           name="project_description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Describe what this project is for…"
+          placeholder={t("describeWhatThisProjectIsFor")}
           rows={3}
           className="ui-input"
           autoComplete="off"
@@ -224,7 +231,7 @@ const AddProjectForm = ({
           }}
           className="ui-btn-secondary"
         >
-          Cancel
+          {t("cancel")}
         </button>
         <button
           type="submit"
@@ -233,11 +240,11 @@ const AddProjectForm = ({
         >
           {isSubmitting
             ? projectId
-              ? "Saving…"
-              : "Adding…"
+              ? t("saving")
+              : t("adding")
             : projectId
-              ? "Save Project"
-              : "Add Project"}
+              ? t("saveProject")
+              : t("addProject")}
         </button>
       </div>
     </form>

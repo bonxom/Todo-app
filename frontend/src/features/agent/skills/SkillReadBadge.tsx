@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ApiError } from "@/shared/services/apiError";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -10,6 +11,8 @@ interface SkillReadBadgeProps {
 }
 
 export function SkillReadBadge({ skill }: SkillReadBadgeProps) {
+  const { t } = useTranslation("agent");
+
   const [showTooltip, setShowTooltip] = useState(false);
   const { data: currentSkill, error } = useSkill(skill.id);
 
@@ -17,11 +20,14 @@ export function SkillReadBadge({ skill }: SkillReadBadgeProps) {
   const isDifferentVersion =
     currentSkill && currentSkill.version !== skill.version;
 
-  let tooltipText = `Version: ${skill.version}`;
+  let tooltipText = t("skillVersion", { version: skill.version });
   if (isDeleted) {
-    tooltipText = "Skill is no longer available";
+    tooltipText = t("skillIsNoLongerAvailable");
   } else if (isDifferentVersion) {
-    tooltipText = `Conversation used version ${skill.version} (current: v${currentSkill.version})`;
+    tooltipText = t("usedSkillVersion", {
+      version: skill.version,
+      current: currentSkill.version,
+    });
   }
 
   const badgeContent = (
@@ -43,7 +49,7 @@ export function SkillReadBadge({ skill }: SkillReadBadgeProps) {
       ) : (
         <BookOpen className="h-3 w-3 shrink-0 text-[var(--color-accent)]" />
       )}
-      <span>Read: {skill.name}</span>
+      <span>{t("readSkill", { name: skill.name })}</span>
     </span>
   );
 
@@ -56,12 +62,14 @@ export function SkillReadBadge({ skill }: SkillReadBadgeProps) {
       onBlur={() => setShowTooltip(false)}
     >
       {isDeleted ? (
-        <div aria-label={`Read: ${skill.name}`}>{badgeContent}</div>
+        <div aria-label={t("readSkill", { name: skill.name })}>
+          {badgeContent}
+        </div>
       ) : (
         <Link
           to={`/agent/skills/${skill.id}`}
           className="focus:outline-hidden"
-          aria-label={`Read: ${skill.name}`}
+          aria-label={t("readSkill", { name: skill.name })}
         >
           {badgeContent}
         </Link>

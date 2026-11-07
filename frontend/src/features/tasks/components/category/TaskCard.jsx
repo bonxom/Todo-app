@@ -1,3 +1,7 @@
+import { workspaceTranslate } from "@/features/tasks/utils/workspaceTranslation";
+import { workspaceKey } from "@/features/tasks/utils/workspaceTranslation";
+import { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { useTaskStatusEffect } from "../../hooks/useTaskStatusEffect";
 import {
@@ -15,10 +19,11 @@ import {
 import { setTaskDragData } from "@/shared/utils/taskDrag";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
-const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-});
+const dateFormatter = () =>
+  new Intl.DateTimeFormat(getLocale(), {
+    month: "short",
+    day: "numeric",
+  });
 
 const STATUS_META = {
   pending: {
@@ -66,11 +71,11 @@ const getDeadlineMeta = (deadline) => {
   if (!deadline) return null;
 
   const daysLeft = getDaysLeft(deadline);
-  const formattedDate = DATE_FORMATTER.format(new Date(deadline));
+  const formattedDate = dateFormatter().format(new Date(deadline));
 
   if (daysLeft < 0) {
     return {
-      label: `Overdue · ${formattedDate}`,
+      label: workspaceTranslate("messages.overdueV0", { v0: formattedDate }),
       badgeClassName: "ui-badge ui-badge--danger",
       accent: "var(--color-danger)",
     };
@@ -78,7 +83,7 @@ const getDeadlineMeta = (deadline) => {
 
   if (daysLeft === 0) {
     return {
-      label: `Due Today · ${formattedDate}`,
+      label: workspaceTranslate("messages.dueTodayV0", { v0: formattedDate }),
       badgeClassName: "ui-badge ui-badge--warning",
       accent: "var(--color-warning)",
     };
@@ -86,14 +91,16 @@ const getDeadlineMeta = (deadline) => {
 
   if (daysLeft === 1) {
     return {
-      label: `Due Tomorrow · ${formattedDate}`,
+      label: workspaceTranslate("messages.dueTomorrowV0", {
+        v0: formattedDate,
+      }),
       badgeClassName: "ui-badge ui-badge--warning",
       accent: "var(--color-warning)",
     };
   }
 
   return {
-    label: `Due ${formattedDate}`,
+    label: workspaceTranslate("messages.dueV0", { v0: formattedDate }),
     badgeClassName: "ui-badge",
     accent: null,
   };
@@ -110,6 +117,8 @@ const TaskCard = ({
   onTaskUpdated,
   enableDrag = false,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const statusEffectRef = useTaskStatusEffect(task);
   const [isHovering, setIsHovering] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
@@ -141,7 +150,7 @@ const TaskCard = ({
       }, 500);
     } catch (error) {
       console.error("Failed to finish task:", error);
-      alert(getApiErrorMessage(error, "Failed to finish task."));
+      alert(getApiErrorMessage(error, t("failedToFinishTask")));
       setIsFinishing(false);
     }
   };
@@ -154,7 +163,7 @@ const TaskCard = ({
       onTaskUpdated?.();
     } catch (error) {
       console.error("Failed to start task:", error);
-      alert(getApiErrorMessage(error, "Failed to start task."));
+      alert(getApiErrorMessage(error, t("failedToStartTask")));
     }
   };
 
@@ -208,7 +217,7 @@ const TaskCard = ({
       tabIndex={!isSimpleInteractive && onClick && !showActions ? 0 : undefined}
       aria-label={
         !isSimpleInteractive && onClick && !showActions
-          ? `Open task ${task.title}`
+          ? t("messages.openTaskV0", { v0: task.title })
           : undefined
       }
     >
@@ -224,7 +233,11 @@ const TaskCard = ({
             {task.title}
           </p>
           <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[color:var(--color-text-muted)]">
-            <span className={statusMeta.tone}>{statusMeta.label}</span>
+            <span className={statusMeta.tone}>
+              {t(workspaceKey(statusMeta.label), {
+                defaultValue: statusMeta.label,
+              })}
+            </span>
             {deadlineMeta ? (
               <>
                 <span aria-hidden="true">·</span>
@@ -244,10 +257,10 @@ const TaskCard = ({
                   type="button"
                   onClick={handleStartTask}
                   className="inline-flex h-8 items-center gap-1 rounded-full border border-[color:var(--color-line)] px-3 text-xs font-medium text-[color:var(--color-text-muted)] transition-[background-color,border-color,color] duration-150 hover:border-[color:var(--color-accent)] hover:bg-[var(--color-accent-soft)] hover:text-[color:var(--color-accent)]"
-                  aria-label="Start task"
+                  aria-label={t("startTask")}
                 >
                   <Play className="h-3 w-3" />
-                  <span>Try</span>
+                  <span>{t("try")}</span>
                 </button>
               ) : null}
 
@@ -265,7 +278,7 @@ const TaskCard = ({
                         ? "border-transparent bg-[var(--color-warning-soft)] text-[color:var(--color-warning)]"
                         : "border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:border-[color:var(--color-accent)] hover:bg-[var(--color-accent-soft)] hover:text-[color:var(--color-accent)]"
                   } ${isFinishing ? "cursor-default" : ""}`}
-                  aria-label="Finish task"
+                  aria-label={t("finishTask")}
                 >
                   {isFinishing || isHovering ? (
                     <CircleCheckBig className="h-4 w-4" />
@@ -284,10 +297,10 @@ const TaskCard = ({
                   type="button"
                   onClick={handleStartTask}
                   className="inline-flex h-8 items-center gap-1 rounded-full border border-[color:var(--color-line)] px-3 text-xs font-medium text-[color:var(--color-text-muted)] transition-[background-color,border-color,color] duration-150 hover:border-[color:var(--color-accent)] hover:bg-[var(--color-accent-soft)] hover:text-[color:var(--color-accent)]"
-                  aria-label="Start task"
+                  aria-label={t("startTask")}
                 >
                   <Play className="h-3 w-3" />
-                  <span>Try</span>
+                  <span>{t("try")}</span>
                 </button>
               ) : null}
 
@@ -305,7 +318,7 @@ const TaskCard = ({
                         ? "border-transparent bg-[var(--color-warning-soft)] text-[color:var(--color-warning)]"
                         : "border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:border-[color:var(--color-accent)] hover:bg-[var(--color-accent-soft)] hover:text-[color:var(--color-accent)]"
                   } ${isFinishing ? "cursor-default" : ""}`}
-                  aria-label="Finish task"
+                  aria-label={t("finishTask")}
                 >
                   {isFinishing || isHovering ? (
                     <CircleCheckBig className="h-4 w-4" />
@@ -322,7 +335,7 @@ const TaskCard = ({
                   onEdit(task);
                 }}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-[color:var(--color-text-muted)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-line)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-accent)]"
-                aria-label="Edit task"
+                aria-label={t("editTask")}
               >
                 <Pencil className="h-4 w-4" />
               </button>
@@ -335,7 +348,7 @@ const TaskCard = ({
                     onGiveUp(task._id);
                   }}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-[color:var(--color-warning)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-warning)] hover:bg-[var(--color-warning-soft)]"
-                  aria-label="Give up task"
+                  aria-label={t("giveUpTaskCasedGiveuptask")}
                 >
                   <Flag className="h-4 w-4" />
                 </button>
@@ -348,7 +361,7 @@ const TaskCard = ({
                   onDelete(task._id);
                 }}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-[color:var(--color-danger)] transition-[background-color,color,border-color] duration-150 hover:border-[color:var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
-                aria-label="Delete task"
+                aria-label={t("deleteTaskCasedDeletetask")}
               >
                 <Trash2 className="h-4 w-4" />
               </button>

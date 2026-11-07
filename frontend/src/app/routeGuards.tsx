@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "../stores/useAuthStore";
 import {
@@ -6,11 +7,14 @@ import {
   getRootDecision,
 } from "./guardDecisions";
 
-export const AuthLoadingScreen = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[var(--color-canvas)] text-sm font-medium text-[var(--color-text-muted)]">
-    Checking your session…
-  </div>
-);
+export const AuthLoadingScreen = () => {
+  const { t } = useTranslation("common");
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-canvas)] text-sm font-medium text-[var(--color-text-muted)]">
+      {t("checkingSession")}
+    </div>
+  );
+};
 
 export const ProtectedGuard = () => {
   const isAuthReady = useAuthStore((state) => state.isAuthReady);

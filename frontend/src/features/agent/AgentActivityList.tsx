@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
 import { taskService } from "@/shared/services/taskService";
 import TaskDetailForm from "@/features/tasks/components/Form/TaskDetailForm";
@@ -22,6 +23,8 @@ export function AgentActivityList({
   activities = [],
   onOpenTask,
 }: AgentActivityListProps) {
+  const { t } = useTranslation("agent");
+
   const [detail, setDetail] = useState<Task | null>(null);
   const [error, setError] = useState("");
   const active = useRef(true);
@@ -44,7 +47,7 @@ export function AgentActivityList({
       if (active.current && request.current === version) setDetail(task);
     } catch {
       if (active.current && request.current === version)
-        setError("Task is no longer available.");
+        setError(t("taskIsNoLongerAvailable"));
     }
   };
   // Deduplicate activities by id
@@ -60,7 +63,7 @@ export function AgentActivityList({
   if (uniqueActivities.length === 0) {
     return (
       <div className="py-6 text-center text-sm text-[var(--color-text-muted)]">
-        No activity results yet
+        {t("noActivityResultsYet")}
       </div>
     );
   }
@@ -86,14 +89,14 @@ export function AgentActivityList({
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="h-3 w-3" />
-            Success
+            {t("success")}
           </span>
         );
       case "failed":
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">
             <XCircle className="h-3 w-3" />
-            Failed
+            {t("failed")}
           </span>
         );
       case "unknown":
@@ -101,7 +104,7 @@ export function AgentActivityList({
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-gray-500/10 px-2 py-0.5 text-xs font-medium text-gray-500">
             <HelpCircle className="h-3 w-3" />
-            Unknown
+            {t("unknown")}
           </span>
         );
     }
@@ -110,15 +113,15 @@ export function AgentActivityList({
   const formatKindLabel = (kind: AgentActivity["kind"]) => {
     switch (kind) {
       case "task_created":
-        return "Created task";
+        return t("createdTask");
       case "task_deleted":
-        return "Task deleted";
+        return t("taskDeleted");
       case "task_updated":
-        return "Updated task";
+        return t("updatedTask");
       case "proposal_created":
-        return "Task proposal";
+        return t("taskProposal");
       default:
-        return "Action";
+        return t("action");
     }
   };
 
@@ -145,8 +148,8 @@ export function AgentActivityList({
                 {act.status === "succeeded"
                   ? formatKindLabel(act.kind)
                   : act.kind === "task_created"
-                    ? "Create task"
-                    : "Update task"}
+                    ? t("createTask")
+                    : t("updateTask")}
               </span>
             </div>
             {renderStatusBadge(act.status)}
@@ -160,14 +163,17 @@ export function AgentActivityList({
             act.kind !== "task_deleted" &&
             act.resourceId && (
               <div className="mt-2 flex items-center justify-between text-xs text-[var(--color-text-muted)]">
-                <span>ID: {act.resourceId}</span>
+                <span>
+                  {t("id")}
+                  {act.resourceId}
+                </span>
                 {act.status === "succeeded" && (
                   <button
                     type="button"
                     onClick={() => void openTask(act.resourceId!)}
                     className="font-medium text-[var(--color-accent)] hover:underline"
                   >
-                    View details
+                    {t("viewDetails")}
                   </button>
                 )}
               </div>

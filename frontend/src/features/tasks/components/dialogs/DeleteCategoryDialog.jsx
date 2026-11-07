@@ -1,4 +1,7 @@
+import { useTranslation } from "react-i18next";
 const DeleteCategoryDialog = ({ isOpen, onClose, onConfirm, categoryName }) => {
+  const { t } = useTranslation("workspace");
+
   if (!isOpen) return null;
 
   return (
@@ -19,16 +22,16 @@ const DeleteCategoryDialog = ({ isOpen, onClose, onConfirm, categoryName }) => {
             id="delete-category-title"
             className="text-xl font-semibold text-[color:var(--color-text)]"
           >
-            Delete Category
+            {t("deleteCategory")}
           </h2>
         </div>
         <div className="ui-modal-body">
           <p className="mb-6 text-sm leading-6 text-[color:var(--color-text-muted)]">
-            Delete{" "}
+            {t("delete")}{" "}
             <span className="font-semibold text-[color:var(--color-text)]">
               “{categoryName}”
             </span>
-            ? This action cannot be undone.
+            {t("thisActionCannotBeUndone")}
           </p>
           <div className="flex gap-3">
             <button
@@ -36,14 +39,14 @@ const DeleteCategoryDialog = ({ isOpen, onClose, onConfirm, categoryName }) => {
               onClick={onClose}
               className="ui-btn-secondary flex-1"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="button"
               onClick={onConfirm}
               className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[10px] border border-[color:var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] transition-[background-color,border-color] duration-150 hover:border-[color:var(--color-danger)] hover:bg-[var(--color-danger)]"
             >
-              Delete
+              {t("delete")}
             </button>
           </div>
         </div>

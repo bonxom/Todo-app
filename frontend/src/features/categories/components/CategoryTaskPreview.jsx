@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Circle, CircleCheck, Play, Check } from "lucide-react";
 import {
   useFinishTaskMutation,
@@ -7,6 +8,8 @@ import { setTaskDragData } from "@/shared/utils/taskDrag";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const CategoryTaskPreview = ({ task, onOpen, onTaskUpdated }) => {
+  const { t } = useTranslation("workspace");
+
   const start = useStartTaskMutation();
   const finish = useFinishTaskMutation();
   const completed = task.status === "completed";
@@ -18,9 +21,7 @@ const CategoryTaskPreview = ({ task, onOpen, onTaskUpdated }) => {
       await (pending ? start : finish).mutateAsync(task._id || task.id);
       onTaskUpdated?.();
     } catch (error) {
-      alert(
-        getApiErrorMessage(error, "Unable to update task. Please try again."),
-      );
+      alert(getApiErrorMessage(error, t("unableToUpdateTaskPleaseTryAgain")));
     }
   };
 
@@ -32,7 +33,7 @@ const CategoryTaskPreview = ({ task, onOpen, onTaskUpdated }) => {
         onClick={() => onOpen(task)}
         draggable
         onDragStart={(event) => setTaskDragData(event, task)}
-        aria-label={`Open task ${task.title}`}
+        aria-label={t("messages.openTaskV0", { v0: task.title })}
       >
         <span className={completed ? "category-task-done" : ""}>
           {completed ? <CircleCheck size={15} /> : <Circle size={15} />}
@@ -45,8 +46,11 @@ const CategoryTaskPreview = ({ task, onOpen, onTaskUpdated }) => {
           className="category-task-action"
           onClick={update}
           disabled={busy}
-          aria-label={`${pending ? "Start" : "Finish"} task ${task.title}`}
-          title={pending ? "Start task" : "Complete task"}
+          aria-label={t("messages.v0TaskV1", {
+            v0: pending ? t("start") : t("finish"),
+            v1: task.title,
+          })}
+          title={pending ? t("startTask") : t("completeTask")}
         >
           {pending ? <Play size={13} /> : <Check size={15} />}
         </button>

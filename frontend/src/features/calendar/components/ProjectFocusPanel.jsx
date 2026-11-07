@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useMemo, useState } from "react";
 import {
   Check,
@@ -26,6 +27,8 @@ const ProjectFocusPanel = ({
   onCompleteProject,
   onRestoreProject,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [editingProject, setEditingProject] = useState(null);
   const selected = useMemo(
@@ -45,39 +48,39 @@ const ProjectFocusPanel = ({
     <aside
       id="calendar-project-filters"
       className="project-filter-panel"
-      aria-label="Project filters"
+      aria-label={t("projectFilters")}
     >
       <header className="project-filter-header">
-        <p className="calendar-eyebrow">FOCUS YOUR CALENDAR</p>
+        <p className="calendar-eyebrow">{t("focusYourCalendar")}</p>
         <div>
           <h3>
-            <FolderKanban size={18} aria-hidden="true" /> Projects{" "}
+            <FolderKanban size={18} aria-hidden="true" /> {t("projects")}{" "}
             <span>{projects.length}</span>
           </h3>
           <button
             type="button"
             onClick={onAddProject}
             className="project-filter-add"
-            aria-label="Add Project"
+            aria-label={t("addProject")}
           >
-            <Plus size={16} /> New
+            <Plus size={16} /> {t("new")}
           </button>
         </div>
-        <p>Choose the projects you want to see.</p>
+        <p>{t("chooseTheProjectsYouWantToSee")}</p>
       </header>
       <div className="project-filter-search">
         <Search size={16} aria-hidden="true" />
         <input
-          aria-label="Search projects"
+          aria-label={t("searchProjects")}
           type="search"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Find a project…"
+          placeholder={t("findAProject")}
         />
         {searchQuery && (
           <button
             type="button"
-            aria-label="Clear project search"
+            aria-label={t("clearProjectSearch")}
             onClick={() => setSearchQuery("")}
           >
             <X size={14} />
@@ -92,7 +95,8 @@ const ProjectFocusPanel = ({
       >
         <Layers size={17} aria-hidden="true" />
         <span>
-          All tasks<small>Every project & personal task</small>
+          {t("allTasks")}
+          <small>{t("everyProjectPersonalTask")}</small>
         </span>
         <span className="project-filter-check" aria-hidden="true">
           {selected.size === 0 && <Check size={12} />}
@@ -100,11 +104,13 @@ const ProjectFocusPanel = ({
       </button>
       <div className="project-filter-list-heading">
         <span>
-          {selected.size ? `${selected.size} selected` : "YOUR PROJECTS"}
+          {selected.size
+            ? t("messages.v0Selected", { v0: selected.size })
+            : t("yourProjects")}
         </span>
         {selected.size > 0 && (
           <button type="button" onClick={onClearProjects}>
-            Clear
+            {t("clear")}
           </button>
         )}
       </div>
@@ -123,14 +129,18 @@ const ProjectFocusPanel = ({
                 className="project-filter-select"
                 onClick={() => onToggleProject(project._id)}
                 aria-pressed={isSelected}
-                aria-label={`${isSelected ? "Remove" : "Add"} ${project.name} ${isSelected ? "from" : "to"} project filters`}
+                aria-label={t("messages.v0V1V2ProjectFilters", {
+                  v0: isSelected ? t("remove") : t("add"),
+                  v1: project.name,
+                  v2: isSelected ? "from" : "to",
+                })}
               >
                 <i style={{ background: getProjectColor(project) }} />
                 <span className="project-filter-name">
                   {project.name}
                   <small>
                     {project.description ||
-                      (completed ? "Completed project" : "Active project")}
+                      (completed ? t("completedProject") : t("activeProject"))}
                   </small>
                 </span>
                 <span className="project-filter-check" aria-hidden="true">
@@ -139,16 +149,18 @@ const ProjectFocusPanel = ({
               </button>
               <div className="project-filter-item-footer">
                 <span>
-                  {project.scheduledCount || 0} in view <b>·</b>{" "}
-                  {project.selectedDayCount || 0} this day
+                  {project.scheduledCount || 0} {t("inView")} <b>·</b>{" "}
+                  {project.selectedDayCount || 0} {t("thisDay")}{" "}
                 </span>
                 <div>
                   {!completed && project.canComplete && (
                     <button
                       type="button"
                       onClick={() => onCompleteProject?.(project._id)}
-                      aria-label={`Complete and hide ${project.name}`}
-                      title="Complete project"
+                      aria-label={t("messages.completeAndHideV0", {
+                        v0: project.name,
+                      })}
+                      title={t("completeProject")}
                     >
                       <Check size={14} />
                     </button>
@@ -157,8 +169,8 @@ const ProjectFocusPanel = ({
                     <button
                       type="button"
                       onClick={() => onRestoreProject?.(project._id)}
-                      aria-label={`Restore ${project.name}`}
-                      title="Restore project"
+                      aria-label={t("messages.restoreV0", { v0: project.name })}
+                      title={t("restoreProject")}
                     >
                       <RotateCcw size={14} />
                     </button>
@@ -166,8 +178,8 @@ const ProjectFocusPanel = ({
                   <button
                     type="button"
                     onClick={() => setEditingProject(project)}
-                    aria-label={`Edit ${project.name}`}
-                    title="Edit project"
+                    aria-label={t("messages.editV0", { v0: project.name })}
+                    title={t("editProject")}
                   >
                     <Pencil size={13} />
                   </button>
@@ -181,13 +193,13 @@ const ProjectFocusPanel = ({
             <Search size={22} />
             <strong>
               {projects.length
-                ? "No matching projects"
-                : "No projects available"}
+                ? t("noMatchingProjects")
+                : t("noProjectsAvailable")}
             </strong>
             <p>
               {projects.length
-                ? "Try another name or clear your search."
-                : "Create a project to bring related tasks together."}
+                ? t("tryAnotherNameOrClearYourSearch")
+                : t("createAProjectToBringRelatedTasksTogether")}
             </p>
             <button
               type="button"
@@ -196,7 +208,7 @@ const ProjectFocusPanel = ({
                 projects.length ? () => setSearchQuery("") : onAddProject
               }
             >
-              {projects.length ? "Clear search" : "Create a project"}
+              {projects.length ? t("clearSearch") : t("createAProject")}
             </button>
           </div>
         )}
@@ -210,12 +222,12 @@ const ProjectFocusPanel = ({
               onShowCompletedProjectsChange?.(event.target.checked)
             }
           />{" "}
-          Show Completed Projects
+          {t("showCompletedProjects")}
         </label>
       </footer>
       {editingProject && (
         <FormDialog
-          title="Edit Project"
+          title={t("editProject")}
           kind="project"
           onClose={() => setEditingProject(null)}
         >

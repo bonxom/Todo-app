@@ -1,3 +1,4 @@
+import i18n from "../i18n";
 import axios, {
   type AxiosError,
   type AxiosRequestConfig,
@@ -65,7 +66,7 @@ const normalizeToApiError = (error: unknown): ApiError => {
       axiosErr.message?.toLowerCase().includes("timeout")
     ) {
       return new ApiError(
-        backendMessage || "Request timed out",
+        backendMessage || i18n.t("network.timeout"),
         status,
         "timeout",
         axiosErr.code,
@@ -76,7 +77,7 @@ const normalizeToApiError = (error: unknown): ApiError => {
     if (!axiosErr.response) {
       if (axiosErr.request) {
         return new ApiError(
-          "No response from server",
+          i18n.t("network.noResponse"),
           undefined,
           "network",
           axiosErr.code,
@@ -84,7 +85,7 @@ const normalizeToApiError = (error: unknown): ApiError => {
         );
       }
       return new ApiError(
-        axiosErr.message || "Network error",
+        axiosErr.message || i18n.t("network.error"),
         undefined,
         "network",
         axiosErr.code,
@@ -93,7 +94,7 @@ const normalizeToApiError = (error: unknown): ApiError => {
     }
 
     return new ApiError(
-      backendMessage || axiosErr.message || "An error occurred",
+      backendMessage || axiosErr.message || i18n.t("network.generic"),
       status,
       "http",
       axiosErr.code,
@@ -106,7 +107,7 @@ const normalizeToApiError = (error: unknown): ApiError => {
   }
 
   return new ApiError(
-    "An unexpected error occurred",
+    i18n.t("unexpectedError"),
     undefined,
     "http",
     undefined,
@@ -125,7 +126,7 @@ const refreshAccessToken = (): Promise<string> => {
       useAuthStore.getState().sessionRevision !== revision ||
       !stored.refreshToken
     ) {
-      throw new ApiError("Session ended", 401, "http");
+      throw new ApiError(i18n.t("network.ended"), 401, "http");
     }
     if (
       stored.token &&
@@ -147,13 +148,13 @@ const refreshAccessToken = (): Promise<string> => {
     );
     const accessToken = response.data.accessToken || response.data.token;
     if (typeof accessToken !== "string" || !accessToken) {
-      throw new ApiError("Invalid refresh response", 502, "http");
+      throw new ApiError(i18n.t("network.refresh"), 502, "http");
     }
     if (
       useAuthStore.getState().sessionRevision !== revision ||
       readAuthSnapshot().refreshToken !== stored.refreshToken
     ) {
-      throw new ApiError("Session changed", 401, "http");
+      throw new ApiError(i18n.t("network.changed"), 401, "http");
     }
     useAuthStore
       .getState()

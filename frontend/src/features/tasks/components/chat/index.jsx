@@ -11,7 +11,7 @@ const ChatBubble = ({ onOpenInAgent = undefined }) => {
   const wasOpen = useRef(false);
   useEffect(() => {
     if (wasOpen.current && !isChatOpen) {
-      document.querySelector('[aria-label="Open assistant"]')?.focus();
+      document.querySelector("[data-assistant-trigger]")?.focus();
     }
     wasOpen.current = isChatOpen;
   }, [isChatOpen]);

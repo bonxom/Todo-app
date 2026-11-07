@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   BarChart3,
   CalendarCheck,
@@ -8,42 +9,49 @@ import {
 } from "lucide-react";
 
 const Features = () => {
+  const { t } = useTranslation("account");
   const features = [
     {
       Icon: ListChecks,
-      title: "Task Command Center",
-      description:
-        "Create, edit, filter, and complete tasks from a focused workspace built for daily use.",
+      title: t("taskCommandCenter"),
+      description: t(
+        "createEditFilterAndCompleteTasksFromAFocusedWorkspaceBuiltForDailyUse",
+      ),
     },
     {
       Icon: FolderTree,
-      title: "Categories & Projects",
-      description:
-        "Group related work by theme or outcome so every list stays easy to scan.",
+      title: t("categoriesProjects"),
+      description: t(
+        "groupRelatedWorkByThemeOrOutcomeSoEveryListStaysEasyToScan",
+      ),
     },
     {
       Icon: CalendarCheck,
-      title: "Calendar Planning",
-      description:
-        "See due work in context and keep weekly commitments visible before they drift.",
+      title: t("calendarPlanning"),
+      description: t(
+        "seeDueWorkInContextAndKeepWeeklyCommitmentsVisibleBeforeTheyDrift",
+      ),
     },
     {
       Icon: BarChart3,
-      title: "Progress Tracking",
-      description:
-        "Track completions, active work, and status patterns with the same visual language as the app.",
+      title: t("progressTracking"),
+      description: t(
+        "trackCompletionsActiveWorkAndStatusPatternsWithTheSameVisualLanguageAsTheApp",
+      ),
     },
     {
       Icon: Search,
-      title: "Quick Search",
-      description:
-        "Find the right task quickly with compact search and filtering controls.",
+      title: t("quickSearch"),
+      description: t(
+        "findTheRightTaskQuicklyWithCompactSearchAndFilteringControls",
+      ),
     },
     {
       Icon: WandSparkles,
-      title: "AI Task Assist",
-      description:
-        "Use assistant support when a project needs to become a clear set of next actions.",
+      title: t("aiTaskAssist"),
+      description: t(
+        "useAssistantSupportWhenAProjectNeedsToBecomeAClearSetOfNextActions",
+      ),
     },
   ];
 
@@ -51,13 +59,14 @@ const Features = () => {
     <section className="landing-section landing-section--muted" id="features">
       <div className="features-container">
         <header className="landing-section-header">
-          <p className="ui-page-kicker">Features</p>
+          <p className="ui-page-kicker">{t("features")}</p>
           <h2 className="features-title">
-            Everything You Need to Stay Productive
+            {t("everythingYouNeedToStayProductive")}
           </h2>
           <p className="features-subtitle">
-            The public pages now introduce the same focused workspace users see
-            after signing in.
+            {t(
+              "thePublicPagesNowIntroduceTheSameFocusedWorkspaceUsersSeeAfterSigningIn",
+            )}
           </p>
         </header>
         <div className="features-grid">

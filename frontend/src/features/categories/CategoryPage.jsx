@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import FormDialog from "@/shared/components/FormDialog";
 import CustomSelect from "@/shared/components/CustomSelect";
 import { useMemo, useRef, useState } from "react";
@@ -23,26 +24,29 @@ import { useVisibleTasks } from "@/stores/useTaskFilterStore";
 import { filterProjectsByVisibility } from "@/shared/utils/projectStatus";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
-const VIEW_CONFIG = {
+const getViewConfig = (t) => ({
   categories: {
-    label: "Categories",
-    title: "Categories",
-    addLabel: "Add Category",
-    loadingLabel: "Loading categories & tasks…",
+    label: t("categories"),
+    title: t("categories"),
+    addLabel: t("addCategory"),
+    loadingLabel: t("loadingCategoriesTasks"),
     Icon: LayoutGrid,
   },
   projects: {
-    label: "Projects",
-    title: "Projects",
-    addLabel: "Add Project",
-    loadingLabel: "Loading projects & tasks…",
+    label: t("projects"),
+    title: t("projects"),
+    addLabel: t("addProject"),
+    loadingLabel: t("loadingProjectsTasks"),
     Icon: FolderOpen,
   },
-};
+});
 
 const getRelationId = (value) => value?._id || value || null;
 
 const CategoryPage = () => {
+  const { t } = useTranslation("workspace");
+  const VIEW_CONFIG = getViewConfig(t);
+
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("name");
   const [filter, setFilter] = useState("all");
@@ -83,11 +87,11 @@ const CategoryPage = () => {
     projectsQuery.isLoading ||
     tasksQuery.isLoading;
   const errorMessage = categoriesQuery.isError
-    ? getApiErrorMessage(categoriesQuery.error, "Failed to load categories.")
+    ? getApiErrorMessage(categoriesQuery.error, t("failedToLoadCategories"))
     : projectsQuery.isError
-      ? getApiErrorMessage(projectsQuery.error, "Failed to load projects.")
+      ? getApiErrorMessage(projectsQuery.error, t("failedToLoadProjects"))
       : tasksQuery.isError
-        ? getApiErrorMessage(tasksQuery.error, "Failed to load tasks.")
+        ? getApiErrorMessage(tasksQuery.error, t("failedToLoadTasks"))
         : "";
 
   const refetchAll = () => {
@@ -240,10 +244,10 @@ const CategoryPage = () => {
 
         <section
           className="category-collection"
-          aria-label="Workspace collection"
+          aria-label={t("workspaceCollection")}
         >
           <div className="category-collection-top">
-            <div className="category-tabs" aria-label="Workspace views">
+            <div className="category-tabs" aria-label={t("workspaceViews")}>
               {Object.entries(VIEW_CONFIG).map(([id, config]) => {
                 const { Icon, label } = config;
                 return (
@@ -269,33 +273,40 @@ const CategoryPage = () => {
               })}
             </div>
             <span className="category-collection-note">
-              <Layers size={14} /> Everything in its place
+              <Layers size={14} /> {t("everythingInItsPlace")}
             </span>
           </div>
           <div className="category-toolbar">
             <div className="category-search">
               <Search size={17} aria-hidden="true" />
               <input
-                aria-label={`Search ${activeConfig.label.toLowerCase()}`}
-                placeholder={`Find a ${selectedView === "categories" ? "category" : "project"}…`}
+                aria-label={t("messages.searchV0", {
+                  v0: activeConfig.label.toLowerCase(),
+                })}
+                placeholder={t("messages.findAV0", {
+                  v0:
+                    selectedView === "categories"
+                      ? t("category")
+                      : t("project"),
+                })}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
               {search && (
                 <button
                   type="button"
-                  aria-label="Clear search"
+                  aria-label={t("clearSearch")}
                   onClick={() => setSearch("")}
                 >
                   <X size={16} />
                 </button>
               )}
             </div>
-            <div className="category-filters" aria-label="Filter groups">
+            <div className="category-filters" aria-label={t("filterGroups")}>
               {[
-                ["all", "All"],
-                ["active", "With active tasks"],
-                ["empty", "Empty"],
+                ["all", t("all")],
+                ["active", t("withActiveTasks")],
+                ["empty", t("empty")],
               ].map(([id, label]) => (
                 <button
                   key={id}
@@ -309,16 +320,16 @@ const CategoryPage = () => {
             </div>
             <label className="category-sort">
               <ArrowUpDown size={15} />
-              <span className="sr-only">Sort groups</span>
+              <span className="sr-only">{t("sortGroups")}</span>
               <CustomSelect
-                aria-label="Sort groups"
+                aria-label={t("sortGroups")}
                 value={sort}
                 wrapperClassName="ui-custom-select--inline"
                 className="!min-h-8 h-8 !w-auto !py-1 !px-2.5 text-xs"
                 onChange={(event) => setSort(event.target.value)}
               >
-                <option value="name">Name A–Z</option>
-                <option value="tasks">Most tasks</option>
+                <option value="name">{t("nameAZ")}</option>
+                <option value="tasks">{t("mostTasks")}</option>
               </CustomSelect>
             </label>
           </div>
@@ -326,7 +337,7 @@ const CategoryPage = () => {
             <p role="status">
               {visibleItems.length} {activeConfig.label.toLowerCase()}
               {search || filter !== "all"
-                ? ` of ${activeItems.length}`
+                ? t("messages.ofV0", { v0: activeItems.length })
                 : " in your workspace"}
             </p>
             {selectedView === "projects" ? (
@@ -338,10 +349,10 @@ const CategoryPage = () => {
                     setShowCompletedProjects(event.target.checked)
                   }
                 />{" "}
-                Include completed projects
+                {t("includeCompletedProjects")}
               </label>
             ) : (
-              <span>Open a category to explore its tasks</span>
+              <span>{t("openACategoryToExploreItsTasks")}</span>
             )}
           </div>
         </section>
@@ -349,7 +360,7 @@ const CategoryPage = () => {
         {errorMessage ? (
           <section className="ui-section-card ui-card-padding text-center">
             <p className="text-lg font-semibold text-[color:var(--color-danger)]">
-              Unable to load this workspace
+              {t("unableToLoadThisWorkspace")}
             </p>
             <p className="mx-auto mt-2 max-w-2xl text-sm text-[color:var(--color-text-muted)]">
               {errorMessage}
@@ -359,14 +370,16 @@ const CategoryPage = () => {
               onClick={refetchAll}
               className="ui-btn-secondary mt-6"
             >
-              Try Again
+              {t("tryAgain")}
             </button>
           </section>
         ) : visibleItems.length === 0 && (search || filter !== "all") ? (
           <section className="category-no-results">
             <Search size={28} />
-            <h2>No {activeConfig.label.toLowerCase()} found</h2>
-            <p>Try a different search or give your filters a fresh start.</p>
+            <h2>
+              {t("noGroupsFound", { groups: activeConfig.label.toLowerCase() })}
+            </h2>
+            <p>{t("tryADifferentSearchOrGiveYourFiltersAFreshStart")}</p>
             <button
               type="button"
               className="ui-btn-secondary"
@@ -375,7 +388,7 @@ const CategoryPage = () => {
                 setFilter("all");
               }}
             >
-              Clear filters
+              {t("clearFilters")}
             </button>
           </section>
         ) : selectedView === "categories" ? (
@@ -397,7 +410,7 @@ const CategoryPage = () => {
       <FormDialog
         isOpen={isAddCategoryModalOpen}
         onClose={closeCreateDialog}
-        title="Add Category"
+        title={t("addCategory")}
         kind="category"
       >
         <AddCategoryForm
@@ -411,7 +424,7 @@ const CategoryPage = () => {
       <FormDialog
         isOpen={isAddProjectModalOpen}
         onClose={closeCreateDialog}
-        title="Add Project"
+        title={t("addProject")}
         kind="project"
       >
         <AddProjectForm

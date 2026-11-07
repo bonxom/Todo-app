@@ -1,9 +1,10 @@
+import { workspaceTranslate } from "@/features/tasks/utils/workspaceTranslation";
 const ProgressBar = ({
   completed,
   total,
-  title = "Progress",
+  title = workspaceTranslate("progress"),
   compact = false,
-  emptyLabel = "No tasks yet",
+  emptyLabel = workspaceTranslate("noTasksYet"),
 }) => {
   const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -40,7 +41,10 @@ const ProgressBar = ({
         className={`text-[var(--color-text-muted)] mt-2 ${compact ? "text-xs" : "text-sm"}`}
       >
         {total > 0
-          ? `${completed} completed · ${total} total tasks`
+          ? workspaceTranslate("messages.v0CompletedV1TotalTasks", {
+              v0: completed,
+              v1: total,
+            })
           : emptyLabel}
       </p>
     </div>
