@@ -1,4 +1,5 @@
 import FormDialog from "@/shared/components/FormDialog";
+import CustomSelect from "@/shared/components/CustomSelect";
 import { useMemo, useRef, useState } from "react";
 import {
   FolderOpen,
@@ -309,13 +310,16 @@ const CategoryPage = () => {
             <label className="category-sort">
               <ArrowUpDown size={15} />
               <span className="sr-only">Sort groups</span>
-              <select
+              <CustomSelect
+                aria-label="Sort groups"
                 value={sort}
+                wrapperClassName="ui-custom-select--inline"
+                className="!min-h-8 h-8 !w-auto !py-1 !px-2.5 text-xs"
                 onChange={(event) => setSort(event.target.value)}
               >
                 <option value="name">Name A–Z</option>
                 <option value="tasks">Most tasks</option>
-              </select>
+              </CustomSelect>
             </label>
           </div>
           <div className="category-results-meta">

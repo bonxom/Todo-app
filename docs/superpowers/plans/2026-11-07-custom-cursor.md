@@ -80,6 +80,31 @@ Expected: PASS
 Run: `cd frontend && pnpm run build && cd ../backend && pnpm run build && pnpm test`
 Expected: PASS
 
+---
+
+### Task 3: CustomSelect dropdown component and form integration
+
+**Files:**
+
+- Create: `frontend/src/shared/components/CustomSelect.tsx`
+- Create: `frontend/src/shared/components/test/CustomSelect.test.tsx`
+- Modify: `frontend/src/styles/index.css`
+- Modify: `frontend/src/styles/forms.css`
+- Modify: `frontend/src/features/tasks/components/Form/TaskDetailForm.jsx`
+- Modify: `frontend/src/features/tasks/components/Form/AddTaskForm.jsx`
+- Modify: `frontend/src/features/tasks/components/TodoTaskToolbar.jsx`
+- Modify: `frontend/src/features/tasks/components/FilterBar.jsx`
+- Modify: `frontend/src/features/tasks/components/AddTaskField.jsx`
+- Modify: `frontend/src/features/tasks/components/chat/A2UI/TaskList.tsx`
+- Modify: `frontend/src/features/categories/CategoryPage.jsx`
+- Modify: `frontend/src/shared/components/Pagination.tsx`
+- Modify: `frontend/src/features/agent/AgentContextPanel.tsx`
+
+- [x] **Step 1: Write failing unit tests in `frontend/src/shared/components/test/CustomSelect.test.tsx`**
+- [x] **Step 2: Implement `CustomSelect.tsx` and dropdown styles in `index.css` / `forms.css`**
+- [x] **Step 3: Integrate `CustomSelect` into task forms and selectors**
+- [x] **Step 4: Run unit tests, full frontend suite, lint, Prettier, and build**
+
 ## Verification Record
 
 - `cd frontend && pnpm exec vitest run src/shared/components/test/CustomCursor.test.tsx`: 5 passed (after confirming initial RED failure before `CustomCursor.tsx` existed).

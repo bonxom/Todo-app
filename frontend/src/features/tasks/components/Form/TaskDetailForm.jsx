@@ -1,4 +1,5 @@
 import FormDialog from "@/shared/components/FormDialog";
+import CustomSelect from "@/shared/components/CustomSelect";
 import { useMemo, useRef, useState } from "react";
 import DescriptionEditor from "./DescriptionEditor";
 import AddCategoryForm from "./AddCategoryForm";
@@ -128,7 +129,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
             >
               Category
             </label>
-            <select
+            <CustomSelect
               id="edit-category"
               value={categoryId || categories[0]?._id || ""}
               onChange={(e) => {
@@ -146,7 +147,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
                 </option>
               ))}
               <option value="__add_more__">+ Add more</option>
-            </select>
+            </CustomSelect>
           </div>
 
           <div>
@@ -156,7 +157,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
             >
               Project
             </label>
-            <select
+            <CustomSelect
               id="edit-project"
               value={projectId}
               onChange={(e) => {
@@ -180,7 +181,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
                 </option>
               ))}
               <option value="__add_project__">+ Add project</option>
-            </select>
+            </CustomSelect>
           </div>
 
           <div>
@@ -190,7 +191,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
             >
               Priority
             </label>
-            <select
+            <CustomSelect
               id="edit-priority"
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
@@ -199,7 +200,7 @@ const TaskDetailForm = ({ task, onClose, onTaskUpdated, onProjectCreated }) => {
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
               <option value="High">High</option>
-            </select>
+            </CustomSelect>
           </div>
         </div>
 

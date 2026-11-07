@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
+import CustomSelect from "@/shared/components/CustomSelect";
 import { useCategoriesQuery } from "@/features/categories/api/categoryQueries";
 
 const AddTaskForm = ({ onAddTask }) => {
@@ -49,7 +50,7 @@ const AddTaskForm = ({ onAddTask }) => {
         </div>
 
         <div className="flex gap-3">
-          <select
+          <CustomSelect
             value={category || categories[0]?.name || ""}
             onChange={(e) => setCategory(e.target.value)}
             className="ui-input"
@@ -60,9 +61,9 @@ const AddTaskForm = ({ onAddTask }) => {
                 {cat.name}
               </option>
             ))}
-          </select>
+          </CustomSelect>
 
-          <select
+          <CustomSelect
             value={priority}
             onChange={(e) => setPriority(e.target.value)}
             className="ui-input"
@@ -71,7 +72,7 @@ const AddTaskForm = ({ onAddTask }) => {
             <option value="Low">Low</option>
             <option value="Medium">Medium</option>
             <option value="High">High</option>
-          </select>
+          </CustomSelect>
         </div>
       </form>
     </div>

@@ -16,11 +16,15 @@ Approved direction: user requested and authorized implementation on 2026-11-07. 
    - Pressing the pointer (`pointerdown`) sets `data-pressed="true"` until `pointerup` or `pointercancel`.
    - Leaving the viewport (`document` `mouseleave` / window `blur`) sets `data-visible="false"`.
    - Window `scroll` and `resize` events refresh the active snapped target's bounding rect if it remains connected in the DOM, or reset to `dot` mode if detached.
+6. **Custom Select dropdown (`CustomSelect`):**
+   - Replace native OS `<select>` menus in task forms (`AddTaskForm`, `TaskDetailForm`, `AddTaskField`, `FilterBar`), toolbar/pagination/category/agent selectors (`TodoTaskToolbar`, `Pagination`, `CategoryPage`, `AgentContextPanel`, `TaskList`) with `CustomSelect`.
+   - Render a styled trigger button (`data-cursor-target="control"`) with single clean border, selected option label, and rotating `ChevronDown` indicator, plus a synchronized native `<select>` for label/test/form compatibility.
+   - Open a portaled custom menu (`role="listbox"`, `z-index: 10000`) styled with theme surface/border/shadow tokens and rounded option buttons (`role="option"`, `data-cursor-target="control"`), supporting selected checkmarks, action options (`+ Add more` / `+ Add project` divider + accent style), disabled options, outside-click/Escape dismissal, and custom cursor morphing on each option.
 
 ## Scope
 
-Frontend only. Implemented via a shared `CustomCursor` component mounted in `frontend/src/app/App.tsx` and styled in `frontend/src/styles/index.css`. No backend changes, no new external dependencies, and no gradient fills.
+Frontend only. Implemented via shared `CustomCursor` and `CustomSelect` components in `frontend/src/shared/components/` and styled in `frontend/src/styles/index.css`. No backend changes, no new external dependencies, and no gradient fills.
 
 ## Test and verification
 
-Unit/component tests in `frontend/src/shared/components/test/CustomCursor.test.tsx` verify fine-pointer and reduced-motion gating, `has-custom-cursor` root class management, free-floating dot coordinates, morphing into buttons and cards (including nested button-in-card priority), text input suppression, press state, and viewport leave cleanup. Run full frontend test suite, lint, scoped Prettier check, frontend build, and backend minimum verification.
+Unit/component tests in `frontend/src/shared/components/test/CustomCursor.test.tsx` and `frontend/src/shared/components/test/CustomSelect.test.tsx` verify fine-pointer and reduced-motion gating, `has-custom-cursor` root class management, free-floating dot coordinates, morphing into buttons and cards (including nested button-in-card priority), text input suppression, press state, viewport leave cleanup, and `CustomSelect` menu open/select/action/keyboard/disabled behavior. Run full frontend test suite, lint, scoped Prettier check, frontend build, and backend minimum verification.
