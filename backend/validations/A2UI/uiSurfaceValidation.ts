@@ -544,7 +544,7 @@ const compiledComponentSchema = z.discriminatedUnion("component", [
 
 const compiledDataModelValueSchema = z.strictObject({
   display: displayDataSchema,
-  proposal: proposalViewSchema.optional(),
+  proposal: z.lazy(() => proposalViewSchema).optional(),
 });
 
 const compiledMessageSchema = z.union([

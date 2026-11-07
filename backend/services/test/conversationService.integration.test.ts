@@ -1199,4 +1199,76 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     release(answer("Finished holding"));
     await first;
   });
+
+  it("persists and replays read-only and proposal composed UI surfaces across history without calling provider", async () => {
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
+    vi.stubEnv("A2UI_COMPOSITION_ENABLED", "true");
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const specFixture = JSON.parse(
+      readFileSync(
+        resolve(
+          process.cwd(),
+          "../frontend/src/test/fixtures/ui-composition-spec.json",
+        ),
+        "utf-8",
+      ),
+    );
+
+    const conversationId = await create();
+
+    // 1. Read-only present_ui turn
+    completion
+      .mockResolvedValueOnce(
+        tool("load_skill", { skillId: "ui-composition" }),
+      )
+      .mockResolvedValueOnce(tool("present_ui", specFixture.readonly));
+
+    const readonlyReqId = randomUUID();
+    const readonlyRes = await post("chat-mcp", {
+      conversationId,
+      requestId: readonlyReqId,
+      userInput: "Show study plan",
+    });
+    expect(readonlyRes.status).toBe(200);
+    expect(readonlyRes.body.surface).toBeDefined();
+    const readonlySurfaceId = readonlyRes.body.surface.a2ui.surfaceId;
+
+    // 2. Composed propose_tasks turn
+    completion
+      .mockResolvedValueOnce(
+        tool("load_skill", { skillId: "ui-composition" }),
+      )
+      .mockResolvedValueOnce(
+        tool("propose_tasks", {
+          items: [{ title: "Practice Essay", priority: "High" }],
+          presentation: specFixture.proposal,
+        }),
+      );
+
+    const proposalReqId = randomUUID();
+    const proposalRes = await post("chat-mcp", {
+      conversationId,
+      requestId: proposalReqId,
+      userInput: "Propose essay tasks",
+    });
+    expect(proposalRes.status).toBe(200);
+    expect(proposalRes.body.surface).toBeDefined();
+    expect(proposalRes.body.proposal).toBeDefined();
+    const proposalSurfaceId = proposalRes.body.surface.a2ui.surfaceId;
+
+    // 3. History replay does not call provider and returns exact saved surfaceIds
+    completion.mockClear();
+    const historyRes = await get(`conversations/${conversationId}`);
+    expect(historyRes.status).toBe(200);
+    expect(completion).not.toHaveBeenCalled();
+
+    const botMessages = historyRes.body.data.messages.filter(
+      (m: { sender: string }) => m.sender === "bot",
+    );
+    expect(botMessages).toHaveLength(2);
+    expect(botMessages[0].surface?.a2ui.surfaceId).toBe(readonlySurfaceId);
+    expect(botMessages[1].surface?.a2ui.surfaceId).toBe(proposalSurfaceId);
+    expect(botMessages[1].proposal?.status).toBe("draft");
+  });
 });

@@ -16,8 +16,7 @@ import {
   taskProposalGenerationService,
   toProposalView,
 } from "./A2UI/taskProposalGenerationService.js";
-import { taskProposalUiService } from "./A2UI/taskProposalUiService.js";
-import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
+import { uiPresentationService } from "./A2UI/uiPresentationService.js";
 import { projectPersistedProposal } from "../utils/agentActivity.js";
 import { projectRepository } from "../repositories/projectRepository.js";
 
@@ -137,6 +136,10 @@ export async function runConversationTurn(
         });
       }
       if ("surfaceSpec" in response) {
+        const storedSurface = uiPresentationService.toStoredUiSurface(
+          response.surfaceSpec,
+          "readonly",
+        );
         await repository.finish(
           turn._id,
           response.surfaceSpec.fallbackText,
@@ -144,13 +147,20 @@ export async function runConversationTurn(
           turn.executionToken,
           undefined,
           latestSkillsRead,
+          storedSurface,
         );
-        return resultFor({
+        const completedTurn: ChatTurn = {
           ...turn,
           activities: latestActivities,
           status: "completed",
           response: response.surfaceSpec.fallbackText,
           skillsRead: latestSkillsRead,
+          uiSurface: storedSurface,
+        };
+        const envelope = uiPresentationService.forTurn(completedTurn);
+        return resultFor(completedTurn, {
+          surface: envelope.surface,
+          text: envelope.text,
         });
       }
       if ("proposalItems" in response) {
@@ -179,6 +189,12 @@ export async function runConversationTurn(
             skillsRead: latestSkillsRead,
           });
         }
+        const storedSurface = response.presentation
+          ? uiPresentationService.toStoredUiSurface(
+              response.presentation,
+              "proposal",
+            )
+          : undefined;
         const finalResponse =
           response.text ||
           "Tôi đã tạo đề xuất các công việc cho bạn. Vui lòng xem lại và xác nhận.";
@@ -188,28 +204,35 @@ export async function runConversationTurn(
           preparedItems,
           finalResponse,
           latestSkillsRead,
+          storedSurface,
         );
         if (proposal)
           latestActivities = [
             ...latestActivities,
             ...projectPersistedProposal(proposal),
           ];
+        const completedTurn: ChatTurn = {
+          ...turn,
+          activities: latestActivities,
+          status: "completed",
+          response: finalResponse,
+          skillsRead: latestSkillsRead,
+          ...(storedSurface ? { uiSurface: storedSurface } : {}),
+        };
         const envelope = proposal
-          ? taskProposalUiService.present(
+          ? uiPresentationService.forTurn(
+              completedTurn,
               toProposalView(proposal),
-              isTaskProposalsEnabled(),
             )
           : undefined;
         return resultFor(
-          {
-            ...turn,
-            activities: latestActivities,
-            status: "completed",
-            response: finalResponse,
-            skillsRead: latestSkillsRead,
-          },
+          completedTurn,
           envelope
-            ? { proposal: envelope.proposal, a2ui: envelope.a2ui }
+            ? {
+                surface: envelope.surface,
+                proposal: envelope.proposal,
+                a2ui: envelope.a2ui,
+              }
             : undefined,
         );
       }

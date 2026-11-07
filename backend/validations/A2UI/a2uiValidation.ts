@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { A2UI_CONFIG } from "../../config/A2UI/a2ui.js";
 import { proposalItemsSchema } from "./taskProposalValidation.js";
+import { uiSurfaceEnvelopeSchema } from "./uiSurfaceValidation.js";
 
 const proposalCreatedTaskSchema = z
   .object({
@@ -85,6 +86,7 @@ export const proposalEnvelopeSchema = z
   .strictObject({
     proposal: proposalViewSchema,
     text: z.string().min(1),
+    surface: z.lazy(() => uiSurfaceEnvelopeSchema).optional(),
     a2ui: a2uiPayloadSchema.optional(),
   })
   .superRefine((data, ctx) => {
