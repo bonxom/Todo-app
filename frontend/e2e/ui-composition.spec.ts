@@ -75,6 +75,35 @@ test("edits, saves, reloads, and confirms a composed propose_tasks surface with 
   ).toBe(true);
 });
 
+test("edits, saves draft, and immediately confirms without reloading the page", async ({
+  page,
+}) => {
+  const { actions } = await setupUiCompositionMocks(page, {
+    mode: "composed-proposal",
+  });
+  await page.goto("/dashboard");
+  await page.getByRole("button", { name: "Open assistant" }).click();
+
+  const title = page.getByRole("textbox", {
+    name: "Task 1 title",
+    exact: true,
+  });
+  await title.fill("Save then confirm without reload");
+
+  await page.getByRole("button", { name: "Lưu bản nháp" }).click();
+  await expect(page.getByText("Đã lưu bản nháp")).toBeVisible();
+
+  await page
+    .getByRole("checkbox", { name: "Chọn công việc: Practice speaking" })
+    .uncheck();
+  await page.getByRole("button", { name: "Xác nhận (1)" }).click();
+
+  await expect(title).toBeDisabled();
+  expect(actions.map((action) => action.action)).toEqual(["save", "confirm"]);
+  expect(actions[1].revision).toBe(2);
+  expect(actions[1].selectedItemIds).toHaveLength(1);
+});
+
 test("falls back to legacy TaskProposalForm when composed proposal surface is invalid and to markdown when read-only surface is invalid", async ({
   page,
 }) => {

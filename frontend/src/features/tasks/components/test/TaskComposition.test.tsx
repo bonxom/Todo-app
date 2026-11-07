@@ -1,10 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TaskProposalSurface } from "../chat/A2UI/TaskProposalSurface";
+import { TaskProposalMessage } from "../chat/A2UI/TaskProposalMessage";
+import { useTaskProposalEditor } from "../../hooks/A2UI/useTaskProposalEditor";
+import { AgentSessionProvider } from "@/features/agent/AgentSessionProvider";
+import { aiService } from "@/shared/services/aiService";
+import { ApiError } from "@/shared/services/apiError";
 import { categoryService } from "@/shared/services/categoryService";
 import { projectService } from "@/shared/services/projectService";
-import type { ProposalEnvelope } from "@/shared/types/A2UI/taskProposal";
+import type {
+  ProposalEnvelope,
+  ProposalView,
+} from "@/shared/types/A2UI/taskProposal";
 import type { UiSurfaceEnvelope } from "@/shared/types/A2UI/uiSurface";
 import legacyFixture from "@/test/fixtures/a2ui-task-proposal-v09.json";
 import composedFixture from "@/test/fixtures/a2ui-composition-v09.json";
@@ -48,6 +57,11 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
         status: "completed",
       },
     ] as never);
+    vi.spyOn(aiService, "getConversationCapabilities").mockResolvedValue({
+      taskProposals: true,
+      uiComposition: true,
+    });
+    vi.spyOn(aiService, "getConversation").mockResolvedValue(null);
   });
 
   it("preserves legacy TaskProposalForm behavior when no composed surface is present", async () => {
@@ -260,6 +274,245 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
       expect.objectContaining({
         action: "confirm",
         items: [expect.objectContaining({ title: "Fallback edited task" })],
+      }),
+    );
+  });
+
+  it("resets editor draft to new server revision when baseline advances even if controlledDraft is momentarily stale", () => {
+    const rev1 = structuredClone(legacyFixture.proposal) as ProposalView;
+    const staleDraft: ProposalView = {
+      ...rev1,
+      items: [{ ...rev1.items[0], title: "Edited in rev 1" }],
+    };
+    const rev2: ProposalView = {
+      ...rev1,
+      revision: 2,
+      items: [{ ...rev1.items[0], title: "Edited in rev 1" }],
+    };
+
+    const { result, rerender } = renderHook(
+      ({ proposal, draft }: { proposal: ProposalView; draft?: ProposalView }) =>
+        useTaskProposalEditor({ proposal, draft }),
+      {
+        initialProps: {
+          proposal: rev1,
+          draft: staleDraft as ProposalView | undefined,
+        },
+      },
+    );
+
+    expect(result.current.draft.revision).toBe(1);
+
+    // Server returns revision 2 while parent still passes staleDraft (revision 1) for one render
+    rerender({ proposal: rev2, draft: staleDraft });
+    expect(result.current.draft.revision).toBe(2);
+
+    // Parent effect then clears stale draft to undefined
+    rerender({ proposal: rev2, draft: undefined });
+    expect(result.current.draft.revision).toBe(2);
+  });
+
+  it("saves a draft and immediately confirms without reloading the page when wrapped in AgentSessionProvider", async () => {
+    const user = userEvent.setup();
+    const initial = makeComposedEnvelope();
+
+    const applyAction = vi
+      .spyOn(aiService, "applyProposalAction")
+      .mockImplementation(async (_convId, _propId, action) => {
+        const nextProposal: ProposalView = {
+          ...initial.proposal,
+          revision: action.revision + 1,
+          status: action.action === "confirm" ? "created" : "draft",
+          items:
+            action.action === "cancel"
+              ? initial.proposal.items
+              : (action.items ?? initial.proposal.items),
+          selectedItemIds:
+            action.action === "cancel"
+              ? initial.proposal.selectedItemIds
+              : (action.selectedItemIds ?? initial.proposal.selectedItemIds),
+          createdTasks:
+            action.action === "confirm"
+              ? [
+                  {
+                    itemId: initial.proposal.items[0].id,
+                    taskId: "task-created-after-save",
+                    title:
+                      action.items?.[0]?.title ??
+                      initial.proposal.items[0].title,
+                  },
+                ]
+              : [],
+        };
+        const nextSurface = structuredClone(initial.surface);
+        (
+          nextSurface.a2ui.messages[2].updateDataModel as {
+            value: { proposal: ProposalView };
+          }
+        ).value.proposal = nextProposal;
+        return {
+          proposal: nextProposal,
+          text: nextSurface.text,
+          a2ui: initial.a2ui,
+          surface: nextSurface,
+        };
+      });
+
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({ defaultOptions: { queries: { retry: false } } })
+        }
+      >
+        <AgentSessionProvider skipInitialLoad>
+          <TaskProposalMessage envelope={initial} />
+        </AgentSessionProvider>
+      </QueryClientProvider>,
+    );
+
+    await screen.findByRole("option", { name: "Work" });
+    const titleInput = screen.getByLabelText("Task 1 title");
+    await user.clear(titleInput);
+    await user.type(titleInput, "Saved then confirmed");
+
+    await user.click(screen.getByRole("button", { name: "Lưu bản nháp" }));
+    await waitFor(() =>
+      expect(screen.getByText("Đã lưu bản nháp")).toBeInTheDocument(),
+    );
+
+    // Immediately confirm without page reload
+    await user.click(screen.getByRole("button", { name: /Xác nhận/ }));
+    await waitFor(() => expect(applyAction).toHaveBeenCalledTimes(2));
+    expect(applyAction.mock.calls[0][2]).toEqual(
+      expect.objectContaining({ action: "save", revision: 1 }),
+    );
+    expect(applyAction.mock.calls[1][2]).toEqual(
+      expect.objectContaining({
+        action: "confirm",
+        revision: 2,
+        items: [expect.objectContaining({ title: "Saved then confirmed" })],
+      }),
+    );
+    expect(await screen.findByLabelText("Task 1 title")).toBeDisabled();
+  });
+
+  it("discards stale session draft when reloading after a 409 conflict and allows confirming the reloaded revision", async () => {
+    const user = userEvent.setup();
+    const initial = makeComposedEnvelope();
+
+    const applyAction = vi
+      .spyOn(aiService, "applyProposalAction")
+      .mockRejectedValueOnce(new ApiError("Conflict", 409))
+      .mockImplementationOnce(async (_convId, _propId, action) => {
+        const items =
+          action.action === "cancel" ? initial.proposal.items : action.items;
+        const selectedItemIds =
+          action.action === "cancel"
+            ? initial.proposal.selectedItemIds
+            : action.selectedItemIds;
+        const confirmedProposal: ProposalView = {
+          ...initial.proposal,
+          revision: action.revision + 1,
+          status: "created",
+          items,
+          selectedItemIds,
+          createdTasks: [
+            {
+              itemId: initial.proposal.items[0].id,
+              taskId: "task-after-reload",
+              title: items[0]?.title ?? initial.proposal.items[0].title,
+            },
+          ],
+        };
+        const nextSurface = structuredClone(initial.surface);
+        (
+          nextSurface.a2ui.messages[2].updateDataModel as {
+            value: { proposal: ProposalView };
+          }
+        ).value.proposal = confirmedProposal;
+        return {
+          proposal: confirmedProposal,
+          text: nextSurface.text,
+          a2ui: initial.a2ui,
+          surface: nextSurface,
+        };
+      });
+
+    const reloadedProposal: ProposalView = {
+      ...initial.proposal,
+      revision: 2,
+      items: [{ ...initial.proposal.items[0], title: "Server latest title" }],
+    };
+    const reloadedSurface = structuredClone(initial.surface);
+    (
+      reloadedSurface.a2ui.messages[2].updateDataModel as {
+        value: { proposal: ProposalView };
+      }
+    ).value.proposal = reloadedProposal;
+
+    vi.spyOn(aiService, "getConversation").mockResolvedValue({
+      conversationId: initial.proposal.conversationId,
+      title: "Study",
+      before: null,
+      mode: "auto",
+      pending: [],
+      messages: [
+        {
+          id: "msg-reloaded",
+          sender: "bot",
+          text: reloadedSurface.text,
+          timestamp: new Date().toISOString(),
+          proposal: reloadedProposal,
+          a2ui: initial.a2ui,
+          surface: reloadedSurface,
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({ defaultOptions: { queries: { retry: false } } })
+        }
+      >
+        <AgentSessionProvider skipInitialLoad>
+          <TaskProposalMessage envelope={initial} />
+        </AgentSessionProvider>
+      </QueryClientProvider>,
+    );
+
+    await screen.findByRole("option", { name: "Work" });
+    const titleInput = screen.getByLabelText("Task 1 title");
+    await user.clear(titleInput);
+    await user.type(titleInput, "Stale local edit");
+
+    // Attempt confirm -> 409 Conflict
+    await user.click(screen.getByRole("button", { name: /Xác nhận/ }));
+    const reloadBtn = await screen.findByRole("button", {
+      name: "Tải lại đề xuất",
+    });
+    await user.click(reloadBtn);
+
+    // Confirm discarding dirty edits
+    const discardAndReloadBtn = await screen.findByRole("button", {
+      name: "Bỏ thay đổi và tải lại",
+    });
+    await user.click(discardAndReloadBtn);
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Task 1 title")).toHaveValue(
+        "Server latest title",
+      ),
+    );
+
+    // Confirm now sends revision 2 with the reloaded items
+    await user.click(screen.getByRole("button", { name: /Xác nhận/ }));
+    await waitFor(() => expect(applyAction).toHaveBeenCalledTimes(2));
+    expect(applyAction.mock.calls[1][2]).toEqual(
+      expect.objectContaining({
+        action: "confirm",
+        revision: 2,
+        items: [expect.objectContaining({ title: "Server latest title" })],
       }),
     );
   });

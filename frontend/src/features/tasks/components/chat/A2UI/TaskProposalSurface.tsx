@@ -5,7 +5,10 @@ import type {
   ProposalEnvelope,
   ProposalView,
 } from "@/shared/types/A2UI/taskProposal";
-import { useTaskProposalEditor } from "@/features/tasks/hooks/A2UI/useTaskProposalEditor";
+import {
+  isMatchingProposalDraft,
+  useTaskProposalEditor,
+} from "@/features/tasks/hooks/A2UI/useTaskProposalEditor";
 import { taskProposalRegistry } from "./taskProposalCatalog";
 import { compositionProposalRegistry } from "./compositionCatalog";
 import { TaskProposalContext } from "./taskProposalContext";
@@ -32,8 +35,14 @@ export function TaskProposalSurface({
 }: TaskProposalSurfaceProps) {
   const agentSession = useContext(AgentSessionContext);
   const proposalId = envelope.proposal.id;
-  const proposalDraft = agentSession?.draft?.proposalDrafts?.[proposalId] as
+  const rawProposalDraft = agentSession?.draft?.proposalDrafts?.[proposalId] as
     ProposalView | undefined;
+  const proposalDraft = isMatchingProposalDraft(
+    rawProposalDraft,
+    envelope.proposal,
+  )
+    ? rawProposalDraft
+    : undefined;
   const setProposalDraft = agentSession?.setProposalDraft;
   const onProposalDraftChange = useCallback(
     (draft: unknown) => {
@@ -42,15 +51,10 @@ export function TaskProposalSurface({
     [setProposalDraft, proposalId],
   );
   useEffect(() => {
-    if (
-      proposalDraft &&
-      (envelope.proposal.status !== "draft" ||
-        (proposalDraft as { revision?: number }).revision !==
-          envelope.proposal.revision)
-    ) {
+    if (rawProposalDraft && !proposalDraft) {
       setProposalDraft?.(proposalId, null);
     }
-  }, [proposalDraft, envelope.proposal, proposalId, setProposalDraft]);
+  }, [rawProposalDraft, proposalDraft, proposalId, setProposalDraft]);
 
   const editor = useTaskProposalEditor({
     proposal: envelope.proposal,

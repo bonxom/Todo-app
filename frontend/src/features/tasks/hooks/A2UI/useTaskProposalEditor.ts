@@ -19,6 +19,20 @@ export type TaskProposalEditorProps = {
   disabled?: boolean;
 };
 
+export function isMatchingProposalDraft(
+  draft: ProposalView | undefined,
+  proposal: ProposalView | undefined,
+): draft is ProposalView {
+  return Boolean(
+    draft &&
+    proposal &&
+    proposal.status === "draft" &&
+    draft.id === proposal.id &&
+    draft.revision === proposal.revision &&
+    draft.status === proposal.status,
+  );
+}
+
 export function useTaskProposalEditor(
   {
     proposal,
@@ -31,24 +45,46 @@ export function useTaskProposalEditor(
   }: TaskProposalEditorProps,
   enabled = true,
 ) {
+  const validControlledDraft = isMatchingProposalDraft(
+    controlledDraft,
+    proposal,
+  )
+    ? controlledDraft
+    : undefined;
+
   const [localDraft, setLocalDraft] = useState<ProposalView>(
-    () => controlledDraft ?? proposal,
+    () => validControlledDraft ?? proposal,
   );
   const prevBaselineKeyRef = useRef(
     `${proposal?.id}:${proposal?.revision}:${proposal?.status}`,
   );
+  const prevProposalRef = useRef(proposal);
+  const hadControlledDraftRef = useRef(Boolean(validControlledDraft));
 
   useEffect(() => {
     const baselineKey = `${proposal?.id}:${proposal?.revision}:${proposal?.status}`;
+    const proposalChanged = prevProposalRef.current !== proposal;
+    prevProposalRef.current = proposal;
+    const hasControlledDraft = Boolean(validControlledDraft);
+
     if (prevBaselineKeyRef.current !== baselineKey) {
       prevBaselineKeyRef.current = baselineKey;
-      setLocalDraft(controlledDraft ?? proposal);
-    } else if (controlledDraft) {
-      setLocalDraft(controlledDraft);
+      hadControlledDraftRef.current = hasControlledDraft;
+      setLocalDraft(validControlledDraft ?? proposal);
+      setError("");
+    } else if (validControlledDraft) {
+      hadControlledDraftRef.current = true;
+      setLocalDraft(validControlledDraft);
+    } else if (hadControlledDraftRef.current || proposalChanged) {
+      hadControlledDraftRef.current = false;
+      setLocalDraft(proposal);
+      setError("");
     }
-  }, [controlledDraft, proposal]);
+  }, [validControlledDraft, proposal]);
 
-  const draft = controlledDraft ?? localDraft;
+  const draft =
+    validControlledDraft ??
+    (isMatchingProposalDraft(localDraft, proposal) ? localDraft : proposal);
 
   const setDraft = useCallback(
     (nextDraft: ProposalView) => {
