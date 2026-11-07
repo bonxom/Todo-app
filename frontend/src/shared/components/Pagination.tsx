@@ -9,6 +9,7 @@
 
 import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import CustomSelect from "./CustomSelect";
 
 interface PaginationProps {
   pageNo: number;
@@ -115,18 +116,19 @@ export default function Pagination({
             >
               Per page
             </label>
-            <select
+            <CustomSelect
               id="pagination-page-size"
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              className="h-8 rounded-[var(--radius-sm)] border border-[var(--color-line)] bg-[var(--color-surface)] px-2 text-xs text-[var(--color-text)] outline-none focus:ring-2 focus:ring-[var(--color-accent)] cursor-pointer"
+              wrapperClassName="ui-custom-select--inline"
+              className="!min-h-8 h-8 !w-auto rounded-[var(--radius-sm)] border border-[var(--color-line)] bg-[var(--color-surface)] !px-2.5 !py-1 text-xs text-[var(--color-text)] cursor-pointer"
             >
               {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>
                   {size}
                 </option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
         )}
 

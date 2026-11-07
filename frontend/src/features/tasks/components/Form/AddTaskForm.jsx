@@ -1,4 +1,5 @@
 import FormDialog from "@/shared/components/FormDialog";
+import CustomSelect from "@/shared/components/CustomSelect";
 import { useMemo, useState } from "react";
 import AddCategoryForm from "./AddCategoryForm";
 import AddProjectForm from "./AddProjectForm";
@@ -119,7 +120,7 @@ const AddTaskForm = ({
             >
               Category
             </label>
-            <select
+            <CustomSelect
               id="category"
               value={categoryId || categories[0]?._id || ""}
               onChange={(e) => {
@@ -137,7 +138,7 @@ const AddTaskForm = ({
                 </option>
               ))}
               <option value="__add_more__">+ Add more</option>
-            </select>
+            </CustomSelect>
           </div>
 
           <div>
@@ -147,7 +148,7 @@ const AddTaskForm = ({
             >
               Project
             </label>
-            <select
+            <CustomSelect
               id="project"
               value={projectId}
               onChange={(e) => {
@@ -166,7 +167,7 @@ const AddTaskForm = ({
                 </option>
               ))}
               <option value="__add_project__">+ Add project</option>
-            </select>
+            </CustomSelect>
           </div>
         </div>
         <div className="workspace-form-schedule">
@@ -177,7 +178,7 @@ const AddTaskForm = ({
             >
               Priority
             </label>
-            <select
+            <CustomSelect
               id="priority"
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
@@ -186,7 +187,7 @@ const AddTaskForm = ({
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
               <option value="High">High</option>
-            </select>
+            </CustomSelect>
           </div>
           <div>
             <label

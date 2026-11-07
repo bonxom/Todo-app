@@ -1,5 +1,6 @@
 import { Fragment, useContext } from "react";
 import type { ProposalItem } from "@/shared/types/A2UI/taskProposal";
+import CustomSelect from "@/shared/components/CustomSelect";
 import {
   toDateTimeLocalValue,
   toISOStringLocal,
@@ -90,7 +91,8 @@ export function TaskList({ bare = false }: TaskListProps) {
         <div className="task-proposal-fields">
           <label className="task-proposal-field">
             <span>Ưu tiên</span>
-            <select
+            <CustomSelect
+              disabled={locked}
               aria-label={`Task ${index + 1} priority`}
               value={priority}
               onChange={(e) =>
@@ -102,11 +104,12 @@ export function TaskList({ bare = false }: TaskListProps) {
               <option value="Low">Thấp</option>
               <option value="Medium">Trung bình</option>
               <option value="High">Cao</option>
-            </select>
+            </CustomSelect>
           </label>
           <label className="task-proposal-field">
             <span>Danh mục</span>
-            <select
+            <CustomSelect
+              disabled={locked}
               aria-label={`Task ${index + 1} category`}
               value={item.categoryId ?? ""}
               onChange={(e) =>
@@ -123,11 +126,12 @@ export function TaskList({ bare = false }: TaskListProps) {
                   {c.name}
                 </option>
               ))}
-            </select>
+            </CustomSelect>
           </label>
           <label className="task-proposal-field">
             <span>Dự án</span>
-            <select
+            <CustomSelect
+              disabled={locked}
               aria-label={`Task ${index + 1} project`}
               value={item.projectId ?? ""}
               onChange={(e) =>
@@ -149,7 +153,7 @@ export function TaskList({ bare = false }: TaskListProps) {
                   {p.status === "completed" ? " (đã hoàn thành)" : ""}
                 </option>
               ))}
-            </select>
+            </CustomSelect>
           </label>
           {(["startDate", "dueDate"] as const).map((field) => (
             <label key={field} className="task-proposal-field">

@@ -1,4 +1,5 @@
 import { RotateCcw, Search, X } from "lucide-react";
+import CustomSelect from "@/shared/components/CustomSelect";
 
 const SORT_OPTIONS = [
   { id: "dueDate", label: "Due date (Earliest)" },
@@ -45,18 +46,18 @@ const TodoTaskToolbar = ({
         </div>
 
         {/* Sort Selector */}
-        <select
+        <CustomSelect
           value={sortBy}
           onChange={(e) => onSortChange(e.target.value)}
           aria-label="Sort tasks by"
-          className="ui-input !w-auto h-10 !min-h-[2.5rem] !py-2 !pl-3 !pr-8 text-xs font-semibold text-[var(--color-text-muted)] cursor-pointer"
+          className="ui-input !w-auto h-10 !min-h-[2.5rem] !py-2 !pl-3 !pr-3 text-xs font-semibold text-[var(--color-text-muted)] cursor-pointer"
         >
           {SORT_OPTIONS.map((opt) => (
             <option key={opt.id} value={opt.id}>
               {opt.label}
             </option>
           ))}
-        </select>
+        </CustomSelect>
       </div>
 
       {/* Active Filter Pills Bar */}

@@ -1,6 +1,7 @@
 import { ApiError } from "@/shared/services/apiError";
 import React, { useEffect, useState, useRef } from "react";
 import { Folder, AlertCircle } from "lucide-react";
+import CustomSelect from "@/shared/components/CustomSelect";
 import { aiService } from "@/shared/services/aiService";
 import { projectService } from "@/shared/services/projectService";
 import type { Project } from "@/shared/types/domain";
@@ -104,13 +105,13 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
         </p>
 
         <div className="mt-2">
-          <select
+          <CustomSelect
             id="agent-context-project-select"
             aria-label="Project Context"
             disabled={isPending || loadingProjects || !chat.conversationId}
             value={currentProjectId}
             onChange={handleProjectChange}
-            className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
           >
             <option value="">No project selected (Default)</option>
             {projects.map((proj) => (
@@ -119,7 +120,7 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
                 {proj.status === "completed" ? " (Completed)" : ""}
               </option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
 
         {isUnavailable && (
