@@ -3,6 +3,7 @@ import type mongoose from "mongoose";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
 import type { AgentInteraction, AgentMode } from "./IAgent.js";
 import type { ProposalIntent } from "./A2UI/ITaskProposal.js";
+import type { StoredUiSurface } from "./A2UI/IUiSurface.js";
 import type { AgentActivity } from "./IAgentActivity.js";
 
 export interface SkillReadMetadata {
@@ -25,6 +26,7 @@ export interface ChatTurn {
   intent?: ProposalIntent;
   requestIntent?: ProposalIntent | null;
   proposalId?: string;
+  uiSurface?: StoredUiSurface | null;
   contextProjectId?: mongoose.Types.ObjectId | null;
   executionToken: string;
   interactions: AgentInteraction[];

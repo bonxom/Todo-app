@@ -192,3 +192,53 @@ it("includes activities in resultFor with safe DTO and preserves them when final
   });
   expect(legacy.activities).toEqual([]);
 });
+
+it("includes surface in resultFor and turnMessages when provided in envelope", async () => {
+  const { resultFor, turnMessages } =
+    await import("../../utils/conversationView.js");
+  const surface = {
+    text: "Study Plan",
+    a2ui: {
+      protocolVersion: "v0.9" as const,
+      catalogId: "urn:orbit:a2ui:composition:v1",
+      surfaceId: "11111111-1111-4111-8111-111111111111",
+      messages: [],
+    },
+  };
+
+  const res = resultFor(
+    {
+      conversationId: "conv-1",
+      requestId: "r1",
+      status: "completed",
+      response: "Study Plan",
+      interactions: [],
+      expiresAt: new Date(Date.now() + 60000),
+    },
+    { surface, text: surface.text },
+  );
+  expect(res.surface).toEqual(surface);
+  expect(res.data).toBe("Study Plan");
+
+  const msgs = turnMessages(
+    {
+      _id: "turn-1",
+      conversationId: "conv-1",
+      userId: "507f1f77bcf86cd799439011" as never,
+      requestId: "r1",
+      sequence: 1,
+      userInput: "Show study plan",
+      status: "completed",
+      mode: "auto",
+      executionToken: "tok",
+      interactions: [],
+      response: "Study Plan",
+      messages: [],
+      expiresAt: new Date(Date.now() + 60000),
+      createdAt: new Date("2026-11-07T00:00:00.000Z"),
+      updatedAt: new Date("2026-11-07T00:00:00.000Z"),
+    },
+    { surface, text: surface.text },
+  );
+  expect(msgs.at(-1)).toMatchObject({ surface });
+});

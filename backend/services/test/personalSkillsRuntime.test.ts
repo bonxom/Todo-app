@@ -142,8 +142,8 @@ describe("Personal Skills runtime integration", () => {
       capturedFirstPayload = payload;
       expect(toolNames(payload)).toContain("list_skills");
       expect(toolNames(payload)).toContain("read_skill");
-      expect(toolNames(payload)).not.toContain("load_skill");
-      expect(toolNames(payload)).not.toContain("read_skill_document");
+      expect(toolNames(payload)).toContain("load_skill");
+      expect(toolNames(payload)).toContain("read_skill_document");
       return done("All good");
     });
 

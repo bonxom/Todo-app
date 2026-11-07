@@ -33,6 +33,7 @@ const schema = new Schema<ChatTurn>(
     intent: { type: String, enum: ["task_proposal"] },
     requestIntent: { type: String, enum: ["task_proposal", null] },
     proposalId: { type: String },
+    uiSurface: { type: Schema.Types.Mixed, default: null },
     contextProjectId: {
       type: Schema.Types.ObjectId,
       ref: "Project",

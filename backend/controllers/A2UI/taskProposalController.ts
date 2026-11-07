@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import { taskProposalActionService } from "../../services/A2UI/taskProposalActionService.js";
-import { taskProposalUiService } from "../../services/A2UI/taskProposalUiService.js";
-import { isTaskProposalsEnabled } from "../../config/A2UI/a2ui.js";
+import { uiPresentationService } from "../../services/A2UI/uiPresentationService.js";
 import type { ProposalAction } from "../../types/A2UI/ITaskProposal.js";
 
 export const handleProposalAction = async (
@@ -20,10 +19,7 @@ export const handleProposalAction = async (
     action,
   );
 
-  const envelope = taskProposalUiService.present(
-    resultView,
-    isTaskProposalsEnabled(),
-  );
+  const envelope = await uiPresentationService.forProposal(userId, resultView);
 
   res.status(200).json({
     success: true,

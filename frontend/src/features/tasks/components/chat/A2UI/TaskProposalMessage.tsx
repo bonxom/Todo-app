@@ -19,15 +19,17 @@ export function TaskProposalMessage({
 }: Props) {
   const session = useContext(AgentSessionContext);
   const reloadConversation = session?.chat.reload;
+  const setProposalDraft = session?.setProposalDraft;
+  const id = initialEnvelope.proposal.id;
   const onSuccess = useCallback(() => {
+    setProposalDraft?.(id, null);
     void reloadConversation?.();
-  }, [reloadConversation]);
+  }, [setProposalDraft, id, reloadConversation]);
   const proposal = useTaskProposal({
     onSuccess,
     conversationId: initialEnvelope.proposal.conversationId,
     initialEnvelope,
   });
-  const id = initialEnvelope.proposal.id;
   const [detail, setDetail] = useState<Task | null>(null);
   const [detailError, setDetailError] = useState("");
   const locked =
@@ -41,6 +43,10 @@ export function TaskProposalMessage({
   }, [id, proposal.dirty, proposal.pendingAction, onDirtyChange]);
   useEffect(() => () => onDirtyChange?.(id, false), [id, onDirtyChange]);
   const [confirmReload, setConfirmReload] = useState(false);
+  const runReload = useCallback(async () => {
+    setProposalDraft?.(id, null);
+    await proposal.reload();
+  }, [setProposalDraft, id, proposal]);
   return (
     <div>
       <TaskProposalSurface
@@ -56,7 +62,7 @@ export function TaskProposalMessage({
           }
         }}
         onReload={() =>
-          proposal.dirty ? setConfirmReload(true) : void proposal.reload()
+          proposal.dirty ? setConfirmReload(true) : void runReload()
         }
       />
       {(proposal.error || detailError) && (
@@ -77,7 +83,7 @@ export function TaskProposalMessage({
           type="button"
           disabled={proposal.isSubmitting}
           onClick={() =>
-            proposal.dirty ? setConfirmReload(true) : void proposal.reload()
+            proposal.dirty ? setConfirmReload(true) : void runReload()
           }
         >
           Tải lại đề xuất
@@ -92,7 +98,7 @@ export function TaskProposalMessage({
           <button
             onClick={() => {
               setConfirmReload(false);
-              void proposal.reload();
+              void runReload();
             }}
           >
             Bỏ thay đổi và tải lại
@@ -103,7 +109,7 @@ export function TaskProposalMessage({
         <TaskDetailForm
           task={detail}
           onClose={() => setDetail(null)}
-          onTaskUpdated={() => void proposal.reload()}
+          onTaskUpdated={() => void runReload()}
           onProjectCreated={() => undefined}
         />
       )}

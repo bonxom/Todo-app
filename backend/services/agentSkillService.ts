@@ -14,7 +14,11 @@ import type {
   SkillRegistry,
   SkillSummary,
 } from "../skills/types.js";
-import { requiredSkillDocuments } from "../skills/policy.js";
+import {
+  requiredSkillDocuments,
+  type AdditionalSkillRequirements,
+  type RequiredSkillDocument,
+} from "../skills/policy.js";
 
 export type ProviderContextSnapshot = Readonly<{
   requestId: string;
@@ -107,7 +111,27 @@ const hash = (text: string) =>
 
 export function createAgentSkillSession(
   registry: SkillRegistry,
+  requirements?: AdditionalSkillRequirements,
 ): AgentSkillSession {
+  const extraRequirements: ReadonlyMap<
+    string,
+    readonly RequiredSkillDocument[]
+  > =
+    requirements instanceof Map
+      ? new Map(
+          [...requirements.entries()].map(([k, v]) => [
+            k,
+            Object.freeze([...v]),
+          ]),
+        )
+      : requirements
+        ? new Map(
+            Object.entries(requirements).map(([k, v]) => [
+              k,
+              Object.freeze([...v]),
+            ]),
+          )
+        : new Map();
   const records = new Map<string, SkillDocument>();
   const loaded = new Map<string, SkillDocument>();
   const issued = new Map<string, ProviderContextSnapshot>();
@@ -193,7 +217,18 @@ export function createAgentSkillSession(
     toolName: string,
     snapshot: ProviderContextSnapshot,
   ): boolean {
-    const required = requiredSkillDocuments(toolName);
+    const base = requiredSkillDocuments(toolName);
+    const extra = extraRequirements.get(toolName);
+    const required =
+      base === undefined && extra === undefined
+        ? undefined
+        : base !== undefined && extra === undefined
+          ? base
+          : base === undefined && extra !== undefined
+            ? extra.length > 0
+              ? extra
+              : undefined
+            : [...base!, ...extra!];
     return (
       required !== undefined &&
       required.every((requirement) =>

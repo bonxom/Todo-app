@@ -3,6 +3,10 @@ export type RequiredSkillDocument = Readonly<{
   document: string;
 }>;
 
+export type AdditionalSkillRequirements =
+  | ReadonlyMap<string, readonly RequiredSkillDocument[]>
+  | Record<string, readonly RequiredSkillDocument[]>;
+
 const coreRequirements = Object.freeze([]) as readonly RequiredSkillDocument[];
 
 const businessTools = new Set([
@@ -29,4 +33,19 @@ export function requiredSkillDocuments(
 ): readonly RequiredSkillDocument[] | undefined {
   if (businessTools.has(name)) return coreRequirements;
   return specialistTools.get(name);
+}
+
+/** Merge per-session tool requirements without weakening any existing static policy. */
+export function resolveRequiredSkillDocuments(
+  name: string,
+  additional?: ReadonlyMap<string, readonly RequiredSkillDocument[]>,
+): readonly RequiredSkillDocument[] | undefined {
+  const base = requiredSkillDocuments(name);
+  const extra = additional?.get(name);
+  if (base === undefined && extra === undefined) return undefined;
+  if (base !== undefined && extra === undefined) return base;
+  if (base === undefined && extra !== undefined) {
+    return extra.length > 0 ? extra : undefined;
+  }
+  return [...base!, ...extra!];
 }

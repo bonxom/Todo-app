@@ -107,3 +107,27 @@ it("renders svg fenced code blocks in svg preview container", () => {
   expect(screen.getByRole("tab", { name: /preview/i })).toBeVisible();
   expect(screen.getByRole("tab", { name: /code/i })).toBeVisible();
 });
+
+it("previews a completed HTML document containing SVG as HTML", () => {
+  render(
+    <MarkdownText
+      text={
+        "```HTML\n<!doctype html><html><body><h1>Weekly dashboard</h1><svg></svg></body></html>\n```"
+      }
+    />,
+  );
+  expect(screen.getByTitle("HTML preview")).toHaveAttribute(
+    "sandbox",
+    "allow-scripts",
+  );
+  expect(screen.queryByTestId("svg-preview-canvas")).not.toBeInTheDocument();
+});
+
+it("keeps incomplete HTML fences as code until closed", () => {
+  const { rerender } = render(
+    <MarkdownText text={"```html\n<h1>Loading</h1>"} />,
+  );
+  expect(screen.queryByTitle("HTML preview")).not.toBeInTheDocument();
+  rerender(<MarkdownText text={"```html\n<h1>Loading</h1>\n```"} />);
+  expect(screen.getByTitle("HTML preview")).toBeInTheDocument();
+});

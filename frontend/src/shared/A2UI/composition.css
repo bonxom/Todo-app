@@ -1,0 +1,534 @@
+.a2ui-column {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.a2ui-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.a2ui-row > * {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.a2ui-gap-none {
+  gap: 0;
+}
+
+.a2ui-gap-sm {
+  gap: 0.5rem;
+}
+
+.a2ui-gap-md {
+  gap: 0.85rem;
+}
+
+.a2ui-gap-lg {
+  gap: 1.25rem;
+}
+
+/* Orbit Card Hierarchy */
+.a2ui-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--color-line, #d9dee5);
+  border-radius: var(--radius-xl, 12px);
+  background: color-mix(
+    in srgb,
+    var(--color-surface, #ffffff) 82%,
+    var(--color-surface-muted, #f1f3f5)
+  );
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(16, 24, 40, 0.06));
+}
+
+.a2ui-card--accent {
+  border-color: color-mix(
+    in srgb,
+    var(--color-accent, #456b8c) 38%,
+    var(--color-line, #d9dee5)
+  );
+  border-left: 3px solid var(--color-accent, #456b8c);
+  background: color-mix(
+    in srgb,
+    var(--color-accent-soft, #eaf1f6) 45%,
+    var(--color-surface, #ffffff)
+  );
+}
+
+.a2ui-card--muted {
+  background: var(--color-surface-muted, #f1f3f5);
+  box-shadow: none;
+}
+
+.a2ui-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--color-line, #d9dee5) 75%, transparent);
+}
+
+.a2ui-card-title {
+  margin: 0;
+  font-size: 0.925rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  color: var(--color-text, #1f2328);
+}
+
+.a2ui-card-subtitle {
+  margin: 0;
+  font-size: 0.775rem;
+  line-height: 1.4;
+  color: var(--color-text-muted, #667085);
+}
+
+.a2ui-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Typography */
+.a2ui-text {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.a2ui-text-normal {
+  font-size: 0.885rem;
+  line-height: 1.55;
+  color: var(--color-text, inherit);
+}
+
+.a2ui-text-muted {
+  font-size: 0.785rem;
+  line-height: 1.45;
+  color: var(--color-text-muted, #667085);
+}
+
+.a2ui-text-heading {
+  font-size: 1.025rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: var(--color-text, inherit);
+}
+
+/* Stat / KPI Metric Card */
+.a2ui-stat {
+  --stat-accent: var(--color-accent, #456b8c);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--color-line, #d9dee5);
+  border-radius: var(--radius-xl, 12px);
+  background: var(--color-surface, #ffffff);
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(16, 24, 40, 0.06));
+  min-width: 0;
+}
+
+.a2ui-stat--accent {
+  --stat-accent: var(--color-accent, #456b8c);
+}
+
+.a2ui-stat--success {
+  --stat-accent: var(--color-success, #2f7d5a);
+}
+
+.a2ui-stat--warning {
+  --stat-accent: var(--color-warning, #a46a2a);
+}
+
+.a2ui-stat--danger {
+  --stat-accent: var(--color-danger, #b25547);
+}
+
+.a2ui-stat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.a2ui-stat-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--stat-accent);
+  flex-shrink: 0;
+}
+
+.a2ui-stat-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #667085);
+  letter-spacing: 0.01em;
+}
+
+.a2ui-stat-value {
+  display: block;
+  font-size: 1.55rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  color: var(--color-text, #1f2328);
+  font-variant-numeric: tabular-nums;
+}
+
+.a2ui-stat-progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-surface-muted, #f1f3f5);
+  overflow: hidden;
+  margin-top: 0.15rem;
+}
+
+.a2ui-stat-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--stat-accent);
+  transition: width 220ms ease;
+}
+
+.a2ui-stat-caption {
+  font-size: 0.725rem;
+  line-height: 1.35;
+  color: var(--color-text-muted, #667085);
+}
+
+/* Table */
+.a2ui-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--color-line, #d9dee5);
+  border-radius: var(--radius-lg, 10px);
+  background: var(--color-surface, #ffffff);
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(16, 24, 40, 0.06));
+}
+
+.a2ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.825rem;
+  text-align: left;
+}
+
+.a2ui-table th,
+.a2ui-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--color-line, #d9dee5);
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.a2ui-table th {
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+  color: var(--color-text-muted, #667085);
+  background: var(--color-surface-muted, #f1f3f5);
+  white-space: nowrap;
+}
+
+.a2ui-table tbody tr:hover td {
+  background: color-mix(
+    in srgb,
+    var(--color-accent-soft, #eaf1f6) 42%,
+    transparent
+  );
+}
+
+.a2ui-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.a2ui-table-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+}
+
+/* Chart */
+.a2ui-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-line, #d9dee5);
+  border-radius: var(--radius-xl, 12px);
+  background: var(--color-surface, #ffffff);
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(16, 24, 40, 0.06));
+}
+
+.a2ui-chart-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.a2ui-chart-title {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: var(--color-text, #1f2328);
+}
+
+.a2ui-chart-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.a2ui-chart-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.725rem;
+  font-weight: 550;
+  color: var(--color-text-muted, #667085);
+}
+
+.a2ui-chart-pill i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.a2ui-chart-empty {
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #667085);
+  background: var(--color-surface-muted, #f1f3f5);
+  border-radius: var(--radius-sm, 8px);
+}
+
+/* Bar Chart */
+.a2ui-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.a2ui-bar-group {
+  display: grid;
+  grid-template-columns: minmax(72px, 110px) 1fr;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.a2ui-bar-label {
+  font-size: 0.78rem;
+  font-weight: 550;
+  color: var(--color-text, #1f2328);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.a2ui-bar-tracks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.a2ui-bar-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.a2ui-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-surface-muted, #f1f3f5);
+  overflow: hidden;
+}
+
+.a2ui-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 4px;
+  transition: width 220ms ease;
+}
+
+.a2ui-bar-val {
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted, #667085);
+  min-width: 2rem;
+  text-align: right;
+}
+
+/* Line Chart SVG */
+.a2ui-chart-svg {
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+  display: block;
+  overflow: visible;
+}
+
+.a2ui-chart-grid {
+  stroke: var(--color-line, #d9dee5);
+  stroke-dasharray: 3 3;
+  stroke-width: 1;
+}
+
+.a2ui-chart-axisText {
+  fill: var(--color-text-muted, #667085);
+  font-size: 10px;
+  font-family: var(--font-sans, inherit);
+}
+
+/* Doughnut Chart (Orbit Conic Ring) */
+.a2ui-donut-layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 1.15rem;
+}
+
+.a2ui-donut-ring {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.a2ui-donut-center {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: var(--color-surface, #ffffff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.25rem;
+}
+
+.a2ui-donut-center strong {
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text, #1f2328);
+}
+
+.a2ui-donut-center span {
+  font-size: 0.65rem;
+  color: var(--color-text-muted, #667085);
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.a2ui-chart-legendList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.a2ui-chart-legendRow {
+  display: grid;
+  grid-template-columns: 8px 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+}
+
+.a2ui-chart-legendRow i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.a2ui-chart-legendLabel {
+  color: var(--color-text, #1f2328);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.a2ui-chart-legendRow strong {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text, #1f2328);
+}
+
+.a2ui-chart-legendRow small {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted, #667085);
+  min-width: 2.1rem;
+  text-align: right;
+}
+
+/* Diagram */
+.a2ui-diagram {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.a2ui-diagram-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--color-text, #1f2328);
+}
+
+.a2ui-diagram .chat-diagram {
+  margin-block: 0;
+}
+
+@media (max-width: 480px) {
+  .a2ui-donut-layout {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .a2ui-chart-legendList {
+    width: 100%;
+  }
+}

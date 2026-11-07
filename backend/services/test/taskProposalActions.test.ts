@@ -11,6 +11,7 @@ vi.mock("../../mcp/repositories/writeRepository.js", () => ({
 
 import { taskProposalActionService } from "../A2UI/taskProposalActionService.js";
 import { taskProposalRepository } from "../../repositories/A2UI/taskProposalRepository.js";
+import { chatTurnRepository } from "../../repositories/chatTurnRepository.js";
 import { taskService } from "../taskService.js";
 import { categoryRepository } from "../../repositories/categoryRepository.js";
 import { projectRepository } from "../../repositories/projectRepository.js";
@@ -63,6 +64,7 @@ describe("taskProposalActionService unit tests", () => {
     vi.spyOn(taskProposalRepository, "initIndexes").mockResolvedValue(
       undefined,
     );
+    vi.spyOn(chatTurnRepository, "findByProposal").mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -482,6 +484,7 @@ describe("POST /api/ai/conversations/:conversationId/proposals/:proposalId/actio
     vi.spyOn(taskProposalRepository, "initIndexes").mockResolvedValue(
       undefined,
     );
+    vi.spyOn(chatTurnRepository, "findByProposal").mockResolvedValue(null);
     vi.spyOn(User, "findById").mockReturnValue({
       select: vi.fn().mockResolvedValue({
         _id: new mongoose.Types.ObjectId(userId),

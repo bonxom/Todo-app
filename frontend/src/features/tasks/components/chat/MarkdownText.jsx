@@ -1,4 +1,5 @@
 import CodeBlock from "./CodeBlock";
+import HtmlPreview from "./HtmlPreview";
 import MermaidDiagram from "./MermaidDiagram";
 import SvgPreview from "./SvgPreview";
 
@@ -92,19 +93,29 @@ const MarkdownText = ({ text }) => {
         codeLines.push(lines[index]);
         index++;
       }
-      if (index < lines.length && lines[index].startsWith("```")) {
+      const isClosed = index < lines.length && lines[index].startsWith("```");
+      if (isClosed) {
         index++; // Skip closing ```
       }
       const codeContent = codeLines.join("\n");
       const langLower = language.toLowerCase();
-      if (langLower === "mermaid") {
+      if (langLower === "html") {
+        blocks.push(
+          isClosed ? (
+            <HtmlPreview key={blockKey++} code={codeContent} />
+          ) : (
+            <CodeBlock
+              key={blockKey++}
+              code={codeContent}
+              language={language}
+            />
+          ),
+        );
+      } else if (langLower === "mermaid") {
         blocks.push(<MermaidDiagram key={blockKey++} code={codeContent} />);
       } else if (
         langLower === "svg" ||
-        ((langLower === "xml" ||
-          langLower === "html" ||
-          langLower === "text" ||
-          !language) &&
+        ((langLower === "xml" || langLower === "text" || !language) &&
           /<svg[\s>]/i.test(codeContent))
       ) {
         blocks.push(<SvgPreview key={blockKey++} code={codeContent} />);

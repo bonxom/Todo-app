@@ -1,6 +1,7 @@
 import type { AgentInteraction } from "../types/IAgent.js";
 import type { ChatTurn } from "../types/IChatTurn.js";
 import type { ProposalView } from "../types/A2UI/ITaskProposal.js";
+import type { UiSurfaceEnvelope } from "../types/A2UI/IUiSurface.js";
 import type { AgentActivity } from "../types/IAgentActivity.js";
 import { interruptedReply } from "./interruptedReply.js";
 import { decodeFilename } from "./attachmentFile.js";
@@ -41,7 +42,12 @@ export function resultFor(
     activities?: AgentActivity[];
     skillsRead?: ChatTurn["skillsRead"];
   },
-  envelope?: { proposal?: ProposalView; a2ui?: unknown; text?: string },
+  envelope?: {
+    surface?: UiSurfaceEnvelope;
+    proposal?: ProposalView;
+    a2ui?: unknown;
+    text?: string;
+  },
 ) {
   const expired =
     turn.status === "processing" && turn.expiresAt.getTime() <= Date.now();
@@ -63,6 +69,7 @@ export function resultFor(
     interaction
       ? { interaction: publicInteraction(interaction) }
       : {}),
+    ...(envelope?.surface ? { surface: envelope.surface } : {}),
     ...(envelope?.proposal ? { proposal: envelope.proposal } : {}),
     ...(envelope?.a2ui ? { a2ui: envelope.a2ui } : {}),
   };
@@ -70,7 +77,12 @@ export function resultFor(
 
 export function turnMessages(
   turn: ChatTurn,
-  envelope?: { proposal?: ProposalView; a2ui?: unknown; text?: string },
+  envelope?: {
+    surface?: UiSurfaceEnvelope;
+    proposal?: ProposalView;
+    a2ui?: unknown;
+    text?: string;
+  },
 ) {
   const expired =
     turn.status === "processing" && turn.expiresAt.getTime() < Date.now();
@@ -110,6 +122,7 @@ export function turnMessages(
               (turn.response || interruptedReply(turn.messages)),
             timestamp: turn.updatedAt.toISOString(),
             skillsRead: turn.skillsRead ?? [],
+            ...(envelope?.surface ? { surface: envelope.surface } : {}),
             ...(envelope?.proposal ? { proposal: envelope.proposal } : {}),
             ...(envelope?.a2ui ? { a2ui: envelope.a2ui } : {}),
           },

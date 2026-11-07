@@ -23,6 +23,7 @@ import type {
   ProposalItem,
   ProposalIntent,
 } from "../types/A2UI/ITaskProposal.js";
+import type { StoredUiSurface } from "../types/A2UI/IUiSurface.js";
 
 const turnId = (userId: string, requestId: string) =>
   createHash("sha256").update(`${userId}:${requestId}`).digest("hex");
@@ -64,6 +65,11 @@ export const chatTurnRepository = {
     id
       ? ChatTurn.findOne({ _id: id, userId, conversationId }).lean()
       : Promise.resolve(null),
+  findByProposal: (
+    userId: string,
+    conversationId: string,
+    proposalId: string,
+  ) => ChatTurn.findOne({ userId, conversationId, proposalId }).lean(),
   async claim(
     userId: string,
     conversationId: string,
@@ -263,6 +269,7 @@ export const chatTurnRepository = {
     executionToken?: string,
     interaction?: AgentInteraction,
     skillsRead?: SkillReadMetadata[],
+    uiSurface?: StoredUiSurface | null,
   ) {
     // Commit final response and release the conversation together.
     await mongoose.connection.transaction(async (session) => {
@@ -278,6 +285,7 @@ export const chatTurnRepository = {
             response,
             status,
             ...(skillsRead !== undefined ? { skillsRead } : {}),
+            ...(uiSurface !== undefined ? { uiSurface } : {}),
           },
           ...(interaction ? { $push: { interactions: interaction } } : {}),
         },
@@ -297,6 +305,7 @@ export const chatTurnRepository = {
     preparedItems: ProposalItem[],
     response: string,
     skillsRead?: SkillReadMetadata[],
+    uiSurface?: StoredUiSurface | null,
   ): Promise<ITaskProposal | null> {
     await taskProposalRepository.initIndexes();
     return mongoose.connection.transaction(async (session) => {
@@ -333,6 +342,7 @@ export const chatTurnRepository = {
             status: "completed",
             proposalId,
             ...(skillsRead !== undefined ? { skillsRead } : {}),
+            ...(uiSurface !== undefined ? { uiSurface } : {}),
           },
         },
         { session },

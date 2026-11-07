@@ -24,7 +24,8 @@ const response = (...calls: unknown[]) => ({
     { message: { role: "assistant", content: null, tool_calls: calls } },
   ],
 });
-const load = () => response(call("load", "load_skill", { skillId: "ielts" }));
+const load = () =>
+  response(call("load", "load_skill", { skillId: "ui-composition" }));
 const done = { choices: [{ message: { role: "assistant", content: "Done" } }] };
 const toolNames = (payload: { tools: { function: { name: string } }[] }) =>
   payload.tools.map((t) => t.function.name);
@@ -46,8 +47,8 @@ describe("request-bound skill gate", () => {
     const read = vi.spyOn(categoryService, "getAll").mockResolvedValue([]);
     completion
       .mockImplementationOnce(async (payload) => {
-        expect(toolNames(payload)).not.toContain("load_skill");
-        expect(toolNames(payload)).not.toContain("read_skill_document");
+        expect(toolNames(payload)).toContain("load_skill");
+        expect(toolNames(payload)).toContain("read_skill_document");
         expect(toolNames(payload)).toContain("orbit_list_categories");
         return response(call("read", "orbit_list_categories"));
       })
@@ -60,7 +61,7 @@ describe("request-bound skill gate", () => {
   it("exposes specialist tools only after their required skill is loaded", async () => {
     vi.spyOn(policy, "requiredSkillDocuments").mockImplementation((name) =>
       name === "orbit_list_categories"
-        ? [{ skillId: "ielts", document: "SKILL.md" }]
+        ? [{ skillId: "ui-composition", document: "SKILL.md" }]
         : undefined,
     );
     const read = vi.spyOn(categoryService, "getAll").mockResolvedValue([]);
@@ -81,7 +82,7 @@ describe("request-bound skill gate", () => {
         expect(toolNames(payload)).toContain("orbit_list_categories");
         expect(
           results(payload.messages).some((r) =>
-            r.text?.includes("IELTS practice"),
+            r.text?.includes("Orbit UI Composition Guidance"),
           ),
         ).toBe(true);
         return response(call("read", "orbit_list_categories"));
@@ -93,7 +94,7 @@ describe("request-bound skill gate", () => {
   it("blocks fabricated/direct and same-batch calls for tools requiring a skill, permitting a new call next response", async () => {
     vi.spyOn(policy, "requiredSkillDocuments").mockImplementation((name) =>
       name === "orbit_list_categories"
-        ? [{ skillId: "ielts", document: "SKILL.md" }]
+        ? [{ skillId: "ui-composition", document: "SKILL.md" }]
         : undefined,
     );
     const read = vi.spyOn(categoryService, "getAll").mockResolvedValue([]);
@@ -101,7 +102,7 @@ describe("request-bound skill gate", () => {
       .mockResolvedValueOnce(
         response(
           call("early", "orbit_list_categories"),
-          call("load", "load_skill", { skillId: "ielts" }),
+          call("load", "load_skill", { skillId: "ui-composition" }),
           call("same", "orbit_list_categories"),
         ),
       )
@@ -119,7 +120,7 @@ describe("request-bound skill gate", () => {
   it("does not trust prior-turn loader history for tools requiring a skill", async () => {
     vi.spyOn(policy, "requiredSkillDocuments").mockImplementation((name) =>
       name === "orbit_list_categories"
-        ? [{ skillId: "ielts", document: "SKILL.md" }]
+        ? [{ skillId: "ui-composition", document: "SKILL.md" }]
         : undefined,
     );
     let history: ChatCompletionMessageParam[] = [];
@@ -222,5 +223,27 @@ describe("request-bound skill gate", () => {
     expect(
       log.mock.calls.filter(([entry]) => entry.event === "agent_turn_metrics"),
     ).toHaveLength(1);
+  });
+
+  it("exposes load_skill for ui-composition when A2UI_COMPOSITION_ENABLED=true without specialist MCP tools", async () => {
+    vi.stubEnv("A2UI_COMPOSITION_ENABLED", "true");
+    completion
+      .mockImplementationOnce(async (payload) => {
+        expect(toolNames(payload)).toContain("load_skill");
+        expect(toolNames(payload)).not.toContain("present_ui");
+        expect(payload.messages[0].content).toContain("ui-composition");
+        return response(
+          call("load-ui", "load_skill", { skillId: "ui-composition" }),
+        );
+      })
+      .mockImplementationOnce(async (payload) => {
+        expect(
+          results(payload.messages).some(
+            (r) => r.skillId === "ui-composition" && r.text?.includes("Column"),
+          ),
+        ).toBe(true);
+        return done;
+      });
+    expect(await agentService.chatWithMcp("Show a plan", context)).toBe("Done");
   });
 });

@@ -8,7 +8,7 @@ import { conversationRepository as repository } from "../repositories/conversati
 import { chatTurnRepository } from "../repositories/chatTurnRepository.js";
 import { taskProposalRepository } from "../repositories/A2UI/taskProposalRepository.js";
 import { toProposalView } from "./A2UI/taskProposalGenerationService.js";
-import { taskProposalUiService } from "./A2UI/taskProposalUiService.js";
+import { uiPresentationService } from "./A2UI/uiPresentationService.js";
 import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
 import {
   deduplicateActivities,
@@ -99,16 +99,18 @@ export const conversationService = {
       before: hasMore ? visible[0].sequence : null,
       messages: visible.flatMap((turn) => {
         const proposal = proposalsByTurn.get(turn._id);
-        const envelope = proposal
-          ? taskProposalUiService.present(
-              toProposalView(proposal),
-              isTaskProposalsEnabled(),
-            )
-          : undefined;
+        const envelope =
+          proposal || turn.uiSurface
+            ? uiPresentationService.forTurn(
+                turn,
+                proposal ? toProposalView(proposal) : undefined,
+              )
+            : undefined;
         return turnMessages(
           turn,
           envelope
             ? {
+                surface: envelope.surface,
                 proposal: envelope.proposal,
                 a2ui: envelope.a2ui,
                 text: envelope.text,
@@ -186,15 +188,17 @@ export const conversationService = {
         userId,
         turn._id,
       );
-      const envelope = proposal
-        ? taskProposalUiService.present(
-            toProposalView(proposal),
-            isTaskProposalsEnabled(),
-          )
-        : undefined;
+      const turnObject = turn.toObject();
+      const envelope =
+        proposal || turnObject.uiSurface
+          ? uiPresentationService.forTurn(
+              turnObject,
+              proposal ? toProposalView(proposal) : undefined,
+            )
+          : undefined;
       return resultFor(
         {
-          ...turn.toObject(),
+          ...turnObject,
           activities: deduplicateActivities([
             ...((turn.activities as AgentActivity[]) ?? []),
             ...(proposal ? projectPersistedProposal(proposal) : []),
@@ -202,6 +206,7 @@ export const conversationService = {
         },
         envelope
           ? {
+              surface: envelope.surface,
               proposal: envelope.proposal,
               a2ui: envelope.a2ui,
               text: envelope.text,

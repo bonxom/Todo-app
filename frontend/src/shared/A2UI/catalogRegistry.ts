@@ -15,6 +15,7 @@ export interface SurfacePayload {
 export interface CatalogRegistration {
   catalog: Catalog<ReactCatalogComponent>;
   actions: readonly string[];
+  validatePayload?: (payload: SurfacePayload) => void;
   validate: (data: unknown) => void;
 }
 // Registrations are application code, never loaded from a model-supplied URL.
@@ -40,6 +41,7 @@ export class CatalogRegistry {
       new TextEncoder().encode(JSON.stringify(payload)).length > 128 * 1024
     )
       throw new Error("Invalid surface size");
+    registration.validatePayload?.(payload);
     const processor = new MessageProcessor<ReactCatalogComponent>(
       [registration.catalog],
       async (action) => {

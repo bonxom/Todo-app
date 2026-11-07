@@ -1,0 +1,6 @@
+{
+  "id": "ui-composition",
+  "description": "Compose accessible A2UI v0.9 presentation layouts and task proposal surfaces using the bounded Orbit component catalog.",
+  "entrypoint": "SKILL.md",
+  "documents": ["SKILL.md"]
+}

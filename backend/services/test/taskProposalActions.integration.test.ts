@@ -281,4 +281,124 @@ describe.skipIf(!uri)("Task proposal actions real MongoDB integration", () => {
     const res2 = await postAction(conversationId, proposalId, action2, 0);
     expect(res2.status).toBe(409);
   });
+
+  it("preserves composed surface layout across save and confirm actions and isolates layout from unrelated users", async () => {
+    vi.stubEnv("A2UI_COMPOSITION_ENABLED", "true");
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const specFixture = JSON.parse(
+      readFileSync(
+        resolve(
+          process.cwd(),
+          "../frontend/src/test/fixtures/ui-composition-spec.json",
+        ),
+        "utf-8",
+      ),
+    );
+
+    const conversationId = randomUUID();
+    const proposalId = randomUUID();
+    const turnId = `turn-composed-${randomUUID()}`;
+    const itemId = randomUUID();
+    const savedSurfaceId = randomUUID();
+
+    await ChatTurn.create({
+      _id: turnId,
+      userId: users[0],
+      conversationId,
+      requestId: randomUUID(),
+      sequence: 1,
+      userInput: "Plan IELTS",
+      status: "completed",
+      mode: "auto",
+      proposalId,
+      executionToken: "tok",
+      interactions: [],
+      response: specFixture.proposal.fallbackText,
+      messages: [],
+      uiSurface: {
+        catalogId: "urn:orbit:a2ui:composition:v1",
+        surfaceId: savedSurfaceId,
+        spec: specFixture.proposal,
+      },
+      expiresAt: new Date(Date.now() + 60_000),
+    });
+
+    await TaskProposal.create({
+      userId: users[0],
+      conversationId,
+      turnId,
+      proposalId,
+      revision: 1,
+      status: "draft",
+      protocolVersion: "v0.9",
+      catalogId: "urn:orbit:a2ui:task-proposals:v1",
+      items: [{ id: itemId, title: "Initial Task", priority: "Medium" }],
+      selectedItemIds: [itemId],
+      createdTasks: [],
+    });
+
+    // Save action preserves composed layout and increments revision
+    const saveRes = await postAction(
+      conversationId,
+      proposalId,
+      {
+        requestId: randomUUID(),
+        revision: 1,
+        action: "save",
+        items: [{ id: itemId, title: "Edited Task", priority: "High" }],
+        selectedItemIds: [itemId],
+      },
+      0,
+    );
+    expect(saveRes.status).toBe(200);
+    expect(saveRes.body.data.proposal.revision).toBe(2);
+    expect(saveRes.body.data.surface).toBeDefined();
+    expect(saveRes.body.data.surface.a2ui.surfaceId).toBe(savedSurfaceId);
+    expect(saveRes.body.data.surface.a2ui.catalogId).toBe(
+      "urn:orbit:a2ui:composition:v1",
+    );
+
+    // Unrelated user cannot access action or retrieve layout by proposalId
+    const strangerRes = await postAction(
+      conversationId,
+      proposalId,
+      {
+        requestId: randomUUID(),
+        revision: 2,
+        action: "cancel",
+      },
+      1,
+    );
+    expect(strangerRes.status).toBe(404);
+
+    // Confirm action preserves composed layout and projects created status; duplicate confirm creates no duplicate tasks
+    const confirmReqId = randomUUID();
+    const confirmAction = {
+      requestId: confirmReqId,
+      revision: 2,
+      action: "confirm",
+      items: [{ id: itemId, title: "Edited Task", priority: "High" }],
+      selectedItemIds: [itemId],
+    };
+    const confirmRes1 = await postAction(
+      conversationId,
+      proposalId,
+      confirmAction,
+      0,
+    );
+    expect(confirmRes1.status).toBe(200);
+    expect(confirmRes1.body.data.proposal.status).toBe("created");
+    expect(confirmRes1.body.data.surface?.a2ui.surfaceId).toBe(savedSurfaceId);
+
+    const confirmRes2 = await postAction(
+      conversationId,
+      proposalId,
+      confirmAction,
+      0,
+    );
+    expect(confirmRes2.status).toBe(200);
+    expect(confirmRes2.body.data.surface?.a2ui.surfaceId).toBe(savedSurfaceId);
+    expect(await Task.countDocuments({ title: "Edited Task" })).toBe(1);
+  });
 });

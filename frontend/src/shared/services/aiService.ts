@@ -15,10 +15,12 @@ import type {
 export const aiService = {
   getConversationCapabilities: async (): Promise<{
     taskProposals: boolean;
+    uiComposition?: boolean;
   }> => {
-    const response = await axiosInstance.get<{ taskProposals: boolean }>(
-      "/api/ai/conversations/capabilities",
-    );
+    const response = await axiosInstance.get<{
+      taskProposals: boolean;
+      uiComposition?: boolean;
+    }>("/api/ai/conversations/capabilities");
     return response.data;
   },
   applyProposalAction: async (
