@@ -1,5 +1,4 @@
 import {
-  readFileSync,
   mkdtempSync,
   mkdirSync,
   writeFileSync,
@@ -211,20 +210,12 @@ it("hashes metadata changes and rejects symlinked template documents", () => {
   }
 });
 
-it("keeps the template rubric guidance aligned with MCP compatibility documents", () => {
+it("keeps the template rubric guidance self-contained for IELTS and Gym", () => {
   const ielts = readTemplate("ielts");
-  for (const file of ["writing-rubric.md", "speaking-rubric.md"]) {
-    const source = readFileSync(
-      new URL(`../content/ielts/${file}`, import.meta.url),
-      "utf8",
-    );
-    const body = source.trim().split("\n\n").slice(2).join("\n\n");
-    expect(ielts.instructions).toContain(body);
-  }
-  expect(readTemplate("gym").instructions).toBe(
-    readFileSync(
-      new URL("../content/gym/SKILL.md", import.meta.url),
-      "utf8",
-    ).trim(),
+  expect(ielts.instructions).toContain("## Writing Feedback Reference");
+  expect(ielts.instructions).toContain("## Speaking Feedback Reference");
+  expect(ielts.instructions).toContain(
+    "Use the Writing and Speaking rubric sections below for assessment.",
   );
+  expect(readTemplate("gym").instructions).toContain("# Gym planning");
 });

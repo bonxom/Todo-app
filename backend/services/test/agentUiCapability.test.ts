@@ -26,10 +26,10 @@ describe("agentUiCapability", () => {
     vi.unstubAllEnvs();
   });
 
-  it("defaults A2UI_COMPOSITION_ENABLED to false while preserving A2UI_TASK_PROPOSALS_ENABLED default true", () => {
+  it("defaults A2UI_COMPOSITION_ENABLED and A2UI_TASK_PROPOSALS_ENABLED to true", () => {
     vi.stubEnv("A2UI_COMPOSITION_ENABLED", undefined);
     vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", undefined);
-    expect(isUiCompositionEnabled()).toBe(false);
+    expect(isUiCompositionEnabled()).toBe(true);
     expect(isTaskProposalsEnabled()).toBe(true);
     expect(UI_SKILL_IDS).toEqual(["ui-composition"]);
   });
@@ -171,11 +171,18 @@ describe("agentUiCapability", () => {
 
     // Verify all JSON examples in SKILL.md are valid against Task 1 schemas
     const skillDoc = registry.read("ui-composition");
+    expect(skillDoc.text).toContain("## 1. Choose the response mode");
+    expect(skillDoc.text).toContain("## 3. How to select components");
+    expect(skillDoc.text).toContain("### Common patterns");
     const jsonBlocks = [
       ...skillDoc.text.matchAll(/```json\r?\n([\s\S]*?)```/g),
     ].map((m) => JSON.parse(m[1]));
-    expect(jsonBlocks).toHaveLength(2);
+    expect(jsonBlocks).toHaveLength(3);
     expect(() => parseUiToolInput(jsonBlocks[0], "readonly")).not.toThrow();
-    expect(() => parseUiToolInput(jsonBlocks[1], "proposal")).not.toThrow();
+    expect(Array.isArray(jsonBlocks[1].items)).toBe(true);
+    expect(jsonBlocks[1].presentation).toBeUndefined();
+    expect(() =>
+      parseUiToolInput(jsonBlocks[2].presentation, "proposal"),
+    ).not.toThrow();
   });
 });

@@ -168,20 +168,11 @@ describe("skill registry", () => {
     try {
       process.chdir(tmpdir());
       const registry = await getSkillRegistry();
-      expect(registry.list().map((s) => s.id)).toEqual([
-        "gym",
-        "ielts",
-        "ui-composition",
-      ]);
-      expect(registry.read("gym").text).toContain("Gym planning");
-      expect(registry.read("ielts").text).toContain("writing-rubric.md");
-      expect(registry.read("ielts", "speaking-rubric.md").text).toContain(
-        "https://ielts.org/",
-      );
+      expect(registry.list().map((s) => s.id)).toEqual(["ui-composition"]);
       expect(registry.read("ui-composition").text).toContain(
         "TaskProposalActions",
       );
-      expect(registry.documents()).toHaveLength(5);
+      expect(registry.documents()).toHaveLength(1);
     } finally {
       process.chdir(before);
     }
