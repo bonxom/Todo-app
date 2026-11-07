@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useMemo, useState } from "react";
 import {
   Calendar as CalendarIcon,
@@ -25,6 +26,8 @@ const TaskListPanel = ({
   onTaskDelete,
   summaryOnly = false,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -79,7 +82,7 @@ const TaskListPanel = ({
               aria-hidden="true"
             />
             <h2 className="text-lg font-semibold text-[var(--color-text)]">
-              {isToday ? "Today's Tasks" : "Day Detail"}
+              {isToday ? t("todaySTasks") : t("dayDetail")}
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -89,7 +92,7 @@ const TaskListPanel = ({
               className="ui-btn-primary ui-btn-opposite-corners !min-h-[2.25rem] !px-3 !text-sm"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
-              Add
+              {t("add")}
             </button>
             <button
               type="button"
@@ -97,7 +100,7 @@ const TaskListPanel = ({
               className="ui-btn-secondary ui-btn-opposite-corners !min-h-[2.25rem] !px-3 !text-sm"
             >
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Generate
+              {t("generate")}
             </button>
           </div>
         </div>
@@ -109,16 +112,19 @@ const TaskListPanel = ({
         )}
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
-          <span className="ui-chip ui-tabular">Total: {tasks.length}</span>
+          <span className="ui-chip ui-tabular">
+            {t("total")}
+            {tasks.length}
+          </span>
           {tasks.filter((task) => task.status === "in-progress").length > 0 && (
             <span className="ui-chip ui-chip--accent ui-tabular">
-              In Progress:{" "}
+              {t("inProgress")}{" "}
               {tasks.filter((task) => task.status === "in-progress").length}
             </span>
           )}
           {tasks.filter((task) => task.status === "pending").length > 0 && (
             <span className="ui-chip ui-tabular">
-              Pending:{" "}
+              {t("pending")}{" "}
               {tasks.filter((task) => task.status === "pending").length}
             </span>
           )}
@@ -151,7 +157,7 @@ const TaskListPanel = ({
                 className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-line)] p-3 text-sm font-medium text-[var(--color-accent)] transition-[background-color,border-color,color] duration-150 hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]"
               >
                 <ChevronDown className="h-4 w-4" aria-hidden="true" />
-                <span>View all tasks</span>
+                <span>{t("viewAllTasks")}</span>
               </button>
             ) : null}
           </>
@@ -162,12 +168,12 @@ const TaskListPanel = ({
               aria-hidden="true"
             />
             <p className="text-base font-medium text-[var(--color-text)]">
-              No tasks for this day
+              {t("noTasksForThisDay")}
             </p>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">
               {isToday
-                ? "You are all caught up."
-                : "Select another date to view its exact-day workload."}
+                ? t("youAreAllCaughtUp")
+                : t("selectAnotherDateToViewItsExactDayWorkload")}
             </p>
           </div>
         )}

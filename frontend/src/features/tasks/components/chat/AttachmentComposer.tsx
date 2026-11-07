@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 export default function AttachmentComposer({
   files,
   disabled,
@@ -7,10 +8,15 @@ export default function AttachmentComposer({
   disabled: boolean;
   onRemove: (index: number) => void;
 }) {
+  const { t } = useTranslation("agent");
+
   if (!files.length) return null;
   return (
     <div className="shrink-0 space-y-2 px-3 pb-3 sm:px-4">
-      <ul aria-label="Selected attachments" className="flex flex-wrap gap-2">
+      <ul
+        aria-label={t("selectedAttachments")}
+        className="flex flex-wrap gap-2"
+      >
         {files.map((file, index) => (
           <li
             key={`${index}-${file.name}`}
@@ -25,7 +31,7 @@ export default function AttachmentComposer({
             <button
               type="button"
               className="ui-focus-ring shrink-0 rounded px-1"
-              aria-label={`Remove ${file.name}`}
+              aria-label={t("removeFile", { name: file.name })}
               disabled={disabled}
               onClick={() => onRemove(index)}
             >
@@ -35,8 +41,9 @@ export default function AttachmentComposer({
         ))}
       </ul>
       <p className="text-xs text-[var(--color-text-muted)]">
-        Add a message to send. Images are analyzed once so the assistant can use
-        their descriptions. Other files are stored for reference.
+        {t(
+          "addAMessageToSendImagesAreAnalyzedOnceSoTheAssistantCanUseTheirDescriptionsOtherFilesAreStoredForReference",
+        )}
       </p>
     </div>
   );

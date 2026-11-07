@@ -1,4 +1,7 @@
+import { useTranslation } from "react-i18next";
 const NotInProgressDialog = ({ isOpen, onClose }) => {
+  const { t } = useTranslation("workspace");
+
   if (!isOpen) return null;
 
   return (
@@ -19,16 +22,16 @@ const NotInProgressDialog = ({ isOpen, onClose }) => {
             id="not-in-progress-title"
             className="text-xl font-semibold text-[var(--color-text)]"
           >
-            Task Not In Progress
+            {t("taskNotInProgress")}
           </h2>
         </div>
         <div className="ui-modal-body">
           <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-            This task must be in progress before you can mark it as completed.
+            {t("thisTaskMustBeInProgressBeforeYouCanMarkItAsCompleted")}
           </p>
           <div className="flex justify-end">
             <button type="button" onClick={onClose} className="ui-btn-primary">
-              Got it
+              {t("gotIt")}
             </button>
           </div>
         </div>

@@ -240,14 +240,14 @@ describe("AgentSessionProvider", () => {
     );
     const user = userEvent.setup();
     render(<AgentSessionHarness />);
-    const confirm = await screen.findByRole("button", { name: /Xác nhận/ });
+    const confirm = await screen.findByRole("button", { name: /Confirm/ });
     await waitFor(() => expect(confirm).toBeEnabled());
     await user.click(confirm);
-    await screen.findByRole("button", { name: "Thử lại yêu cầu" });
+    await screen.findByRole("button", { name: "Retry request" });
     const first = vi.mocked(aiService.applyProposalAction).mock.calls[0][2];
     await user.click(screen.getByRole("button", { name: /Open in Agent/i }));
     await user.click(
-      await screen.findByRole("button", { name: "Thử lại yêu cầu" }),
+      await screen.findByRole("button", { name: "Retry request" }),
     );
     expect(vi.mocked(aiService.applyProposalAction).mock.calls[1][2]).toEqual(
       first,
@@ -264,9 +264,7 @@ describe("AgentSessionProvider", () => {
     expect(screen.getByRole("alertdialog")).toBeVisible();
 
     // Cancel discard keeps draft
-    await user.click(
-      screen.getByRole("button", { name: /tiếp tục chỉnh sửa/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /keep editing/i }));
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /message/i })).toHaveValue(
       "Unsaved draft message",
@@ -275,7 +273,7 @@ describe("AgentSessionProvider", () => {
     // Confirm discard clears draft
     await user.click(screen.getByRole("button", { name: "New chat" }));
     await user.click(
-      screen.getByRole("button", { name: /bỏ thay đổi và tiếp tục/i }),
+      screen.getByRole("button", { name: /discard changes and continue/i }),
     );
     await waitFor(() => {
       expect(screen.getByRole("textbox", { name: /message/i })).toHaveValue("");

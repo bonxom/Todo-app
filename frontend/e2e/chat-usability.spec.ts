@@ -222,7 +222,9 @@ test("mode is visible, welcome fills the draft, and new chat retains Ask", async
     .click();
   await page.getByRole("button", { name: "New chat", exact: true }).click();
   await expect(page.getByRole("alertdialog")).toBeVisible();
-  await page.getByRole("button", { name: "Bỏ thay đổi và tiếp tục" }).click();
+  await page
+    .getByRole("button", { name: "Discard changes and continue" })
+    .click();
   await expect(input).toHaveValue("");
   await page
     .getByRole("button", { name: "Expand options", exact: true })

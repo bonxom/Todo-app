@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { workspaceTranslate } from "@/features/tasks/utils/workspaceTranslation";
 import { useState, useEffect, useRef } from "react";
 import {
   CalendarClock,
@@ -18,7 +20,7 @@ import { getTaskProjectColor } from "@/shared/utils/projectColor";
 import { useTaskStatusEffect } from "@/features/tasks/hooks/useTaskStatusEffect";
 
 const formatLabel = (value) => {
-  if (!value) return "None";
+  if (!value) return workspaceTranslate("none");
 
   return value
     .split("-")
@@ -135,6 +137,8 @@ const CalendarTaskDetailCard = ({
   onTaskDelete,
   compact = false,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const statusEffectRef = useTaskStatusEffect(task);
   const [isCompletionUpdating, setIsCompletionUpdating] = useState(false);
   const [isGiveUpUpdating, setIsGiveUpUpdating] = useState(false);
@@ -164,7 +168,7 @@ const CalendarTaskDetailCard = ({
   const isMutedStatus = isCompleted || isGivenUp;
   const priorityStyle = getPriorityStyle(task.priority);
   const taskLevel =
-    { High: "Hard", Medium: "Moderate", Low: "Easy" }[task.priority] ||
+    { High: t("hard"), Medium: t("moderate"), Low: t("easy") }[task.priority] ||
     "Moderate";
   const statusStyle = getStatusStyle(task.status);
   const projectColor = task.projectId ? getTaskProjectColor(task) : null;
@@ -312,7 +316,11 @@ const CalendarTaskDetailCard = ({
 
         {!compact ? (
           <div className="flex flex-wrap gap-2 lg:justify-end">
-            <Badge style={priorityStyle}>{task.priority || "Medium"}</Badge>
+            <Badge style={priorityStyle}>
+              {t((task.priority || "Medium").toLowerCase(), {
+                defaultValue: task.priority,
+              })}
+            </Badge>
             <Badge icon={CircleDot} style={statusStyle}>
               {formatLabel(task.status)}
             </Badge>
@@ -344,7 +352,7 @@ const CalendarTaskDetailCard = ({
               style={chipStyles.neutral}
               className="min-w-0 max-w-full justify-self-start"
             >
-              {formatDateTime(task.dueDate, "No due date")}
+              {formatDateTime(task.dueDate, t("noDueDate"))}
             </Badge>
             <Badge
               compact
@@ -359,7 +367,7 @@ const CalendarTaskDetailCard = ({
         ) : (
           <div className="flex flex-wrap items-center gap-2">
             <Badge icon={CalendarClock} style={chipStyles.neutral}>
-              {formatDateTime(task.dueDate, "No due date")}
+              {formatDateTime(task.dueDate, t("noDueDate"))}
             </Badge>
             <Badge icon={FolderKanban} style={chipStyles.accent}>
               {projectName}
@@ -379,7 +387,7 @@ const CalendarTaskDetailCard = ({
               onClick={handleToggleCompletion}
               disabled={isCompletionUpdating || isFlushing}
               className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-dashed border-[var(--color-line)] bg-[var(--color-surface)] px-2.5 py-1 text-xs font-semibold text-[var(--color-text-muted)] shadow-sm transition-all duration-150 ease-out hover:scale-105 hover:border-solid hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)] hover:shadow-md active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-              aria-label={`Accept ${task.title}`}
+              aria-label={t("messages.acceptV0", { v0: task.title })}
             >
               {isCompletionUpdating ? (
                 <Loader2
@@ -389,14 +397,14 @@ const CalendarTaskDetailCard = ({
               ) : (
                 <Check className="h-3.5 w-3.5" aria-hidden="true" />
               )}
-              <span>Accept</span>
+              <span>{t("accept")}</span>
             </button>
             <button
               type="button"
               onClick={handleToggleGiveUp}
               disabled={isGiveUpUpdating || isFlushing}
               className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-dashed border-[var(--color-line)] bg-[var(--color-surface)] px-2.5 py-1 text-xs font-semibold text-[var(--color-text-muted)] shadow-sm transition-all duration-150 ease-out hover:scale-105 hover:border-solid hover:border-[var(--color-danger)] hover:bg-[var(--color-danger-soft)] hover:text-[var(--color-danger)] hover:shadow-md active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-              aria-label={`Deny ${task.title}`}
+              aria-label={t("messages.denyV0", { v0: task.title })}
             >
               {isGiveUpUpdating ? (
                 <Loader2
@@ -406,7 +414,7 @@ const CalendarTaskDetailCard = ({
               ) : (
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
               )}
-              <span>{isFlushing ? "Denying…" : "Deny"}</span>
+              <span>{isFlushing ? t("denying") : t("deny")}</span>
             </button>
           </div>
         ) : null}
@@ -421,7 +429,8 @@ const CalendarTaskDetailCard = ({
       data-status={task.status}
       data-calendar-task-card
       onClick={(event) => {
-        if (!event.target.closest("button, a, input, select, textarea")) handleOpen();
+        if (!event.target.closest("button, a, input, select, textarea"))
+          handleOpen();
       }}
       draggable={Boolean(taskId) && !isFlushing}
       onDragStart={handleDragStart}
@@ -438,17 +447,19 @@ const CalendarTaskDetailCard = ({
         <span
           className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full ring-2 ring-[var(--color-surface)]"
           style={{ background: priorityStyle.color }}
-          aria-label={`Task level: ${taskLevel}`}
-          title={`Task level: ${taskLevel}`}
+          aria-label={t("messages.taskLevelV0", { v0: taskLevel })}
+          title={t("messages.taskLevelV0", { v0: taskLevel })}
         />
       ) : null}
       {compact ? (
         <div
           className="calendar-task-side-badges"
-          aria-label="Task level and status"
+          aria-label={t("taskLevelAndStatus")}
         >
           <Badge compact style={priorityStyle}>
-            {task.priority || "Medium"}
+            {t((task.priority || "Medium").toLowerCase(), {
+              defaultValue: task.priority,
+            })}
           </Badge>
           <Badge compact icon={CircleDot} style={statusStyle}>
             {formatLabel(task.status)}
@@ -475,11 +486,11 @@ const CalendarTaskDetailCard = ({
                 aria-pressed={isCompleted}
                 aria-label={
                   isCompleted
-                    ? `Mark ${task.title} as in progress`
-                    : `Mark ${task.title} as completed`
+                    ? t("messages.markV0AsInProgress", { v0: task.title })
+                    : t("messages.markV0AsCompleted", { v0: task.title })
                 }
                 title={
-                  isCompleted ? "Mark as in progress" : "Mark as completed"
+                  isCompleted ? t("markAsInProgress") : t("markAsCompleted")
                 }
                 className={`ui-focus-ring relative inline-flex h-6 w-6 items-center justify-center rounded-lg border transition-all duration-200 ease-out hover:scale-110 active:scale-90 disabled:cursor-wait disabled:opacity-70 disabled:hover:scale-100 ${
                   justCompleted ? "scale-125" : "scale-100"
@@ -507,10 +518,14 @@ const CalendarTaskDetailCard = ({
               aria-pressed={isGivenUp}
               aria-label={
                 isGivenUp
-                  ? `Restore ${task.title} to in progress`
-                  : `Give up ${task.title}`
+                  ? t("messages.restoreV0ToInProgress", { v0: task.title })
+                  : t("messages.giveUpV0", { v0: task.title })
               }
-              title={isGivenUp ? "Restore to in progress" : "Give up task"}
+              title={
+                isGivenUp
+                  ? t("restoreToInProgress")
+                  : t("giveUpTaskCasedGiveuptask")
+              }
               className={`ui-focus-ring inline-flex h-6 w-6 items-center justify-center rounded-lg border transition-all duration-200 ease-out hover:scale-110 active:scale-90 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100 ${
                 isGivenUp
                   ? "border-[var(--color-danger)] bg-[var(--color-danger)] text-[var(--color-on-status,#fff)] shadow-sm"
@@ -527,12 +542,12 @@ const CalendarTaskDetailCard = ({
         ) : null}
 
         <div className="min-w-0 flex-1">
-          {(onEdit || onClick) ? (
+          {onEdit || onClick ? (
             <button
               type="button"
               onClick={handleOpen}
               className="ui-focus-ring w-full rounded-[12px] px-1 py-0.5 text-left transition-[background-color] duration-150 hover:bg-[var(--color-surface-muted)] active:bg-[var(--color-surface-muted)]"
-              aria-label={`Open ${task.title}`}
+              aria-label={t("messages.openV0", { v0: task.title })}
             >
               {details}
             </button>
@@ -544,7 +559,7 @@ const CalendarTaskDetailCard = ({
         {mode === "modal" ? (
           <div className="flex shrink-0 items-center gap-1">
             <IconAction
-              label={`Edit ${task.title}`}
+              label={t("messages.editV0", { v0: task.title })}
               onClick={(event) => {
                 event.stopPropagation();
                 onEdit?.(task);
@@ -554,7 +569,7 @@ const CalendarTaskDetailCard = ({
               <Pencil className="h-4 w-4" aria-hidden="true" />
             </IconAction>
             <IconAction
-              label={`Delete ${task.title}`}
+              label={t("messages.deleteV0", { v0: task.title })}
               onClick={(event) => {
                 event.stopPropagation();
                 onDelete?.(taskId);

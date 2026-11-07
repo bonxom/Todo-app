@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   Paperclip,
@@ -9,6 +10,8 @@ import {
 } from "lucide-react";
 
 export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
+  const { t } = useTranslation("agent");
+
   const [open, setOpen] = useState(false);
   const root = useRef(null);
   const toggle = useRef(null);
@@ -43,12 +46,12 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
             ref={toggle}
             type="button"
             className="chat-tool ui-focus-ring"
-            aria-label={open ? "Collapse options" : "Expand options"}
+            aria-label={open ? t("collapseOptions") : t("expandOptions")}
             aria-expanded={open}
             aria-controls={open ? optionsId : undefined}
             disabled={disabled}
             onClick={() => setOpen(!open)}
-            title={open ? "Hide tools" : "Show tools"}
+            title={open ? t("hideTools") : t("showTools")}
           >
             <ChevronRight
               size={18}
@@ -61,13 +64,13 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
               id={optionsId}
               className="chat-expanded-icons"
               role="group"
-              aria-label="Chat tools"
+              aria-label={t("chatTools")}
             >
               <button
                 type="button"
                 className="chat-tool ui-focus-ring"
-                title="Attach image"
-                aria-label="Attach image"
+                title={t("attachImage")}
+                aria-label={t("attachImage")}
                 onClick={() => {
                   onImages();
                   setOpen(false);
@@ -79,8 +82,8 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
               <button
                 type="button"
                 className="chat-tool ui-focus-ring"
-                title="Attach file"
-                aria-label="Attach file"
+                title={t("attachFile")}
+                aria-label={t("attachFile")}
                 onClick={() => {
                   onFiles();
                   setOpen(false);
@@ -94,8 +97,14 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
                   type="button"
                   className={`chat-tool chat-mode-toggle ui-focus-ring chat-mode-toggle--${chat.mode}`}
                   aria-pressed={chat.mode === "ask"}
-                  aria-label={`Agent mode: ${chat.mode}`}
-                  title={`${chat.mode === "auto" ? "Auto" : "Ask"} mode — click to switch`}
+                  aria-label={t("agentMode", {
+                    mode: t(
+                      chat.mode === "auto" ? "autoModeValue" : "askModeValue",
+                    ),
+                  })}
+                  title={t("switchMode", {
+                    mode: t(chat.mode === "auto" ? "auto" : "ask"),
+                  })}
                   disabled={chat.locked}
                   onClick={() =>
                     chat.setMode(chat.mode === "auto" ? "ask" : "auto")

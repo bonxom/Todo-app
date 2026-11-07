@@ -1,3 +1,6 @@
+import { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
+import i18n from "@/shared/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import { aiService } from "@/shared/services/aiService";
@@ -7,10 +10,14 @@ function relativeTime(value) {
     0,
     Math.floor((Date.now() - new Date(value).getTime()) / 60000),
   );
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m`;
-  if (minutes < 1440) return `${Math.floor(minutes / 60)}h`;
-  return `${Math.floor(minutes / 1440)}d`;
+  if (minutes < 1) return i18n.t("agent:justNow");
+  const formatter = new Intl.RelativeTimeFormat(getLocale(), {
+    numeric: "auto",
+  });
+  if (minutes < 60) return formatter.format(-minutes, "minute");
+  if (minutes < 1440)
+    return formatter.format(-Math.floor(minutes / 60), "hour");
+  return formatter.format(-Math.floor(minutes / 1440), "day");
 }
 
 export default function RecentConversations({
@@ -19,6 +26,8 @@ export default function RecentConversations({
   expanded = false,
   onClose,
 }) {
+  const { t } = useTranslation("agent");
+
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -61,13 +70,13 @@ export default function RecentConversations({
   if (loading)
     return (
       <p role="status" className="py-4 text-sm text-[var(--color-text-muted)]">
-        Loading conversations…
+        {t("loadingConversations")}
       </p>
     );
   if (error)
     return (
       <div className="space-y-2 py-4 text-sm text-[var(--color-text-muted)]">
-        <p>Unable to load previous conversations.</p>
+        <p>{t("unableToLoadPreviousConversations")}</p>
         <button
           type="button"
           className="ui-focus-ring rounded text-[var(--color-accent)]"
@@ -77,20 +86,20 @@ export default function RecentConversations({
             setAttempt((value) => value + 1);
           }}
         >
-          Try again
+          {t("tryAgain")}
         </button>
       </div>
     );
   if (!conversations.length)
     return expanded ? (
       <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">
-        No conversations yet.
+        {t("noConversationsYetLabel")}
       </div>
     ) : null;
 
   return (
     <section
-      aria-label="Recent conversations"
+      aria-label={t("recentConversations")}
       className={`flex min-h-0 flex-col py-2 ${expanded ? "flex-1" : "chat-recent"}`}
       onKeyDown={(event) => {
         if (showAll && event.key === "Escape") {
@@ -99,7 +108,7 @@ export default function RecentConversations({
         }
       }}
     >
-      <h2 className="ui-chat-history-label mb-2">Recent conversations</h2>
+      <h2 className="ui-chat-history-label mb-2">{t("recentConversations")}</h2>
       <div
         className={
           showAll
@@ -117,8 +126,8 @@ export default function RecentConversations({
               <input
                 ref={searchRef}
                 type="search"
-                aria-label="Search recent chats"
-                placeholder="Search conversations…"
+                aria-label={t("searchRecentChats")}
+                placeholder={t("searchConversationsLabel")}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 className="ui-focus-ring min-w-0 flex-1 rounded bg-transparent px-1 py-1 text-sm text-[var(--color-text)] outline-none"
@@ -126,13 +135,13 @@ export default function RecentConversations({
             </div>
             <div className="flex shrink-0 items-center justify-between px-3 py-2">
               <span className="text-xs font-medium text-[var(--color-text-muted)]">
-                All conversations
+                {t("allConversations")}
               </span>
               <button
                 type="button"
                 onClick={closeHistory}
-                aria-label="Close chat history"
-                title="Close chat history"
+                aria-label={t("closeChatHistory")}
+                title={t("closeChatHistory")}
                 className="ui-focus-ring rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
               >
                 <X className="h-4 w-4" />
@@ -170,7 +179,9 @@ export default function RecentConversations({
                 </span>
                 <time
                   dateTime={conversation.updatedAt}
-                  title={new Date(conversation.updatedAt).toLocaleString()}
+                  title={new Date(conversation.updatedAt).toLocaleString(
+                    getLocale(),
+                  )}
                   className="shrink-0 text-xs text-[var(--color-text-muted)]"
                 >
                   {relativeTime(conversation.updatedAt)}
@@ -189,19 +200,19 @@ export default function RecentConversations({
               role="status"
               className="px-3 py-6 text-center text-sm text-[var(--color-text-muted)]"
             >
-              No conversations found
+              {t("noConversationsFound")}
             </p>
           )}
       </div>
       {!showAll && conversations.length > 3 && (
         <button
           ref={viewAllRef}
-          aria-label={`View all (${conversations.length})`}
+          aria-label={t("viewAll", { count: conversations.length })}
           type="button"
           className="ui-chat-history-label ui-focus-ring mt-2 self-start"
           onClick={() => setShowAll(true)}
         >
-          View all ({conversations.length})
+          {t("viewAll", { count: conversations.length })}
         </button>
       )}
     </section>

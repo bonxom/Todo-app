@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
 import { attachmentService } from "@/shared/services/attachmentService";
 import type { ChatAttachment } from "@/shared/types/domain";
@@ -8,6 +9,8 @@ function AttachmentItem({
   conversationId: string;
   file: ChatAttachment;
 }) {
+  const { t } = useTranslation("agent");
+
   const [url, setUrl] = useState<string>();
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -88,14 +91,14 @@ function AttachmentItem({
         className="ui-focus-ring block max-w-full truncate rounded text-left text-xs underline"
         disabled={loading}
         onClick={download}
-        aria-label={`Download ${file.name}`}
+        aria-label={t("downloadFile", { name: file.name })}
       >
-        {loading ? "Loading…" : file.name} ·{" "}
+        {loading ? t("loading") : file.name} ·{" "}
         {Math.max(1, Math.ceil(file.size / 1024))} KB
       </button>
       {error && (
         <div role="alert" className="mt-1 text-xs">
-          Unable to load the file.{" "}
+          {t("unableToLoadTheFile")}{" "}
           <button
             type="button"
             className="ui-focus-ring underline"
@@ -103,7 +106,7 @@ function AttachmentItem({
               isImage ? setRevision((value) => value + 1) : void download()
             }
           >
-            Try again
+            {t("tryAgain")}
           </button>
         </div>
       )}
@@ -117,9 +120,11 @@ export default function AttachmentList({
   conversationId?: string;
   files?: ChatAttachment[];
 }) {
+  const { t } = useTranslation("agent");
+
   if (!conversationId || !files?.length) return null;
   return (
-    <ul aria-label="Message attachments">
+    <ul aria-label={t("messageAttachments")}>
       {files.map((file) => (
         <AttachmentItem
           key={`${conversationId}-${file.id}`}

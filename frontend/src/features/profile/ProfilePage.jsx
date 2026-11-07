@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useMemo } from "react";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileInfo from "./components/ProfileInfo";
@@ -15,6 +16,7 @@ import {
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const ProfilePage = () => {
+  const { t } = useTranslation("account");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
@@ -61,10 +63,7 @@ const ProfilePage = () => {
     } catch (error) {
       console.error("Error updating profile:", error);
       alert(
-        getApiErrorMessage(
-          error,
-          "Failed to update profile. Please try again.",
-        ),
+        getApiErrorMessage(error, t("failedToUpdateProfilePleaseTryAgain")),
       );
     }
   };
@@ -77,14 +76,11 @@ const ProfilePage = () => {
     try {
       await changePasswordMutation.mutateAsync(passwordData);
       setIsPasswordModalOpen(false);
-      alert("Password changed successfully!");
+      alert(t("passwordChangedSuccessfully"));
     } catch (error) {
       console.error("Error changing password:", error);
       alert(
-        getApiErrorMessage(
-          error,
-          "Failed to change password. Please try again.",
-        ),
+        getApiErrorMessage(error, t("failedToChangePasswordPleaseTryAgain")),
       );
     }
   };
@@ -94,7 +90,7 @@ const ProfilePage = () => {
       <div className="ui-page-shell">
         <section className="ui-section-card ui-card-padding" aria-live="polite">
           <p className="m-0 text-sm text-[var(--color-text-muted)]">
-            Loading profile…
+            {t("loadingProfile")}
           </p>
         </section>
       </div>
@@ -106,7 +102,7 @@ const ProfilePage = () => {
       <div className="ui-page-shell">
         <section className="ui-section-card ui-card-padding">
           <p className="m-0 text-sm font-medium text-[var(--color-danger)]">
-            Failed to load profile details.
+            {t("failedToLoadProfileDetails")}
           </p>
         </section>
       </div>
@@ -132,11 +128,12 @@ const ProfilePage = () => {
 
       <div className="ui-page-shell">
         <header className="ui-page-header">
-          <p className="ui-page-kicker">Account</p>
-          <h1 className="ui-page-title">Account Settings</h1>
+          <p className="ui-page-kicker">{t("account")}</p>
+          <h1 className="ui-page-title">{t("accountSettings")}</h1>
           <p className="ui-page-description">
-            Review your profile details, keep account information current, and
-            manage the credentials you use to sign in.
+            {t(
+              "reviewYourProfileDetailsKeepAccountInformationCurrentAndManageTheCredentialsYouUseToSignIn",
+            )}
           </p>
         </header>
 

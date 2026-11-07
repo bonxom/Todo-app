@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -27,6 +28,8 @@ export function TemplateGallery({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation("agent");
+
   const navigate = useNavigate();
   const sessionKey = useSessionKey();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -70,10 +73,12 @@ export function TemplateGallery({
         await reloadTemplates();
         await reloadDetail();
         setImportError(
-          "Check your skill limit and review the updated template version before trying again.",
+          t(
+            "checkYourSkillLimitAndReviewTheUpdatedTemplateVersionBeforeTryingAgain",
+          ),
         );
       } else
-        setImportError("Unable to add template. Check your connection and try again.");
+        setImportError(t("unableToAddTemplateCheckYourConnectionAndTryAgain"));
     }
   };
   if (!isOpen) return null;
@@ -83,7 +88,7 @@ export function TemplateGallery({
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Skill templates gallery"
+      aria-label={t("skillTemplatesGallery")}
     >
       <div
         className={`skill-gallery ${showPreview ? "skill-gallery--preview" : ""}`}
@@ -91,34 +96,37 @@ export function TemplateGallery({
         <header className="skill-gallery-header">
           <div>
             <span className="skill-eyebrow">
-              Start from a pre-built guideline
+              {t("startFromAPreBuiltGuideline")}
             </span>
-            <h2>Skill Templates Gallery</h2>
+            <h2>{t("skillTemplatesGalleryLabel")}</h2>
           </div>
           <button
             className="skills-icon-button"
             onClick={close}
-            aria-label="Close templates gallery"
+            aria-label={t("closeTemplatesGallery")}
           >
             <X size={21} />
           </button>
         </header>
         <div className="skill-gallery-body">
-          <aside className="skill-template-list" aria-label="Skill templates">
-            <p>Select a template, then customize it to your needs.</p>
+          <aside
+            className="skill-template-list"
+            aria-label={t("skillTemplates")}
+          >
+            <p>{t("selectATemplateThenCustomizeItToYourNeeds")}</p>
             {isLoading ? (
               <p role="status">
                 <Loader2 className="animate-spin" size={20} />
-                Loading templates…
+                {t("loadingTemplates")}
               </p>
             ) : error ? (
               <div role="alert">
-                <p>Unable to load templates.</p>
+                <p>{t("unableToLoadTemplates")}</p>
                 <button
                   className="ui-btn-secondary"
                   onClick={() => void reloadTemplates()}
                 >
-                  Try again
+                  {t("tryAgain")}
                 </button>
               </div>
             ) : (
@@ -126,7 +134,7 @@ export function TemplateGallery({
                 <button
                   className="skill-template-choice"
                   key={template.id}
-                  aria-label={`View template ${template.name}`}
+                  aria-label={t("viewTemplate", { name: template.name })}
                   aria-pressed={activeId === template.id}
                   onClick={() => {
                     setSelectedId(template.id);
@@ -147,36 +155,41 @@ export function TemplateGallery({
             )}
             <div className="skill-template-note">
               <Check size={16} />
-              <span>Your own private copy. Edit freely after adding.</span>
+              <span>{t("yourOwnPrivateCopyEditFreelyAfterAdding")}</span>
             </div>
           </aside>
-          <section className="skill-template-preview" aria-label="Template content">
+          <section
+            className="skill-template-preview"
+            aria-label={t("templateContent")}
+          >
             <button
               className="skill-back-link skill-template-back"
               onClick={() => setShowPreview(false)}
             >
               <ArrowLeft size={16} />
-              Back to templates
+              {t("backToTemplates")}
             </button>
             {loadingDetail ? (
               <div className="skills-empty" role="status">
                 <Loader2 className="animate-spin" />
-                Loading template content…
+                {t("loadingTemplateContent")}
               </div>
             ) : detailError ? (
               <div className="skills-empty" role="alert">
-                <p>Unable to load template content.</p>
+                <p>{t("unableToLoadTemplateContent")}</p>
                 <button
                   className="ui-btn-secondary"
                   onClick={() => void reloadDetail()}
                 >
-                  Try again
+                  {t("tryAgain")}
                 </button>
               </div>
             ) : detail ? (
               <>
                 <div className="skill-template-preview-heading">
-                  <span className="skill-eyebrow">Instruction preview</span>
+                  <span className="skill-eyebrow">
+                    {t("instructionPreview")}
+                  </span>
                   <h3>{detail.name}</h3>
                   <p>{detail.description}</p>
                 </div>
@@ -187,7 +200,7 @@ export function TemplateGallery({
             ) : (
               <div className="skills-empty">
                 <BookOpen />
-                <p>Select a template to view instructions.</p>
+                <p>{t("selectATemplateToViewInstructions")}</p>
               </div>
             )}
           </section>
@@ -198,7 +211,7 @@ export function TemplateGallery({
           </p>
         )}
         <footer className="skill-gallery-footer">
-          <p>Templates are only used after you add them to your library.</p>
+          <p>{t("templatesAreOnlyUsedAfterYouAddThemToYourLibrary")}</p>
           <button
             className="ui-btn-primary"
             onClick={() => void handleImport()}
@@ -209,7 +222,7 @@ export function TemplateGallery({
             ) : (
               <Plus size={17} />
             )}
-            Add to my skills
+            {t("addToMySkills")}
           </button>
         </footer>
       </div>

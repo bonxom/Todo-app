@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import {
   CircleCheckBig,
@@ -17,6 +18,8 @@ const TaskItem = ({
   onGiveUp,
   onDelete,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const [isHovered, setIsHovered] = useState(false);
 
   const getDaysLeft = (deadline) => {
@@ -36,10 +39,11 @@ const TaskItem = ({
   };
 
   const formatDaysLeft = (daysLeft) => {
-    if (daysLeft < 0) return `${Math.abs(daysLeft)}d overdue`;
-    if (daysLeft === 0) return "Due today";
-    if (daysLeft === 1) return "1 day left";
-    return `${daysLeft}d left`;
+    if (daysLeft < 0)
+      return t("messages.v0DOverdue", { v0: Math.abs(daysLeft) });
+    if (daysLeft === 0) return t("dueToday");
+    if (daysLeft === 1) return t("oneDayLeft");
+    return t("messages.v0DLeft", { v0: daysLeft });
   };
 
   const isPending = task.status === "pending";
@@ -59,8 +63,8 @@ const TaskItem = ({
         className="mt-1 h-5 w-5 rounded border-[var(--color-line)] accent-[var(--color-accent)] cursor-pointer"
         aria-label={
           task.status === "completed"
-            ? `Mark ${task.title} as in progress`
-            : `Mark ${task.title} as completed`
+            ? t("messages.markV0AsInProgress", { v0: task.title })
+            : t("messages.markV0AsCompleted", { v0: task.title })
         }
       />
 
@@ -89,10 +93,10 @@ const TaskItem = ({
             <span
               className={`ui-chip ${task.priority.toLowerCase() === "high" ? "ui-chip--danger" : task.priority.toLowerCase() === "low" ? "ui-chip--success" : "ui-chip--warning"}`}
             >
-              {task.priority.toLowerCase()}
+              {t(task.priority.toLowerCase(), { defaultValue: task.priority })}
             </span>
           )}
-          {isPending && <span className="ui-chip">Pending</span>}
+          {isPending && <span className="ui-chip">{t("pending")}</span>}
           {task.dueDate &&
             task.status !== "completed" &&
             task.status !== "given-up" && (
@@ -105,13 +109,14 @@ const TaskItem = ({
           {task.status === "completed" && task.completedAt && (
             <span className="ui-chip ui-chip--success">
               <CircleCheckBig className="h-3.5 w-3.5" aria-hidden="true" />
-              Done {formatDateTime(task.completedAt)}
+              {t("done")}
+              {formatDateTime(task.completedAt)}
             </span>
           )}
           {task.status === "given-up" && (
             <span className="ui-chip">
               <Frown className="h-3.5 w-3.5" aria-hidden="true" />
-              Given up
+              {t("givenUp")}
             </span>
           )}
         </div>
@@ -123,17 +128,17 @@ const TaskItem = ({
             type="button"
             onClick={() => onStart(task._id)}
             className="ui-btn-secondary !min-h-[2rem] !px-3 !text-xs"
-            aria-label={`Start ${task.title}`}
+            aria-label={t("messages.startV0", { v0: task.title })}
           >
             <Play className="h-3.5 w-3.5" aria-hidden="true" />
-            Start
+            {t("start")}
           </button>
         )}
         <button
           type="button"
           onClick={() => onEdit(task)}
           className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] transition-[background-color,color] duration-150 hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
-          aria-label={`Edit ${task.title}`}
+          aria-label={t("messages.editV0", { v0: task.title })}
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -142,7 +147,7 @@ const TaskItem = ({
             type="button"
             onClick={() => onGiveUp(task._id)}
             className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-warning)] transition-[background-color,color] duration-150 hover:bg-[var(--color-warning-soft)]"
-            aria-label={`Give up ${task.title}`}
+            aria-label={t("messages.giveUpV0", { v0: task.title })}
           >
             <Flag className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -151,7 +156,7 @@ const TaskItem = ({
           type="button"
           onClick={() => onDelete(task._id)}
           className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-danger)] transition-[background-color,color] duration-150 hover:bg-[var(--color-danger-soft)]"
-          aria-label={`Delete ${task.title}`}
+          aria-label={t("messages.deleteV0", { v0: task.title })}
         >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
         </button>

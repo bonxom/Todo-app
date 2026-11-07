@@ -1,0 +1,96 @@
+{
+  "language": "Ngôn ngữ",
+  "navigation": {
+    "calendar": "Lịch",
+    "todos": "Công việc",
+    "categories": "Danh mục",
+    "statistics": "Thống kê",
+    "agent": "Trợ lý",
+    "account": "Tài khoản",
+    "workspace": "Không gian làm việc",
+    "logout": "Đăng xuất",
+    "close": "Đóng điều hướng",
+    "open": "Mở điều hướng",
+    "primary": "Điều hướng chính",
+    "back": "Quay lại",
+    "profile": "Xem hồ sơ",
+    "avatar": "Ảnh đại diện của {{name}}",
+    "userAvatar": "Ảnh đại diện người dùng"
+  },
+  "status": {
+    "pending": "Chưa bắt đầu",
+    "in-progress": "Đang thực hiện",
+    "completed": "Hoàn thành",
+    "given-up": "Đã từ bỏ",
+    "all": "Tất cả công việc",
+    "count_one": "{{count}} trạng thái",
+    "count_other": "{{count}} trạng thái",
+    "filter": "Lọc công việc theo trạng thái",
+    "title": "Trạng thái công việc",
+    "clear": "Xóa bộ lọc"
+  },
+  "theme": {
+    "light": "Chuyển sang giao diện sáng",
+    "dark": "Chuyển sang giao diện tối"
+  },
+  "dialog": {
+    "task": "Một bước nhỏ hướng đến điều bạn quan tâm.",
+    "category": "Sắp xếp các công việc liên quan vào cùng một nơi.",
+    "project": "Tập hợp công việc để cùng hướng đến một mục tiêu.",
+    "generate": "Biến ý tưởng thành kế hoạch vừa sức cho ngày của bạn.",
+    "help": "GỢI Ý ĐỂ BẮT ĐẦU",
+    "workspace": "KHÔNG GIAN LÀM VIỆC CỦA BẠN",
+    "close": "Đóng hộp thoại {{title}}"
+  },
+  "pagination": {
+    "label": "Phân trang",
+    "summary": "Hiển thị {{start}}–{{end}} trong {{total}} kết quả",
+    "perPage": "Mỗi trang",
+    "previous": "Trang trước",
+    "next": "Trang tiếp",
+    "page": "Trang {{page}}"
+  },
+  "options": "Tùy chọn",
+  "unavailable": "Không có",
+  "unexpectedError": "Đã xảy ra lỗi ngoài dự kiến",
+  "checkingSession": "Đang kiểm tra phiên đăng nhập…",
+  "errors": {
+    "badge": "Lỗi {{code}}",
+    "404": {
+      "title": "Trang không tồn tại",
+      "description": "Đường dẫn bạn truy cập không tồn tại hoặc đã bị di chuyển. Vui lòng kiểm tra lại URL hoặc quay lại trang trước."
+    },
+    "403": {
+      "title": "Quyền truy cập bị từ chối",
+      "description": "Bạn không có quyền truy cập vào nội dung này. Vui lòng kiểm tra tài khoản hoặc quay lại trang trước."
+    },
+    "500": {
+      "title": "Lỗi máy chủ nội bộ",
+      "description": "Đã xảy ra sự cố từ phía máy chủ trong quá trình xử lý. Vui lòng thử lại sau hoặc quay về trang chủ."
+    },
+    "503": {
+      "title": "Dịch vụ tạm thời không khả dụng",
+      "description": "Hệ thống đang được nâng cấp hoặc bảo trì định kỳ. Vui lòng quay lại sau ít phút."
+    },
+    "appTitle": "Ứng dụng gặp sự cố ngoài dự kiến",
+    "appDescription": "Đã xảy ra lỗi hệ thống trong quá trình xử lý giao diện. Bạn có thể tải lại trang hoặc quay về trang chủ.",
+    "pause": "Tạm dừng video",
+    "play": "Phát video",
+    "unmute": "Bật âm thanh",
+    "mute": "Tắt âm thanh",
+    "back": "Quay lại trang trước",
+    "retry": "Thử lại",
+    "home": "Về Trang Chủ",
+    "code": "Mã lỗi:",
+    "other": "Xem thử trang lỗi khác:"
+  },
+  "network": {
+    "timeout": "Yêu cầu đã hết thời gian chờ",
+    "noResponse": "Không nhận được phản hồi từ máy chủ",
+    "error": "Lỗi kết nối mạng",
+    "generic": "Đã xảy ra lỗi",
+    "ended": "Phiên đăng nhập đã kết thúc",
+    "refresh": "Phản hồi làm mới phiên không hợp lệ",
+    "changed": "Phiên đăng nhập đã thay đổi"
+  }
+}

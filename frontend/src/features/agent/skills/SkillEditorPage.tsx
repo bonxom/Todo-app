@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useMemo, useRef } from "react";
 import {
   useNavigate,
@@ -38,6 +39,8 @@ export function SkillEditorPage() {
 }
 
 function SkillEditorForm() {
+  const { t } = useTranslation("agent");
+
   const sessionKey = useSessionKey();
   const isCurrent = () => currentSessionKey() === sessionKey;
   const bypass = useRef(false);
@@ -160,11 +163,13 @@ function SkillEditorForm() {
       if (!isCurrent()) return;
       if (err instanceof ApiError && err.status === 409) {
         setConflictError(
-          "Skill version has changed on the server by another session.",
+          t("skillVersionHasChangedOnTheServerByAnotherSession"),
         );
       } else {
         setGeneralError(
-          err instanceof Error ? err.message : "An error occurred while saving the skill.",
+          err instanceof Error
+            ? err.message
+            : t("anErrorOccurredWhileSavingTheSkill"),
         );
       }
     }
@@ -186,10 +191,10 @@ function SkillEditorForm() {
       setIsDeleteDialogOpen(false);
       if (err instanceof ApiError && err.status === 409)
         setConflictError(
-          "Skill version has changed on the server by another session.",
+          t("skillVersionHasChangedOnTheServerByAnotherSession"),
         );
       setGeneralError(
-        err instanceof Error ? err.message : "Unable to delete skill.",
+        err instanceof Error ? err.message : t("unableToDeleteSkill"),
       );
     }
   };
@@ -201,7 +206,7 @@ function SkillEditorForm() {
     const result = await refetch();
     if (!isCurrent()) return;
     if (result.error || !result.data) {
-      setGeneralError("Unable to load latest version. Your draft is preserved.");
+      setGeneralError(t("unableToLoadLatestVersionYourDraftIsPreserved"));
       return;
     }
     const latest = result.data;
@@ -224,8 +229,8 @@ function SkillEditorForm() {
   if (!isNew && loadError && !baseline)
     return (
       <div role="alert" className="p-6">
-        Skill is not available.{" "}
-        <button onClick={handleBack}>Back to list</button>
+        {t("skillIsNotAvailable")}{" "}
+        <button onClick={handleBack}>{t("backToList")}</button>
       </div>
     );
 
@@ -252,23 +257,25 @@ function SkillEditorForm() {
           ref={deleteRef}
           role="dialog"
           aria-modal="true"
-          aria-label="Confirm skill deletion"
+          aria-label={t("confirmSkillDeletion")}
         >
           <div className="skill-delete-dialog">
             <span className="skill-delete-icon">
               <Trash2 size={23} />
             </span>
-            <h2>Delete this skill?</h2>
+            <h2>{t("deleteThisSkill")}</h2>
             <p>
-              <strong>{name}</strong> will be removed from your library. Past
-              conversation responses remain unchanged.
+              <strong>{name}</strong>{" "}
+              {t(
+                "willBeRemovedFromYourLibraryPastConversationResponsesRemainUnchanged",
+              )}
             </p>
             <div className="skills-actions">
               <button
                 className="ui-btn-secondary"
                 onClick={() => setIsDeleteDialogOpen(false)}
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 className="skill-danger-button"
@@ -278,7 +285,7 @@ function SkillEditorForm() {
                 {deleteMutation.isPending && (
                   <Loader2 size={16} className="animate-spin" />
                 )}
-                Confirm delete
+                {t("confirmDelete")}
               </button>
             </div>
           </div>
@@ -288,28 +295,28 @@ function SkillEditorForm() {
         <button
           className="skill-back-link"
           onClick={handleBack}
-          aria-label="Back to skills"
+          aria-label={t("backToSkills")}
         >
           <ArrowLeft size={17} />
-          Personal Skills
+          {t("personalSkills")}
         </button>
         <span className="skill-editor-status">
           {isSaving
-            ? "Saving…"
+            ? t("saving")
             : isDirty
-              ? "Unsaved changes"
+              ? t("unsavedChanges")
               : isNew
-                ? "New draft"
-                : "Saved"}
+                ? t("newDraft")
+                : t("saved")}
         </span>
       </div>
       <header className="skills-heading skill-editor-heading">
         <div>
           <h1 className="ui-page-title">
-            {isNew ? "Create new skill" : name || "Edit skill"}
+            {isNew ? t("createNewSkill") : name || t("editSkill")}
           </h1>
           <p className="ui-page-description">
-            Clear guidance for better conversations.
+            {t("clearGuidanceForBetterConversations")}
           </p>
         </div>
         <button
@@ -322,7 +329,7 @@ function SkillEditorForm() {
           ) : (
             <Save size={17} />
           )}
-          {isNew ? "Save skill" : "Save changes"}
+          {isNew ? t("saveSkill") : t("saveChanges")}
         </button>
       </header>
       {conflictError && (
@@ -331,8 +338,9 @@ function SkillEditorForm() {
           <div>
             <strong>{conflictError}</strong>
             <p>
-              Your draft is preserved. Copy your changes or reload the latest
-              version to continue.
+              {t(
+                "yourDraftIsPreservedCopyYourChangesOrReloadTheLatestVersionToContinue",
+              )}
             </p>
           </div>
           <button
@@ -340,7 +348,7 @@ function SkillEditorForm() {
             onClick={handleReloadServerVersion}
           >
             <RotateCcw size={15} />
-            Reload latest
+            {t("reloadLatest")}
           </button>
         </div>
       )}
@@ -356,13 +364,14 @@ function SkillEditorForm() {
           aria-labelledby="skill-info-heading"
         >
           <div className="skill-panel-heading">
-            <h2 id="skill-info-heading">Skill Information</h2>
-            <p>Helps Agent know when to use this skill.</p>
+            <h2 id="skill-info-heading">{t("skillInformation")}</h2>
+            <p>{t("helpsAgentKnowWhenToUseThisSkill")}</p>
           </div>
           <div className="skill-field">
             <div className="skill-field-label">
               <label htmlFor="skill-name">
-                Skill name <span>*</span>
+                {t("skillName")}
+                <span>*</span>
               </label>
               <span>{name.length}/80</span>
             </div>
@@ -373,13 +382,14 @@ function SkillEditorForm() {
               maxLength={80}
               disabled={isSaving || deleteMutation.isPending}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. IELTS Writing"
+              placeholder={t("eGIeltsWriting")}
             />
           </div>
           <div className="skill-field">
             <div className="skill-field-label">
               <label htmlFor="skill-description">
-                Skill description <span>*</span>
+                {t("skillDescription")}
+                <span>*</span>
               </label>
               <span>{description.length}/500</span>
             </div>
@@ -391,19 +401,21 @@ function SkillEditorForm() {
               maxLength={500}
               disabled={isSaving || deleteMutation.isPending}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="When should Agent use this guidance?"
+              placeholder={t("whenShouldAgentUseThisGuidance")}
             />
             <p className="skill-field-hint">
-              e.g. When I need feedback and improvement suggestions on IELTS Task 2 writing.
+              {t(
+                "eGWhenINeedFeedbackAndImprovementSuggestionsOnIeltsTask2Writing",
+              )}
             </p>
           </div>
           <div className="skill-enabled-setting">
             <div>
-              <label id="skill-enabled-label">Enable skill</label>
+              <label id="skill-enabled-label">{t("enableSkill")}</label>
               <p>
                 {enabled
-                  ? "Ready for your next conversation."
-                  : "Agent will not read this skill."}
+                  ? t("readyForYourNextConversation")
+                  : t("agentWillNotReadThisSkill")}
               </p>
             </div>
             <button
@@ -420,20 +432,24 @@ function SkillEditorForm() {
           <div className="skill-editor-help">
             <BookOpen size={17} />
             <p>
-              The more specific the instructions, the better Agent can apply
-              them. Write as if guiding a collaborator.
+              {t(
+                "theMoreSpecificTheInstructionsTheBetterAgentCanApplyThemWriteAsIfGuidingACollaborator",
+              )}
             </p>
           </div>
           {!isNew && (
             <div className="skill-editor-danger-zone">
-              <span>Current version: v{baseline?.version}</span>
+              <span>
+                {t("currentVersionV")}
+                {baseline?.version}
+              </span>
               <button
                 className="skill-text-action skill-text-danger"
                 disabled={isSaving || deleteMutation.isPending}
                 onClick={() => setIsDeleteDialogOpen(true)}
               >
                 <Trash2 size={15} />
-                Delete skill
+                {t("deleteSkill")}
               </button>
             </div>
           )}
@@ -442,24 +458,25 @@ function SkillEditorForm() {
           <div className="skill-instructions-header">
             <div>
               <label id="skill-instructions-label" htmlFor="skill-instructions">
-                Instructions <span>*</span>
+                {t("instructions")}
+                <span>*</span>
               </label>
-              <p>Agent will follow these instructions when reading the skill.</p>
+              <p>{t("agentWillFollowTheseInstructionsWhenReadingTheSkill")}</p>
             </div>
-            <div className="skill-editor-tabs" aria-label="Editor mode">
+            <div className="skill-editor-tabs" aria-label={t("editorMode")}>
               <button
                 aria-pressed={!previewMode}
                 onClick={() => setPreviewMode(false)}
               >
                 <Edit3 size={14} />
-                Edit
+                {t("edit")}
               </button>
               <button
                 aria-pressed={previewMode}
                 onClick={() => setPreviewMode(true)}
               >
                 <Eye size={14} />
-                Preview
+                {t("preview")}
               </button>
             </div>
           </div>
@@ -469,7 +486,7 @@ function SkillEditorForm() {
                 <MarkdownText text={instructions} />
               ) : (
                 <p className="skill-preview-empty">
-                  Preview content will appear once you add instructions.
+                  {t("previewContentWillAppearOnceYouAddInstructions")}
                 </p>
               )}
             </div>
@@ -481,21 +498,19 @@ function SkillEditorForm() {
               maxLength={10000}
               disabled={isSaving || deleteMutation.isPending}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder={
-                "Describe how you want Agent to assist…\n\nFor example:\n- Preserve original meaning when editing.\n- Briefly explain each change.\n- Conclude with an actionable practice prompt."
-              }
+              placeholder={t(
+                "describeHowYouWantAgentToAssistForExamplePreserveOriginalMeaningWhenEditingBrieflyExplainEachChangeConcludeWithAnActionablePracticePrompt",
+              )}
             />
           )}
           <div className="skill-instructions-footer">
-            <span>Markdown supported</span>
-            <span>
-              {instructions.length.toLocaleString("en-US")} / 10,000 characters
-            </span>
+            <span>{t("markdownSupported")}</span>
+            <span>{t("characterCount", { count: instructions.length })}</span>
           </div>
         </section>
       </div>
       <p className="skill-editor-footnote">
-        Changes apply from the next chat turn.
+        {t("changesApplyFromTheNextChatTurn")}
       </p>
     </div>
   );

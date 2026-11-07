@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AuthLayout from "./components/AuthLayout";
@@ -7,6 +8,7 @@ import { useLoginMutation, useRegisterMutation } from "./api/authMutations";
 import "@/styles/auth.css";
 
 const AuthPage = () => {
+  const { t } = useTranslation("account");
   const navigate = useNavigate();
   const location = useLocation();
   const loginMutation = useLoginMutation();
@@ -29,7 +31,9 @@ const AuthPage = () => {
       navigate("/dashboard", { replace: true });
     } catch (error) {
       console.error("Login error:", error);
-      const errorMessage = error?.message || "Login failed. Please try again.";
+      const errorMessage = error?.message || {
+        key: "loginFailedPleaseTryAgain",
+      };
       setErrors({ password: errorMessage });
     } finally {
       setIsLoading(false);
@@ -47,8 +51,9 @@ const AuthPage = () => {
       });
       navigate("/dashboard", { replace: true });
     } catch (error) {
-      const errorMessage =
-        error?.message || "Registration failed. Please try again.";
+      const errorMessage = error?.message || {
+        key: "registrationFailedPleaseTryAgain",
+      };
       setErrors({ email: errorMessage });
     } finally {
       setIsLoading(false);
@@ -65,19 +70,19 @@ const AuthPage = () => {
       <div className="auth-card">
         <div className="auth-card-header">
           <div>
-            <p className="ui-page-kicker">Account</p>
-            <h2>{mode === "login" ? "Sign In" : "Create Workspace"}</h2>
+            <p className="ui-page-kicker">{t("account")}</p>
+            <h2>{mode === "login" ? t("signIn") : t("createWorkspace")}</h2>
             <p>
               {mode === "login"
-                ? "Continue to your tasks, projects, calendar, and statistics."
-                : "Set up your account and start organizing tasks in one workspace."}
+                ? t("continueToYourTasksProjectsCalendarAndStatistics")
+                : t("setUpYourAccountAndStartOrganizingTasksInOneWorkspace")}
             </p>
           </div>
 
           <div
             className="auth-mode-toggle"
             role="group"
-            aria-label="Authentication mode"
+            aria-label={t("authenticationMode")}
           >
             <button
               type="button"
@@ -86,7 +91,7 @@ const AuthPage = () => {
               aria-pressed={mode === "login"}
               onClick={() => switchMode("login")}
             >
-              Sign In
+              {t("signIn")}
             </button>
             <button
               type="button"
@@ -95,7 +100,7 @@ const AuthPage = () => {
               aria-pressed={mode === "register"}
               onClick={() => switchMode("register")}
             >
-              Sign Up
+              {t("signUp")}
             </button>
           </div>
         </div>

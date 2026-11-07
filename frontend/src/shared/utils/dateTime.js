@@ -1,3 +1,4 @@
+import i18n, { getLocale } from "../i18n";
 const pad = (value) => String(value).padStart(2, "0");
 
 const toDate = (value) => {
@@ -9,24 +10,30 @@ const toDate = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-export const formatDateTime = (value, fallback = "N/A") => {
+export const formatDateTime = (value, fallback = i18n.t("unavailable")) => {
   const date = toDate(value);
 
   if (!date) {
     return fallback;
   }
 
-  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return new Intl.DateTimeFormat(getLocale(), {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 };
 
-export const formatDateOnly = (value, fallback = "N/A") => {
+export const formatDateOnly = (value, fallback = i18n.t("unavailable")) => {
   const date = toDate(value);
 
   if (!date) {
     return fallback;
   }
 
-  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+  return new Intl.DateTimeFormat(getLocale()).format(date);
 };
 
 export const toDateTimeInputValue = (value) => {

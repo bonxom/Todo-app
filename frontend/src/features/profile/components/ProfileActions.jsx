@@ -1,20 +1,22 @@
+import { useTranslation } from "react-i18next";
 import { ChevronRight, Edit, Lock } from "lucide-react";
 
 const ProfileActions = ({ onEditProfile, onChangePassword }) => {
+  const { t } = useTranslation("account");
   const actions = [
     {
-      label: "Edit Profile",
+      label: t("editProfile"),
       icon: Edit,
       onClick: onEditProfile,
-      eyebrow: "Profile",
-      description: "Update your name, email, birthday, and avatar details.",
+      eyebrow: t("profile"),
+      description: t("updateYourNameEmailBirthdayAndAvatarDetails"),
     },
     {
-      label: "Change Password",
+      label: t("changePassword"),
       icon: Lock,
       onClick: onChangePassword,
-      eyebrow: "Security",
-      description: "Replace the password you use to sign in to your workspace.",
+      eyebrow: t("security"),
+      description: t("replaceThePasswordYouUseToSignInToYourWorkspace"),
     },
   ];
 
@@ -22,10 +24,10 @@ const ProfileActions = ({ onEditProfile, onChangePassword }) => {
     <section className="ui-section-card ui-card-padding">
       <div className="mb-4">
         <h2 className="m-0 text-lg font-semibold tracking-[-0.02em] text-[var(--color-text)]">
-          Settings Actions
+          {t("settingsActions")}
         </h2>
         <p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">
-          Use these quick actions to keep your account details current.
+          {t("useTheseQuickActionsToKeepYourAccountDetailsCurrent")}
         </p>
       </div>
 

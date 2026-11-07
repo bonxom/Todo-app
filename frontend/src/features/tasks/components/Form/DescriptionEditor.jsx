@@ -1,9 +1,18 @@
+import { useTranslation } from "react-i18next";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useModalKeyboard } from "@/shared/hooks/useModalKeyboard";
 
-export default function DescriptionEditor({ value, onChange, onSave, busy, error }) {
+export default function DescriptionEditor({
+  value,
+  onChange,
+  onSave,
+  busy,
+  error,
+}) {
+  const { t } = useTranslation("workspace");
+
   const [expanded, setExpanded] = useState(false);
   const [closing, setClosing] = useState(false);
   const dialogRef = useRef(null);
@@ -18,12 +27,12 @@ export default function DescriptionEditor({ value, onChange, onSave, busy, error
     <div>
       <div className="mb-2 flex items-center justify-between gap-3">
         <label htmlFor="edit-description" className="text-sm font-medium">
-          Description
+          {t("description")}
         </label>
         <button
           type="button"
           className="ui-btn-ghost"
-          aria-label="Expand description"
+          aria-label={t("expandDescription")}
           aria-haspopup="dialog"
           onClick={open}
         >
@@ -35,64 +44,76 @@ export default function DescriptionEditor({ value, onChange, onSave, busy, error
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onClick={open}
-        placeholder="Enter task description…"
+        placeholder={t("enterTaskDescription")}
         rows={4}
         className="ui-input"
       />
-      {expanded && createPortal(
-        <div
-          className="description-editor-overlay"
-          data-closing={closing}
-          onAnimationEnd={(event) => {
-            if (event.target === event.currentTarget && closing) {
-              setExpanded(false);
-              setClosing(false);
-            }
-          }}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (event.target === event.currentTarget) close();
-          }}
-        >
-          <section
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Edit description"
-            className="description-editor-dialog"
+      {expanded &&
+        createPortal(
+          <div
+            className="description-editor-overlay"
+            data-closing={closing}
+            onAnimationEnd={(event) => {
+              if (event.target === event.currentTarget && closing) {
+                setExpanded(false);
+                setClosing(false);
+              }
+            }}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (event.target === event.currentTarget) close();
+            }}
           >
-            <label htmlFor="expanded-description" className="text-sm font-medium">
-              Description
-            </label>
-            <textarea
-              id="expanded-description"
-              autoFocus
-              value={value}
-              onChange={(event) => onChange(event.target.value)}
-              placeholder="Enter task description…"
-              className="ui-input description-editor-textarea"
-            />
-            {error && <p role="alert" className="workspace-form-error">{error}</p>}
-            <div className="flex justify-end gap-3">
-              <button type="button" className="ui-btn-secondary" onClick={close}>
-                <Minimize2 size={16} /> Collapse
-              </button>
-              <button
-                type="button"
-                className="ui-btn-primary"
-                disabled={busy}
-                onClick={() => {
-                  close();
-                  onSave();
-                }}
+            <section
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={t("editDescription")}
+              className="description-editor-dialog"
+            >
+              <label
+                htmlFor="expanded-description"
+                className="text-sm font-medium"
               >
-                {busy ? "Saving…" : "Save Changes"}
-              </button>
-            </div>
-          </section>
-        </div>,
-        document.body,
-      )}
+                {t("description")}
+              </label>
+              <textarea
+                id="expanded-description"
+                autoFocus
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                placeholder={t("enterTaskDescription")}
+                className="ui-input description-editor-textarea"
+              />
+              {error && (
+                <p role="alert" className="workspace-form-error">
+                  {error}
+                </p>
+              )}
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  className="ui-btn-secondary"
+                  onClick={close}
+                >
+                  <Minimize2 size={16} /> {t("collapse")}
+                </button>
+                <button
+                  type="button"
+                  className="ui-btn-primary"
+                  disabled={busy}
+                  onClick={() => {
+                    close();
+                    onSave();
+                  }}
+                >
+                  {busy ? t("saving") : t("saveChanges")}
+                </button>
+              </div>
+            </section>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

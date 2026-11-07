@@ -1,3 +1,4 @@
+import { getLocale } from "@/shared/i18n";
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}/;
 const MONTH_LABELS = [
   "Jan",
@@ -160,7 +161,7 @@ export const formatUtcDateLabel = (dateKey, options) => {
     return "";
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getLocale(), {
     timeZone: "UTC",
     ...options,
   }).format(parsedDate);

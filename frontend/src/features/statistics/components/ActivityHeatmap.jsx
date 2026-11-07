@@ -1,3 +1,7 @@
+import { workspaceTranslate } from "@/features/tasks/utils/workspaceTranslation";
+import { workspaceKey } from "@/features/tasks/utils/workspaceTranslation";
+import { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 import { useMemo, useState } from "react";
 import { Check, X } from "lucide-react";
 import { useActivityQuery } from "../api/statQueries";
@@ -5,8 +9,13 @@ import { createHeatmapModel, formatUtcDateLabel } from "./statsUtils";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const label = (cell) =>
-  `${cell.dateKey}: ${cell.count} ${cell.count === 1 ? "task" : "tasks"} completed`;
+  workspaceTranslate("completedOnDay", {
+    date: cell.dateKey,
+    count: cell.count,
+  });
 const ActivityHeatmap = ({ dailyStats = [] }) => {
+  const { t } = useTranslation("workspace");
+
   const [selected, setSelected] = useState(null);
   const [hovered, setHovered] = useState(null);
   const heatmap = useMemo(
@@ -15,34 +24,37 @@ const ActivityHeatmap = ({ dailyStats = [] }) => {
   );
   const activity = useActivityQuery(selected?.dateKey);
   const months = new Map(
-    heatmap.monthLabels.map(({ columnIndex, label }) => [columnIndex, label]),
+    heatmap.monthLabels.map(({ columnIndex, label }) => [
+      columnIndex,
+      t(workspaceKey(label), { defaultValue: label }),
+    ]),
   );
   const tasks = activity.data || [];
   return (
-    <section className="statistics-card" aria-label="Activity calendar">
+    <section className="statistics-card" aria-label={t("activityCalendar")}>
       <div className="statistics-card-header">
         <div>
-          <h2>Your consistency, day by day</h2>
+          <h2>{t("yourConsistencyDayByDay")}</h2>
         </div>
-        <span className="statistics-small-label">Last 365 days</span>
+        <span className="statistics-small-label">{t("last365Days")}</span>
       </div>
       <div className="statistics-heat-summary">
         <span>
-          <strong>{heatmap.totalCompleted.toLocaleString()}</strong> tasks
-          completed
+          <strong>{heatmap.totalCompleted.toLocaleString(getLocale())}</strong>{" "}
+          {t("tasksCompleted")}{" "}
         </span>
         <span>
-          <strong>{heatmap.activeDays}</strong> active days
+          <strong>{heatmap.activeDays}</strong> {t("activeDays")}{" "}
         </span>
         <span>
-          <strong>{heatmap.bestDay?.count || 0}</strong> most in a day
+          <strong>{heatmap.bestDay?.count || 0}</strong> {t("mostInADay")}{" "}
         </span>
       </div>
       <div className="statistics-heat-scroll">
         <div className="statistics-heat-grid">
           <div className="statistics-weekdays" aria-hidden="true">
-            {["", "Mon", "", "Wed", "", "Fri", ""].map((day, i) => (
-              <span key={i}>{day}</span>
+            {["", t("mon"), "", t("wed"), "", t("fri"), ""].map((day, i) => (
+              <span key={i}>{t(workspaceKey(day), { defaultValue: day })}</span>
             ))}
           </div>
           <div className="statistics-heat-weeks">
@@ -83,13 +95,13 @@ const ActivityHeatmap = ({ dailyStats = [] }) => {
             ? label(hovered)
             : heatmap.totalCompleted
               ? `${formatUtcDateLabel(heatmap.rangeStartKey, { month: "short", day: "numeric", year: "numeric" })} – ${formatUtcDateLabel(heatmap.rangeEndKey, { month: "short", day: "numeric", year: "numeric" })}`
-              : "Your first completed task is the start of something good."}
+              : t("yourFirstCompletedTaskIsTheStartOfSomethingGood")}
         </span>
         <div
           className="statistics-heat-legend"
-          aria-label="Activity intensity: less to more"
+          aria-label={t("activityIntensityLessToMore")}
         >
-          <small>Less</small>
+          <small>{t("less")}</small>
           {[0, 1, 2, 3, 4].map((level) => (
             <span
               key={level}
@@ -97,7 +109,7 @@ const ActivityHeatmap = ({ dailyStats = [] }) => {
               data-level={level}
             />
           ))}
-          <small>More</small>
+          <small>{t("more")}</small>
         </div>
       </div>
       {selected && (
@@ -112,11 +124,13 @@ const ActivityHeatmap = ({ dailyStats = [] }) => {
                   year: "numeric",
                 })}
               </h3>
-              <p className="statistics-card-description">Completed tasks</p>
+              <p className="statistics-card-description">
+                {t("completedTasksCasedCompletedtas")}
+              </p>
             </div>
             <button
               type="button"
-              aria-label="Close day details"
+              aria-label={t("closeDayDetails")}
               onClick={() => setSelected(null)}
             >
               <X size={17} />
@@ -125,21 +139,21 @@ const ActivityHeatmap = ({ dailyStats = [] }) => {
           <div className="statistics-day-list">
             {activity.isLoading ? (
               <p className="statistics-empty-note" role="status">
-                Loading your completed tasks…
+                {t("loadingYourCompletedTasks")}
               </p>
             ) : activity.isError ? (
               <div>
                 <p className="statistics-empty-note">
                   {getApiErrorMessage(
                     activity.error,
-                    "Unable to load completed tasks.",
+                    t("unableToLoadCompletedTasks"),
                   )}
                 </p>
                 <button
                   className="ui-btn-secondary mt-3"
                   onClick={() => activity.refetch()}
                 >
-                  Try again
+                  {t("tryAgainCasedTryagain")}
                 </button>
               </div>
             ) : tasks.length ? (
@@ -162,8 +176,7 @@ const ActivityHeatmap = ({ dailyStats = [] }) => {
               ))
             ) : (
               <p className="statistics-empty-note">
-                No tasks were completed on this day. A fresh start is always
-                ahead.
+                {t("noTasksWereCompletedOnThisDayAFreshStartIsAlwaysAhead")}
               </p>
             )}
           </div>

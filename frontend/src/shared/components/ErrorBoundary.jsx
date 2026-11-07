@@ -1,3 +1,4 @@
+import i18n from "../i18n";
 import React from "react";
 import ErrorPage from "@/features/errors";
 
@@ -20,8 +21,8 @@ class ErrorBoundary extends React.Component {
       return (
         <ErrorPage
           code="500"
-          title="Ứng dụng gặp sự cố ngoài dự kiến"
-          description="Đã xảy ra lỗi hệ thống trong quá trình xử lý giao diện. Bạn có thể tải lại trang hoặc quay về trang chủ."
+          title={i18n.t("errors.appTitle")}
+          description={i18n.t("errors.appDescription")}
           onRetry={() => {
             this.setState({ hasError: false, error: null });
             window.location.reload();

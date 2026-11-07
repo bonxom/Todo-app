@@ -1042,11 +1042,17 @@ textarea.ui-input {
 }
 
 .ui-workspace-layout {
-  --assistant-dock-width: min(50vw, var(--assistant-dock-preferred-width, clamp(22rem, 32vw, 30rem)));
+  --assistant-dock-width: min(
+    50vw,
+    var(--assistant-dock-preferred-width, clamp(22rem, 32vw, 30rem))
+  );
 }
 
 .ui-assistant-panel.ui-assistant-panel--docked {
-  --assistant-width: min(50vw, var(--assistant-dock-preferred-width, clamp(22rem, 32vw, 30rem)));
+  --assistant-width: min(
+    50vw,
+    var(--assistant-dock-preferred-width, clamp(22rem, 32vw, 30rem))
+  );
   --assistant-height: calc(100dvh - var(--topbar-height, 64px));
   /* The dock belongs below topbar menus and navigation overlays. */
   z-index: 25;
@@ -1078,12 +1084,17 @@ textarea.ui-input {
 }
 
 .ui-assistant-panel.ui-assistant-panel--docked {
-  transition: opacity 180ms ease, visibility 0s;
+  transition:
+    opacity 180ms ease,
+    visibility 0s;
 }
 
 /* Only the content below the topbar makes room for the open dock. */
 @media (min-width: 1024px) {
-  .ui-workspace-layout:has(.ui-assistant-presence[data-open="true"] .ui-assistant-panel--docked) > .ui-main-shell {
+  .ui-workspace-layout:has(
+      .ui-assistant-presence[data-open="true"] .ui-assistant-panel--docked
+    )
+    > .ui-main-shell {
     margin-right: var(--assistant-dock-width);
   }
 }
@@ -1257,4 +1268,27 @@ textarea.ui-input {
 }
 :root[data-theme="dark"] .ui-global-task-filter__check {
   color: var(--color-primary-text, #fff);
+}
+
+@media (max-width: 380px) {
+  .ui-topbar {
+    gap: 0.5rem;
+    padding-inline: 0.5rem;
+  }
+
+  .ui-topbar-actions {
+    gap: 0.375rem;
+  }
+
+  .ui-topbar-actions .ui-language-select {
+    max-width: 5.5rem;
+  }
+
+  .ui-global-task-filter__trigger {
+    max-width: 2.5rem;
+  }
+
+  .ui-global-task-filter__trigger span {
+    display: none;
+  }
 }

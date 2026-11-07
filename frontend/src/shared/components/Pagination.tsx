@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 /**
  * Pagination — Reusable pagination UI component.
  *
@@ -67,6 +68,7 @@ export default function Pagination({
   className = "",
   compact = false,
 }: PaginationProps) {
+  const { t } = useTranslation("common");
   const pageNumbers = useMemo(
     () => buildPageNumbers(pageNo, totalPage),
     [pageNo, totalPage],
@@ -85,23 +87,15 @@ export default function Pagination({
         compact ? "" : "sm:flex-row sm:items-center sm:justify-between"
       } ${className}`}
       role="navigation"
-      aria-label="Pagination"
+      aria-label={t("pagination.label")}
     >
       {/* Info text */}
       <p className="text-sm text-[var(--color-text-muted)] tabular-nums">
-        Showing{" "}
-        <span className="font-semibold text-[var(--color-text)]">
-          {startItem}
-        </span>
-        –
-        <span className="font-semibold text-[var(--color-text)]">
-          {endItem}
-        </span>{" "}
-        of{" "}
-        <span className="font-semibold text-[var(--color-text)]">
-          {totalCount}
-        </span>{" "}
-        results
+        {t("pagination.summary", {
+          start: startItem,
+          end: endItem,
+          total: totalCount,
+        })}
       </p>
 
       <div
@@ -114,7 +108,7 @@ export default function Pagination({
               htmlFor="pagination-page-size"
               className="text-xs text-[var(--color-text-muted)]"
             >
-              Per page
+              {t("pagination.perPage")}
             </label>
             <CustomSelect
               id="pagination-page-size"
@@ -141,7 +135,7 @@ export default function Pagination({
             type="button"
             onClick={() => onPageChange(pageNo - 1)}
             disabled={isFirstPage}
-            aria-label="Previous page"
+            aria-label={t("pagination.previous")}
             className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-muted)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -163,7 +157,7 @@ export default function Pagination({
                 type="button"
                 onClick={() => onPageChange(page)}
                 disabled={page === pageNo}
-                aria-label={`Page ${page}`}
+                aria-label={t("pagination.page", { page })}
                 aria-current={page === pageNo ? "page" : undefined}
                 className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-[var(--radius-sm)] border px-1.5 text-xs font-medium tabular-nums transition-colors cursor-pointer ${
                   page === pageNo
@@ -181,7 +175,7 @@ export default function Pagination({
             type="button"
             onClick={() => onPageChange(pageNo + 1)}
             disabled={isLastPage}
-            aria-label="Next page"
+            aria-label={t("pagination.next")}
             className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-surface-muted)] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
           >
             <ChevronRight className="h-4 w-4" />

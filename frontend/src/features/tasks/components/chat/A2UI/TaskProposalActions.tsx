@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Fragment, useContext } from "react";
 import type { ProposalAction } from "@/shared/types/A2UI/taskProposal";
 import { TaskProposalEditorContext } from "./taskProposalEditorContext";
@@ -16,6 +17,8 @@ export function TaskProposalActions({
   showAlerts = true,
   onDispatchAction,
 }: TaskProposalActionsProps) {
+  const { t } = useTranslation("agent");
+
   const editor = useContext(TaskProposalEditorContext);
   if (!editor) {
     throw new Error("Missing task proposal editor context");
@@ -42,19 +45,19 @@ export function TaskProposalActions({
         >
           <strong>
             {proposal.status === "created"
-              ? "Đã tạo công việc"
+              ? t("tasksCreated")
               : proposal.status === "cancelled"
-                ? "Đề xuất đã hủy"
-                : "Đề xuất công việc (Bản nháp)"}
+                ? t("proposalCancelled")
+                : t("taskProposalDraft")}
           </strong>
           <span role="status" className="task-proposal-status">
             {terminal
               ? proposal.status === "created"
-                ? `Đã tạo ${proposal.createdTasks.length} công việc`
-                : "Đã hủy"
+                ? t("createdCount", { count: proposal.createdTasks.length })
+                : t("cancelled")
               : dirty
-                ? "Chưa lưu thay đổi"
-                : "Đã lưu bản nháp"}
+                ? t("unsavedChanges")
+                : t("draftSaved")}
           </span>
         </header>
       )}
@@ -73,10 +76,10 @@ export function TaskProposalActions({
                   className="task-proposal-created-link"
                   onClick={() => onOpenTask(task.taskId)}
                 >
-                  Đã tạo: {task.title}
+                  {t("createdTask", { title: task.title })}
                 </button>
               ) : (
-                `Đã tạo: ${task.title}`
+                t("createdTask", { title: task.title })
               )}
             </li>
           ))}
@@ -89,7 +92,7 @@ export function TaskProposalActions({
             disabled={locked}
             onClick={() => void submit("cancel", onDispatchAction)}
           >
-            Hủy
+            {t("cancel")}
           </button>
           <button
             type="button"
@@ -97,7 +100,7 @@ export function TaskProposalActions({
             disabled={locked || invalid}
             onClick={() => void submit("save", onDispatchAction)}
           >
-            Lưu bản nháp
+            {t("saveDraft")}
           </button>
           <button
             type="button"
@@ -105,7 +108,7 @@ export function TaskProposalActions({
             disabled={locked || invalid || !draft.selectedItemIds.length}
             onClick={() => void submit("confirm", onDispatchAction)}
           >
-            Xác nhận ({draft.selectedItemIds.length})
+            {t("confirmCount", { count: draft.selectedItemIds.length })}
           </button>
         </footer>
       )}

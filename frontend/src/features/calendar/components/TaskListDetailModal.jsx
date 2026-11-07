@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Calendar as CalendarIcon, X } from "lucide-react";
@@ -20,6 +21,8 @@ const TaskListDetailModal = ({
   onTaskDelete,
   summaryOnly = false,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -75,7 +78,7 @@ const TaskListDetailModal = ({
       }, 300);
     } catch (error) {
       console.error("Failed to delete task:", error);
-      alert("Failed to delete task.");
+      alert(t("failedToDeleteTask"));
       setDeletingTaskId(null);
       setTaskToDelete(null);
     }
@@ -140,7 +143,7 @@ const TaskListDetailModal = ({
                 </div>
                 <div>
                   <h2 className="text-2xl font-semibold text-[var(--color-text)]">
-                    {isToday ? "Today's Tasks" : "Day Tasks"}
+                    {isToday ? t("todaySTasks") : t("dayTasks")}
                   </h2>
                   {selectedDate && (
                     <p className="mt-1 text-sm text-[var(--color-text-muted)]">
@@ -153,7 +156,7 @@ const TaskListDetailModal = ({
                 type="button"
                 onClick={onClose}
                 className="ui-icon-button ui-focus-ring"
-                aria-label="Close task list"
+                aria-label={t("closeTaskList")}
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -161,12 +164,12 @@ const TaskListDetailModal = ({
 
             <div className="flex flex-wrap gap-2 text-sm">
               <span className="ui-chip ui-tabular">
-                {completedTasks}/{totalTasks} completed
+                {completedTasks}/{totalTasks} {t("completed")}{" "}
               </span>
               <span className="ui-chip ui-tabular">
-                {totalTasks} total tasks
+                {totalTasks} {t("totalTasks")}{" "}
               </span>
-              <span className="ui-chip">In progress first</span>
+              <span className="ui-chip">{t("inProgressFirst")}</span>
             </div>
           </div>
 
@@ -214,12 +217,12 @@ const TaskListDetailModal = ({
                   aria-hidden="true"
                 />
                 <p className="text-lg font-medium text-[var(--color-text)]">
-                  No tasks for this day
+                  {t("noTasksForThisDay")}
                 </p>
                 <p className="mt-1 text-sm">
                   {isToday
-                    ? "You're all caught up."
-                    : "Select another date to view tasks"}
+                    ? t("youReAllCaughtUp")
+                    : t("selectAnotherDateToViewTasks")}
                 </p>
               </div>
             )}

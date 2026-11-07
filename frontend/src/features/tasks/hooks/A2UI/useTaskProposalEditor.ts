@@ -1,3 +1,5 @@
+import i18n from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   ProposalAction,
@@ -45,6 +47,7 @@ export function useTaskProposalEditor(
   }: TaskProposalEditorProps,
   enabled = true,
 ) {
+  const { t } = useTranslation("agent");
   const validControlledDraft = isMatchingProposalDraft(
     controlledDraft,
     proposal,
@@ -141,10 +144,7 @@ export function useTaskProposalEditor(
         if (active) setChoices({ categories, projects, loaded: true });
       })
       .catch(() => {
-        if (active)
-          setChoiceError(
-            "Không thể tải danh mục và dự án. Hãy tải lại đề xuất.",
-          );
+        if (active) setChoiceError(i18n.t("agent:proposalChoicesLoadFailed"));
       });
     return () => {
       active = false;
@@ -153,21 +153,21 @@ export function useTaskProposalEditor(
 
   const validation = draftItems.map((item) => {
     if (!item.title.trim() || item.title.length > 200)
-      return "Tiêu đề cần từ 1 đến 200 ký tự.";
+      return t("proposalTitleLength");
     if ((item.description?.length ?? 0) > 1000)
-      return "Mô tả tối đa 1000 ký tự.";
+      return t("proposalDescriptionMax");
     if (
       item.startDate &&
       item.dueDate &&
       new Date(item.startDate) > new Date(item.dueDate)
     )
-      return "Ngày bắt đầu phải trước hạn hoàn thành.";
+      return t("proposalStartBeforeDue");
     if (
       choices.loaded &&
       item.categoryId &&
       !choices.categories.some((category) => category._id === item.categoryId)
     )
-      return "Danh mục không còn khả dụng. Hãy chọn lại.";
+      return t("proposalCategoryUnavailable");
     if (
       choices.loaded &&
       item.projectId &&
@@ -176,7 +176,7 @@ export function useTaskProposalEditor(
           project._id === item.projectId && project.status !== "completed",
       )
     )
-      return "Dự án không còn nhận công việc. Hãy chọn lại.";
+      return t("proposalProjectUnavailable");
     return "";
   });
 
@@ -234,14 +234,14 @@ export function useTaskProposalEditor(
     try {
       const handler = customDispatch ?? onAction;
       if (!handler) {
-        throw new Error("Thao tác hiện không khả dụng.");
+        throw new Error(i18n.t("agent:proposalActionUnavailable"));
       }
       await handler(payload);
     } catch (failure) {
       setError(
         failure instanceof Error
           ? failure.message
-          : "Không thể lưu. Hãy thử lại.",
+          : i18n.t("agent:proposalSaveFailed"),
       );
     } finally {
       busy.current = false;

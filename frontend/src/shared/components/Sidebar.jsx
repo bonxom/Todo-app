@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { getLocale } from "../i18n";
 import { useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Bot, LogOut, X } from "lucide-react";
@@ -11,7 +13,7 @@ export const drawerWidthCollapsed = 88;
 const menuItems = [
   {
     path: "/dashboard",
-    label: "Todos",
+    label: "navigation.todos",
     icon: (
       <svg
         className="h-5 w-5 flex-shrink-0"
@@ -30,7 +32,7 @@ const menuItems = [
   },
   {
     path: "/categories",
-    label: "Categories",
+    label: "navigation.categories",
     icon: (
       <svg
         className="h-5 w-5 flex-shrink-0"
@@ -49,7 +51,7 @@ const menuItems = [
   },
   {
     path: "/calendar",
-    label: "Calendar",
+    label: "navigation.calendar",
     icon: (
       <svg
         className="h-5 w-5 flex-shrink-0"
@@ -68,7 +70,7 @@ const menuItems = [
   },
   {
     path: "/statistics",
-    label: "Statistics",
+    label: "navigation.statistics",
     icon: (
       <svg
         className="h-5 w-5 flex-shrink-0"
@@ -87,7 +89,7 @@ const menuItems = [
   },
   {
     path: "/agent",
-    label: "Agent",
+    label: "navigation.agent",
     icon: <Bot className="h-5 w-5 flex-shrink-0" />,
   },
 ];
@@ -100,6 +102,7 @@ const Sidebar = ({
   onHoverChange,
   onFocusChange,
 }) => {
+  const { t } = useTranslation("common");
   const location = useLocation();
   const navigate = useNavigate();
   const logoutMutation = useLogoutMutation();
@@ -110,7 +113,7 @@ const Sidebar = ({
       ? drawerWidthExpanded
       : drawerWidthCollapsed
     : "min(18rem, calc(100vw - 1rem))";
-  const todayLabel = new Intl.DateTimeFormat("en-US", {
+  const todayLabel = new Intl.DateTimeFormat(getLocale(), {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -164,7 +167,7 @@ const Sidebar = ({
           type="button"
           className="ui-shell-overlay"
           onClick={onClose}
-          aria-label="Close navigation"
+          aria-label={t("navigation.close")}
         />
       )}
 
@@ -195,8 +198,8 @@ const Sidebar = ({
             type="button"
             onClick={onClose}
             className="ui-icon-button ui-focus-ring ui-shell-sidebar__toggle"
-            aria-label="Close navigation"
-            title="Close navigation"
+            aria-label={t("navigation.close")}
+            title={t("navigation.close")}
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -225,10 +228,12 @@ const Sidebar = ({
           </div>
 
           {showLabels && (
-            <p className="ui-shell-section-label px-1">Workspace</p>
+            <p className="ui-shell-section-label px-1">
+              {t("navigation.workspace")}
+            </p>
           )}
 
-          <nav className="ui-shell-nav" aria-label="Primary navigation">
+          <nav className="ui-shell-nav" aria-label={t("navigation.primary")}>
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
 
@@ -240,14 +245,14 @@ const Sidebar = ({
                   data-active={isActive}
                   aria-current={isActive ? "page" : undefined}
                   onClick={!isDesktop ? onClose : undefined}
-                  aria-label={item.label}
-                  title={!showLabels ? item.label : undefined}
+                  aria-label={t(item.label)}
+                  title={!showLabels ? t(item.label) : undefined}
                 >
                   <span className="flex-shrink-0" aria-hidden="true">
                     {item.icon}
                   </span>
                   {showLabels && (
-                    <span className="ui-shell-nav-label">{item.label}</span>
+                    <span className="ui-shell-nav-label">{t(item.label)}</span>
                   )}
                 </Link>
               );
@@ -259,10 +264,14 @@ const Sidebar = ({
               type="button"
               onClick={handleLogout}
               className={`ui-shell-nav-link ui-focus-ring w-full ${showLabels ? "" : "justify-center"}`}
-              title={!showLabels ? "Logout" : undefined}
+              title={!showLabels ? t("navigation.logout") : undefined}
             >
               <LogOut className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
-              {showLabels && <span className="ui-shell-nav-label">Logout</span>}
+              {showLabels && (
+                <span className="ui-shell-nav-label">
+                  {t("navigation.logout")}
+                </span>
+              )}
             </button>
           </div>
         </div>

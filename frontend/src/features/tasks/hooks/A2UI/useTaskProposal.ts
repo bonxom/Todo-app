@@ -1,3 +1,4 @@
+import i18n from "@/shared/i18n";
 import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import { useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -66,7 +67,7 @@ export function useTaskProposal({
   const envelope = saved ?? baseline.current;
   const submit = useCallback(
     async (incoming: ProposalAction): Promise<ProposalEnvelope> => {
-      if (busy.current) throw new Error("Đang xử lý yêu cầu.");
+      if (busy.current) throw new Error(i18n.t("agent:proposalProcessing"));
       busy.current = true;
       const isCurrent = () =>
         active.current &&
@@ -98,7 +99,9 @@ export function useTaskProposal({
         if (isCurrent()) {
           const status =
             failure instanceof ApiError ? failure.status : undefined;
-          setError(getApiErrorMessage(failure, "Không thể thực hiện yêu cầu."));
+          setError(
+            getApiErrorMessage(failure, i18n.t("agent:proposalRequestFailed")),
+          );
           if (status && status >= 400 && status < 500) {
             pending.current = null;
             setPendingAction(null);
@@ -168,7 +171,7 @@ export function useTaskProposal({
         }
         before = snapshot?.before ?? undefined;
       } while (before !== undefined);
-      setError("Không tìm thấy đề xuất.");
+      setError(i18n.t("agent:proposalNotFound"));
     } catch (failure) {
       if (isCurrent()) setError(getApiErrorMessage(failure));
     } finally {

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useMemo } from "react";
 import {
   AlertCircle,
@@ -14,7 +15,7 @@ import {
 /**
  * Sanitizes SVG code to prevent XSS attacks while keeping valid graphic elements.
  */
-const sanitizeSvg = (rawSvg) => {
+const sanitizeSvg = (rawSvg, t) => {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(rawSvg.trim(), "image/svg+xml");
@@ -22,14 +23,14 @@ const sanitizeSvg = (rawSvg) => {
     // Check parser errors
     const parserError = doc.querySelector("parsererror");
     if (parserError) {
-      return { valid: false, error: "Invalid SVG format", sanitized: "" };
+      return { valid: false, error: t("invalidSvgFormat"), sanitized: "" };
     }
 
     const svgElement = doc.documentElement;
     if (svgElement.tagName.toLowerCase() !== "svg") {
       return {
         valid: false,
-        error: "Root element must be <svg>",
+        error: t("rootElementMustBeSvg"),
         sanitized: "",
       };
     }
@@ -83,18 +84,23 @@ const sanitizeSvg = (rawSvg) => {
   } catch (err) {
     return {
       valid: false,
-      error: err?.message || "Failed to parse SVG",
+      error: err?.message || t("failedToParseSvg"),
       sanitized: "",
     };
   }
 };
 
 const SvgPreview = ({ code }) => {
+  const { t } = useTranslation("agent");
+
   const [activeTab, setActiveTab] = useState("preview");
   const [copied, setCopied] = useState(false);
   const [zoom, setZoom] = useState(100);
 
-  const { valid, error, sanitized } = useMemo(() => sanitizeSvg(code), [code]);
+  const { valid, error, sanitized } = useMemo(
+    () => sanitizeSvg(code, t),
+    [code, t],
+  );
 
   const handleCopy = async () => {
     try {
@@ -143,7 +149,7 @@ const SvgPreview = ({ code }) => {
           <button
             type="button"
             role="tab"
-            aria-label="Preview"
+            aria-label={t("preview")}
             aria-selected={activeTab === "preview"}
             onClick={() => setActiveTab("preview")}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
@@ -153,12 +159,12 @@ const SvgPreview = ({ code }) => {
             }`}
           >
             <Eye className="h-3.5 w-3.5" />
-            <span>Preview</span>
+            <span>{t("preview")}</span>
           </button>
           <button
             type="button"
             role="tab"
-            aria-label="Code"
+            aria-label={t("code")}
             aria-selected={activeTab === "code"}
             onClick={() => setActiveTab("code")}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
@@ -168,7 +174,7 @@ const SvgPreview = ({ code }) => {
             }`}
           >
             <Code className="h-3.5 w-3.5" />
-            <span>Code</span>
+            <span>{t("code")}</span>
           </button>
         </div>
 
@@ -179,8 +185,8 @@ const SvgPreview = ({ code }) => {
                 type="button"
                 onClick={handleZoomOut}
                 disabled={zoom <= 50}
-                aria-label="Zoom out"
-                title="Zoom out"
+                aria-label={t("zoomOut")}
+                title={t("zoomOut")}
                 className="ui-focus-ring flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-line)] hover:text-[var(--color-text)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ZoomOut className="h-3 w-3" />
@@ -189,8 +195,8 @@ const SvgPreview = ({ code }) => {
               <button
                 type="button"
                 onClick={handleResetZoom}
-                aria-label="Reset zoom"
-                title="Reset to 100%"
+                aria-label={t("resetZoom")}
+                title={t("resetTo100")}
                 className="ui-focus-ring px-1 font-mono text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer"
               >
                 {zoom}%
@@ -200,8 +206,8 @@ const SvgPreview = ({ code }) => {
                 type="button"
                 onClick={handleZoomIn}
                 disabled={zoom >= 300}
-                aria-label="Zoom in"
-                title="Zoom in"
+                aria-label={t("zoomIn")}
+                title={t("zoomIn")}
                 className="ui-focus-ring flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-line)] hover:text-[var(--color-text)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ZoomIn className="h-3 w-3" />
@@ -211,8 +217,8 @@ const SvgPreview = ({ code }) => {
                 <button
                   type="button"
                   onClick={handleResetZoom}
-                  aria-label="Reset zoom"
-                  title="Fit to view"
+                  aria-label={t("resetZoom")}
+                  title={t("fitToView")}
                   className="ui-focus-ring flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-line)] hover:text-[var(--color-text)] cursor-pointer"
                 >
                   <RotateCcw className="h-3 w-3" />
@@ -222,8 +228,8 @@ const SvgPreview = ({ code }) => {
               <button
                 type="button"
                 onClick={handleDownload}
-                aria-label="Download SVG"
-                title="Download SVG"
+                aria-label={t("downloadSvg")}
+                title={t("downloadSvg")}
                 className="ui-focus-ring flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-line)] hover:text-[var(--color-text)] cursor-pointer ml-1"
               >
                 <Download className="h-3 w-3" />
@@ -238,18 +244,20 @@ const SvgPreview = ({ code }) => {
           <button
             type="button"
             onClick={handleCopy}
-            aria-label={copied ? "Copied" : "Copy code"}
+            aria-label={copied ? t("copied") : t("copyCode")}
             className="ui-focus-ring flex items-center gap-1 rounded-md px-2 py-0.5 text-xs transition-colors hover:bg-[var(--color-line)] hover:text-[var(--color-text)] cursor-pointer"
           >
             {copied ? (
               <>
                 <Check className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="text-emerald-500 font-medium">Copied</span>
+                <span className="text-emerald-500 font-medium">
+                  {t("copied")}
+                </span>
               </>
             ) : (
               <>
                 <Copy className="h-3.5 w-3.5" />
-                <span>Copy</span>
+                <span>{t("copy")}</span>
               </>
             )}
           </button>
@@ -262,9 +270,7 @@ const SvgPreview = ({ code }) => {
           {!valid ? (
             <div className="flex flex-col items-center gap-1.5 text-center text-xs text-amber-600 dark:text-amber-400">
               <AlertCircle className="h-4 w-4" />
-              <span>
-                {error || "Unable to render the SVG. Check the code."}
-              </span>
+              <span>{error || t("unableToRenderTheSvgCheckTheCode")}</span>
             </div>
           ) : (
             <div

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Fragment, useContext } from "react";
 import type { ProposalItem } from "@/shared/types/A2UI/taskProposal";
 import CustomSelect from "@/shared/components/CustomSelect";
@@ -13,6 +14,8 @@ type TaskListProps = {
 };
 
 export function TaskList({ bare = false }: TaskListProps) {
+  const { t } = useTranslation("agent");
+
   const editor = useContext(TaskProposalEditorContext);
   if (!editor) {
     throw new Error("Missing task proposal editor context");
@@ -33,10 +36,10 @@ export function TaskList({ bare = false }: TaskListProps) {
     const isSelected = draft.selectedItemIds.includes(item.id);
     const priorityLabel =
       priority === "High"
-        ? "Ưu tiên cao"
+        ? t("highPriority")
         : priority === "Low"
-          ? "Ưu tiên thấp"
-          : "Trung bình";
+          ? t("lowPriority")
+          : t("medium");
 
     return (
       <fieldset
@@ -48,7 +51,8 @@ export function TaskList({ bare = false }: TaskListProps) {
       >
         <div className="task-proposal-item-top">
           <legend className="task-proposal-legend">
-            Công việc {index + 1}
+            {t("task")}
+            {index + 1}
           </legend>
           <div className="task-proposal-item-badges">
             <span
@@ -60,26 +64,26 @@ export function TaskList({ bare = false }: TaskListProps) {
               <input
                 type="checkbox"
                 checked={isSelected}
-                aria-label={`Chọn công việc: ${item.title}`}
+                aria-label={t("selectTask", { title: item.title })}
                 onChange={() => toggleItemSelection(item.id)}
               />
-              <span>Chọn để tạo</span>
+              <span>{t("selectToCreate")}</span>
             </label>
           </div>
         </div>
         <label className="task-proposal-field">
-          <span>Tiêu đề</span>
+          <span>{t("title")}</span>
           <input
-            aria-label={`Task ${index + 1} title`}
+            aria-label={t("taskTitle", { index: index + 1 })}
             value={item.title}
             maxLength={200}
             onChange={(e) => updateItem(item.id, { title: e.target.value })}
           />
         </label>
         <label className="task-proposal-field">
-          <span>Mô tả</span>
+          <span>{t("description")}</span>
           <textarea
-            aria-label={`Task ${index + 1} description`}
+            aria-label={t("taskDescription", { index: index + 1 })}
             value={item.description ?? ""}
             maxLength={1000}
             rows={2}
@@ -90,10 +94,10 @@ export function TaskList({ bare = false }: TaskListProps) {
         </label>
         <div className="task-proposal-fields">
           <label className="task-proposal-field">
-            <span>Ưu tiên</span>
+            <span>{t("priority")}</span>
             <CustomSelect
               disabled={locked}
-              aria-label={`Task ${index + 1} priority`}
+              aria-label={t("taskPriority", { index: index + 1 })}
               value={priority}
               onChange={(e) =>
                 updateItem(item.id, {
@@ -101,25 +105,27 @@ export function TaskList({ bare = false }: TaskListProps) {
                 })
               }
             >
-              <option value="Low">Thấp</option>
-              <option value="Medium">Trung bình</option>
-              <option value="High">Cao</option>
+              <option value="Low">{t("low")}</option>
+              <option value="Medium">{t("medium")}</option>
+              <option value="High">{t("high")}</option>
             </CustomSelect>
           </label>
           <label className="task-proposal-field">
-            <span>Danh mục</span>
+            <span>{t("category")}</span>
             <CustomSelect
               disabled={locked}
-              aria-label={`Task ${index + 1} category`}
+              aria-label={t("taskCategory", { index: index + 1 })}
               value={item.categoryId ?? ""}
               onChange={(e) =>
                 updateItem(item.id, { categoryId: e.target.value || undefined })
               }
             >
-              <option value="">Uncategorized</option>
+              <option value="">{t("uncategorized")}</option>
               {item.categoryId &&
                 !choices.categories.some((c) => c._id === item.categoryId) && (
-                  <option value={item.categoryId}>Danh mục hiện tại</option>
+                  <option value={item.categoryId}>
+                    {t("currentCategory")}
+                  </option>
                 )}
               {choices.categories.map((c) => (
                 <option key={c._id} value={c._id}>
@@ -129,19 +135,19 @@ export function TaskList({ bare = false }: TaskListProps) {
             </CustomSelect>
           </label>
           <label className="task-proposal-field">
-            <span>Dự án</span>
+            <span>{t("project")}</span>
             <CustomSelect
               disabled={locked}
-              aria-label={`Task ${index + 1} project`}
+              aria-label={t("taskProject", { index: index + 1 })}
               value={item.projectId ?? ""}
               onChange={(e) =>
                 updateItem(item.id, { projectId: e.target.value || null })
               }
             >
-              <option value="">Không có dự án</option>
+              <option value="">{t("noProject")}</option>
               {item.projectId &&
                 !choices.projects.some((p) => p._id === item.projectId) && (
-                  <option value={item.projectId}>Dự án hiện tại</option>
+                  <option value={item.projectId}>{t("currentProject")}</option>
                 )}
               {choices.projects.map((p) => (
                 <option
@@ -150,19 +156,20 @@ export function TaskList({ bare = false }: TaskListProps) {
                   disabled={p.status === "completed"}
                 >
                   {p.name}
-                  {p.status === "completed" ? " (đã hoàn thành)" : ""}
+                  {p.status === "completed" ? t("taskCompletedSuffix") : ""}
                 </option>
               ))}
             </CustomSelect>
           </label>
           {(["startDate", "dueDate"] as const).map((field) => (
             <label key={field} className="task-proposal-field">
-              <span>
-                {field === "startDate" ? "Bắt đầu" : "Hạn hoàn thành"}
-              </span>
+              <span>{field === "startDate" ? t("start") : t("dueDate")}</span>
               <input
                 type="datetime-local"
-                aria-label={`Task ${index + 1} ${field}`}
+                aria-label={t(
+                  field === "startDate" ? "taskStartDate" : "taskDueDate",
+                  { index: index + 1 },
+                )}
                 value={toDateTimeLocalValue(item[field] ?? "")}
                 onChange={(e) =>
                   updateItem(item.id, {

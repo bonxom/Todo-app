@@ -1,8 +1,12 @@
+import { useTranslation } from "react-i18next";
+import { workspaceTranslate } from "@/features/tasks/utils/workspaceTranslation";
 const SearchBar = ({
   searchTerm,
   onSearchChange,
-  placeholder = "Search tasks\u2026",
+  placeholder = workspaceTranslate("searchTasksPlaceholder"),
 }) => {
+  const { t } = useTranslation("workspace");
+
   const hasValue = (searchTerm ?? "").length > 0;
 
   return (
@@ -12,7 +16,7 @@ const SearchBar = ({
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={placeholder}
-        aria-label="Search tasks"
+        aria-label={t("searchTasks")}
         className="ui-input peer w-full !pl-12 !pr-12"
       />
 
@@ -50,8 +54,8 @@ const SearchBar = ({
             text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]
             transition-[background-color,color] duration-150
           "
-          aria-label="Clear search"
-          title="Clear"
+          aria-label={t("clearSearch")}
+          title={t("clear")}
         >
           <svg
             className="h-4 w-4"

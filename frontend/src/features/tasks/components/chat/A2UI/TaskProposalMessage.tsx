@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useTaskProposal } from "../../../hooks/A2UI/useTaskProposal";
@@ -17,6 +18,8 @@ export function TaskProposalMessage({
   onDirtyChange,
   disabled,
 }: Props) {
+  const { t } = useTranslation("agent");
+
   const session = useContext(AgentSessionContext);
   const reloadConversation = session?.chat.reload;
   const setProposalDraft = session?.setProposalDraft;
@@ -58,7 +61,7 @@ export function TaskProposalMessage({
           try {
             setDetail(await taskService.getTaskById(taskId));
           } catch {
-            setDetailError("Không thể mở công việc.");
+            setDetailError(t("unableToOpenTask"));
           }
         }}
         onReload={() =>
@@ -75,7 +78,7 @@ export function TaskProposalMessage({
             void proposal.submit(proposal.pendingAction!).catch(() => undefined)
           }
         >
-          Thử lại yêu cầu
+          {t("retryRequest")}
         </button>
       )}
       {(proposal.conflict || proposal.error) && (
@@ -86,14 +89,14 @@ export function TaskProposalMessage({
             proposal.dirty ? setConfirmReload(true) : void runReload()
           }
         >
-          Tải lại đề xuất
+          {t("reloadProposal")}
         </button>
       )}
       {confirmReload && (
-        <div role="alertdialog" aria-label="Bỏ thay đổi chưa lưu?">
-          <p>Tải lại sẽ bỏ các thay đổi chưa lưu.</p>
+        <div role="alertdialog" aria-label={t("discardUnsavedChanges")}>
+          <p>{t("reloadingWillDiscardUnsavedChanges")}</p>
           <button onClick={() => setConfirmReload(false)}>
-            Tiếp tục chỉnh sửa
+            {t("keepEditing")}
           </button>
           <button
             onClick={() => {
@@ -101,7 +104,7 @@ export function TaskProposalMessage({
               void runReload();
             }}
           >
-            Bỏ thay đổi và tải lại
+            {t("discardChangesAndReload")}
           </button>
         </div>
       )}

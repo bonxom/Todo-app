@@ -241,7 +241,7 @@ test.describe("Orbit Frontend Architecture E2E", () => {
   test("404 error page renders on unknown route", async ({ page }) => {
     await page.goto("/unknown-route-that-does-not-exist");
     await expect(
-      page.getByRole("heading", { name: /Trang không tồn tại|404/i }),
+      page.getByRole("heading", { name: /Page not found|404/i }),
     ).toBeVisible();
   });
 });

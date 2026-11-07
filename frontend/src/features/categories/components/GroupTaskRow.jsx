@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import TodoTaskCard from "@/features/tasks/components/TodoTaskCard";
 import {
   useDeleteTaskMutation,
@@ -15,6 +16,8 @@ export default function GroupTaskRow({
   onGiveUp,
   onTaskUpdated,
 }) {
+  const { t } = useTranslation("workspace");
+
   const start = useStartTaskMutation();
   const finish = useFinishTaskMutation();
   const restore = useRestoreTaskMutation();
@@ -24,7 +27,7 @@ export default function GroupTaskRow({
       await mutation.mutateAsync(taskId);
       onTaskUpdated?.();
     } catch (error) {
-      alert(getApiErrorMessage(error, "Unable to update task."));
+      alert(getApiErrorMessage(error, t("unableToUpdateTask")));
     }
   };
   return (

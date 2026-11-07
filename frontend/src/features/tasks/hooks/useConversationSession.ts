@@ -1,3 +1,4 @@
+import i18n from "@/shared/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "@/shared/services/apiError";
 import { aiService } from "@/shared/services/aiService";
@@ -120,7 +121,7 @@ export function useConversationSession(options?: ConversationSessionOptions) {
             err instanceof ApiError && [400, 404].includes(err.status ?? 0);
           setError(
             isNotFound
-              ? "Hội thoại không khả dụng hoặc đã bị xóa."
+              ? i18n.t("agent:conversationUnavailableOrDeleted")
               : "Unable to load the conversation. Please try again.",
           );
         }
@@ -153,7 +154,7 @@ export function useConversationSession(options?: ConversationSessionOptions) {
           err instanceof ApiError && [400, 404].includes(err.status ?? 0);
         setError(
           isNotFound
-            ? "Hội thoại không khả dụng hoặc đã bị xóa."
+            ? i18n.t("agent:conversationUnavailableOrDeleted")
             : "Unable to load the conversation. Please try again.",
         );
       }

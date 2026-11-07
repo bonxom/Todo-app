@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { MessageSquare, Plus, Search, Loader2 } from "lucide-react";
 import { aiService } from "@/shared/services/aiService";
@@ -21,6 +22,8 @@ export function AgentHistoryList({
   onNewChat,
   disabled = false,
 }: AgentHistoryListProps) {
+  const { t } = useTranslation("agent");
+
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
@@ -45,7 +48,7 @@ export function AgentHistoryList({
   }, [activeConversationId]);
 
   const filtered = conversations.filter((c) =>
-    (c.title || "New conversation")
+    (c.title || t("newConversation"))
       .toLowerCase()
       .includes(searchQuery.toLowerCase()),
   );
@@ -60,7 +63,7 @@ export function AgentHistoryList({
           className="ui-btn-primary agent-new-chat-button"
         >
           <Plus className="h-4 w-4" />
-          <span>New conversation</span>
+          <span>{t("newConversation")}</span>
         </button>
 
         <div className="relative mt-3">
@@ -69,8 +72,8 @@ export function AgentHistoryList({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search conversations..."
-            aria-label="Search conversations"
+            placeholder={t("searchConversations")}
+            aria-label={t("searchConversationsLabel")}
             className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] py-1.5 pl-8 pr-3 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-hidden"
           />
         </div>
@@ -83,7 +86,7 @@ export function AgentHistoryList({
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-6 text-center text-xs text-[var(--color-text-muted)]">
-            {searchQuery ? "No conversations found" : "No conversations yet"}
+            {searchQuery ? t("noConversationsFound") : t("noConversationsYet")}
           </div>
         ) : (
           <div className="space-y-1">
@@ -103,7 +106,7 @@ export function AgentHistoryList({
                 >
                   <MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-70" />
                   <span className="truncate">
-                    {item.title || "New conversation"}
+                    {item.title || t("newConversation")}
                   </span>
                 </button>
               );

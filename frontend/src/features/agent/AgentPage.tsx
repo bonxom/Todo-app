@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { AgentNavigation } from "./AgentNavigation";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -32,6 +33,8 @@ const STARTER_SUGGESTIONS = [
 ];
 
 export default function AgentPage() {
+  const { t } = useTranslation("agent");
+
   const { chat, setDraft } = useAgentSession();
   const {
     activeConversationId,
@@ -77,13 +80,13 @@ export default function AgentPage() {
 
   // Accessible live status text
   const liveStatus = chat.sending
-    ? "Sending message..."
+    ? t("sendingMessage")
     : chat.loading
-      ? "Loading conversation..."
+      ? t("loadingConversation")
       : chat.pending
         ? "..."
         : chat.error
-          ? `Error: ${chat.error}`
+          ? t("errorMessage", { message: chat.error })
           : "";
 
   const handleSelectStarter = (text: string) => {
@@ -92,8 +95,7 @@ export default function AgentPage() {
 
   const isUnavailable = Boolean(
     chat.error &&
-    (chat.error.includes("không khả dụng") ||
-      chat.error.includes("unavailable") ||
+    (chat.error.includes("unavailable") ||
       chat.error.includes("Unable to load")),
   );
 
@@ -120,7 +122,7 @@ export default function AgentPage() {
         <aside className="agent-history-col flex flex-col">
           <div className="border-b border-[var(--color-line)] p-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-              Conversation History
+              {t("conversationHistory")}
             </h2>
           </div>
           <div className="flex-1 overflow-hidden">
@@ -139,14 +141,14 @@ export default function AgentPage() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Conversation history"
+          aria-label={t("conversationHistoryLabel")}
           ref={historyDialogRef}
           className="fixed inset-0 z-50 flex bg-black/50"
         >
           <div className="flex h-full w-4/5 max-w-xs flex-col bg-[var(--color-surface)] shadow-xl">
             <div className="flex items-center justify-between border-b border-[var(--color-line)] p-3">
               <h2 className="text-sm font-semibold text-[var(--color-text)]">
-                Conversation History
+                {t("conversationHistory")}
               </h2>
               <button
                 type="button"
@@ -155,7 +157,7 @@ export default function AgentPage() {
                   historyTriggerRef.current?.focus();
                 }}
                 className="rounded-md p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
-                aria-label="Close history"
+                aria-label={t("closeHistory")}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -188,7 +190,7 @@ export default function AgentPage() {
       )}
 
       {/* Center Column: Chat Field & Messages */}
-      <section aria-label="Agent conversation" className="agent-center-col">
+      <section aria-label={t("agentConversation")} className="agent-center-col">
         {/* Workspace Sub-header */}
         <header className="agent-chat-header">
           <div className="agent-chat-identity">
@@ -198,14 +200,14 @@ export default function AgentPage() {
                 type="button"
                 onClick={() => setHistoryDrawerOpen(true)}
                 className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
-                aria-label="Open conversation history"
+                aria-label={t("openConversationHistory")}
               >
                 <History className="h-5 w-5" />
               </button>
             )}
             <Sparkles className="h-5 w-5 text-[var(--color-accent)]" />
             <span className="font-semibold text-[var(--color-text)]">
-              Orbit Agent
+              {t("orbitAgent")}
             </span>
           </div>
 
@@ -218,19 +220,19 @@ export default function AgentPage() {
                 className="flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
                 aria-label={
                   desktopRightPanelOpen
-                    ? "Close context panel"
-                    : "Open context panel"
+                    ? t("closeContextPanel")
+                    : t("openContextPanel")
                 }
               >
                 {desktopRightPanelOpen ? (
                   <>
                     <PanelRightClose className="h-4 w-4" />
-                    <span>Collapse</span>
+                    <span>{t("collapse")}</span>
                   </>
                 ) : (
                   <>
                     <PanelRightOpen className="h-4 w-4" />
-                    <span>Context & Actions</span>
+                    <span>{t("contextActions")}</span>
                   </>
                 )}
               </button>
@@ -240,10 +242,10 @@ export default function AgentPage() {
                 type="button"
                 onClick={() => setContextDrawerOpen(true)}
                 className="flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
-                aria-label="Open context and actions panel"
+                aria-label={t("openContextAndActionsPanel")}
               >
                 <PanelRightOpen className="h-4 w-4" />
-                <span className="hidden sm:inline">Context & Actions</span>
+                <span className="hidden sm:inline">{t("contextActions")}</span>
               </button>
             )}
           </div>
@@ -261,10 +263,12 @@ export default function AgentPage() {
                 <AlertCircle className="h-6 w-6" />
               </div>
               <h3 className="mt-3 text-base font-semibold text-[var(--color-text)]">
-                Conversation unavailable
+                {t("conversationUnavailable")}
               </h3>
               <p className="mt-1 max-w-sm text-sm text-[var(--color-text-muted)]">
-                The conversation you are trying to access does not exist, was deleted, or you do not have permission to view it.
+                {t(
+                  "theConversationYouAreTryingToAccessDoesNotExistWasDeletedOrYouDoNotHavePermissionToViewIt",
+                )}
               </p>
               <button
                 type="button"
@@ -272,7 +276,7 @@ export default function AgentPage() {
                 className="ui-btn-primary mt-4"
               >
                 <Plus className="h-4 w-4" />
-                <span>Start new conversation</span>
+                <span>{t("startNewConversation")}</span>
               </button>
             </div>
           ) : (
@@ -284,10 +288,10 @@ export default function AgentPage() {
                     <Sparkles className="h-6 w-6" />
                   </div>
                   <h2 className="mt-3 text-lg font-semibold text-[var(--color-text)]">
-                    Hello! How can I help you today?
+                    {t("helloHowCanIHelpYouToday")}
                   </h2>
                   <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                    Choose a prompt below or type your request to get started:
+                    {t("chooseAPromptBelowOrTypeYourRequestToGetStarted")}
                   </p>
                   <div className="mt-4 flex flex-wrap justify-center gap-2">
                     {STARTER_SUGGESTIONS.map((starter) => (
@@ -297,7 +301,13 @@ export default function AgentPage() {
                         onClick={() => handleSelectStarter(starter)}
                         className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-1.5 text-xs font-medium text-[var(--color-text)] transition-colors hover:border-[var(--color-accent)] hover:bg-[var(--color-surface-muted)]"
                       >
-                        {starter}
+                        {t(
+                          [
+                            "planTodaySSchedule",
+                            "breakDownTasks",
+                            "reviewPriorityTasks",
+                          ][STARTER_SUGGESTIONS.indexOf(starter)],
+                        )}
                       </button>
                     ))}
                   </div>
@@ -324,14 +334,14 @@ export default function AgentPage() {
         <aside className="agent-right-col flex flex-col p-4">
           <div className="mb-4 border-b border-[var(--color-line)] pb-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-              Context & Actions
+              {t("contextActions")}
             </h2>
           </div>
           <div className="space-y-6">
             <AgentContextPanel chat={chat} />
             <div>
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                Verified Activities
+                {t("verifiedActivities")}
               </h3>
               <AgentActivityList
                 key={chat.conversationId}
@@ -347,7 +357,7 @@ export default function AgentPage() {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Context and verified activities"
+          aria-label={t("contextAndVerifiedActivities")}
           ref={contextDialogRef}
           className="fixed inset-0 z-50 flex justify-end bg-black/50"
         >
@@ -361,7 +371,7 @@ export default function AgentPage() {
           <div className="flex h-full w-4/5 max-w-sm flex-col bg-[var(--color-surface)] p-4 shadow-xl">
             <div className="flex items-center justify-between border-b border-[var(--color-line)] pb-3">
               <h2 className="text-sm font-semibold text-[var(--color-text)]">
-                Context & Actions
+                {t("contextActions")}
               </h2>
               <button
                 type="button"
@@ -370,7 +380,7 @@ export default function AgentPage() {
                   contextTriggerRef.current?.focus();
                 }}
                 className="rounded-md p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
-                aria-label="Close context panel"
+                aria-label={t("closeContextPanel")}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -379,7 +389,7 @@ export default function AgentPage() {
               <AgentContextPanel chat={chat} />
               <div>
                 <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                  Verified Activities
+                  {t("verifiedActivities")}
                 </h3>
                 <AgentActivityList
                   key={chat.conversationId}

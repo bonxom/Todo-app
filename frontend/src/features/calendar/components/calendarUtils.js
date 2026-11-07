@@ -1,3 +1,4 @@
+import { getLocale } from "@/shared/i18n";
 export const startOfDay = (value) => {
   const date = new Date(value);
   date.setHours(0, 0, 0, 0);
@@ -114,7 +115,7 @@ export const sortTasksByDueTime = (tasks = []) =>
   });
 
 export const formatMonthLabel = (currentDate) =>
-  currentDate.toLocaleDateString("en-US", {
+  currentDate.toLocaleDateString(getLocale(), {
     month: "long",
     year: "numeric",
   });
@@ -122,11 +123,11 @@ export const formatMonthLabel = (currentDate) =>
 export const formatWeekLabel = (currentDate) => {
   const weekStart = getStartOfWeek(currentDate);
   const weekEnd = addDays(weekStart, 6);
-  const startLabel = weekStart.toLocaleDateString("en-US", {
+  const startLabel = weekStart.toLocaleDateString(getLocale(), {
     month: "short",
     day: "numeric",
   });
-  const endLabel = weekEnd.toLocaleDateString("en-US", {
+  const endLabel = weekEnd.toLocaleDateString(getLocale(), {
     month: weekStart.getMonth() === weekEnd.getMonth() ? undefined : "short",
     day: "numeric",
     year:

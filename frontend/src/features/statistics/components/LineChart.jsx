@@ -1,3 +1,5 @@
+import { workspaceTranslate } from "@/features/tasks/utils/workspaceTranslation";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@/shared/theme/theme";
 import { useMemo, useState } from "react";
 import { Line } from "react-chartjs-2";
@@ -46,7 +48,10 @@ const formatRangeLabel = (startDate, endDate) => {
     year: "numeric",
   });
 
-  return `${startLabel} to ${endLabel}`;
+  return workspaceTranslate("messages.v0ToV1", {
+    v0: startLabel,
+    v1: endLabel,
+  });
 };
 
 const isQuickRangeActive = (days, startDate, endDate, todayKey) => {
@@ -56,6 +61,8 @@ const isQuickRangeActive = (days, startDate, endDate, todayKey) => {
 };
 
 const LineChart = ({ dailyStats }) => {
+  const { t } = useTranslation("workspace");
+
   const { theme } = useTheme();
   const completedColor = theme === "dark" ? "#8ad3ac" : "#2f7d5a";
   const givenUpColor = theme === "dark" ? "#f0a99e" : "#b25547";
@@ -105,7 +112,7 @@ const LineChart = ({ dailyStats }) => {
       dateKeys,
       datasets: [
         {
-          label: "Completed Tasks",
+          label: t("completedTasks"),
           data: completed,
           borderColor: completedColor,
           backgroundColor: COMPLETED_FILL,
@@ -119,7 +126,7 @@ const LineChart = ({ dailyStats }) => {
           pointBorderWidth: 1.5,
         },
         {
-          label: "Given Up Tasks",
+          label: t("givenUpTasks"),
           data: givenUp,
           borderColor: givenUpColor,
           backgroundColor: GIVEN_UP_FILL,
@@ -134,7 +141,7 @@ const LineChart = ({ dailyStats }) => {
         },
       ],
     };
-  }, [dailyStats, startDate, endDate, completedColor, givenUpColor]);
+  }, [dailyStats, startDate, endDate, completedColor, givenUpColor, t]);
 
   const options = useMemo(
     () => ({
@@ -235,7 +242,7 @@ const LineChart = ({ dailyStats }) => {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-[color:var(--color-text)]">
-            Completion trend
+            {t("completionTrend")}
           </h2>
         </div>
         <span className="statistics-range-label">{rangeLabel}</span>
@@ -244,7 +251,7 @@ const LineChart = ({ dailyStats }) => {
       <div className="statistics-trend-controls">
         <div className="statistics-date-inputs">
           <label className="statistics-date-field">
-            <span>From</span>
+            <span>{t("from")}</span>
             <input
               type="date"
               name="stats_range_start"
@@ -257,7 +264,7 @@ const LineChart = ({ dailyStats }) => {
           </label>
 
           <label className="statistics-date-field">
-            <span>To</span>
+            <span>{t("to")}</span>
             <input
               type="date"
               name="stats_range_end"
@@ -292,7 +299,7 @@ const LineChart = ({ dailyStats }) => {
                     : "border-[color:var(--color-line)] bg-[var(--color-surface)] text-[color:var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[color:var(--color-text)]"
                 }`}
               >
-                {days} days
+                {days} {t("days")}
               </button>
             );
           })}
@@ -302,7 +309,7 @@ const LineChart = ({ dailyStats }) => {
       <div className="mt-6">
         {hasNoData ? (
           <div className="flex h-[245px] items-center justify-center rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 text-sm text-[color:var(--color-text-muted)]">
-            No trend data available for this date range.
+            {t("noTrendDataAvailableForThisDateRange")}
           </div>
         ) : (
           <div className="statistics-chart">
@@ -310,7 +317,9 @@ const LineChart = ({ dailyStats }) => {
               data={chartData}
               options={options}
               role="img"
-              aria-label={`Daily completed and given-up tasks, ${rangeLabel}`}
+              aria-label={t("messages.dailyCompletedAndGivenUpTasksV0", {
+                v0: rangeLabel,
+              })}
             />
           </div>
         )}

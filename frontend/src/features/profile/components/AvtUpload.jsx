@@ -1,9 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { Camera, X } from "lucide-react";
 import { useUpdateProfileMutation } from "../api/userMutations";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const AvatarUpload = ({ onUploadSuccess }) => {
+  const { t } = useTranslation("account");
   const [isOpen, setIsOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const updateProfileMutation = useUpdateProfileMutation();
@@ -32,14 +34,17 @@ const AvatarUpload = ({ onUploadSuccess }) => {
 
     try {
       await updateProfileMutation.mutateAsync({ avatarUrl });
-      alert("Avatar updated successfully!");
+      alert(t("avatarUpdatedSuccessfully"));
       handleClose();
       if (onUploadSuccess) {
         onUploadSuccess();
       }
     } catch (error) {
       console.error("Error updating avatar:", error);
-      alert("Error updating avatar: " + getApiErrorMessage(error));
+      alert(
+        t("errorUpdatingAvatar") +
+          getApiErrorMessage(error, t("avatarUpdateFailed")),
+      );
     }
   };
 
@@ -58,8 +63,8 @@ const AvatarUpload = ({ onUploadSuccess }) => {
           backgroundColor: "var(--color-surface)",
           boxShadow: "var(--shadow-xs)",
         }}
-        aria-label="Update avatar image"
-        title="Update avatar image"
+        aria-label={t("updateAvatarImage")}
+        title={t("updateAvatarImage")}
       >
         <Camera size={20} />
       </button>
@@ -78,17 +83,17 @@ const AvatarUpload = ({ onUploadSuccess }) => {
                   id="avatar-upload-title"
                   className="m-0 text-xl font-semibold text-[var(--color-text)]"
                 >
-                  Update Avatar
+                  {t("updateAvatar")}
                 </h3>
                 <p className="mt-1 mb-0 text-sm text-[var(--color-text-muted)]">
-                  Paste a direct image URL for your account photo.
+                  {t("pasteADirectImageUrlForYourAccountPhoto")}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleClose}
                 className="ui-modal-close-button ui-focus-ring"
-                aria-label="Close avatar dialog"
+                aria-label={t("closeAvatarDialog")}
               >
                 <X className="h-6 w-6" />
               </button>
@@ -100,7 +105,7 @@ const AvatarUpload = ({ onUploadSuccess }) => {
                   htmlFor="avatar-url"
                   className="mb-2 block text-sm font-medium text-[var(--color-text)]"
                 >
-                  Avatar URL
+                  {t("avatarUrl")}
                 </label>
                 <input
                   id="avatar-url"
@@ -110,7 +115,7 @@ const AvatarUpload = ({ onUploadSuccess }) => {
                   onChange={(e) => setAvatarUrl(e.target.value)}
                   autoComplete="url"
                   spellCheck={false}
-                  placeholder="https://example.com/avatar.jpg…"
+                  placeholder={t("avatarUrlPlaceholder")}
                   className="ui-input"
                   disabled={isUploading}
                 />
@@ -123,14 +128,14 @@ const AvatarUpload = ({ onUploadSuccess }) => {
                   className="ui-btn-secondary ui-focus-ring min-w-[8.5rem] flex-1"
                   disabled={isUploading}
                 >
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button
                   type="submit"
                   className="ui-btn-primary ui-focus-ring min-w-[8.5rem] flex-1 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isUploading}
                 >
-                  {isUploading ? "Updating…" : "Update Avatar"}
+                  {isUploading ? t("updating") : t("updateAvatar")}
                 </button>
               </div>
             </form>

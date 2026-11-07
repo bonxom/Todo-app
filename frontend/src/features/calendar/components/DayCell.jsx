@@ -1,3 +1,6 @@
+import { workspaceTranslate } from "@/features/tasks/utils/workspaceTranslation";
+import { useTranslation } from "react-i18next";
+import { getLocale } from "@/shared/i18n";
 import TaskDetailButton from "@/features/tasks/components/TaskDetailButton";
 import { useMemo, useState, memo } from "react";
 import { isSameDay, sortTasksByDueTime } from "./calendarUtils";
@@ -14,12 +17,12 @@ import {
 import { getTaskProjectColor } from "@/shared/utils/projectColor";
 
 const formatCellTime = (value) => {
-  if (!value) return "No due";
+  if (!value) return workspaceTranslate("noDue");
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "No due";
+  if (Number.isNaN(date.getTime())) return workspaceTranslate("noDue");
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(getLocale(), {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -84,6 +87,7 @@ const DayCell = memo(
     onTaskCopy,
     viewMode = "month",
   }) => {
+    const { t } = useTranslation("workspace");
     const [editingTask, setEditingTask] = useState(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [draggingTaskId, setDraggingTaskId] = useState(null);
@@ -158,13 +162,24 @@ const DayCell = memo(
           role="button"
           tabIndex={0}
           onKeyDown={(event) => {
-            if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+            if (
+              event.target === event.currentTarget &&
+              (event.key === "Enter" || event.key === " ")
+            ) {
               event.preventDefault();
               onClick(day);
             }
           }}
           onClick={() => onClick(day)}
-          aria-label={`${day.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}, ${taskCount} ${taskCount === 1 ? "task" : "tasks"}`}
+          aria-label={t("dayTaskCount", {
+            date: day.toLocaleDateString(getLocale(), {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
+            count: taskCount,
+          })}
           aria-pressed={isSelected}
           aria-current={isToday ? "date" : undefined}
           data-today={isToday}
@@ -218,7 +233,7 @@ const DayCell = memo(
             </div>
 
             {taskCount === 0 && viewMode === "week" && (
-              <span className="calendar-day-free">No plans yet</span>
+              <span className="calendar-day-free">{t("noPlansYet")}</span>
             )}
             {taskCount > 0 && (
               <div
@@ -239,7 +254,7 @@ const DayCell = memo(
                         event.stopPropagation();
                         setEditingTask(task);
                       }}
-                      aria-label={`Edit ${task.title}`}
+                      aria-label={t("messages.editV0", { v0: task.title })}
                       key={taskId}
                       draggable={Boolean(task._id || task.id)}
                       onDragStart={(event) => {
@@ -253,17 +268,19 @@ const DayCell = memo(
                       }}
                       data-cal-task-card
                       className={`w-full rounded-lg border px-2 py-1.5 text-left transition-[border-color,background-color,box-shadow,opacity,transform] duration-150 ${
-                        task.status === "completed" || task.status === "given-up"
+                        task.status === "completed" ||
+                        task.status === "given-up"
                           ? "opacity-80"
                           : ""
                       } ${draggingTaskId === taskId ? "opacity-60" : ""} cursor-grab active:cursor-grabbing`}
                       style={{
                         borderColor: previewTone.borderColor,
                         background: previewTone.background,
-                        borderLeftColor: projectColor || previewTone.borderColor,
+                        borderLeftColor:
+                          projectColor || previewTone.borderColor,
                         borderLeftWidth: projectColor ? "4px" : undefined,
                       }}
-                      title={`${task.title} • ${task.priority || "Medium"} • ${formatDateTime(task.dueDate, "No due date")}`}
+                      title={`${task.title} • ${t((task.priority || "Medium").toLowerCase())} • ${formatDateTime(task.dueDate, t("noDueDate"))}`}
                     >
                       <div className="flex items-start gap-2">
                         <span
@@ -306,7 +323,7 @@ const DayCell = memo(
                   <span
                     className={`mt-0.5 text-xs text-[var(--color-text-muted)] ${viewMode === "week" ? "px-3" : "px-2.5"}`}
                   >
-                    +{taskCount - previewLimit} more
+                    +{taskCount - previewLimit} {t("more")}
                   </span>
                 )}
               </div>

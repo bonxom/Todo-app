@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import FormDialog from "@/shared/components/FormDialog";
 import { useEffect, useState } from "react";
 import {
@@ -29,6 +30,8 @@ import {
 import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
+  const { t } = useTranslation("workspace");
+
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -75,10 +78,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
     } catch (error) {
       console.error("Failed to delete project:", error);
       alert(
-        getApiErrorMessage(
-          error,
-          "Failed to delete project. Please try again.",
-        ),
+        getApiErrorMessage(error, t("failedToDeleteProjectPleaseTryAgain")),
       );
     }
   };
@@ -136,7 +136,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
       onTaskUpdated?.();
     } catch (error) {
       console.error("Failed to move task to project:", error);
-      alert(getApiErrorMessage(error, "Failed to move task to this project."));
+      alert(getApiErrorMessage(error, t("failedToMoveTaskToThisProject")));
     }
   };
 
@@ -149,7 +149,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
       onProjectUpdated?.();
     } catch (error) {
       console.error("Failed to complete project:", error);
-      alert(getApiErrorMessage(error, "Failed to complete project."));
+      alert(getApiErrorMessage(error, t("failedToCompleteProject")));
     }
   };
 
@@ -162,7 +162,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
       onProjectUpdated?.();
     } catch (error) {
       console.error("Failed to restore project:", error);
-      alert(getApiErrorMessage(error, "Failed to restore project."));
+      alert(getApiErrorMessage(error, t("failedToRestoreProject")));
     }
   };
 
@@ -203,7 +203,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
       <FormDialog
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        title="Edit Project"
+        title={t("editProject")}
         kind="project"
       >
         <AddProjectForm
@@ -232,7 +232,7 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
             </span>
             <span className="project-state-label">
               <i />
-              {isProjectCompleted ? "Completed" : "Active"}
+              {isProjectCompleted ? t("completed") : t("active")}
             </span>
             <div className="project-card-actions">
               {isCompletionEligible && (
@@ -241,8 +241,10 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
                   className="category-delete"
                   onClick={handleCompleteProject}
                   disabled={updateProjectMutation.isPending}
-                  aria-label={`Complete and hide ${project.name}`}
-                  title="Complete project"
+                  aria-label={t("messages.completeAndHideV0", {
+                    v0: project.name,
+                  })}
+                  title={t("completeProject")}
                 >
                   <Check size={16} />
                 </button>
@@ -253,8 +255,8 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
                   className="category-delete"
                   onClick={handleRestoreProject}
                   disabled={updateProjectMutation.isPending}
-                  aria-label={`Restore ${project.name}`}
-                  title="Restore project"
+                  aria-label={t("messages.restoreV0", { v0: project.name })}
+                  title={t("restoreProject")}
                 >
                   <RotateCcw size={15} />
                 </button>
@@ -263,8 +265,8 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
                 type="button"
                 className="category-delete"
                 onClick={() => setIsEditModalOpen(true)}
-                aria-label={`Edit ${project.name}`}
-                title="Edit project"
+                aria-label={t("messages.editV0", { v0: project.name })}
+                title={t("editProject")}
               >
                 <Pencil size={15} />
               </button>
@@ -272,8 +274,8 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
                 type="button"
                 className="category-delete"
                 onClick={() => setIsDeleteDialogOpen(true)}
-                aria-label={`Delete ${project.name}`}
-                title="Delete project"
+                aria-label={t("messages.deleteV0", { v0: project.name })}
+                title={t("deleteProject")}
               >
                 <Trash2 size={15} />
               </button>
@@ -294,14 +296,14 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
           </p>
           <div className="category-progress-label">
             <span>
-              {completedTasks} of {totalTasks} completed
+              {completedTasks} {t("of")} {totalTasks} {t("completed")}{" "}
             </span>
             <strong>{completionRate}%</strong>
           </div>
           <div
             className="category-progress"
             role="progressbar"
-            aria-label={`${project.name} progress`}
+            aria-label={t("messages.v0Progress", { v0: project.name })}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={completionRate}
@@ -312,8 +314,8 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
         <div className="category-task-preview">
           <p className="category-preview-label">
             {previewTasks.length
-              ? "A LOOK INSIDE"
-              : "YOUR NEXT STEP STARTS HERE"}
+              ? t("aLookInside")
+              : t("yourNextStepStartsHere")}
           </p>
           {previewTasks.length ? (
             previewTasks.map((task) => (
@@ -327,8 +329,8 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
           ) : (
             <p className="category-empty-hint">
               {isProjectCompleted
-                ? "Restore this project to add new tasks."
-                : "Assign a task to this project, or drag one here."}
+                ? t("restoreThisProjectToAddNewTasks")
+                : t("assignATaskToThisProjectOrDragOneHere")}
             </p>
           )}
         </div>
@@ -338,8 +340,10 @@ const ProjectCard = ({ project, tasks, onTaskUpdated, onProjectUpdated }) => {
           onClick={() => setIsDetailOpen(true)}
         >
           <span>
-            Explore project{" "}
-            <span className="project-footer-count">· {totalTasks} tasks</span>
+            {t("exploreProject")}{" "}
+            <span className="project-footer-count">
+              · {totalTasks} {t("tasks")}{" "}
+            </span>
           </span>
           <ArrowUpRight size={16} />
         </button>

@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import OrbitMark from "@/shared/components/OrbitMark";
 
 const Footer = () => {
+  const { t } = useTranslation("account");
   const year = new Date().getFullYear();
 
   return (
@@ -13,24 +15,25 @@ const Footer = () => {
             <strong>Orbit</strong>
           </div>
           <p>
-            A focused task workspace for lists, projects, calendars, and steady
-            progress.
+            {t(
+              "aFocusedTaskWorkspaceForListsProjectsCalendarsAndSteadyProgress",
+            )}
           </p>
         </div>
         <div className="landing-footer__section">
           <h3>Orbit</h3>
-          <a href="#capture">Capture</a>
-          <a href="#organize">Organize</a>
-          <a href="#focus">Focus</a>
+          <a href="#capture">{t("capture")}</a>
+          <a href="#organize">{t("organize")}</a>
+          <a href="#focus">{t("focus")}</a>
         </div>
         <div className="landing-footer__section">
-          <h3>Account</h3>
-          <Link to="/login">Sign in</Link>
-          <Link to="/register">Create workspace</Link>
+          <h3>{t("account")}</h3>
+          <Link to="/login">{t("signInCasedSignin")}</Link>
+          <Link to="/register">{t("createWorkspaceCasedCreateworksp")}</Link>
         </div>
       </div>
       <p className="landing-footer__bottom">
-        © {year} Orbit. All rights reserved.
+        © {year} {t("orbitAllRightsReserved")}
       </p>
     </footer>
   );

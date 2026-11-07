@@ -1,3 +1,5 @@
+import { workspaceKey } from "@/features/tasks/utils/workspaceTranslation";
+import { useTranslation } from "react-i18next";
 import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import DayCell from "./DayCell";
@@ -29,6 +31,8 @@ const CalendarGrid = ({
   onViewModeChange,
   actions,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const gridRef = useRef(null);
   useEffect(() => {
     const grid = gridRef.current;
@@ -58,12 +62,12 @@ const CalendarGrid = ({
         <div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-[var(--color-accent)]">
-              {viewMode === "week" ? "Week view" : "Month view"}
+              {viewMode === "week" ? t("weekView") : t("monthView")}
             </p>
             {isRangeLoading ? (
               <span
                 role="status"
-                aria-label="Loading calendar range"
+                aria-label={t("loadingCalendarRange")}
                 className="inline-flex text-[var(--color-text-muted)]"
               >
                 <LoaderCircle
@@ -92,7 +96,7 @@ const CalendarGrid = ({
                       : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
                   }`}
                 >
-                  Month
+                  {t("month")}
                 </button>
                 <button
                   type="button"
@@ -104,7 +108,7 @@ const CalendarGrid = ({
                       : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
                   }`}
                 >
-                  Week
+                  {t("week")}
                 </button>
               </div>
             )}
@@ -115,7 +119,7 @@ const CalendarGrid = ({
                 onClick={() => onNavigate(-1)}
                 className="ui-icon-button ui-focus-ring"
                 aria-label={
-                  viewMode === "week" ? "Previous week" : "Previous month"
+                  viewMode === "week" ? t("previousWeek") : t("previousMonth")
                 }
               >
                 <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -125,13 +129,15 @@ const CalendarGrid = ({
                 onClick={onResetToToday}
                 className="ui-btn-secondary ui-focus-ring"
               >
-                Today
+                {t("today")}
               </button>
               <button
                 type="button"
                 onClick={() => onNavigate(1)}
                 className="ui-icon-button ui-focus-ring"
-                aria-label={viewMode === "week" ? "Next week" : "Next month"}
+                aria-label={
+                  viewMode === "week" ? t("nextWeek") : t("nextMonth")
+                }
               >
                 <ChevronRight className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -149,12 +155,12 @@ const CalendarGrid = ({
         ref={gridRef}
         tabIndex={0}
         role="region"
-        aria-label="Calendar dates"
+        aria-label={t("calendarDates")}
       >
         <div className="calendar-weekdays" data-cal-header-grid>
           {WEEK_DAYS.map((day) => (
             <div
-              key={day}
+              key={t(workspaceKey(day), { defaultValue: day })}
               className="py-2 text-center text-xs font-semibold text-[var(--color-text-muted)] sm:text-sm"
             >
               {day}
@@ -189,9 +195,10 @@ const CalendarGrid = ({
       </div>
       <footer className="calendar-board-footer">
         <span>
-          <i /> Today <b /> Selected day
+          <i /> {t("today")}
+          <b /> {t("selectedDay")}
         </span>
-        <span>Choose a day to see its tasks · Drag tasks to reschedule</span>
+        <span>{t("chooseADayToSeeItsTasksDragTasksToReschedule")}</span>
       </footer>
     </div>
   );

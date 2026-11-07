@@ -1,3 +1,6 @@
+import { workspaceKey } from "@/features/tasks/utils/workspaceTranslation";
+import { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { CalendarDays, LoaderCircle, Sparkles } from "lucide-react";
 import FormDialog from "@/shared/components/FormDialog";
@@ -21,6 +24,8 @@ const DetailRequestModal = ({
   selectedDate,
   onTasksGenerated,
 }) => {
+  const { t } = useTranslation("workspace");
+
   const [userInput, setUserInput] = useState("");
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [error, setError] = useState("");
@@ -30,7 +35,7 @@ const DetailRequestModal = ({
     event.preventDefault();
     setError("");
     if (!userInput.trim() && selectedTopics.length === 0) {
-      setError("Describe your plan or choose a topic to get started.");
+      setError(t("describeYourPlanOrChooseATopicToGetStarted"));
       return;
     }
     const dateStr = selectedDate ? formatDateTime(selectedDate) : "today";
@@ -38,9 +43,7 @@ const DetailRequestModal = ({
     try {
       const response = await mutation.mutateAsync({ userRequirement: request });
       if (!response.success || !response.data) {
-        setError(
-          "We couldn't create a plan yet. Try adding a little more detail.",
-        );
+        setError(t("weCouldnTCreateAPlanYetTryAddingALittleMoreDetail"));
         return;
       }
       onTasksGenerated?.();
@@ -51,7 +54,7 @@ const DetailRequestModal = ({
       setError(
         getApiErrorMessage(
           err,
-          "Couldn't generate tasks. Your plan is still here — please try again.",
+          t("couldnTGenerateTasksYourPlanIsStillHerePleaseTryAgain"),
         ),
       );
     }
@@ -60,7 +63,7 @@ const DetailRequestModal = ({
     <FormDialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Generate Tasks"
+      title={t("generateTasks")}
       kind="generate"
       busy={isLoading}
       closeLabel="Close task generation modal"
@@ -69,9 +72,9 @@ const DetailRequestModal = ({
         <div className="workspace-generate-date">
           <CalendarDays size={20} aria-hidden="true" />
           <div>
-            <span>PLANNING FOR</span>
+            <span>{t("planningFor")}</span>
             <strong>
-              {(selectedDate || new Date()).toLocaleDateString("en-US", {
+              {(selectedDate || new Date()).toLocaleDateString(getLocale(), {
                 weekday: "long",
                 month: "long",
                 day: "numeric",
@@ -81,32 +84,33 @@ const DetailRequestModal = ({
         </div>
         <div>
           <label htmlFor="calendar-task-request" className="block">
-            What do you want to accomplish?
+            {t("whatDoYouWantToAccomplish")}
           </label>
           <textarea
             id="calendar-task-request"
             className="ui-input"
             value={userInput}
             onChange={(event) => setUserInput(event.target.value)}
-            placeholder="Tell us about your day. A goal, a few ideas, or a project you'd like to move forward…"
+            placeholder={t(
+              "tellUsAboutYourDayAGoalAFewIdeasOrAProjectYouDLikeToMoveForward",
+            )}
             rows={4}
             disabled={isLoading}
           />
           <p className="workspace-form-hint mt-2">
-            A little context helps: your goal, available time, or where to
-            start.
+            {t("aLittleContextHelpsYourGoalAvailableTimeOrWhereToStart")}
           </p>
         </div>
         <fieldset disabled={isLoading}>
           <legend>
-            Need a starting point?{" "}
-            <span className="workspace-form-hint">Pick a topic</span>
+            {t("needAStartingPoint")}{" "}
+            <span className="workspace-form-hint">{t("pickATopic")}</span>
           </legend>
           <div className="workspace-topic-list">
             {topics.map((topic) => (
               <button
                 type="button"
-                key={topic}
+                key={t(workspaceKey(topic), { defaultValue: topic })}
                 aria-pressed={selectedTopics.includes(topic)}
                 onClick={() =>
                   setSelectedTopics((previous) =>
@@ -116,7 +120,7 @@ const DetailRequestModal = ({
                   )
                 }
               >
-                {topic}
+                {t(workspaceKey(topic), { defaultValue: topic })}
               </button>
             ))}
           </div>
@@ -128,8 +132,8 @@ const DetailRequestModal = ({
         )}
         {isLoading && (
           <p className="workspace-generating" role="status">
-            <LoaderCircle size={16} className="animate-spin" /> Putting your
-            plan together…
+            <LoaderCircle size={16} className="animate-spin" />{" "}
+            {t("puttingYourPlanTogether")}
           </p>
         )}
         <div className="workspace-form-actions">
@@ -139,11 +143,11 @@ const DetailRequestModal = ({
             disabled={isLoading}
             className="ui-btn-secondary"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button type="submit" disabled={isLoading} className="ui-btn-primary">
             <Sparkles size={15} aria-hidden="true" />
-            {isLoading ? "Generating…" : "Generate Tasks"}
+            {isLoading ? t("generating") : t("generateTasks")}
           </button>
         </div>
       </form>

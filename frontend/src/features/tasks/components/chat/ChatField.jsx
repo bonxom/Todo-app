@@ -1,3 +1,5 @@
+import { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
 import ChatAvatar from "./ChatAvatar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import AttachmentComposer from "./AttachmentComposer";
@@ -25,6 +27,8 @@ const ChatField = ({
   disabled = false,
   chat,
 }) => {
+  const { t } = useTranslation("agent");
+
   const userAvatar = useAuthStore((state) => state.user?.avatarUrl);
   const agentSession = useContext(AgentSessionContext);
   const [localFiles, setLocalFiles] = useState([]);
@@ -215,7 +219,7 @@ const ChatField = ({
           setFileError(
             error instanceof Error
               ? error.message
-              : "Unable to send. Please try again.",
+              : t("unableToSendPleaseTryAgain"),
           );
         }
         return;
@@ -236,7 +240,7 @@ const ChatField = ({
         setFileError(
           error instanceof Error
             ? error.message
-            : "Unable to send. Please try again.",
+            : t("unableToSendPleaseTryAgain"),
         );
       } finally {
         setSubmitting(false);
@@ -298,7 +302,7 @@ const ChatField = ({
             disabled={chat.loading}
             onClick={chat.loadEarlier}
           >
-            Load earlier messages
+            {t("loadEarlierMessages")}
           </button>
         )}
         {messages.length === 0 ? (
@@ -307,14 +311,14 @@ const ChatField = ({
               <div className="chat-welcome-icon">
                 <Sparkles size={24} />
               </div>
-              <h2>Let's make your day more manageable.</h2>
-              <p>Plan your day, review your tasks, or break down a goal.</p>
+              <h2>{t("letSMakeYourDayMoreManageable")}</h2>
+              <p>{t("planYourDayReviewYourTasksOrBreakDownAGoal")}</p>
               <div className="chat-starters">
                 {[
-                  ["Plan my day", "Help me plan my tasks for today."],
-                  ["Review upcoming tasks", "Show me my upcoming tasks."],
+                  [t("planMyDay"), "Help me plan my tasks for today."],
+                  [t("reviewUpcomingTasks"), "Show me my upcoming tasks."],
                   [
-                    "Break down a goal",
+                    t("breakDownAGoal"),
                     "Help me break down a goal into actionable steps.",
                   ],
                 ].map(([label, prompt]) => (
@@ -339,7 +343,7 @@ const ChatField = ({
             </div>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">
-              Start with something you need help with.
+              {t("startWithSomethingYouNeedHelpWith")}
             </div>
           )
         ) : (
@@ -461,10 +465,13 @@ const ChatField = ({
                     dateTime={message.timestamp}
                     title={formatDateTime(message.timestamp)}
                   >
-                    {new Date(message.timestamp).toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {new Date(message.timestamp).toLocaleTimeString(
+                      getLocale(),
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      },
+                    )}
                   </time>
                 </div>
               </div>
@@ -481,9 +488,9 @@ const ChatField = ({
               <div
                 className="flex items-center space-x-1"
                 role="status"
-                aria-label="Processing request"
+                aria-label={t("processingRequest")}
               >
-                <span className="mr-2 text-xs">Processing</span>
+                <span className="mr-2 text-xs">{t("processing")}</span>
                 <div
                   className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]"
                   style={{ animationDelay: "0ms" }}
@@ -530,7 +537,7 @@ const ChatField = ({
         type="file"
         multiple
         accept={FILE_ACCEPT}
-        aria-label="Choose files"
+        aria-label={t("chooseFiles")}
         className="hidden"
         disabled={disabled || submitting}
         onChange={chooseFiles}
@@ -540,7 +547,7 @@ const ChatField = ({
         type="file"
         multiple
         accept=".jpg,.jpeg,.png,.gif,.webp"
-        aria-label="Choose images"
+        aria-label={t("chooseImages")}
         className="hidden"
         disabled={disabled || submitting}
         onChange={chooseFiles}
@@ -549,7 +556,7 @@ const ChatField = ({
         <div className="shrink-0 px-3 sm:px-4 py-1.5 flex items-center">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-2.5 py-1 shadow-xs text-xs animate-in fade-in duration-150">
             <span className="text-[11px] font-medium text-[var(--color-text-muted)] select-none">
-              Skills:
+              {t("skillsLabel")}
             </span>
             <ToolBadge
               tool={selectedTool}
@@ -570,29 +577,28 @@ const ChatField = ({
           <div className="chat-error">
             <p role="alert">{chat.error}</p>
             <p className="text-xs">
-              Your request is not complete. Try again or reload the
-              conversation.
+              {t("yourRequestIsNotCompleteTryAgainOrReloadTheConversation")}
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
               {chat.pending && (
                 <button
                   type="button"
                   className="chat-recovery ui-focus-ring"
-                  aria-label="Retry message"
+                  aria-label={t("retryMessage")}
                   disabled={chat.loading || chat.sending}
                   onClick={() => chat.send()}
                 >
-                  Retry message
+                  {t("retryMessage")}
                 </button>
               )}
               <button
                 type="button"
                 className="chat-recovery ui-focus-ring"
-                aria-label="Reload conversation"
+                aria-label={t("reloadConversation")}
                 disabled={chat.loading || chat.sending}
                 onClick={chat.reload}
               >
-                Reload conversation
+                {t("reloadConversation")}
               </button>
             </div>
           </div>
@@ -600,17 +606,18 @@ const ChatField = ({
         {chat?.pending && !chat.error && !chat.sending && (
           <div className="chat-pending" role="status">
             <span>
-              Your request is processing. Check the result before sending
-              another message.
+              {t(
+                "yourRequestIsProcessingCheckTheResultBeforeSendingAnotherMessage",
+              )}
             </span>
             <button
               type="button"
-              aria-label="Reload conversation"
+              aria-label={t("reloadConversation")}
               className="chat-recovery ui-focus-ring"
               disabled={chat.loading}
               onClick={chat.reload}
             >
-              Check result
+              {t("checkResult")}
             </button>
           </div>
         )}
@@ -618,13 +625,13 @@ const ChatField = ({
           <div className="chat-answer-back">
             <button
               type="button"
-              aria-label="← Back to question"
+              aria-label={t("backToQuestion")}
               onClick={() => setMessageInteractionId(null)}
               className="ui-focus-ring"
             >
-              ← Back to question
+              {t("backToQuestion")}
             </button>
-            <span>Your new message will replace the pending question.</span>
+            <span>{t("yourNewMessageWillReplaceThePendingQuestion")}</span>
           </div>
         )}
         {chat?.interaction && !showChatInput && (
@@ -681,22 +688,22 @@ const ChatField = ({
             <textarea
               ref={textareaRef}
               rows={1}
-              aria-label="Message"
+              aria-label={t("message")}
               disabled={submitting}
               value={inputValue}
               onChange={handleInputChange}
               onPaste={handlePaste}
               onKeyDown={handleKeyDown}
               placeholder={
-                chat?.interaction ? "New request…" : "Message Orbit…"
+                chat?.interaction ? t("newRequest") : t("messageOrbit")
               }
               className="chat-input ui-focus-ring"
             />
           </div>
           <button
             type="submit"
-            aria-label="Send message"
-            title="Send message"
+            aria-label={t("sendMessage")}
+            title={t("sendMessage")}
             disabled={
               disabled ||
               submitting ||

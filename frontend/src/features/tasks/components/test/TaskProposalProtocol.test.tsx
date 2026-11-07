@@ -40,9 +40,9 @@ it("renders bound fields and sends edited data through a real A2UI action", asyn
   fireEvent.change(input, { target: { value: "Read chapter 2" } });
   expect(dirty).toHaveBeenCalledWith(true);
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: "Lưu bản nháp" })).toBeEnabled(),
+    expect(screen.getByRole("button", { name: "Save draft" })).toBeEnabled(),
   );
-  fireEvent.click(screen.getByRole("button", { name: "Lưu bản nháp" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
   await waitFor(() =>
     expect(onAction).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -58,7 +58,7 @@ it("rejects invalid fields and supports start date editing", async () => {
     await screen.findByRole("textbox", { name: "Task 1 title" }),
     { target: { value: " " } },
   );
-  expect(screen.getByRole("button", { name: /Xác nhận/ })).toBeDisabled();
+  expect(screen.getByRole("button", { name: /Confirm/ })).toBeDisabled();
   expect(screen.getByLabelText("Task 1 startDate")).toBeInTheDocument();
 });
 describe.each(["created", "cancelled"] as const)("%s proposal", (status) => {
@@ -74,7 +74,7 @@ describe.each(["created", "cancelled"] as const)("%s proposal", (status) => {
       await screen.findByRole("textbox", { name: "Task 1 title" }),
     ).toBeDisabled();
     expect(
-      screen.queryByRole("button", { name: /Xác nhận/ }),
+      screen.queryByRole("button", { name: /Confirm/ }),
     ).not.toBeInTheDocument();
   });
 });
@@ -96,7 +96,7 @@ it.each(["catalog", "component", "data", "version", "root"])(
         items: null,
       };
     render(<TaskProposalSurface envelope={value} />);
-    expect(await screen.findByText(/Không thể hiển thị/)).toBeInTheDocument();
+    expect(await screen.findByText(/Unable to display/)).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   },
 );

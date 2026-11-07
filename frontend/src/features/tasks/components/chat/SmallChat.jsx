@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useContext, useEffect, useRef, useState } from "react";
 import {
   X,
@@ -22,6 +23,8 @@ const SmallChatView = ({
   onOpenInAgent = undefined,
   chat,
 }) => {
+  const { t } = useTranslation("agent");
+
   const [historyOpen, setHistoryOpen] = useState(false);
   const historyButton = useRef(null);
   const [displayMode, setDisplayMode] = useState("compact");
@@ -92,9 +95,9 @@ const SmallChatView = ({
     docked: "compact",
   };
   const resizeLabel = {
-    compact: "Expand chat",
-    expanded: "Dock chat to right",
-    docked: "Restore chat size",
+    compact: t("expandChat"),
+    expanded: t("dockChatToRight"),
+    docked: t("restoreChatSize"),
   }[displayMode];
   const [chatRevision, setChatRevision] = useState(0);
 
@@ -130,7 +133,7 @@ const SmallChatView = ({
           : { "--assistant-dock-preferred-width": `${dockWidth}px` }
       }
       role="region"
-      aria-label="Assistant chat"
+      aria-label={t("assistantChat")}
       onKeyDown={(event) => {
         if (event.key === "Escape" && !event.defaultPrevented) {
           if (historyOpen) {
@@ -167,7 +170,7 @@ const SmallChatView = ({
         <div
           className="ui-assistant-resize-handle ui-focus-ring"
           role="separator"
-          aria-label="Resize chat sidebar"
+          aria-label={t("resizeChatSidebar")}
           aria-orientation="vertical"
           aria-valuemin={minimumDockWidth}
           aria-valuemax={Math.floor(window.innerWidth / 2)}
@@ -178,7 +181,7 @@ const SmallChatView = ({
             ),
           )}
           tabIndex={0}
-          title="Drag to resize. Drag all the way closed to close chat."
+          title={t("dragToResizeDragAllTheWayClosedToCloseChat")}
           onPointerDown={(event) => {
             if (event.button !== 0) return;
             event.preventDefault();
@@ -216,7 +219,7 @@ const SmallChatView = ({
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-[var(--color-text)]">
-                Orbit Assistant
+                {t("orbitAssistant")}
               </p>
             </div>
           </div>
@@ -225,8 +228,8 @@ const SmallChatView = ({
               ref={historyButton}
               type="button"
               className="ui-icon-button ui-focus-ring"
-              aria-label="Chat history"
-              title="Chat history"
+              aria-label={t("chatHistory")}
+              title={t("chatHistory")}
               aria-expanded={historyOpen}
               disabled={chat.loading || chat.sending || Boolean(chat.pending)}
               onClick={() => setHistoryOpen((open) => !open)}
@@ -238,8 +241,8 @@ const SmallChatView = ({
               onClick={handleNewChat}
               disabled={chat.loading || chat.sending}
               className="ui-icon-button ui-focus-ring h-8 w-8 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="New chat"
-              title="New conversation"
+              aria-label={t("newChat")}
+              title={t("newConversation")}
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -251,8 +254,8 @@ const SmallChatView = ({
                 }
               }}
               className="ui-icon-button ui-focus-ring h-8 w-8"
-              aria-label="Open in Agent"
-              title="Open in Agent"
+              aria-label={t("openInAgent")}
+              title={t("openInAgent")}
             >
               <ExternalLink className="h-4 w-4" />
             </button>
@@ -265,9 +268,9 @@ const SmallChatView = ({
               aria-label={resizeLabel}
               title={
                 {
-                  compact: "Expand",
-                  expanded: "Dock to the right",
-                  docked: "Compact view",
+                  compact: t("expand"),
+                  expanded: t("dockToTheRight"),
+                  docked: t("compactView"),
                 }[displayMode]
               }
             >
@@ -285,8 +288,8 @@ const SmallChatView = ({
                 if (await chat.confirmDiscard()) onClose();
               }}
               className="ui-icon-button ui-focus-ring h-8 w-8"
-              aria-label="Close chat"
-              title="Close chat"
+              aria-label={t("closeChat")}
+              title={t("closeChat")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -300,13 +303,13 @@ const SmallChatView = ({
             <button
               type="button"
               className="chat-history-back ui-focus-ring"
-              aria-label="Back to conversation"
+              aria-label={t("backToConversation")}
               onClick={() => {
                 setHistoryOpen(false);
                 historyButton.current?.focus();
               }}
             >
-              <ArrowLeft size={16} /> Back to conversation
+              <ArrowLeft size={16} /> {t("backToConversation")}
             </button>
             {chat.error && (
               <p role="alert" className="chat-error">
@@ -328,18 +331,19 @@ const SmallChatView = ({
           <div
             role="alertdialog"
             aria-modal="true"
-            aria-label="Bỏ thay đổi chưa lưu?"
+            aria-label={t("discardUnsavedChanges")}
             className="p-4"
           >
             <p>
-              Bản nháp chưa được lưu hoặc yêu cầu chưa rõ kết quả. Bạn muốn rời
-              hội thoại?
+              {t(
+                "yourDraftIsUnsavedOrTheRequestResultIsUnclearLeaveThisConversation",
+              )}
             </p>
             <button onClick={() => chat.resolveDiscard(false)}>
-              Tiếp tục chỉnh sửa
+              {t("keepEditing")}
             </button>
             <button onClick={() => chat.resolveDiscard(true)}>
-              Bỏ thay đổi và tiếp tục
+              {t("discardChangesAndContinue")}
             </button>
           </div>
         )}

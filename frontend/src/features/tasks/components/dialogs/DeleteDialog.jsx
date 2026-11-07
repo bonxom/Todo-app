@@ -1,4 +1,7 @@
+import { useTranslation } from "react-i18next";
 const DeleteDialog = ({ isOpen, onClose, onConfirm }) => {
+  const { t } = useTranslation("workspace");
+
   if (!isOpen) return null;
 
   return (
@@ -19,13 +22,12 @@ const DeleteDialog = ({ isOpen, onClose, onConfirm }) => {
             id="delete-task-title"
             className="text-xl font-semibold text-[var(--color-text)]"
           >
-            Delete Task
+            {t("deleteTask")}
           </h2>
         </div>
         <div className="ui-modal-body">
           <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
-            Are you sure you want to delete this task? This action cannot be
-            undone.
+            {t("areYouSureYouWantToDeleteThisTaskThisActionCannotBeUndone")}
           </p>
           <div className="flex gap-3">
             <button
@@ -33,14 +35,14 @@ const DeleteDialog = ({ isOpen, onClose, onConfirm }) => {
               onClick={onClose}
               className="ui-btn-secondary flex-1"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="button"
               onClick={onConfirm}
               className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] transition-[background-color,border-color] duration-150 hover:opacity-90"
             >
-              Delete
+              {t("delete")}
             </button>
           </div>
         </div>

@@ -15,15 +15,15 @@ test("edits, saves, reloads and confirms a subset through the real A2UI renderer
     exact: true,
   });
   await title.fill("Master vocabulary");
-  await page.getByRole("button", { name: "Lưu bản nháp" }).click();
-  await expect(page.getByText("Đã lưu bản nháp")).toBeVisible();
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await expect(page.getByText("Draft saved")).toBeVisible();
   await page.reload();
   await page.getByRole("button", { name: "Open assistant" }).click();
   await expect(title).toHaveValue("Master vocabulary");
   await page
-    .getByRole("checkbox", { name: "Chọn công việc: Practice speaking" })
+    .getByRole("checkbox", { name: "Select task: Practice speaking" })
     .uncheck();
-  await page.getByRole("button", { name: "Xác nhận (1)" }).click();
+  await page.getByRole("button", { name: "Confirm (1)" }).click();
   await expect(title).toBeDisabled();
   expect(actions.map((action) => action.action)).toEqual(["save", "confirm"]);
   expect(actions[1].selectedItemIds).toHaveLength(1);
@@ -35,8 +35,8 @@ test("retries a lost confirmation response with the exact original request", asy
   const { actions } = await setupTaskProposalMocks(page, true);
   await page.goto("/dashboard");
   await page.getByRole("button", { name: "Open assistant" }).click();
-  await page.getByRole("button", { name: "Xác nhận (2)" }).click();
-  await page.getByRole("button", { name: "Thử lại yêu cầu" }).click();
+  await page.getByRole("button", { name: "Confirm (2)" }).click();
+  await page.getByRole("button", { name: "Retry request" }).click();
   await expect(
     page.getByRole("textbox", { name: "Task 1 title", exact: true }),
   ).toBeDisabled();
@@ -56,8 +56,8 @@ test("warns before leaving dirty edits and locks cancelled proposals on mobile",
     .fill("Changed title");
   await page.getByRole("button", { name: "Close chat", exact: true }).click();
   await expect(page.getByRole("alertdialog")).toBeVisible();
-  await page.getByRole("button", { name: "Tiếp tục chỉnh sửa" }).click();
-  await page.getByRole("button", { name: "Hủy", exact: true }).click();
+  await page.getByRole("button", { name: "Keep editing" }).click();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(
     page.getByRole("textbox", { name: "Task 1 title", exact: true }),
   ).toBeDisabled();
@@ -84,7 +84,5 @@ test("receives an interactive proposal after an ordinary chat request", async ({
   ).toBeVisible();
   expect(chatRequests).toHaveLength(1);
   expect(chatRequests[0]).not.toHaveProperty("intent");
-  await expect(
-    page.getByRole("button", { name: "Xác nhận (2)" }),
-  ).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Confirm (2)" })).toBeEnabled();
 });

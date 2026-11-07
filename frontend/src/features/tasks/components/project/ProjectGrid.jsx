@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import ProjectCard from "./ProjectCard";
 
 const ProjectGrid = ({
@@ -6,22 +7,23 @@ const ProjectGrid = ({
   onProjectUpdated,
   onCreateProject,
 }) => {
+  const { t } = useTranslation("workspace");
+
   if (items.length === 0) {
     return (
       <section className="ui-section-card border-dashed px-6 py-14 text-center">
         <p className="text-lg font-semibold text-[color:var(--color-text)]">
-          No projects to show
+          {t("noProjectsToShow")}
         </p>
         <p className="mt-2 text-sm text-[color:var(--color-text-muted)]">
-          Create a project to track multi-step work with its own progress and
-          task list.
+          {t("createAProjectToTrackMultiStepWorkWithItsOwnProgressAndTaskList")}
         </p>
         <button
           type="button"
           onClick={onCreateProject}
           className="ui-btn-primary ui-btn-opposite-corners mt-6"
         >
-          Add Project
+          {t("addProject")}
         </button>
       </section>
     );
@@ -44,9 +46,9 @@ const ProjectGrid = ({
         onClick={onCreateProject}
       >
         <span aria-hidden="true">+</span>
-        <strong>Make room for a bigger plan</strong>
-        <p>Bring your next project to life.</p>
-        <b>Add Project ↗</b>
+        <strong>{t("makeRoomForABiggerPlan")}</strong>
+        <p>{t("bringYourNextProjectToLife")}</p>
+        <b>{t("addProject")}</b>
       </button>
     </div>
   );

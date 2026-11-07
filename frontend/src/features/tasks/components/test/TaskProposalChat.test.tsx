@@ -86,9 +86,9 @@ it("wires confirmation to shared API and displays committed state", async () => 
     </QueryClientProvider>,
   );
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: /Xác nhận/ })).toBeEnabled(),
+    expect(screen.getByRole("button", { name: /Confirm/ })).toBeEnabled(),
   );
-  fireEvent.click(screen.getByRole("button", { name: /Xác nhận/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Confirm/ }));
   await waitFor(() =>
     expect(
       screen.getByRole("textbox", { name: "Task 1 title" }),

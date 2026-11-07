@@ -1,0 +1,96 @@
+{
+  "language": "Language",
+  "navigation": {
+    "calendar": "Calendar",
+    "todos": "Todos",
+    "categories": "Categories",
+    "statistics": "Statistics",
+    "agent": "Agent",
+    "account": "Account",
+    "workspace": "Workspace",
+    "logout": "Logout",
+    "close": "Close navigation",
+    "open": "Open navigation",
+    "primary": "Primary navigation",
+    "back": "Go back",
+    "profile": "Go to profile",
+    "avatar": "{{name}} avatar",
+    "userAvatar": "User avatar"
+  },
+  "status": {
+    "pending": "Pending",
+    "in-progress": "In Progress",
+    "completed": "Completed",
+    "given-up": "Given Up",
+    "all": "All tasks",
+    "count_one": "{{count}} status",
+    "count_other": "{{count}} statuses",
+    "filter": "Filter tasks by status",
+    "title": "Task status",
+    "clear": "Clear"
+  },
+  "theme": {
+    "light": "Switch to light mode",
+    "dark": "Switch to dark mode"
+  },
+  "dialog": {
+    "task": "A small step toward something that matters.",
+    "category": "Give related tasks a place to belong.",
+    "project": "Bring your tasks together around a shared goal.",
+    "generate": "Turn an idea into a manageable plan for your day.",
+    "help": "A LITTLE HELP TO GET STARTED",
+    "workspace": "YOUR WORKSPACE",
+    "close": "Close {{title}} dialog"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "summary": "Showing {{start}}–{{end}} of {{total}} results",
+    "perPage": "Per page",
+    "previous": "Previous page",
+    "next": "Next page",
+    "page": "Page {{page}}"
+  },
+  "options": "Options",
+  "unavailable": "N/A",
+  "unexpectedError": "An unexpected error occurred",
+  "checkingSession": "Checking your session…",
+  "errors": {
+    "badge": "Error {{code}}",
+    "404": {
+      "title": "Page not found",
+      "description": "This page does not exist or has moved. Check the URL or go back."
+    },
+    "403": {
+      "title": "Access denied",
+      "description": "You do not have access to this content. Check your account or go back."
+    },
+    "500": {
+      "title": "Internal server error",
+      "description": "Something went wrong while processing your request. Try again later or return home."
+    },
+    "503": {
+      "title": "Service temporarily unavailable",
+      "description": "The system is being updated or maintained. Please try again in a few minutes."
+    },
+    "appTitle": "The application encountered an unexpected error",
+    "appDescription": "Something went wrong displaying this page. Reload the page or return home.",
+    "pause": "Pause video",
+    "play": "Play video",
+    "unmute": "Unmute",
+    "mute": "Mute",
+    "back": "Back to previous page",
+    "retry": "Try again",
+    "home": "Go home",
+    "code": "Error code:",
+    "other": "Preview another error page:"
+  },
+  "network": {
+    "timeout": "Request timed out",
+    "noResponse": "No response from server",
+    "error": "Network error",
+    "generic": "An error occurred",
+    "ended": "Session ended",
+    "refresh": "Invalid refresh response",
+    "changed": "Session changed"
+  }
+}

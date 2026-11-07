@@ -1,11 +1,16 @@
+import { getLocale } from "@/shared/i18n";
+import { useTranslation } from "react-i18next";
+import { workspaceTranslate } from "@/features/tasks/utils/workspaceTranslation";
 const DonutChartCard = ({
   title,
   description,
   total,
-  totalLabel = "Total",
+  totalLabel = workspaceTranslate("total"),
   items = [],
   emptyMessage,
 }) => {
+  const { t } = useTranslation("workspace");
+
   let offset = 0;
   const segments = items.map((item) => {
     const start = offset;
@@ -21,7 +26,7 @@ const DonutChartCard = ({
             <p className="statistics-card-description">{description}</p>
           )}
         </div>
-        <span className="statistics-small-label">All time</span>
+        <span className="statistics-small-label">{t("allTime")}</span>
       </div>
       <div className="statistics-donut-layout">
         <div
@@ -34,7 +39,7 @@ const DonutChartCard = ({
           aria-hidden="true"
         >
           <div className="statistics-donut-center">
-            <strong>{total.toLocaleString()}</strong>
+            <strong>{total.toLocaleString(getLocale())}</strong>
             <span>{totalLabel}</span>
           </div>
         </div>
@@ -44,7 +49,7 @@ const DonutChartCard = ({
               <div className="statistics-legend-row" key={item.label}>
                 <i style={{ background: item.color }} />
                 <span>{item.label}</span>
-                <strong>{item.value.toLocaleString()}</strong>
+                <strong>{item.value.toLocaleString(getLocale())}</strong>
                 <small>{Math.round(Number(item.percentage))}%</small>
               </div>
             ))}

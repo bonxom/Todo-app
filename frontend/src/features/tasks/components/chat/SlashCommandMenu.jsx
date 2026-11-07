@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useRef } from "react";
 import {
   PlusCircle,
@@ -38,6 +39,8 @@ const SlashCommandMenu = ({
   onSelect,
   onHoverIndex,
 }) => {
+  const { t } = useTranslation("agent");
+
   const tools = filterTools(query);
   const listRef = useRef(null);
 
@@ -54,7 +57,7 @@ const SlashCommandMenu = ({
   if (tools.length === 0) {
     return (
       <div className="absolute bottom-full left-0 right-0 mb-2 z-50 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-center text-xs text-[var(--color-text-muted)] shadow-xl">
-        No skills match "{query}"
+        {t("noSkillsMatch", { query })}
       </div>
     );
   }
@@ -62,12 +65,12 @@ const SlashCommandMenu = ({
   return (
     <div
       role="listbox"
-      aria-label="Suggested skills"
+      aria-label={t("suggestedSkills")}
       ref={listRef}
       className="absolute bottom-full left-0 right-0 mb-2 z-50 max-h-64 overflow-y-auto rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-1.5 shadow-xl transition-all"
     >
       <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-        Skills ({tools.length})
+        {t("skillsCount", { count: tools.length })}
       </div>
       {tools.map((tool, index) => {
         const isSelected = index === selectedIndex;
@@ -99,11 +102,13 @@ const SlashCommandMenu = ({
                 <div className="flex items-center gap-1.5 font-medium">
                   <span className="font-mono text-xs">{tool.name}</span>
                   <span className="text-[11px] text-[var(--color-text-muted)] font-normal">
-                    • {tool.label}
+                    • {t(`${tool.id}Label`, { defaultValue: tool.label })}
                   </span>
                 </div>
                 <div className="truncate text-[11px] text-[var(--color-text-muted)]">
-                  {tool.description}
+                  {t(`${tool.id}Description`, {
+                    defaultValue: tool.description,
+                  })}
                 </div>
               </div>
             </div>
@@ -114,7 +119,7 @@ const SlashCommandMenu = ({
                   : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
               }`}
             >
-              {tool.category === "skill" ? "Skills" : "Tools"}
+              {tool.category === "skill" ? t("skills") : t("tools")}
             </span>
           </button>
         );
