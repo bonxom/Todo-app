@@ -1,3 +1,5 @@
+import type { UiSurfaceEnvelope } from "./uiSurface";
+
 export type ProposalStatus = "draft" | "created" | "cancelled";
 export type ProposalIntent = "task_proposal";
 
@@ -48,6 +50,7 @@ export type ProposalAction = {
 export interface ProposalEnvelope {
   proposal: ProposalView;
   text: string;
+  surface?: UiSurfaceEnvelope;
   a2ui?: {
     protocolVersion: "v0.9";
     catalogId: string;

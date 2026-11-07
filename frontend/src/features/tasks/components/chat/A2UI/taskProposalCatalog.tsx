@@ -61,6 +61,7 @@ const form = createBinderlessComponentImplementation(api, ({ context }) => {
           { userActivation: true },
         );
         await context.dispatchAction(resolved as Record<string, unknown>);
+        await options.awaitPendingAction?.();
       }}
     />
   );
