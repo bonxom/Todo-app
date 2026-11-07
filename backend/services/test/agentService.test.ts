@@ -504,4 +504,20 @@ describe("Automatic task proposal selection", () => {
       agentService.chatWithMcp("Plan tasks", askContext),
     ).resolves.toBe("Unavailable");
   });
+
+  it("keeps propose_tasks working even when A2UI_COMPOSITION_ENABLED is false", async () => {
+    vi.stubEnv("A2UI_COMPOSITION_ENABLED", "false");
+    completionCreate.mockResolvedValueOnce(
+      response(
+        call("legacy-proposal", "propose_tasks", {
+          items: [{ title: "Legacy task" }],
+        }),
+      ),
+    );
+    await expect(
+      agentService.chatWithMcp("Plan legacy task", askContext),
+    ).resolves.toEqual({
+      proposalItems: [{ title: "Legacy task" }],
+    });
+  });
 });

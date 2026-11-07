@@ -136,6 +136,23 @@ export async function runConversationTurn(
           skillsRead: latestSkillsRead,
         });
       }
+      if ("surfaceSpec" in response) {
+        await repository.finish(
+          turn._id,
+          response.surfaceSpec.fallbackText,
+          "completed",
+          turn.executionToken,
+          undefined,
+          latestSkillsRead,
+        );
+        return resultFor({
+          ...turn,
+          activities: latestActivities,
+          status: "completed",
+          response: response.surfaceSpec.fallbackText,
+          skillsRead: latestSkillsRead,
+        });
+      }
       if ("proposalItems" in response) {
         let preparedItems: ProposalItem[];
         try {

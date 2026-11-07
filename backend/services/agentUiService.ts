@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ChatCompletionTool } from "openai/resources/chat/completions.js";
+import { A2UI_CONFIG } from "../config/A2UI/a2ui.js";
 import {
   UI_SKILL_IDS,
   isUiCompositionEnabled,
@@ -14,6 +15,8 @@ import {
   parseSurfaceSpec,
   surfaceSpecBaseSchema,
 } from "../validations/A2UI/uiSurfaceValidation.js";
+
+export const MAX_UI_TOOL_ARGUMENT_BYTES = A2UI_CONFIG.MAX_PAYLOAD_BYTES;
 
 export type UiCapability = Readonly<{
   enabled: boolean;
@@ -139,4 +142,21 @@ export function parseUiToolInput(
   mode: UiSurfaceMode,
 ): SurfaceSpec {
   return parseSurfaceSpec(input, mode);
+}
+
+export function formatUiValidationIssues(
+  error: unknown,
+): { path: string; message: string }[] {
+  if (error instanceof z.ZodError) {
+    return error.issues.slice(0, 10).map((issue) => ({
+      path: issue.path.join("."),
+      message: issue.message,
+    }));
+  }
+  return [
+    {
+      path: "",
+      message: error instanceof Error ? error.message : "Invalid UI specification",
+    },
+  ];
 }

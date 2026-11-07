@@ -9,10 +9,16 @@ import {
   parseLoaderArguments,
 } from "./agentSkillService.js";
 import {
+  MAX_UI_TOOL_ARGUMENT_BYTES,
+  buildProposeTasksTool,
   buildUiSkillRequirements,
   formatDeveloperUiSkillContext,
+  formatUiValidationIssues,
+  parseUiToolInput,
+  presentUiTool,
   resolveUiCapability,
 } from "./agentUiService.js";
+import type { SurfaceSpec } from "../types/A2UI/IUiSurface.js";
 import {
   createPersonalSkillSession,
   personalSkillToolDefinitions,
@@ -131,7 +137,12 @@ export const agentService = {
   ): Promise<
     | string
     | { interaction: AgentInteraction }
-    | { proposalItems: Omit<ProposalItem, "id">[]; text?: string }
+    | { surfaceSpec: SurfaceSpec }
+    | {
+        proposalItems: Omit<ProposalItem, "id">[];
+        text?: string;
+        presentation?: SurfaceSpec;
+      }
   > {
     const budget = memory.budget ?? createAgentBudget();
     const metrics = {
@@ -359,6 +370,7 @@ ${formatDeveloperUiSkillContext(registry, uiCapability)}`,
             name === "load_skill" || name === "read_skill_document";
           const isPersonal = personalSession.isPersonalSkillTool(name);
           const propose = name === "propose_tasks";
+          const present = name === "present_ui";
           if (loader || name === "read_skill") metrics.skill_load_count++;
           if (!budget.canStartAction()) {
             metrics.blocked_tool_count++;
@@ -385,9 +397,17 @@ ${formatDeveloperUiSkillContext(registry, uiCapability)}`,
           let args: Record<string, unknown>;
           let menu: AgentInteraction | undefined;
           try {
-            if (toolCall.function.arguments.length > 16000)
+            const rawArgs = toolCall.function.arguments || "{}";
+            if (present || propose) {
+              if (
+                Buffer.byteLength(rawArgs, "utf8") > MAX_UI_TOOL_ARGUMENT_BYTES
+              ) {
+                throw new Error("Arguments too large");
+              }
+            } else if (rawArgs.length > 16000) {
               throw new Error("Arguments too large");
-            args = JSON.parse(toolCall.function.arguments || "{}");
+            }
+            args = JSON.parse(rawArgs);
             if (!args || typeof args !== "object" || Array.isArray(args))
               throw new Error("Expected object");
             if (canClarify && name === "grill_user")
@@ -404,6 +424,50 @@ ${formatDeveloperUiSkillContext(registry, uiCapability)}`,
               "Return valid JSON matching the tool schema. Correct only this unexecuted call; do not repeat successful calls.",
             );
             continue;
+          }
+          if (present) {
+            if (!uiCapability.enabled || proposal || !sourceRequestId) {
+              metrics.blocked_tool_count++;
+              await rejectCall(
+                toolCall.id,
+                "TOOL_NOT_ALLOWED",
+                "This tool is not available to this request.",
+              );
+              continue;
+            }
+            if (!session.canExecute("present_ui", sourceRequestId)) {
+              metrics.blocked_tool_count++;
+              const required = uiRequirements.get("present_ui") ?? [];
+              await rejectCall(
+                toolCall.id,
+                "SKILL_REQUIRED",
+                "Load the required skill and make a new call after receiving its content.",
+                { requiredDocuments: required },
+              );
+              continue;
+            }
+            let surfaceSpec: SurfaceSpec;
+            try {
+              surfaceSpec = parseUiToolInput(args, "readonly");
+            } catch (error) {
+              await rejectCall(
+                toolCall.id,
+                "INVALID_UI_SPEC",
+                "UI surface specification failed validation. Correct the invalid fields or respond in plain text.",
+                { issues: formatUiValidationIssues(error) },
+              );
+              continue;
+            }
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({
+                status: "presented",
+                componentCount: surfaceSpec.components.length,
+              }),
+            });
+            await checkpoint();
+            return { surfaceSpec };
           }
           if (propose) {
             if (!proposalsEnabled) {
@@ -426,6 +490,19 @@ ${formatDeveloperUiSkillContext(registry, uiCapability)}`,
               );
               continue;
             }
+            let presentation: SurfaceSpec | undefined;
+            if (
+              args.presentation !== undefined &&
+              uiCapability.enabled &&
+              sourceRequestId &&
+              session.canExecute("propose_tasks_presentation", sourceRequestId)
+            ) {
+              try {
+                presentation = parseUiToolInput(args.presentation, "proposal");
+              } catch {
+                presentation = undefined;
+              }
+            }
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,
@@ -435,7 +512,13 @@ ${formatDeveloperUiSkillContext(registry, uiCapability)}`,
               }),
             });
             await checkpoint();
-            return { proposalItems: rawItems };
+            return presentation
+              ? {
+                  proposalItems: rawItems,
+                  text: presentation.fallbackText,
+                  presentation,
+                }
+              : { proposalItems: rawItems };
           }
           if (!loader && !menu && !isPersonal) {
             if (!toolsByName.has(name) || !sourceRequestId) {
@@ -599,7 +682,20 @@ ${formatDeveloperUiSkillContext(registry, uiCapability)}`,
           ...personalSkillToolDefinitions,
           ...(trustedSkillIds.size ? session.definitions : []),
           ...(canClarify ? [grillUserTool] : []),
-          ...(proposalsEnabled ? [proposeTasksTool] : []),
+          ...(proposalsEnabled
+            ? [
+                buildProposeTasksTool(
+                  proposeTasksTool,
+                  uiCapability.enabled &&
+                    session.canExpose("propose_tasks_presentation", snapshot),
+                ),
+              ]
+            : []),
+          ...(uiCapability.enabled &&
+          !proposal &&
+          session.canExpose("present_ui", snapshot)
+            ? [presentUiTool]
+            : []),
           ...openAiTools.filter(
             (t) =>
               t.type === "function" &&
