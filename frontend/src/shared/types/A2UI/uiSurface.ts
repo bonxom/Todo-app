@@ -7,7 +7,18 @@ export type DisplayScalar = string | number | boolean | null;
 
 export type Spacing = "none" | "sm" | "md" | "lg";
 
+export type UiTone = "default" | "accent" | "success" | "warning" | "danger";
+
+export type CardTone = "default" | "accent" | "muted";
+
+export type ChartType = "bar" | "line" | "doughnut";
+
 export interface TableColumnSpec {
+  key: string;
+  label: string;
+}
+
+export interface ChartSeriesSpec {
   key: string;
   label: string;
 }

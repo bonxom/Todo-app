@@ -37,6 +37,9 @@ function compileNode(node: UiNode): Record<string, unknown> {
         id: node.id,
         component: "Card",
         children: node.children,
+        ...(node.title !== undefined ? { title: node.title } : {}),
+        ...(node.subtitle !== undefined ? { subtitle: node.subtitle } : {}),
+        ...(node.tone !== undefined ? { tone: node.tone } : {}),
       };
     case "Text":
       return {
@@ -48,12 +51,45 @@ function compileNode(node: UiNode): Record<string, unknown> {
             : { path: node.value.path },
         emphasis: node.emphasis,
       };
+    case "Stat":
+      return {
+        id: node.id,
+        component: "Stat",
+        label: node.label,
+        value:
+          "literal" in node.value
+            ? node.value.literal
+            : { path: node.value.path },
+        ...(node.caption !== undefined ? { caption: node.caption } : {}),
+        ...(node.progress !== undefined ? { progress: node.progress } : {}),
+        ...(node.tone !== undefined ? { tone: node.tone } : {}),
+      };
     case "Table":
       return {
         id: node.id,
         component: "Table",
         columns: node.columns,
         rows: { path: node.rowsPath },
+      };
+    case "Chart":
+      return {
+        id: node.id,
+        component: "Chart",
+        chartType: node.chartType,
+        ...(node.title !== undefined ? { title: node.title } : {}),
+        rows: { path: node.rowsPath },
+        labelKey: node.labelKey,
+        series: node.series,
+      };
+    case "Diagram":
+      return {
+        id: node.id,
+        component: "Diagram",
+        ...(node.title !== undefined ? { title: node.title } : {}),
+        value:
+          "literal" in node.value
+            ? node.value.literal
+            : { path: node.value.path },
       };
     case "TaskProposalForm":
       return {

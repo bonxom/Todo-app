@@ -121,4 +121,93 @@ describe("uiSurfaceService.compileSurface", () => {
     ).toThrow();
     expect(() => compileSurface(proposalStored)).toThrow();
   });
+
+  it("compiles Card metadata, Stat, Chart, and Diagram nodes into v0.9 components", () => {
+    const stored: StoredUiSurface = {
+      catalogId: UI_COMPOSITION_CATALOG_ID,
+      surfaceId: specFixture.surfaceId,
+      spec: {
+        fallbackText: "Rich summary",
+        components: [
+          {
+            id: "root",
+            component: "Card",
+            title: "Weekly Focus",
+            subtitle: "IELTS & Fitness",
+            tone: "accent",
+            children: ["stat1", "chart1", "diag1"],
+          },
+          {
+            id: "stat1",
+            component: "Stat",
+            label: "Completion",
+            value: { literal: "80%" },
+            caption: "4 of 5 sessions",
+            progress: 80,
+            tone: "success",
+          },
+          {
+            id: "chart1",
+            component: "Chart",
+            chartType: "line",
+            title: "Trend",
+            rowsPath: "/display/trend",
+            labelKey: "day",
+            series: [{ key: "hours", label: "Hours" }],
+          },
+          {
+            id: "diag1",
+            component: "Diagram",
+            title: "Routine",
+            value: { literal: "flowchart LR\n  A --> B" },
+          },
+        ],
+        displayData: {
+          trend: [
+            { day: "Mon", hours: 2 },
+            { day: "Tue", hours: 3 },
+          ],
+        },
+      },
+    };
+
+    const envelope = compileSurface(stored);
+    const updateComponents = envelope.a2ui.messages[1] as {
+      updateComponents: { components: Record<string, unknown>[] };
+    };
+    expect(updateComponents.updateComponents.components).toEqual([
+      {
+        id: "root",
+        component: "Card",
+        title: "Weekly Focus",
+        subtitle: "IELTS & Fitness",
+        tone: "accent",
+        children: ["stat1", "chart1", "diag1"],
+      },
+      {
+        id: "stat1",
+        component: "Stat",
+        label: "Completion",
+        value: "80%",
+        caption: "4 of 5 sessions",
+        progress: 80,
+        tone: "success",
+      },
+      {
+        id: "chart1",
+        component: "Chart",
+        chartType: "line",
+        title: "Trend",
+        rows: { path: "/display/trend" },
+        labelKey: "day",
+        series: [{ key: "hours", label: "Hours" }],
+      },
+      {
+        id: "diag1",
+        component: "Diagram",
+        title: "Routine",
+        value: "flowchart LR\n  A --> B",
+      },
+    ]);
+  });
 });

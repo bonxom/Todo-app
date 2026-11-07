@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { SurfacePayload } from "./catalogRegistry";
 import {
   UI_COMPOSITION_CATALOG_ID,
+  type ChartSeriesSpec,
   type DisplayScalar,
   type TableColumnSpec,
   type UiSurfaceMode,
@@ -12,6 +13,8 @@ export const UI_COMPOSITION_LIMITS = {
   MAX_DEPTH: 10,
   MAX_TABLE_COLUMNS: 12,
   MAX_TABLE_ROWS: 50,
+  MAX_CHART_SERIES: 4,
+  MAX_DIAGRAM_LENGTH: 4000,
   MAX_PAYLOAD_BYTES: 128 * 1024,
 } as const;
 
@@ -59,8 +62,24 @@ export const displayScalarSchema: z.ZodType<DisplayScalar> = z.union([
 
 export const spacingSchema = z.enum(["none", "sm", "md", "lg"]);
 export const emphasisSchema = z.enum(["normal", "muted", "heading"]);
+export const uiToneSchema = z.enum([
+  "default",
+  "accent",
+  "success",
+  "warning",
+  "danger",
+]);
+export const cardToneSchema = z.enum(["default", "accent", "muted"]);
+export const chartTypeSchema = z.enum(["bar", "line", "doughnut"]);
 
 export const tableColumnSchema: z.ZodType<TableColumnSpec> = z
+  .object({
+    key: keySchema,
+    label: z.string().trim().min(1).max(200),
+  })
+  .strict();
+
+export const chartSeriesSchema: z.ZodType<ChartSeriesSpec> = z
   .object({
     key: keySchema,
     label: z.string().trim().min(1).max(200),
@@ -108,6 +127,9 @@ export const rowPropertiesSchema = z
 export const cardPropertiesSchema = z
   .object({
     children: z.array(keySchema).max(UI_COMPOSITION_LIMITS.MAX_COMPONENTS),
+    title: z.string().trim().min(1).max(200).optional(),
+    subtitle: z.string().trim().min(1).max(300).optional(),
+    tone: cardToneSchema.optional(),
   })
   .strict();
 
@@ -121,6 +143,19 @@ export const textPropertiesSchema = z
   })
   .strict();
 
+export const statPropertiesSchema = z
+  .object({
+    label: z.string().trim().min(1).max(120),
+    value: z.union([
+      displayScalarSchema,
+      z.object({ path: displayPathSchema }).strict(),
+    ]),
+    caption: z.string().trim().min(1).max(200).optional(),
+    progress: z.number().finite().min(0).max(100).optional(),
+    tone: uiToneSchema.optional(),
+  })
+  .strict();
+
 export const tablePropertiesSchema = z
   .object({
     columns: z
@@ -128,6 +163,33 @@ export const tablePropertiesSchema = z
       .min(1)
       .max(UI_COMPOSITION_LIMITS.MAX_TABLE_COLUMNS),
     rows: z.object({ path: displayPathSchema }).strict(),
+  })
+  .strict();
+
+export const chartPropertiesSchema = z
+  .object({
+    chartType: chartTypeSchema,
+    title: z.string().trim().min(1).max(200).optional(),
+    rows: z.object({ path: displayPathSchema }).strict(),
+    labelKey: keySchema,
+    series: z
+      .array(chartSeriesSchema)
+      .min(1)
+      .max(UI_COMPOSITION_LIMITS.MAX_CHART_SERIES),
+  })
+  .strict();
+
+export const diagramPropertiesSchema = z
+  .object({
+    title: z.string().trim().min(1).max(200).optional(),
+    value: z.union([
+      z
+        .string()
+        .min(1)
+        .max(UI_COMPOSITION_LIMITS.MAX_DIAGRAM_LENGTH)
+        .refine((v) => v.trim().length > 0, "Diagram code must not be blank"),
+      z.object({ path: displayPathSchema }).strict(),
+    ]),
   })
   .strict();
 
@@ -172,9 +234,21 @@ const compiledComponentSchema = z.discriminatedUnion("component", [
     id: keySchema,
     component: z.literal("Text"),
   }),
+  statPropertiesSchema.extend({
+    id: keySchema,
+    component: z.literal("Stat"),
+  }),
   tablePropertiesSchema.extend({
     id: keySchema,
     component: z.literal("Table"),
+  }),
+  chartPropertiesSchema.extend({
+    id: keySchema,
+    component: z.literal("Chart"),
+  }),
+  diagramPropertiesSchema.extend({
+    id: keySchema,
+    component: z.literal("Diagram"),
   }),
   taskProposalFormPropertiesSchema.extend({
     id: keySchema,
@@ -472,7 +546,7 @@ export function validateCompositionPayload(
 
   for (const node of components) {
     if (
-      node.component === "Text" &&
+      (node.component === "Text" || node.component === "Stat") &&
       typeof node.value === "object" &&
       node.value !== null &&
       "path" in node.value
@@ -483,12 +557,37 @@ export function validateCompositionPayload(
         !Object.prototype.hasOwnProperty.call(dataModel.display, key)
       ) {
         throw new Error(
-          `Text binding '${node.value.path}' does not exist in display model`,
+          `${node.component} binding '${node.value.path}' does not exist in display model`,
         );
       }
       if (Array.isArray(dataModel.display[key])) {
         throw new Error(
-          `Text component '${node.id}' must bind to a scalar display value`,
+          `${node.component} component '${node.id}' must bind to a scalar display value`,
+        );
+      }
+    } else if (
+      node.component === "Diagram" &&
+      typeof node.value === "object" &&
+      node.value !== null &&
+      "path" in node.value
+    ) {
+      const key = extractDisplayKey(node.value.path);
+      if (
+        !key ||
+        !Object.prototype.hasOwnProperty.call(dataModel.display, key)
+      ) {
+        throw new Error(
+          `Diagram binding '${node.value.path}' does not exist in display model`,
+        );
+      }
+      const bound = dataModel.display[key];
+      if (
+        typeof bound !== "string" ||
+        bound.trim().length === 0 ||
+        bound.length > UI_COMPOSITION_LIMITS.MAX_DIAGRAM_LENGTH
+      ) {
+        throw new Error(
+          `Diagram component '${node.id}' must bind to a non-empty string`,
         );
       }
     } else if (node.component === "Table") {
@@ -523,6 +622,60 @@ export function validateCompositionPayload(
           throw new Error(
             `Table row ${rIdx} keys must match declared table columns`,
           );
+        }
+      }
+    } else if (node.component === "Chart") {
+      if (node.chartType === "doughnut" && node.series.length !== 1) {
+        throw new Error("Doughnut chart must declare exactly 1 series");
+      }
+      const seriesKeys = new Set<string>();
+      for (const s of node.series) {
+        if (s.key === node.labelKey) {
+          throw new Error(
+            `Chart series key '${s.key}' must not equal labelKey`,
+          );
+        }
+        if (seriesKeys.has(s.key)) {
+          throw new Error(`Duplicate chart series key '${s.key}'`);
+        }
+        seriesKeys.add(s.key);
+      }
+      const key = extractDisplayKey(node.rows.path);
+      if (
+        !key ||
+        !Object.prototype.hasOwnProperty.call(dataModel.display, key)
+      ) {
+        throw new Error(
+          `Chart rows path '${node.rows.path}' does not exist in display model`,
+        );
+      }
+      const rows = dataModel.display[key];
+      if (!Array.isArray(rows)) {
+        throw new Error(`Chart rows path '${node.rows.path}' must be an array`);
+      }
+      for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+        const row = rows[rIdx];
+        if (
+          !Object.prototype.hasOwnProperty.call(row, node.labelKey) ||
+          row[node.labelKey] === null ||
+          row[node.labelKey] === undefined
+        ) {
+          throw new Error(
+            `Chart row ${rIdx} is missing non-null labelKey '${node.labelKey}'`,
+          );
+        }
+        for (const sKey of seriesKeys) {
+          const val = row[sKey];
+          if (typeof val !== "number" || !Number.isFinite(val)) {
+            throw new Error(
+              `Chart row ${rIdx} series '${sKey}' must be a finite number`,
+            );
+          }
+          if (node.chartType === "doughnut" && val < 0) {
+            throw new Error(
+              `Doughnut chart row ${rIdx} series '${sKey}' must be >= 0`,
+            );
+          }
         }
       }
     }

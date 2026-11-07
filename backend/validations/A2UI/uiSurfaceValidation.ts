@@ -16,6 +16,8 @@ export const UI_SURFACE_LIMITS = {
   MAX_DEPTH: 10,
   MAX_TABLE_COLUMNS: 12,
   MAX_TABLE_ROWS: 50,
+  MAX_CHART_SERIES: 4,
+  MAX_DIAGRAM_LENGTH: 4000,
   MAX_FALLBACK_TEXT_LENGTH: 8000,
   MAX_PAYLOAD_BYTES: A2UI_CONFIG.MAX_PAYLOAD_BYTES,
   MAX_MESSAGES: A2UI_CONFIG.MAX_MESSAGES_PER_ENVELOPE,
@@ -65,6 +67,18 @@ export const displayScalarSchema: z.ZodType<DisplayScalar> = z.union([
 
 export const spacingSchema = z.enum(["none", "sm", "md", "lg"]);
 
+export const uiToneSchema = z.enum([
+  "default",
+  "accent",
+  "success",
+  "warning",
+  "danger",
+]);
+
+export const cardToneSchema = z.enum(["default", "accent", "muted"]);
+
+export const chartTypeSchema = z.enum(["bar", "line", "doughnut"]);
+
 export const displayValueSchema = z.union([
   z.strictObject({
     literal: displayScalarSchema,
@@ -74,7 +88,25 @@ export const displayValueSchema = z.union([
   }),
 ]);
 
+export const diagramValueSchema = z.union([
+  z.strictObject({
+    literal: z
+      .string()
+      .min(1)
+      .max(UI_SURFACE_LIMITS.MAX_DIAGRAM_LENGTH)
+      .refine((v) => v.trim().length > 0, "Diagram code must not be blank"),
+  }),
+  z.strictObject({
+    path: displayPathSchema,
+  }),
+]);
+
 export const tableColumnSchema = z.strictObject({
+  key: keySchema,
+  label: z.string().trim().min(1).max(200),
+});
+
+export const chartSeriesSchema = z.strictObject({
   key: keySchema,
   label: z.string().trim().min(1).max(200),
 });
@@ -97,6 +129,9 @@ const cardNodeSchema = z.strictObject({
   id: keySchema,
   component: z.literal("Card"),
   children: z.array(keySchema).max(UI_SURFACE_LIMITS.MAX_COMPONENTS),
+  title: z.string().trim().min(1).max(200).optional(),
+  subtitle: z.string().trim().min(1).max(300).optional(),
+  tone: cardToneSchema.optional(),
 });
 
 const textNodeSchema = z.strictObject({
@@ -104,6 +139,16 @@ const textNodeSchema = z.strictObject({
   component: z.literal("Text"),
   value: displayValueSchema,
   emphasis: z.enum(["normal", "muted", "heading"]),
+});
+
+const statNodeSchema = z.strictObject({
+  id: keySchema,
+  component: z.literal("Stat"),
+  label: z.string().trim().min(1).max(120),
+  value: displayValueSchema,
+  caption: z.string().trim().min(1).max(200).optional(),
+  progress: z.number().finite().min(0).max(100).optional(),
+  tone: uiToneSchema.optional(),
 });
 
 const tableNodeSchema = z.strictObject({
@@ -114,6 +159,26 @@ const tableNodeSchema = z.strictObject({
     .min(1)
     .max(UI_SURFACE_LIMITS.MAX_TABLE_COLUMNS),
   rowsPath: displayPathSchema,
+});
+
+const chartNodeSchema = z.strictObject({
+  id: keySchema,
+  component: z.literal("Chart"),
+  chartType: chartTypeSchema,
+  title: z.string().trim().min(1).max(200).optional(),
+  rowsPath: displayPathSchema,
+  labelKey: keySchema,
+  series: z
+    .array(chartSeriesSchema)
+    .min(1)
+    .max(UI_SURFACE_LIMITS.MAX_CHART_SERIES),
+});
+
+const diagramNodeSchema = z.strictObject({
+  id: keySchema,
+  component: z.literal("Diagram"),
+  title: z.string().trim().min(1).max(200).optional(),
+  value: diagramValueSchema,
 });
 
 const taskProposalFormNodeSchema = z.strictObject({
@@ -136,7 +201,10 @@ export const uiNodeSchema = z.discriminatedUnion("component", [
   rowNodeSchema,
   cardNodeSchema,
   textNodeSchema,
+  statNodeSchema,
   tableNodeSchema,
+  chartNodeSchema,
+  diagramNodeSchema,
   taskProposalFormNodeSchema,
   taskListNodeSchema,
   taskProposalActionsNodeSchema,
@@ -354,10 +422,13 @@ function validateGraphAndBindings(
     }
   }
 
-  // Validate data bindings for Text and Table nodes
+  // Validate data bindings for Text, Stat, Diagram, Table, and Chart nodes
   for (let i = 0; i < spec.components.length; i++) {
     const node = spec.components[i];
-    if (node.component === "Text" && "path" in node.value) {
+    if (
+      (node.component === "Text" || node.component === "Stat") &&
+      "path" in node.value
+    ) {
       const key = extractDisplayKey(node.value.path);
       if (
         !key ||
@@ -372,8 +443,33 @@ function validateGraphAndBindings(
         ctx.addIssue({
           code: "custom",
           path: ["components", i, "value", "path"],
-          message: `Text component '${node.id}' must bind to a scalar display value, not an array`,
+          message: `${node.component} component '${node.id}' must bind to a scalar display value, not an array`,
         });
+      }
+    } else if (node.component === "Diagram" && "path" in node.value) {
+      const key = extractDisplayKey(node.value.path);
+      if (
+        !key ||
+        !Object.prototype.hasOwnProperty.call(spec.displayData, key)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["components", i, "value", "path"],
+          message: `Display path '${node.value.path}' does not exist in displayData`,
+        });
+      } else {
+        const bound = spec.displayData[key];
+        if (
+          typeof bound !== "string" ||
+          bound.trim().length === 0 ||
+          bound.length > UI_SURFACE_LIMITS.MAX_DIAGRAM_LENGTH
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["components", i, "value", "path"],
+            message: `Diagram component '${node.id}' must bind to a non-empty string (max ${UI_SURFACE_LIMITS.MAX_DIAGRAM_LENGTH} chars)`,
+          });
+        }
       }
     } else if (node.component === "Table") {
       const colKeys = new Set<string>();
@@ -425,6 +521,88 @@ function validateGraphAndBindings(
             path: ["displayData", key, rIdx],
             message: `Table row ${rIdx} keys must match declared table columns`,
           });
+        }
+      }
+    } else if (node.component === "Chart") {
+      if (node.chartType === "doughnut" && node.series.length !== 1) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["components", i, "series"],
+          message: "Doughnut chart must declare exactly 1 series",
+        });
+      }
+
+      const seriesKeys = new Set<string>();
+      for (let sIdx = 0; sIdx < node.series.length; sIdx++) {
+        const sKey = node.series[sIdx].key;
+        if (sKey === node.labelKey) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["components", i, "series", sIdx, "key"],
+            message: `Chart series key '${sKey}' must not equal labelKey`,
+          });
+        }
+        if (seriesKeys.has(sKey)) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["components", i, "series", sIdx, "key"],
+            message: `Duplicate chart series key '${sKey}'`,
+          });
+        }
+        seriesKeys.add(sKey);
+      }
+
+      const key = extractDisplayKey(node.rowsPath);
+      if (
+        !key ||
+        !Object.prototype.hasOwnProperty.call(spec.displayData, key)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["components", i, "rowsPath"],
+          message: `Chart rowsPath '${node.rowsPath}' does not exist in displayData`,
+        });
+        continue;
+      }
+
+      const rows = spec.displayData[key];
+      if (!Array.isArray(rows)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["components", i, "rowsPath"],
+          message: `Chart rowsPath '${node.rowsPath}' must bind to an array of row objects`,
+        });
+        continue;
+      }
+
+      for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+        const row = rows[rIdx];
+        if (
+          !Object.prototype.hasOwnProperty.call(row, node.labelKey) ||
+          row[node.labelKey] === null ||
+          row[node.labelKey] === undefined
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["displayData", key, rIdx, node.labelKey],
+            message: `Chart row ${rIdx} is missing non-null labelKey '${node.labelKey}'`,
+          });
+        }
+        for (const sKey of seriesKeys) {
+          const val = row[sKey];
+          if (typeof val !== "number" || !Number.isFinite(val)) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["displayData", key, rIdx, sKey],
+              message: `Chart row ${rIdx} series '${sKey}' must be a finite number`,
+            });
+          } else if (node.chartType === "doughnut" && val < 0) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["displayData", key, rIdx, sKey],
+              message: `Doughnut chart row ${rIdx} series '${sKey}' must be >= 0`,
+            });
+          }
         }
       }
     }
@@ -512,12 +690,45 @@ const compiledComponentSchema = z.discriminatedUnion("component", [
   }),
   z.strictObject({
     id: keySchema,
+    component: z.literal("Stat"),
+    label: z.string().trim().min(1).max(120),
+    value: z.union([
+      displayScalarSchema,
+      z.strictObject({ path: displayPathSchema }),
+    ]),
+    caption: z.string().trim().min(1).max(200).optional(),
+    progress: z.number().finite().min(0).max(100).optional(),
+    tone: uiToneSchema.optional(),
+  }),
+  z.strictObject({
+    id: keySchema,
     component: z.literal("Table"),
     columns: z
       .array(tableColumnSchema)
       .min(1)
       .max(UI_SURFACE_LIMITS.MAX_TABLE_COLUMNS),
     rows: z.strictObject({ path: displayPathSchema }),
+  }),
+  z.strictObject({
+    id: keySchema,
+    component: z.literal("Chart"),
+    chartType: chartTypeSchema,
+    title: z.string().trim().min(1).max(200).optional(),
+    rows: z.strictObject({ path: displayPathSchema }),
+    labelKey: keySchema,
+    series: z
+      .array(chartSeriesSchema)
+      .min(1)
+      .max(UI_SURFACE_LIMITS.MAX_CHART_SERIES),
+  }),
+  z.strictObject({
+    id: keySchema,
+    component: z.literal("Diagram"),
+    title: z.string().trim().min(1).max(200).optional(),
+    value: z.union([
+      z.string().min(1).max(UI_SURFACE_LIMITS.MAX_DIAGRAM_LENGTH),
+      z.strictObject({ path: displayPathSchema }),
+    ]),
   }),
   z.strictObject({
     id: keySchema,

@@ -37,7 +37,9 @@ export function TaskProposalActions({
   const content = (
     <Fragment>
       {showHeader && (
-        <header className="task-proposal-header">
+        <header
+          className={`task-proposal-header task-proposal-header--${proposal.status}`}
+        >
           <strong>
             {proposal.status === "created"
               ? "Đã tạo công việc"
@@ -45,7 +47,7 @@ export function TaskProposalActions({
                 ? "Đề xuất đã hủy"
                 : "Đề xuất công việc (Bản nháp)"}
           </strong>
-          <span role="status">
+          <span role="status" className="task-proposal-status">
             {terminal
               ? proposal.status === "created"
                 ? `Đã tạo ${proposal.createdTasks.length} công việc`
@@ -57,14 +59,20 @@ export function TaskProposalActions({
         </header>
       )}
       {showAlerts && (error || choiceError) && (
-        <p role="alert">{error || choiceError}</p>
+        <p role="alert" className="task-proposal-alert">
+          {error || choiceError}
+        </p>
       )}
       {terminal ? (
-        <ul>
+        <ul className="task-proposal-created-list">
           {proposal.createdTasks.map((task) => (
             <li key={task.taskId}>
               {onOpenTask ? (
-                <button type="button" onClick={() => onOpenTask(task.taskId)}>
+                <button
+                  type="button"
+                  className="task-proposal-created-link"
+                  onClick={() => onOpenTask(task.taskId)}
+                >
                   Đã tạo: {task.title}
                 </button>
               ) : (
@@ -77,6 +85,7 @@ export function TaskProposalActions({
         <footer className="task-proposal-actions">
           <button
             type="button"
+            className="task-proposal-btn task-proposal-btn-cancel"
             disabled={locked}
             onClick={() => void submit("cancel", onDispatchAction)}
           >
@@ -84,6 +93,7 @@ export function TaskProposalActions({
           </button>
           <button
             type="button"
+            className="task-proposal-btn task-proposal-btn-save"
             disabled={locked || invalid}
             onClick={() => void submit("save", onDispatchAction)}
           >
@@ -91,6 +101,7 @@ export function TaskProposalActions({
           </button>
           <button
             type="button"
+            className="task-proposal-btn task-proposal-btn-confirm"
             disabled={locked || invalid || !draft.selectedItemIds.length}
             onClick={() => void submit("confirm", onDispatchAction)}
           >

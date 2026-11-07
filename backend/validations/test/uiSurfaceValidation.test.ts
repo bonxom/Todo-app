@@ -592,4 +592,134 @@ describe("uiSurfaceValidation", () => {
       ),
     ).toThrow(/128 KiB/);
   });
+
+  it("accepts Card headers/tones, Stat, Chart (bar/line/doughnut), and Diagram nodes and rejects invalid visual bindings", () => {
+    const validVisualSpec = {
+      fallbackText: "Weekly Dashboard",
+      components: [
+        {
+          id: "root",
+          component: "Column" as const,
+          children: ["kpiCard", "hoursChart", "splitDonut", "flowDiagram"],
+          gap: "md" as const,
+        },
+        {
+          id: "kpiCard",
+          component: "Card" as const,
+          title: "Overview",
+          subtitle: "Week 1 targets",
+          tone: "accent" as const,
+          children: ["hoursStat"],
+        },
+        {
+          id: "hoursStat",
+          component: "Stat" as const,
+          label: "Total Study Hours",
+          value: { path: "/display/totalHours" },
+          caption: "75% of weekly goal",
+          progress: 75,
+          tone: "success" as const,
+        },
+        {
+          id: "hoursChart",
+          component: "Chart" as const,
+          chartType: "bar" as const,
+          title: "Daily Study & Workout Hours",
+          rowsPath: "/display/dailyMetrics",
+          labelKey: "day",
+          series: [
+            { key: "study", label: "Study (h)" },
+            { key: "gym", label: "Gym (h)" },
+          ],
+        },
+        {
+          id: "splitDonut",
+          component: "Chart" as const,
+          chartType: "doughnut" as const,
+          title: "Time Split",
+          rowsPath: "/display/splitMetrics",
+          labelKey: "category",
+          series: [{ key: "hours", label: "Hours" }],
+        },
+        {
+          id: "flowDiagram",
+          component: "Diagram" as const,
+          title: "Study Workflow",
+          value: { path: "/display/mermaidCode" },
+        },
+      ],
+      displayData: {
+        totalHours: "12h",
+        dailyMetrics: [
+          { day: "Mon", study: 2, gym: 1 },
+          { day: "Wed", study: 1.5, gym: 1 },
+        ],
+        splitMetrics: [
+          { category: "IELTS", hours: 8 },
+          { category: "Gym", hours: 4 },
+        ],
+        mermaidCode: "flowchart LR\n  A[Read] --> B[Practice]",
+      },
+    };
+
+    expect(parseSurfaceSpec(validVisualSpec, "readonly")).toEqual(
+      validVisualSpec,
+    );
+
+    // Reject Chart when series value in displayData is not a finite number
+    expect(() =>
+      parseSurfaceSpec(
+        {
+          ...validVisualSpec,
+          displayData: {
+            ...validVisualSpec.displayData,
+            dailyMetrics: [{ day: "Mon", study: "two", gym: 1 }],
+          },
+        },
+        "readonly",
+      ),
+    ).toThrow(/number/i);
+
+    // Reject doughnut Chart with multiple series
+    expect(() =>
+      parseSurfaceSpec(
+        {
+          fallbackText: "Bad doughnut",
+          components: [
+            {
+              id: "root",
+              component: "Chart",
+              chartType: "doughnut",
+              rowsPath: "/display/rows",
+              labelKey: "day",
+              series: [
+                { key: "a", label: "A" },
+                { key: "b", label: "B" },
+              ],
+            },
+          ],
+          displayData: { rows: [{ day: "Mon", a: 1, b: 2 }] },
+        },
+        "readonly",
+      ),
+    ).toThrow(/doughnut/i);
+
+    // Reject Diagram bound to non-string or blank string
+    expect(() =>
+      parseSurfaceSpec(
+        {
+          fallbackText: "Bad diagram",
+          components: [
+            {
+              id: "root",
+              component: "Diagram",
+              value: { path: "/display/num" },
+            },
+          ],
+          displayData: { num: 42 },
+        },
+        "readonly",
+      ),
+    ).toThrow(/Diagram/i);
+  });
 });

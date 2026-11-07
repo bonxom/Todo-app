@@ -378,4 +378,158 @@ describe("compositionProtocol & presentationComponents", () => {
       expect(await screen.findByTestId("fallback")).toBeInTheDocument();
     },
   );
+
+  it("renders Card header/tone, Stat with progress bar, Chart (bar/line/doughnut), and Diagram nodes", async () => {
+    const payload = cloneReadonlyPayload();
+    payload.messages[1] = {
+      version: "v0.9",
+      updateComponents: {
+        surfaceId: payload.surfaceId,
+        components: [
+          {
+            id: "root",
+            component: "Column",
+            children: ["summaryCard", "barChart", "donutChart", "flowDiagram"],
+            gap: "md",
+          },
+          {
+            id: "summaryCard",
+            component: "Card",
+            title: "Weekly Progress",
+            subtitle: "IELTS & Fitness Overview",
+            tone: "accent",
+            children: ["hoursStat"],
+          },
+          {
+            id: "hoursStat",
+            component: "Stat",
+            label: "Total Study Hours",
+            value: { path: "/display/totalHours" },
+            caption: "75% of weekly goal",
+            progress: 75,
+            tone: "success",
+          },
+          {
+            id: "barChart",
+            component: "Chart",
+            chartType: "bar",
+            title: "Daily Breakdown",
+            rows: { path: "/display/dailyMetrics" },
+            labelKey: "day",
+            series: [
+              { key: "study", label: "Study (h)" },
+              { key: "gym", label: "Gym (h)" },
+            ],
+          },
+          {
+            id: "donutChart",
+            component: "Chart",
+            chartType: "doughnut",
+            title: "Focus Share",
+            rows: { path: "/display/splitMetrics" },
+            labelKey: "category",
+            series: [{ key: "hours", label: "Hours" }],
+          },
+          {
+            id: "flowDiagram",
+            component: "Diagram",
+            title: "Study Workflow",
+            value: "flowchart LR\n  A[Read] --> B[Review]",
+          },
+        ],
+      },
+    };
+    payload.messages[2] = {
+      version: "v0.9",
+      updateDataModel: {
+        surfaceId: payload.surfaceId,
+        path: "/",
+        value: {
+          display: {
+            totalHours: "12h",
+            dailyMetrics: [
+              { day: "Mon", study: 2, gym: 1 },
+              { day: "Wed", study: 1.5, gym: 1 },
+            ],
+            splitMetrics: [
+              { category: "IELTS", hours: 8 },
+              { category: "Gym", hours: 4 },
+            ],
+          },
+        },
+      },
+    };
+
+    const { container, unmount } = render(
+      <A2uiHost
+        payload={payload}
+        registry={readonlyRegistry}
+        onAction={vi.fn()}
+        fallback={<div data-testid="fallback">Fallback</div>}
+      />,
+    );
+
+    expect(await screen.findByText("Weekly Progress")).toBeInTheDocument();
+    expect(screen.getByText("IELTS & Fitness Overview")).toBeInTheDocument();
+    expect(screen.getByText("Total Study Hours")).toBeInTheDocument();
+    expect(screen.getByText("12h")).toBeInTheDocument();
+    expect(screen.getByText("75% of weekly goal")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "75",
+    );
+    expect(screen.getByText("Daily Breakdown")).toBeInTheDocument();
+    expect(screen.getByText("Focus Share")).toBeInTheDocument();
+    expect(screen.getByText("Study Workflow")).toBeInTheDocument();
+    expect(container.querySelector(".a2ui-card--accent")).not.toBeNull();
+    expect(container.querySelector(".a2ui-stat--success")).not.toBeNull();
+    expect(container.querySelectorAll(".a2ui-chart")).toHaveLength(2);
+    expect(container.querySelector(".a2ui-diagram")).not.toBeNull();
+
+    unmount();
+  });
+
+  it("rejects invalid Chart or Diagram bindings and renders fallback cleanly", async () => {
+    const payload = cloneReadonlyPayload();
+    payload.messages[1] = {
+      version: "v0.9",
+      updateComponents: {
+        surfaceId: payload.surfaceId,
+        components: [
+          {
+            id: "root",
+            component: "Chart",
+            chartType: "bar",
+            rows: { path: "/display/badMetrics" },
+            labelKey: "day",
+            series: [{ key: "hours", label: "Hours" }],
+          },
+        ],
+      },
+    };
+    payload.messages[2] = {
+      version: "v0.9",
+      updateDataModel: {
+        surfaceId: payload.surfaceId,
+        path: "/",
+        value: {
+          display: {
+            badMetrics: [{ day: "Mon", hours: "not-a-number" }],
+          },
+        },
+      },
+    };
+
+    expect(() => readonlyRegistry.createProcessor(payload, vi.fn())).toThrow();
+
+    render(
+      <A2uiHost
+        payload={payload}
+        registry={readonlyRegistry}
+        onAction={vi.fn()}
+        fallback={<div data-testid="fallback">Fallback rendered</div>}
+      />,
+    );
+    expect(await screen.findByTestId("fallback")).toBeInTheDocument();
+  });
 });

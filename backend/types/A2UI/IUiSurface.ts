@@ -11,7 +11,20 @@ export type Spacing = "none" | "sm" | "md" | "lg";
 
 export type DisplayValue = { literal: DisplayScalar } | { path: string };
 
+export type DiagramValue = { literal: string } | { path: string };
+
+export type UiTone = "default" | "accent" | "success" | "warning" | "danger";
+
+export type CardTone = "default" | "accent" | "muted";
+
+export type ChartType = "bar" | "line" | "doughnut";
+
 export type TableColumnSpec = {
+  key: string;
+  label: string;
+};
+
+export type ChartSeriesSpec = {
   key: string;
   label: string;
 };
@@ -27,6 +40,9 @@ export type UiNode =
       id: string;
       component: "Card";
       children: string[];
+      title?: string;
+      subtitle?: string;
+      tone?: CardTone;
     }
   | {
       id: string;
@@ -36,9 +52,33 @@ export type UiNode =
     }
   | {
       id: string;
+      component: "Stat";
+      label: string;
+      value: DisplayValue;
+      caption?: string;
+      progress?: number;
+      tone?: UiTone;
+    }
+  | {
+      id: string;
       component: "Table";
       columns: TableColumnSpec[];
       rowsPath: string;
+    }
+  | {
+      id: string;
+      component: "Chart";
+      chartType: ChartType;
+      title?: string;
+      rowsPath: string;
+      labelKey: string;
+      series: ChartSeriesSpec[];
+    }
+  | {
+      id: string;
+      component: "Diagram";
+      title?: string;
+      value: DiagramValue;
     }
   | {
       id: string;
