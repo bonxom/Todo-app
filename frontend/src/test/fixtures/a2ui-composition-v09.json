@@ -1,0 +1,207 @@
+{
+  "readonly": {
+    "text": "Weekly Study Plan\nMonday: Reading (2h)\nWednesday: Listening (1.5h)",
+    "a2ui": {
+      "protocolVersion": "v0.9",
+      "catalogId": "urn:orbit:a2ui:composition:v1",
+      "surfaceId": "44444444-4444-4444-8444-444444444444",
+      "messages": [
+        {
+          "version": "v0.9",
+          "createSurface": {
+            "surfaceId": "44444444-4444-4444-8444-444444444444",
+            "catalogId": "urn:orbit:a2ui:composition:v1"
+          }
+        },
+        {
+          "version": "v0.9",
+          "updateComponents": {
+            "surfaceId": "44444444-4444-4444-8444-444444444444",
+            "components": [
+              {
+                "id": "root",
+                "component": "Column",
+                "children": ["headerRow", "planCard"],
+                "gap": "md"
+              },
+              {
+                "id": "headerRow",
+                "component": "Row",
+                "children": ["headingText", "subtitleText"],
+                "gap": "sm"
+              },
+              {
+                "id": "headingText",
+                "component": "Text",
+                "value": "Weekly Study Plan",
+                "emphasis": "heading"
+              },
+              {
+                "id": "subtitleText",
+                "component": "Text",
+                "value": { "path": "/display/summary" },
+                "emphasis": "muted"
+              },
+              {
+                "id": "planCard",
+                "component": "Card",
+                "children": ["scheduleTable"]
+              },
+              {
+                "id": "scheduleTable",
+                "component": "Table",
+                "columns": [
+                  { "key": "day", "label": "Day" },
+                  { "key": "focus", "label": "Focus" },
+                  { "key": "hours", "label": "Hours" },
+                  { "key": "optionalNote", "label": "Note" },
+                  { "key": "active", "label": "Active" }
+                ],
+                "rows": { "path": "/display/schedule" }
+              }
+            ]
+          }
+        },
+        {
+          "version": "v0.9",
+          "updateDataModel": {
+            "surfaceId": "44444444-4444-4444-8444-444444444444",
+            "path": "/",
+            "value": {
+              "display": {
+                "summary": "Target band 7.5",
+                "schedule": [
+                  {
+                    "day": "Monday",
+                    "focus": "Reading",
+                    "hours": 2,
+                    "optionalNote": null,
+                    "active": true
+                  },
+                  {
+                    "day": "Wednesday",
+                    "focus": "Listening",
+                    "hours": 1.5,
+                    "optionalNote": "Practice test 3",
+                    "active": false
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "proposal": {
+    "text": "Đề xuất công việc — hãy chỉnh sửa và chọn những việc muốn tạo.\n1. Study Vocabulary",
+    "a2ui": {
+      "protocolVersion": "v0.9",
+      "catalogId": "urn:orbit:a2ui:composition:v1",
+      "surfaceId": "44444444-4444-4444-8444-444444444444",
+      "messages": [
+        {
+          "version": "v0.9",
+          "createSurface": {
+            "surfaceId": "44444444-4444-4444-8444-444444444444",
+            "catalogId": "urn:orbit:a2ui:composition:v1"
+          }
+        },
+        {
+          "version": "v0.9",
+          "updateComponents": {
+            "surfaceId": "44444444-4444-4444-8444-444444444444",
+            "components": [
+              {
+                "id": "root",
+                "component": "Column",
+                "children": ["introText", "tasksCard", "actionsNode"],
+                "gap": "md"
+              },
+              {
+                "id": "introText",
+                "component": "Text",
+                "value": { "path": "/display/intro" },
+                "emphasis": "normal"
+              },
+              {
+                "id": "tasksCard",
+                "component": "Card",
+                "children": ["taskListNode"]
+              },
+              {
+                "id": "taskListNode",
+                "component": "TaskList",
+                "proposal": { "path": "/proposal" }
+              },
+              {
+                "id": "actionsNode",
+                "component": "TaskProposalActions",
+                "proposal": { "path": "/proposal" },
+                "saveAction": {
+                  "event": {
+                    "name": "save",
+                    "context": {
+                      "proposal": { "path": "/proposal" },
+                      "requestId": { "path": "/requestId" }
+                    }
+                  }
+                },
+                "confirmAction": {
+                  "event": {
+                    "name": "confirm",
+                    "context": {
+                      "proposal": { "path": "/proposal" },
+                      "requestId": { "path": "/requestId" }
+                    }
+                  }
+                },
+                "cancelAction": {
+                  "event": {
+                    "name": "cancel",
+                    "context": {
+                      "proposal": { "path": "/proposal" },
+                      "requestId": { "path": "/requestId" }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "version": "v0.9",
+          "updateDataModel": {
+            "surfaceId": "44444444-4444-4444-8444-444444444444",
+            "path": "/",
+            "value": {
+              "display": {
+                "intro": "Review and confirm the proposed study tasks below."
+              },
+              "proposal": {
+                "id": "11111111-1111-4111-8111-111111111111",
+                "conversationId": "22222222-2222-4222-8222-222222222222",
+                "turnId": "turn-test-fixture",
+                "revision": 1,
+                "status": "draft",
+                "protocolVersion": "v0.9",
+                "catalogId": "urn:orbit:a2ui:task-proposals:v1",
+                "items": [
+                  {
+                    "id": "33333333-3333-4333-8333-333333333333",
+                    "title": "Study Vocabulary",
+                    "description": "Learn 20 new words",
+                    "priority": "High",
+                    "categoryId": "507f1f77bcf86cd799439011"
+                  }
+                ],
+                "selectedItemIds": ["33333333-3333-4333-8333-333333333333"],
+                "createdTasks": []
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

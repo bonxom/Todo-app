@@ -1,0 +1,122 @@
+{
+  "surfaceId": "44444444-4444-4444-8444-444444444444",
+  "catalogId": "urn:orbit:a2ui:composition:v1",
+  "readonly": {
+    "fallbackText": "Weekly Study Plan\nMonday: Reading (2h)\nWednesday: Listening (1.5h)",
+    "components": [
+      {
+        "id": "root",
+        "component": "Column",
+        "children": ["headerRow", "planCard"],
+        "gap": "md"
+      },
+      {
+        "id": "headerRow",
+        "component": "Row",
+        "children": ["headingText", "subtitleText"],
+        "gap": "sm"
+      },
+      {
+        "id": "headingText",
+        "component": "Text",
+        "value": { "literal": "Weekly Study Plan" },
+        "emphasis": "heading"
+      },
+      {
+        "id": "subtitleText",
+        "component": "Text",
+        "value": { "path": "/display/summary" },
+        "emphasis": "muted"
+      },
+      {
+        "id": "planCard",
+        "component": "Card",
+        "children": ["scheduleTable"]
+      },
+      {
+        "id": "scheduleTable",
+        "component": "Table",
+        "columns": [
+          { "key": "day", "label": "Day" },
+          { "key": "focus", "label": "Focus" },
+          { "key": "hours", "label": "Hours" },
+          { "key": "optionalNote", "label": "Note" },
+          { "key": "active", "label": "Active" }
+        ],
+        "rowsPath": "/display/schedule"
+      }
+    ],
+    "displayData": {
+      "summary": "Target band 7.5",
+      "schedule": [
+        {
+          "day": "Monday",
+          "focus": "Reading",
+          "hours": 2,
+          "optionalNote": null,
+          "active": true
+        },
+        {
+          "day": "Wednesday",
+          "focus": "Listening",
+          "hours": 1.5,
+          "optionalNote": "Practice test 3",
+          "active": false
+        }
+      ]
+    }
+  },
+  "proposal": {
+    "fallbackText": "Đề xuất công việc — hãy chỉnh sửa và chọn những việc muốn tạo.\n1. Study Vocabulary",
+    "components": [
+      {
+        "id": "root",
+        "component": "Column",
+        "children": ["introText", "tasksCard", "actionsNode"],
+        "gap": "md"
+      },
+      {
+        "id": "introText",
+        "component": "Text",
+        "value": { "path": "/display/intro" },
+        "emphasis": "normal"
+      },
+      {
+        "id": "tasksCard",
+        "component": "Card",
+        "children": ["taskListNode"]
+      },
+      {
+        "id": "taskListNode",
+        "component": "TaskList"
+      },
+      {
+        "id": "actionsNode",
+        "component": "TaskProposalActions"
+      }
+    ],
+    "displayData": {
+      "intro": "Review and confirm the proposed study tasks below."
+    }
+  },
+  "proposalView": {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "conversationId": "22222222-2222-4222-8222-222222222222",
+    "turnId": "turn-test-fixture",
+    "revision": 1,
+    "status": "draft",
+    "protocolVersion": "v0.9",
+    "catalogId": "urn:orbit:a2ui:task-proposals:v1",
+    "items": [
+      {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "title": "Study Vocabulary",
+        "description": "Learn 20 new words",
+        "priority": "High",
+        "categoryId": "507f1f77bcf86cd799439011"
+      }
+    ],
+    "selectedItemIds": ["33333333-3333-4333-8333-333333333333"],
+    "createdTasks": []
+  }
+}
