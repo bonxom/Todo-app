@@ -99,7 +99,9 @@ describe("agentUiRuntime", () => {
   });
 
   it("executes load guidance -> propose_tasks with presentation", async () => {
-    const validItems = [{ title: "Study Vocabulary", priority: "High" as const }];
+    const validItems = [
+      { title: "Study Vocabulary", priority: "High" as const },
+    ];
 
     completionCreate
       .mockImplementationOnce(async (payload) => {
@@ -139,7 +141,9 @@ describe("agentUiRuntime", () => {
   });
 
   it("drops forged or invalid optional presentation without discarding valid task items", async () => {
-    const validItems = [{ title: "Read chapter 1", priority: "Medium" as const }];
+    const validItems = [
+      { title: "Read chapter 1", priority: "Medium" as const },
+    ];
 
     // Forged presentation without loading ui-composition first
     completionCreate.mockResolvedValueOnce(

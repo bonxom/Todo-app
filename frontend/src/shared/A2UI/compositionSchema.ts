@@ -67,7 +67,9 @@ export const tableColumnSchema: z.ZodType<TableColumnSpec> = z
   })
   .strict();
 
-const proposalBindingSchema = z.object({ path: z.literal("/proposal") }).strict();
+const proposalBindingSchema = z
+  .object({ path: z.literal("/proposal") })
+  .strict();
 const requestIdBindingSchema = z
   .object({ path: z.literal("/requestId") })
   .strict();

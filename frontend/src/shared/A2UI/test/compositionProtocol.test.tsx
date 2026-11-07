@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { A2uiMessageSchema, Catalog, MessageProcessor } from "@a2ui/web_core/v0_9";
+import {
+  A2uiMessageSchema,
+  Catalog,
+  MessageProcessor,
+} from "@a2ui/web_core/v0_9";
 import { A2uiHost } from "../A2uiHost";
 import { CatalogRegistry, type SurfacePayload } from "../catalogRegistry";
 import {
@@ -49,9 +53,7 @@ describe("compositionProtocol & presentationComponents", () => {
       />,
     );
 
-    expect(
-      await screen.findByText("Weekly Study Plan"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Weekly Study Plan")).toBeInTheDocument();
     expect(screen.getByText("Target band 7.5")).toBeInTheDocument();
 
     // Semantic table headers and cells
@@ -183,181 +185,197 @@ describe("compositionProtocol & presentationComponents", () => {
     "table_13_columns",
     "table_51_rows",
     "prototype_key",
-  ])("rejects invalid payload (%s) and renders fallback cleanly", async (invalidCase) => {
-    const payload = cloneReadonlyPayload();
+  ])(
+    "rejects invalid payload (%s) and renders fallback cleanly",
+    async (invalidCase) => {
+      const payload = cloneReadonlyPayload();
 
-    if (invalidCase === "cycle") {
-      (
-        payload.messages[1].updateComponents as {
-          components: Record<string, unknown>[];
+      if (invalidCase === "cycle") {
+        (
+          payload.messages[1].updateComponents as {
+            components: Record<string, unknown>[];
+          }
+        ).components = [
+          { id: "root", component: "Column", children: ["childA"], gap: "md" },
+          { id: "childA", component: "Card", children: ["childB"] },
+          { id: "childB", component: "Card", children: ["childA"] },
+        ];
+      } else if (invalidCase === "missing_child") {
+        (
+          payload.messages[1].updateComponents as {
+            components: Record<string, unknown>[];
+          }
+        ).components = [{ id: "root", component: "Card", children: ["ghost"] }];
+      } else if (invalidCase === "undefined_model_path") {
+        (
+          payload.messages[1].updateComponents as {
+            components: Record<string, unknown>[];
+          }
+        ).components = [
+          {
+            id: "root",
+            component: "Text",
+            value: { path: "/display/missingKey" },
+            emphasis: "normal",
+          },
+        ];
+      } else if (invalidCase === "extra_delete_message") {
+        payload.messages.push({
+          version: "v0.9",
+          deleteSurface: { surfaceId: payload.surfaceId },
+        });
+      } else if (invalidCase === "mismatched_surface_id") {
+        (
+          payload.messages[2].updateDataModel as { surfaceId: string }
+        ).surfaceId = "99999999-9999-4999-8999-999999999999";
+      } else if (invalidCase === "unknown_catalog") {
+        payload.catalogId = "urn:orbit:a2ui:unknown:v1";
+      } else if (invalidCase === "unknown_action") {
+        (
+          payload.messages[1].updateComponents as {
+            components: Record<string, unknown>[];
+          }
+        ).components = [
+          {
+            id: "root",
+            component: "Text",
+            value: "Hello",
+            emphasis: "normal",
+            onClickAction: { event: { name: "delete_all" } },
+          },
+        ];
+      } else if (invalidCase === "table_column_mismatch") {
+        (
+          payload.messages[2].updateDataModel as {
+            value: { display: { schedule: Record<string, unknown>[] } };
+          }
+        ).value.display.schedule = [{ day: "Monday" }];
+      } else if (invalidCase === "multiple_parents") {
+        (
+          payload.messages[1].updateComponents as {
+            components: Record<string, unknown>[];
+          }
+        ).components = [
+          {
+            id: "root",
+            component: "Column",
+            children: ["cardA", "cardB"],
+            gap: "sm",
+          },
+          { id: "cardA", component: "Card", children: ["sharedText"] },
+          { id: "cardB", component: "Card", children: ["sharedText"] },
+          {
+            id: "sharedText",
+            component: "Text",
+            value: "Hi",
+            emphasis: "normal",
+          },
+        ];
+      } else if (invalidCase === "unreachable_node") {
+        (
+          payload.messages[1].updateComponents as {
+            components: Record<string, unknown>[];
+          }
+        ).components = [
+          { id: "root", component: "Text", value: "Root", emphasis: "normal" },
+          {
+            id: "orphan",
+            component: "Text",
+            value: "Orphan",
+            emphasis: "muted",
+          },
+        ];
+      } else if (invalidCase === "depth_11") {
+        const chain: Record<string, unknown>[] = [];
+        for (let i = 0; i < 10; i++) {
+          const id = i === 0 ? "root" : `node_${i}`;
+          const child = `node_${i + 1}`;
+          chain.push({ id, component: "Card", children: [child] });
         }
-      ).components = [
-        { id: "root", component: "Column", children: ["childA"], gap: "md" },
-        { id: "childA", component: "Card", children: ["childB"] },
-        { id: "childB", component: "Card", children: ["childA"] },
-      ];
-    } else if (invalidCase === "missing_child") {
-      (
-        payload.messages[1].updateComponents as {
-          components: Record<string, unknown>[];
-        }
-      ).components = [
-        { id: "root", component: "Card", children: ["ghost"] },
-      ];
-    } else if (invalidCase === "undefined_model_path") {
-      (
-        payload.messages[1].updateComponents as {
-          components: Record<string, unknown>[];
-        }
-      ).components = [
-        {
-          id: "root",
+        chain.push({
+          id: "node_10",
           component: "Text",
-          value: { path: "/display/missingKey" },
+          value: "Too deep",
           emphasis: "normal",
-        },
-      ];
-    } else if (invalidCase === "extra_delete_message") {
-      payload.messages.push({
-        version: "v0.9",
-        deleteSurface: { surfaceId: payload.surfaceId },
-      });
-    } else if (invalidCase === "mismatched_surface_id") {
-      (
-        payload.messages[2].updateDataModel as { surfaceId: string }
-      ).surfaceId = "99999999-9999-4999-8999-999999999999";
-    } else if (invalidCase === "unknown_catalog") {
-      payload.catalogId = "urn:orbit:a2ui:unknown:v1";
-    } else if (invalidCase === "unknown_action") {
-      (
-        payload.messages[1].updateComponents as {
-          components: Record<string, unknown>[];
-        }
-      ).components = [
-        {
-          id: "root",
-          component: "Text",
-          value: "Hello",
-          emphasis: "normal",
-          onClickAction: { event: { name: "delete_all" } },
-        },
-      ];
-    } else if (invalidCase === "table_column_mismatch") {
-      (
-        payload.messages[2].updateDataModel as {
-          value: { display: { schedule: Record<string, unknown>[] } };
-        }
-      ).value.display.schedule = [{ day: "Monday" }];
-    } else if (invalidCase === "multiple_parents") {
-      (
-        payload.messages[1].updateComponents as {
-          components: Record<string, unknown>[];
-        }
-      ).components = [
-        { id: "root", component: "Column", children: ["cardA", "cardB"], gap: "sm" },
-        { id: "cardA", component: "Card", children: ["sharedText"] },
-        { id: "cardB", component: "Card", children: ["sharedText"] },
-        { id: "sharedText", component: "Text", value: "Hi", emphasis: "normal" },
-      ];
-    } else if (invalidCase === "unreachable_node") {
-      (
-        payload.messages[1].updateComponents as {
-          components: Record<string, unknown>[];
-        }
-      ).components = [
-        { id: "root", component: "Text", value: "Root", emphasis: "normal" },
-        { id: "orphan", component: "Text", value: "Orphan", emphasis: "muted" },
-      ];
-    } else if (invalidCase === "depth_11") {
-      const chain: Record<string, unknown>[] = [];
-      for (let i = 0; i < 10; i++) {
-        const id = i === 0 ? "root" : `node_${i}`;
-        const child = `node_${i + 1}`;
-        chain.push({ id, component: "Card", children: [child] });
+        });
+        (
+          payload.messages[1].updateComponents as {
+            components: Record<string, unknown>[];
+          }
+        ).components = chain;
+      } else if (invalidCase === "count_101") {
+        const children = Array.from({ length: 100 }, (_, i) => `item_${i}`);
+        (
+          payload.messages[1].updateComponents as {
+            components: Record<string, unknown>[];
+          }
+        ).components = [
+          { id: "root", component: "Column", children, gap: "none" },
+          ...children.map((id) => ({
+            id,
+            component: "Text",
+            value: id,
+            emphasis: "normal",
+          })),
+        ];
+      } else if (invalidCase === "table_13_columns") {
+        const columns = Array.from({ length: 13 }, (_, i) => ({
+          key: `col_${i}`,
+          label: `Col ${i}`,
+        }));
+        (
+          payload.messages[1].updateComponents as {
+            components: Record<string, unknown>[];
+          }
+        ).components = [
+          {
+            id: "root",
+            component: "Table",
+            columns,
+            rows: { path: "/display/schedule" },
+          },
+        ];
+      } else if (invalidCase === "table_51_rows") {
+        (
+          payload.messages[2].updateDataModel as {
+            value: { display: { schedule: Record<string, unknown>[] } };
+          }
+        ).value.display.schedule = Array.from({ length: 51 }, () => ({
+          day: "Mon",
+          focus: "Reading",
+          hours: 1,
+          optionalNote: null,
+          active: true,
+        }));
+      } else if (invalidCase === "prototype_key") {
+        (
+          payload.messages[1].updateComponents as {
+            components: Record<string, unknown>[];
+          }
+        ).components = [
+          {
+            id: "root",
+            component: "Text",
+            value: { path: "/display/constructor" },
+            emphasis: "normal",
+          },
+        ];
       }
-      chain.push({
-        id: "node_10",
-        component: "Text",
-        value: "Too deep",
-        emphasis: "normal",
-      });
-      (
-        payload.messages[1].updateComponents as {
-          components: Record<string, unknown>[];
-        }
-      ).components = chain;
-    } else if (invalidCase === "count_101") {
-      const children = Array.from({ length: 100 }, (_, i) => `item_${i}`);
-      (
-        payload.messages[1].updateComponents as {
-          components: Record<string, unknown>[];
-        }
-      ).components = [
-        { id: "root", component: "Column", children, gap: "none" },
-        ...children.map((id) => ({
-          id,
-          component: "Text",
-          value: id,
-          emphasis: "normal",
-        })),
-      ];
-    } else if (invalidCase === "table_13_columns") {
-      const columns = Array.from({ length: 13 }, (_, i) => ({
-        key: `col_${i}`,
-        label: `Col ${i}`,
-      }));
-      (
-        payload.messages[1].updateComponents as {
-          components: Record<string, unknown>[];
-        }
-      ).components = [
-        {
-          id: "root",
-          component: "Table",
-          columns,
-          rows: { path: "/display/schedule" },
-        },
-      ];
-    } else if (invalidCase === "table_51_rows") {
-      (
-        payload.messages[2].updateDataModel as {
-          value: { display: { schedule: Record<string, unknown>[] } };
-        }
-      ).value.display.schedule = Array.from({ length: 51 }, () => ({
-        day: "Mon",
-        focus: "Reading",
-        hours: 1,
-        optionalNote: null,
-        active: true,
-      }));
-    } else if (invalidCase === "prototype_key") {
-      (
-        payload.messages[1].updateComponents as {
-          components: Record<string, unknown>[];
-        }
-      ).components = [
-        {
-          id: "root",
-          component: "Text",
-          value: { path: "/display/constructor" },
-          emphasis: "normal",
-        },
-      ];
-    }
 
-    expect(() =>
-      readonlyRegistry.createProcessor(payload, vi.fn()),
-    ).toThrow();
+      expect(() =>
+        readonlyRegistry.createProcessor(payload, vi.fn()),
+      ).toThrow();
 
-    render(
-      <A2uiHost
-        payload={payload}
-        registry={readonlyRegistry}
-        onAction={vi.fn()}
-        fallback={<div data-testid="fallback">Fallback rendered</div>}
-      />,
-    );
+      render(
+        <A2uiHost
+          payload={payload}
+          registry={readonlyRegistry}
+          onAction={vi.fn()}
+          fallback={<div data-testid="fallback">Fallback rendered</div>}
+        />,
+      );
 
-    expect(await screen.findByTestId("fallback")).toBeInTheDocument();
-  });
+      expect(await screen.findByTestId("fallback")).toBeInTheDocument();
+    },
+  );
 });

@@ -65,7 +65,8 @@ export const taskProposalFormComponent =
       const model = context.dataContext.dataModel;
       const signal = model.getSignal<ProposalView>("/proposal");
       const proposal = useSignalValue(signal);
-      const activeDraft = editor?.draft ?? (options?.proposalDraft as ProposalView | undefined);
+      const activeDraft =
+        editor?.draft ?? (options?.proposalDraft as ProposalView | undefined);
 
       useEffect(() => {
         if (
@@ -84,9 +85,7 @@ export const taskProposalFormComponent =
         }
         model.set("/requestId", action.requestId);
         const property = `${action.action}Action` as
-          | "saveAction"
-          | "confirmAction"
-          | "cancelAction";
+          "saveAction" | "confirmAction" | "cancelAction";
         const parsed = taskProposalFormApi.schema.parse(
           context.componentModel.properties,
         );
@@ -162,9 +161,7 @@ export const taskProposalActionsComponent =
         model.set("/proposal", editor.draft);
         model.set("/requestId", action.requestId);
         const property = `${action.action}Action` as
-          | "saveAction"
-          | "confirmAction"
-          | "cancelAction";
+          "saveAction" | "confirmAction" | "cancelAction";
         const parsed = taskProposalActionsApi.schema.parse(
           context.componentModel.properties,
         );

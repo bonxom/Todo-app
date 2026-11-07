@@ -11,7 +11,7 @@ import { createAgentSkillSession } from "../agentSkillService.js";
 import {
   buildUiSkillRequirements,
   formatDeveloperUiSkillContext,
-   parseUiToolInput,
+  parseUiToolInput,
   presentUiTool,
   resolveUiCapability,
 } from "../agentUiService.js";

@@ -33,8 +33,7 @@ export function TaskProposalSurface({
   const agentSession = useContext(AgentSessionContext);
   const proposalId = envelope.proposal.id;
   const proposalDraft = agentSession?.draft?.proposalDrafts?.[proposalId] as
-    | ProposalView
-    | undefined;
+    ProposalView | undefined;
   const setProposalDraft = agentSession?.setProposalDraft;
   const onProposalDraftChange = useCallback(
     (draft: unknown) => {

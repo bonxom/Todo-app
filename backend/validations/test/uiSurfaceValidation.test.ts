@@ -199,7 +199,10 @@ describe("uiSurfaceValidation", () => {
 
   it("accepts 100 components and rejects 101 components", () => {
     const makeWide = (total: number) => {
-      const childIds = Array.from({ length: total - 1 }, (_, i) => `c_${i + 1}`);
+      const childIds = Array.from(
+        { length: total - 1 },
+        (_, i) => `c_${i + 1}`,
+      );
       return [
         {
           id: "root",

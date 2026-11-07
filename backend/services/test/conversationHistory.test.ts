@@ -194,9 +194,8 @@ it("includes activities in resultFor with safe DTO and preserves them when final
 });
 
 it("includes surface in resultFor and turnMessages when provided in envelope", async () => {
-  const { resultFor, turnMessages } = await import(
-    "../../utils/conversationView.js"
-  );
+  const { resultFor, turnMessages } =
+    await import("../../utils/conversationView.js");
   const surface = {
     text: "Study Plan",
     a2ui: {

@@ -1219,9 +1219,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
 
     // 1. Read-only present_ui turn
     completion
-      .mockResolvedValueOnce(
-        tool("load_skill", { skillId: "ui-composition" }),
-      )
+      .mockResolvedValueOnce(tool("load_skill", { skillId: "ui-composition" }))
       .mockResolvedValueOnce(tool("present_ui", specFixture.readonly));
 
     const readonlyReqId = randomUUID();
@@ -1236,9 +1234,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
 
     // 2. Composed propose_tasks turn
     completion
-      .mockResolvedValueOnce(
-        tool("load_skill", { skillId: "ui-composition" }),
-      )
+      .mockResolvedValueOnce(tool("load_skill", { skillId: "ui-composition" }))
       .mockResolvedValueOnce(
         tool("propose_tasks", {
           items: [{ title: "Practice Essay", priority: "High" }],

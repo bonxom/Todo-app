@@ -45,9 +45,7 @@ export type UiNode =
       component: "TaskProposalForm" | "TaskList" | "TaskProposalActions";
     };
 
-export type DisplayDataValue =
-  | DisplayScalar
-  | Record<string, DisplayScalar>[];
+export type DisplayDataValue = DisplayScalar | Record<string, DisplayScalar>[];
 
 export type SurfaceSpec = {
   fallbackText: string;

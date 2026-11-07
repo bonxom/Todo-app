@@ -7,10 +7,7 @@ import {
 } from "../config/A2UI/composition.js";
 import type { RequiredSkillDocument } from "../skills/policy.js";
 import { SkillError, type SkillRegistry } from "../skills/types.js";
-import type {
-  SurfaceSpec,
-  UiSurfaceMode,
-} from "../types/A2UI/IUiSurface.js";
+import type { SurfaceSpec, UiSurfaceMode } from "../types/A2UI/IUiSurface.js";
 import {
   parseSurfaceSpec,
   surfaceSpecBaseSchema,
@@ -156,7 +153,8 @@ export function formatUiValidationIssues(
   return [
     {
       path: "",
-      message: error instanceof Error ? error.message : "Invalid UI specification",
+      message:
+        error instanceof Error ? error.message : "Invalid UI specification",
     },
   ];
 }

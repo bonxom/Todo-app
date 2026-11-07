@@ -220,9 +220,7 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
       }
     ).value.proposal = envelope.proposal;
 
-    render(
-      <TaskProposalSurface envelope={envelope} onOpenTask={onOpenTask} />,
-    );
+    render(<TaskProposalSurface envelope={envelope} onOpenTask={onOpenTask} />);
 
     expect(await screen.findByLabelText("Task 1 title")).toBeDisabled();
     expect(
