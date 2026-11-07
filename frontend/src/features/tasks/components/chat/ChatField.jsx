@@ -15,6 +15,7 @@ import SlashCommandMenu from "./SlashCommandMenu";
 import { filterTools } from "./toolCatalog";
 import { formatDateTime } from "@/shared/utils/dateTime";
 import { TaskProposalMessage } from "./A2UI/TaskProposalMessage";
+import { UiSurfaceMessage } from "./A2UI/UiSurfaceMessage";
 import { SkillReadBadge } from "@/features/agent/skills/SkillReadBadge";
 
 const ChatField = ({
@@ -376,7 +377,24 @@ const ChatField = ({
                   }
                 >
                   <div className="text-sm whitespace-pre-wrap break-words">
-                    {message.proposal ? (
+                    {message.surface ? (
+                      <UiSurfaceMessage
+                        key={`${chat?.conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
+                        surface={message.surface}
+                        proposalEnvelope={
+                          message.proposal
+                            ? {
+                                proposal: message.proposal,
+                                text: message.text,
+                                a2ui: message.a2ui,
+                                surface: message.surface,
+                              }
+                            : undefined
+                        }
+                        onDirtyChange={chat?.setProposalDirty}
+                        disabled={chat?.loading || chat?.sending}
+                      />
+                    ) : message.proposal ? (
                       <TaskProposalMessage
                         key={`${chat?.conversationId}:${message.proposal.id}`}
                         envelope={{

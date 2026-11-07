@@ -150,10 +150,11 @@ export function useTaskProposal({
           (message) => message.proposal?.id === initialEnvelope.proposal.id,
         );
         if (message?.proposal) {
-          const result = {
+          const result: ProposalEnvelope = {
             proposal: message.proposal,
             text: message.text,
             a2ui: message.a2ui,
+            surface: message.surface,
           };
           baseline.current = result;
           setSaved(result);

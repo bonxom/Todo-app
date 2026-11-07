@@ -13,6 +13,8 @@ import ChatField from "@/features/tasks/components/chat/ChatField";
 import { AgentSessionProvider } from "../AgentSessionProvider";
 import { useAgentSession } from "../agentSessionContext";
 import fixture from "@/test/fixtures/a2ui-task-proposal-v09.json";
+import composedFixture from "@/test/fixtures/a2ui-composition-v09.json";
+import type { UiSurfaceEnvelope } from "@/shared/types/A2UI/uiSurface";
 import { categoryService } from "@/shared/services/categoryService";
 import { projectService } from "@/shared/services/projectService";
 
@@ -337,5 +339,62 @@ describe("AgentSessionProvider", () => {
     await screen.findByText(/your request is processing/i);
     // Reload will trigger check result / reload
     expect(aiService.getConversation).toHaveBeenCalledWith(undefined);
+  });
+
+  it("renders read-only surfaces and preserves composed proposal drafts across SmallChat and Agent page", async () => {
+    const readonlySurface = structuredClone(
+      composedFixture.readonly,
+    ) as UiSurfaceEnvelope;
+    const composedProposalSurface = structuredClone(
+      composedFixture.proposal,
+    ) as UiSurfaceEnvelope;
+
+    load.mockResolvedValue(
+      snapshot([
+        {
+          id: "m-readonly",
+          sender: "bot",
+          text: readonlySurface.text,
+          timestamp: new Date().toISOString(),
+          surface: readonlySurface,
+        } as ConversationMessage,
+        {
+          id: "m-composed-proposal",
+          sender: "bot",
+          text: composedProposalSurface.text,
+          timestamp: new Date().toISOString(),
+          proposal: fixture.proposal as ProposalEnvelope["proposal"],
+          a2ui: fixture.a2ui as ProposalEnvelope["a2ui"],
+          surface: composedProposalSurface,
+        } as ConversationMessage,
+      ]),
+    );
+
+    const user = userEvent.setup();
+    render(<AgentSessionHarness initialSurface="bubble" />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Weekly Study Plan" }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "Review and confirm the proposed study tasks below.",
+      ),
+    ).toBeInTheDocument();
+
+    const titleInput = await screen.findByRole("textbox", {
+      name: "Task 1 title",
+    });
+    await user.clear(titleInput);
+    await user.type(titleInput, "Composed draft across views");
+
+    await user.click(screen.getByRole("button", { name: /open in agent/i }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Weekly Study Plan" }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole("textbox", { name: "Task 1 title" }),
+    ).toHaveValue("Composed draft across views");
   });
 });

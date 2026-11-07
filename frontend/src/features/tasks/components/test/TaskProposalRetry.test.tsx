@@ -9,7 +9,9 @@ import type {
   ProposalAction,
   ProposalEnvelope,
 } from "@/shared/types/A2UI/taskProposal";
+import type { UiSurfaceEnvelope } from "@/shared/types/A2UI/uiSurface";
 import fixture from "@/test/fixtures/a2ui-task-proposal-v09.json";
+import composedFixture from "@/test/fixtures/a2ui-composition-v09.json";
 const initial = fixture as ProposalEnvelope;
 const action: ProposalAction = {
   action: "confirm",
@@ -69,5 +71,37 @@ describe("proposal retry", () => {
       await result.current.submit(action).catch(() => {});
     });
     expect(result.current.pendingAction).toBeNull();
+  });
+  it("preserves composed surface envelope when reloading proposal from conversation history", async () => {
+    const surface = structuredClone(
+      composedFixture.proposal,
+    ) as UiSurfaceEnvelope;
+    vi.spyOn(aiService, "getConversation").mockResolvedValue({
+      conversationId: initial.proposal.conversationId,
+      title: "Study",
+      before: null,
+      mode: "auto",
+      pending: [],
+      messages: [
+        {
+          id: "msg-composed-1",
+          sender: "bot",
+          text: surface.text,
+          timestamp: new Date().toISOString(),
+          proposal: {
+            ...initial.proposal,
+            revision: 2,
+          },
+          a2ui: initial.a2ui,
+          surface,
+        } as never,
+      ],
+    });
+    const { result } = setup();
+    await act(async () => {
+      await result.current.reload();
+    });
+    expect(result.current.envelope.proposal.revision).toBe(2);
+    expect(result.current.envelope.surface).toEqual(surface);
   });
 });

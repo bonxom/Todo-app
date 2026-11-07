@@ -29,11 +29,13 @@ export function useConversationSession(options?: ConversationSessionOptions) {
   const [before, setBefore] = useState<number | null>(null);
   const [loading, setLoading] = useState(!options?.skipInitialLoad);
   const [sending, setSending] = useState(false);
-  const [capabilities, setCapabilities] = useState<{ taskProposals?: boolean }>(
-    {
-      taskProposals: false,
-    },
-  );
+  const [capabilities, setCapabilities] = useState<{
+    taskProposals?: boolean;
+    uiComposition?: boolean;
+  }>({
+    taskProposals: false,
+    uiComposition: false,
+  });
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<ChatPayload | null>(null);
   const [context, setContext] = useState<
@@ -213,6 +215,7 @@ export function useConversationSession(options?: ConversationSessionOptions) {
           interaction: result.interaction,
           proposal: result.proposal,
           a2ui: result.a2ui,
+          surface: result.surface,
           timestamp: new Date().toISOString(),
         },
       ]);
