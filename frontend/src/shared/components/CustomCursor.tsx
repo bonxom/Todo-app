@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 const DOT_SIZE_PX = 14;
 
@@ -13,6 +14,7 @@ const CONTROL_SELECTOR = [
   "a[href]",
   '[role="button"]:not([aria-disabled="true"])',
   "summary",
+  "select:not(:disabled)",
   'input[type="button"]:not(:disabled)',
   'input[type="submit"]:not(:disabled)',
   'input[type="reset"]:not(:disabled)',
@@ -98,6 +100,9 @@ function resolveElementBorderRadius(element: HTMLElement): string {
 export default function CustomCursor() {
   const [isEligible, setIsEligible] = useState<boolean>(() =>
     getCursorEligibility(),
+  );
+  const [portalHost, setPortalHost] = useState<HTMLElement | null>(() =>
+    typeof document !== "undefined" ? document.body : null,
   );
   const cursorRef = useRef<HTMLDivElement | null>(null);
   const activeSnapElementRef = useRef<HTMLElement | null>(null);
@@ -186,6 +191,13 @@ export default function CustomCursor() {
     const handlePointerMove = (event: PointerEvent | MouseEvent) => {
       const cursorEl = cursorRef.current;
       if (!cursorEl) return;
+
+      if (event.target instanceof Element) {
+        const openDialog = event.target.closest("dialog[open]");
+        const nextHost =
+          openDialog instanceof HTMLElement ? openDialog : document.body;
+        setPortalHost((prev) => (prev === nextHost ? prev : nextHost));
+      }
 
       const x = Number.isFinite(event.clientX)
         ? event.clientX
@@ -313,11 +325,11 @@ export default function CustomCursor() {
     };
   }, [isEligible]);
 
-  if (!isEligible) {
+  if (!isEligible || !portalHost) {
     return null;
   }
 
-  return (
+  return createPortal(
     <div
       ref={cursorRef}
       className="custom-cursor"
@@ -327,6 +339,7 @@ export default function CustomCursor() {
       data-visible="false"
       data-pressed="false"
       aria-hidden="true"
-    />
+    />,
+    portalHost,
   );
 }

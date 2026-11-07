@@ -223,7 +223,7 @@ a {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 9999;
+  z-index: 2147483647;
   width: var(--cursor-w);
   height: var(--cursor-h);
   border-radius: var(--cursor-radius);

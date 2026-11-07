@@ -61,14 +61,17 @@ describe("CustomCursor", () => {
   });
 
   it("tracks pointer movement as a solid circular dot and manages root class lifecycle", () => {
-    const { unmount } = render(
-      <div>
+    const { container, unmount } = render(
+      <div id="root-shell">
         <CustomCursor />
         <div data-testid="plain-area">Plain content</div>
       </div>,
     );
 
     const cursor = screen.getByTestId("custom-cursor");
+    // Cursor must be portaled to document.body outside #root stacking context
+    expect(cursor.parentElement).toBe(document.body);
+    expect(container.querySelector('[data-testid="custom-cursor"]')).toBeNull();
     expect(document.documentElement).toHaveClass("has-custom-cursor");
     expect(cursor).toHaveAttribute("data-visible", "false");
 
