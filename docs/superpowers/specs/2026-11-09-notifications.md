@@ -1,6 +1,6 @@
 # Thông báo deadline trong ứng dụng
 
-Ngày: 2026-11-09. Trạng thái: bản thiết kế để rà soát trước khi lập kế hoạch.
+Ngày: 2026-11-09. Trạng thái: đã được người dùng đồng ý tiếp tục lập kế hoạch.
 
 ## Mục tiêu và phạm vi đã thống nhất
 
