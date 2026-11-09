@@ -24,3 +24,18 @@ services:
     restart: unless-stopped
     ports:
       - "3636:80"
+
+  notification-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    init: true
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["pnpm", "run", "notifications:worker"]
+    stop_grace_period: 60s

@@ -8,6 +8,7 @@ import { TASK_ERROR } from "./definitions/taskErrors.js";
 import { AI_ERROR } from "./definitions/aiErrors.js";
 import { MCP_ERROR } from "./definitions/mcpErrors.js";
 import { TASK_PROPOSAL_ERROR } from "./definitions/A2UI/taskProposalErrors.js";
+import { NOTIFICATION_ERROR } from "./definitions/notificationErrors.js";
 import { SKILL_ERROR } from "./definitions/skillErrors.js";
 
 export const ERROR_DEFINITION_GROUPS = {
@@ -21,6 +22,7 @@ export const ERROR_DEFINITION_GROUPS = {
   MCP_ERROR,
   TASK_PROPOSAL_ERROR,
   SKILL_ERROR,
+  NOTIFICATION_ERROR,
 } as const satisfies Record<string, Record<string, ErrorDefinition>>;
 
 export {
@@ -34,4 +36,5 @@ export {
   MCP_ERROR,
   TASK_PROPOSAL_ERROR,
   SKILL_ERROR,
+  NOTIFICATION_ERROR,
 };

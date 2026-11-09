@@ -15,7 +15,9 @@
     "test:mcp:integration": "vitest run mcp/test/mcp.integration.test.ts",
     "mcp:smoke": "tsx scripts/mcp-smoke.ts",
     "storage:cleanup": "tsx scripts/cleanup-attachments.ts",
-    "storage:smoke": "tsx scripts/storage-smoke.ts"
+    "storage:smoke": "tsx scripts/storage-smoke.ts",
+    "notifications:generate": "tsx scripts/generate-notifications.ts",
+    "notifications:worker": "tsx workers/notificationWorker.ts"
   },
   "keywords": [],
   "author": "",

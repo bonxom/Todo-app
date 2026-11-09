@@ -17,6 +17,7 @@ import projectRouter from "./routes/projectRoute.js";
 import taskRouter from "./routes/taskRoute.js";
 import authRouter from "./routes/authRoute.js";
 import aiRouter from "./routes/aiRoutes.js";
+import notificationRouter from "./routes/notificationRoute.js";
 import statRouter from "./routes/statRoute.js";
 
 import { readMcpConfig } from "./mcp/config.js";
@@ -72,6 +73,7 @@ app.use("/api/projects", projectRouter);
 app.use("/api/tasks", taskRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/stats", statRouter);
+app.use("/api/notifications", notificationRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

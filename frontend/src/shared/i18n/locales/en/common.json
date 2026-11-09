@@ -15,7 +15,8 @@
     "back": "Go back",
     "profile": "Go to profile",
     "avatar": "{{name}} avatar",
-    "userAvatar": "User avatar"
+    "userAvatar": "User avatar",
+    "notifications": "Notifications"
   },
   "status": {
     "pending": "Pending",
@@ -92,5 +93,30 @@
     "ended": "Session ended",
     "refresh": "Invalid refresh response",
     "changed": "Session changed"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Keep track of your deadlines",
+    "count": "Notifications, {{count}} unread",
+    "close": "Close notifications",
+    "due_soon": "Due soon",
+    "overdue": "Overdue",
+    "unread": "Unread",
+    "all": "All",
+    "due": "Due {{date}}",
+    "loading": "Loading notifications…",
+    "loadError": "Could not load notifications",
+    "updateError": "Could not update notifications. Try again.",
+    "retry": "Try again",
+    "empty": "You're all caught up",
+    "emptyHint": "Reminders appear here when tasks approach or pass their deadlines.",
+    "viewAll": "View all notifications",
+    "markAll": "Mark all as read",
+    "filter": "Filter notifications",
+    "history": "Notification history",
+    "firstPage": "Back to first page",
+    "unavailable": "This task is no longer available",
+    "taskError": "Could not load this task",
+    "closeTask": "Close"
   }
 }
