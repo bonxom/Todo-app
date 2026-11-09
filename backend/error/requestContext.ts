@@ -3,9 +3,10 @@ import type { NextFunction, Request, Response } from "express";
 
 export const requestContext = (
   req: Request,
-  _res: Response,
+  res: Response,
   next: NextFunction,
 ): void => {
+  res.locals.requestStartedAt = new Date();
   req.requestId = randomUUID();
   next();
 };
