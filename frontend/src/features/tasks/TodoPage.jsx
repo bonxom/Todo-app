@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import FormDialog from "@/shared/components/FormDialog";
 import { createElement, useEffect, useMemo, useState } from "react";
 import AddTaskButton from "./components/AddTaskButton";
+import TaskDeepLink from "./components/TaskDeepLink";
 import TaskDetailButton from "./components/TaskDetailButton";
 import TodoTaskToolbar from "./components/TodoTaskToolbar";
 import TaskList from "./components/TaskList";
@@ -274,6 +275,7 @@ const TodoPage = () => {
 
   return (
     <>
+      <TaskDeepLink />
       <AddTaskButton
         isOpen={isModalOpen}
         onClose={() => {

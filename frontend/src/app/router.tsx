@@ -6,6 +6,7 @@ import { AgentSessionProvider } from "../features/agent/AgentSessionProvider";
 import ErrorPage from "../features/errors/ErrorPage";
 import { landingRoutes } from "../features/landing/routes";
 import { authRoutes } from "../features/auth/routes";
+import { notificationRoutes } from "../features/notifications/routes";
 import { taskRoutes } from "../features/tasks/routes";
 import { categoryRoutes } from "../features/categories/routes";
 import { calendarRoutes } from "../features/calendar/routes";
@@ -42,6 +43,7 @@ export const routes: RouteObject[] = [
         ),
         children: [
           ...taskRoutes,
+          ...notificationRoutes,
           ...categoryRoutes,
           ...calendarRoutes,
           ...statisticsRoutes,

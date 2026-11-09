@@ -1292,3 +1292,37 @@ textarea.ui-input {
     display: none;
   }
 }
+
+/* Keep navigation and notification controls separate on narrow screens. */
+@media (max-width: 600px) {
+  .ui-topbar {
+    gap: 0.5rem;
+  }
+  .ui-topbar-navigation {
+    flex-shrink: 0;
+    gap: 0.375rem;
+  }
+  .ui-topbar-meta {
+    display: none;
+  }
+  .ui-topbar-actions {
+    gap: 0.375rem;
+  }
+  .ui-topbar-actions .ui-language-select {
+    max-width: 6rem;
+  }
+  .ui-global-task-filter__trigger {
+    width: 2.5rem;
+    min-width: 2.5rem;
+    justify-content: center;
+  }
+  .ui-global-task-filter__trigger > span,
+  .ui-global-task-filter__chevron {
+    display: none;
+  }
+}
+@media (max-width: 420px) {
+  .ui-topbar-back {
+    display: none;
+  }
+}

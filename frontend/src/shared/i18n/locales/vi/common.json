@@ -15,7 +15,8 @@
     "back": "Quay lại",
     "profile": "Xem hồ sơ",
     "avatar": "Ảnh đại diện của {{name}}",
-    "userAvatar": "Ảnh đại diện người dùng"
+    "userAvatar": "Ảnh đại diện người dùng",
+    "notifications": "Thông báo"
   },
   "status": {
     "pending": "Chưa bắt đầu",
@@ -92,5 +93,30 @@
     "ended": "Phiên đăng nhập đã kết thúc",
     "refresh": "Phản hồi làm mới phiên không hợp lệ",
     "changed": "Phiên đăng nhập đã thay đổi"
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "subtitle": "Theo dõi các mốc hạn công việc",
+    "count": "Thông báo, {{count}} chưa đọc",
+    "close": "Đóng thông báo",
+    "due_soon": "Sắp đến hạn",
+    "overdue": "Quá hạn",
+    "unread": "Chưa đọc",
+    "all": "Tất cả",
+    "due": "Hạn {{date}}",
+    "loading": "Đang tải thông báo…",
+    "loadError": "Không tải được thông báo",
+    "updateError": "Không cập nhật được thông báo. Hãy thử lại.",
+    "retry": "Thử lại",
+    "empty": "Bạn đã xem hết thông báo",
+    "emptyHint": "Lời nhắc xuất hiện ở đây khi công việc sắp đến hạn hoặc quá hạn.",
+    "viewAll": "Xem tất cả thông báo",
+    "markAll": "Đánh dấu tất cả đã đọc",
+    "filter": "Lọc thông báo",
+    "history": "Lịch sử thông báo",
+    "firstPage": "Về trang đầu",
+    "unavailable": "Công việc này không còn khả dụng",
+    "taskError": "Không tải được công việc",
+    "closeTask": "Đóng"
   }
 }

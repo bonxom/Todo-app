@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { getLocale } from "../i18n";
+import NotificationBell from "@/features/notifications/components/NotificationBell";
 import LanguageSelect from "./LanguageSelect";
 import ThemeToggle from "./ThemeToggle";
 import { useEffect, useRef, useState } from "react";
@@ -45,6 +46,7 @@ const getTopbarTitle = (pathname) => {
     calendar: "calendar",
     statistics: "statistics",
     profile: "account",
+    notifications: "notifications",
   };
   return `navigation.${routes[pathname.split("/")[1]] || "workspace"}`;
 };
@@ -130,7 +132,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
       className="ui-topbar"
       style={{ left: isDesktop ? "var(--sidebar-w)" : 0 }}
     >
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="ui-topbar-navigation flex min-w-0 items-center gap-3">
         {!isDesktop && (
           <button
             type="button"
@@ -145,7 +147,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
         <button
           type="button"
           onClick={handleBack}
-          className="ui-icon-button ui-focus-ring"
+          className="ui-icon-button ui-focus-ring ui-topbar-back"
           aria-label={t("navigation.back")}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -160,6 +162,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
       </div>
 
       <div className="ui-topbar-actions">
+        <NotificationBell />
         <LanguageSelect />
         <ThemeToggle />
         {!isAgentPage && (
@@ -174,6 +177,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
               className="ui-global-task-filter__trigger ui-focus-ring"
               aria-expanded={isStatusMenuOpen}
               aria-haspopup="menu"
+              aria-label={t("status.filter") + ": " + statusFilterLabel}
             >
               <ListFilter className="h-4 w-4" aria-hidden="true" />
               <span>{statusFilterLabel}</span>
