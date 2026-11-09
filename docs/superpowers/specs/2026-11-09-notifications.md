@@ -1,6 +1,6 @@
 # Thông báo deadline trong ứng dụng
 
-Ngày: 2026-11-09. Trạng thái: đã được người dùng đồng ý tiếp tục lập kế hoạch.
+Ngày: 2026-11-09. Trạng thái: đã triển khai; xem báo cáo kiểm chứng trong `docs/deployment/notifications-verification.md` để biết các cảnh báo baseline.
 
 ## Mục tiêu và phạm vi đã thống nhất
 

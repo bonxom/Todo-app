@@ -275,6 +275,21 @@ pnpm run build
 - [ ] Từ root chạy `git diff --check`; rà spec criteria 1–4/10 → Task 1, 5–6 → Task 2, 7–8 → Task 4–5, 9 → Task 6; vận hành → Task 3. Review authorization, unique index thực tế, shutdown, dữ liệu nhạy cảm và lỗi cache trước commit cuối.
 - [ ] Commit scoped test/docs còn lại, báo chính xác lệnh/kết quả, skipped, rủi ro và cách bật worker. Không merge hoặc deploy tự động.
 
+## Kết quả thực thi — 2026-11-09
+
+Đã triển khai Tasks 1–6 trên `feat/noti`. Các checkbox phía trên được giữ làm checklist thiết kế ban đầu; bằng chứng thực thi và ngoại lệ nằm ở [báo cáo kiểm chứng](../../deployment/notifications-verification.md).
+
+- Task 1: `0885d79`, generation và integration MongoDB thật, gồm concurrent upsert, batch >200, deadline/status/ownership.
+- Task 2: `f42f918`, API có auth/validation và cutoff lấy từ requestContext trước readiness. Test trì hoãn readiness tái hiện lỗi trước sửa.
+- Task 3: `99aaf37`, worker, one-shot, Compose và hướng dẫn vận hành. Smoke insert 1 rồi 0; SIGTERM exit 0.
+- Task 4: `f46765f`, API client, query/mutation và tests cách ly user/polling. Tái sử dụng AuthCacheBoundary hiện có; regression suite của nó vẫn đạt.
+- Task 5: `632bdae`, chuông/lịch sử/deep link/i18n/mobile. Test trang lịch sử nằm chung `NotificationBell.test.tsx` để dùng cùng fixtures. Giữ editor khi refetch để không mất bản nháp; reset bằng key theo task ID.
+- Task 6: `f9d5246`, bảy ca browser en/vi, light/dark, mobile keyboard/layout và history/deep link. Review độc lập đã được xử lý bằng regression test đỏ → xanh.
+
+Các ca bổ sung coverage được viết sau implementation cốt lõi; không khẳng định mọi dòng code đều có test đỏ riêng. Dùng `pnpm exec vitest run <paths>` cho focused tests vì `pnpm test -- <paths>` ở môi trường này đã chạy cả suite. Browser dùng Playwright TypeScript hiện có thay vì bổ sung harness Python. Worker dùng abortable native setTimeout để fake-timer test được shutdown. Các API client tests spy shared HTTP client thay vì thêm adapter.
+
+Toàn bộ test, lint (không lỗi), build/type-check và format của file thay đổi đạt. Full-package format check **chưa đạt** do 16 file baseline không thay đổi; giữ nguyên phạm vi, không format lockfile hoặc file ngoài feature. Backend lint có 13 warning cũ; frontend suite có warning JSDOM navigation và build có warning chunk size/ErrorPage imports.
+
 ## Thực thi và điểm kiểm tra
 
 Thực hiện tuần tự trong phiên bằng executing-plans; không cần subagent. Sau Task 1–3 kiểm tra backend và worker; sau Task 4–5 kiểm tra frontend; Task 6 là cổng hoàn tất. Trước code đọc workflow worktree/TDD liên quan, kiểm tra git status để bảo toàn thay đổi có sẵn. Mọi phát hiện buộc đổi hành vi người dùng phải cập nhật spec và plan cùng nhau.
