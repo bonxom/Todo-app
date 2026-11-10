@@ -17,7 +17,9 @@ test("bell, history, pagination, read all and missing task", async ({
   await expect(
     page.getByText("Deadline report 21", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: /Deadline report 21/ }).click();
+  await page
+    .getByRole("button", { name: "Open task: Deadline report 21" })
+    .click();
   await expect(page.getByRole("alert")).toContainText(
     "This task is no longer available",
   );
@@ -113,4 +115,66 @@ test("mobile topbar controls fit the viewport", async ({ page }) => {
     expect(bound.left).toBeGreaterThanOrEqual(0);
     expect(bound.right).toBeLessThanOrEqual(390);
   }
+});
+
+test("popup mark-one, mark-all, cancel and delete entire history", async ({
+  page,
+}) => {
+  await page.goto("/dashboard");
+  await page.getByRole("button", { name: /notifications/i }).click();
+  await page
+    .getByRole("button", {
+      name: "Mark as read: Deadline report 1",
+      exact: true,
+    })
+    .click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByTestId("notification-badge")).toHaveText("20");
+  await page.getByRole("button", { name: "Mark all as read" }).click();
+  await expect(page.getByTestId("notification-badge")).toHaveCount(0);
+  await page.getByRole("button", { name: "Delete all notifications" }).click();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(
+    page.getByText("Deadline report 1", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Delete all notifications" }).click();
+  await page.getByRole("button", { name: "Confirm delete" }).click();
+  await expect(page.getByText("You're all caught up")).toBeVisible();
+  await page.getByRole("link", { name: "View all notifications" }).click();
+  await expect(page.getByText("You're all caught up")).toBeVisible();
+});
+
+test("history delete resets page and works with an empty unread filter", async ({
+  page,
+}) => {
+  await page.goto("/notifications");
+  await page.getByRole("button", { name: "Page 2", exact: true }).click();
+  await page.getByRole("button", { name: "Delete all notifications" }).click();
+  await page.getByRole("button", { name: "Confirm delete" }).click();
+  await expect(page.getByText("You're all caught up")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Back to first page" }),
+  ).toHaveCount(0);
+});
+test("read history can be deleted from empty unread view on mobile", async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/notifications");
+  await page.getByRole("button", { name: "Mark all as read" }).click();
+  await page.getByRole("button", { name: "Unread", exact: true }).click();
+  await expect(page.getByText("You're all caught up")).toBeVisible();
+  await page.getByRole("button", { name: "Delete all notifications" }).click();
+  await page.screenshot({
+    path: testInfo.outputPath("delete-confirmation-mobile.png"),
+    fullPage: true,
+  });
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("button", { name: "Delete all notifications" }),
+  ).toBeFocused();
+  await page.getByRole("button", { name: "Delete all notifications" }).click();
+  await page.getByRole("button", { name: "Confirm delete" }).click();
+  await page.getByRole("button", { name: "All", exact: true }).click();
+  await expect(page.getByText("You're all caught up")).toBeVisible();
 });

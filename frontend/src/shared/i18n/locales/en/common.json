@@ -117,6 +117,14 @@
     "firstPage": "Back to first page",
     "unavailable": "This task is no longer available",
     "taskError": "Could not load this task",
-    "closeTask": "Close"
+    "closeTask": "Close",
+    "markRead": "Mark as read",
+    "markReadFor": "Mark as read: {{title}}",
+    "openTask": "Open task: {{title}}",
+    "deleteAll": "Delete all notifications",
+    "deleteConfirmTitle": "Confirm deletion",
+    "deleteConfirm": "Delete all notifications, including those on other pages?",
+    "cancel": "Cancel",
+    "confirmDelete": "Confirm delete"
   }
 }

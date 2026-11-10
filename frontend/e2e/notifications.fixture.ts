@@ -14,6 +14,11 @@ export async function notificationsFixture(page: Page) {
   await page.route("**/api/notifications**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
+    if (route.request().method() === "DELETE") {
+      const deletedCount = items.length;
+      items.splice(0);
+      return route.fulfill({ json: { deletedCount } });
+    }
     if (path.endsWith("/unread-count"))
       return route.fulfill({
         json: { count: items.filter((n) => !n.readAt).length },
@@ -23,7 +28,9 @@ export async function notificationsFixture(page: Page) {
       return route.fulfill({ json: { modifiedCount: 21 } });
     }
     if (path.endsWith("/read")) {
-      const item = items.find((n) => path.includes(n._id));
+      const item = items.find(
+        (n) => path === `/api/notifications/${n._id}/read`,
+      );
       if (item) item.readAt = new Date().toISOString();
       return route.fulfill({ json: item });
     }

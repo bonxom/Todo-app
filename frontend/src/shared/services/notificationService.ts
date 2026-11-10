@@ -5,6 +5,10 @@ import type {
   NotificationListParams,
 } from "../types/notification";
 export const notificationService = {
+  async deleteAll() {
+    return (await http.delete<{ deletedCount: number }>("/api/notifications"))
+      .data;
+  },
   async list(params: NotificationListParams, options?: RequestOptions) {
     return (
       await http.get<PaginatedResponse<NotificationDto>>("/api/notifications", {

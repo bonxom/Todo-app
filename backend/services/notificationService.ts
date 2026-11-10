@@ -2,6 +2,9 @@ import { notificationRepository as repo } from "../repositories/notificationRepo
 import { AppError } from "../error/AppError.js";
 import { NOTIFICATION_ERROR } from "../error/definitions/notificationErrors.js";
 export const notificationService = {
+  async deleteAll(userId: string, cutoff: Date) {
+    return { deletedCount: await repo.deleteAll(userId, cutoff) };
+  },
   list: repo.list,
   unreadCount: repo.unreadCount,
   async markRead(userId: string, id: string, now: Date) {

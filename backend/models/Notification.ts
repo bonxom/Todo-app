@@ -8,6 +8,7 @@ const schema = new Schema<INotification>(
     dueAt: { type: Date, required: true },
     taskTitle: { type: String, required: true },
     readAt: { type: Date, default: null },
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

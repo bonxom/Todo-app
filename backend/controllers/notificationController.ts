@@ -29,3 +29,12 @@ export async function markAllRead(req: Request, res: Response) {
     ),
   );
 }
+
+export async function deleteAll(req: Request, res: Response) {
+  res.json(
+    await service.deleteAll(
+      String(req.user!._id),
+      res.locals.notificationReadCutoff,
+    ),
+  );
+}

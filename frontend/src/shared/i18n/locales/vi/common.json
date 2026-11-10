@@ -117,6 +117,14 @@
     "firstPage": "Về trang đầu",
     "unavailable": "Công việc này không còn khả dụng",
     "taskError": "Không tải được công việc",
-    "closeTask": "Đóng"
+    "closeTask": "Đóng",
+    "markRead": "Đánh dấu đã đọc",
+    "markReadFor": "Đánh dấu đã đọc: {{title}}",
+    "openTask": "Mở công việc: {{title}}",
+    "deleteAll": "Xóa tất cả thông báo",
+    "deleteConfirmTitle": "Xác nhận xóa",
+    "deleteConfirm": "Xóa tất cả thông báo, bao gồm các thông báo ở trang khác?",
+    "cancel": "Hủy",
+    "confirmDelete": "Xác nhận xóa"
   }
 }

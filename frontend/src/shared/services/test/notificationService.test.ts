@@ -26,3 +26,11 @@ it("normalizes count and mutations without swallowing errors", async () => {
   patch.mockRejectedValueOnce(new Error("offline"));
   await expect(service.markRead("abc")).rejects.toThrow("offline");
 });
+
+it("deletes caller history through the authenticated client", async () => {
+  const remove = vi
+    .spyOn(http, "delete")
+    .mockResolvedValue({ data: { deletedCount: 23 } });
+  expect(await service.deleteAll()).toEqual({ deletedCount: 23 });
+  expect(remove).toHaveBeenCalledWith("/api/notifications");
+});

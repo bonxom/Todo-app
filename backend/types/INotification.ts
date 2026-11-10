@@ -9,6 +9,7 @@ export interface NotificationInsert {
 }
 export interface INotification extends NotificationInsert {
   readAt: Date | null;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

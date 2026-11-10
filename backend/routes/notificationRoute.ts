@@ -6,6 +6,7 @@ import {
   unreadCount,
   markRead,
   markAllRead,
+  deleteAll,
 } from "../controllers/notificationController.js";
 import {
   notificationQuerySchema,
@@ -24,6 +25,7 @@ router.get(
   listNotifications,
 );
 router.get("/unread-count", unreadCount);
+router.delete("/", validate({ body: notificationBodySchema }), deleteAll);
 router.patch(
   "/read-all",
   validate({ body: notificationBodySchema }),

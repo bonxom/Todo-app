@@ -62,3 +62,17 @@ History has no TTL, because deleting deduplication records could resend reminder
 Tests using ORBIT_MCP_TEST_MONGO_URI require a disposable loopback MongoDB URI
 (e.g. mongodb://127.0.0.1:27029/). They create and drop their own uniquely named
 database; never point them at a user's database.
+
+## Reading and clearing history
+
+The bell popup and notification history provide per-item Mark as read, Mark all
+as read, and Delete all notifications. Delete all asks for confirmation and clears
+the current user's history across all pages and read states. Notifications created
+after the request began are preserved.
+
+Removal sets an internal deletedAt marker. Deleted entries are excluded from
+history, unread counts and read mutations, while their unique reminder key remains
+stored. This prevents the worker from recreating the same reminder on its next
+scan. A later overdue reminder or a different deadline can still generate a new
+notification. This action clears application history; it is not permanent database
+erasure. Existing entries without deletedAt remain visible without migration.

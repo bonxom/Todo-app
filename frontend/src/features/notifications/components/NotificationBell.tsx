@@ -8,9 +8,14 @@ import {
   useUnreadCountQuery,
   useNotificationsQuery,
 } from "../api/notificationQueries";
-import { useMarkNotificationReadMutation } from "../api/notificationMutations";
+import {
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+  useDeleteAllNotificationsMutation,
+} from "../api/notificationMutations";
 import type { NotificationDto } from "@/shared/types/notification";
 import NotificationList from "./NotificationList";
+import NotificationBulkActions from "./NotificationBulkActions";
 import "../notifications.css";
 function NotificationPanel({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation("common");
@@ -23,6 +28,10 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
     filter: "all",
   });
   const read = useMarkNotificationReadMutation();
+  const all = useMarkAllNotificationsReadMutation();
+  const remove = useDeleteAllNotificationsMutation();
+  const count = useUnreadCountQuery();
+  const busy = read.isPending || all.isPending || remove.isPending;
   const open = async (item: NotificationDto) => {
     try {
       await read.mutateAsync(item._id);
@@ -60,6 +69,13 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
             <X size={18} />
           </button>
         </header>
+        <NotificationBulkActions
+          disabled={busy}
+          hasItems={(list.data?.pageInfo.totalCount ?? 0) > 0}
+          hasUnread={(count.data?.count ?? 0) > 0}
+          onMarkAll={() => all.mutateAsync()}
+          onDeleteAll={() => remove.mutateAsync()}
+        />
         {list.isPending && (
           <p className="notification-state" role="status">
             {t("notifications.loading")}
@@ -76,7 +92,7 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         )}
-        {read.isError && (
+        {(read.isError || all.isError || remove.isError) && (
           <p className="notification-state" role="alert">
             {t("notifications.updateError")}
           </p>
@@ -86,7 +102,8 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
             <NotificationList
               items={list.data.data}
               onOpen={open}
-              pendingId={read.isPending ? read.variables : undefined}
+              onMarkRead={(item) => read.mutateAsync(item._id)}
+              pendingId={busy ? "busy" : undefined}
             />
           ) : (
             <p className="notification-state">{t("notifications.empty")}</p>

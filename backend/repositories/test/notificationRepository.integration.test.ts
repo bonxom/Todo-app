@@ -97,4 +97,67 @@ describe.skipIf(!uri)("notification persistence", () => {
     expect(page.data).toHaveLength(1);
     expect(await repo.unreadCount(String(otherId))).toBe(1);
   });
+  it("deletes all old read/unread pages for caller and preserves new/foreign records", async () => {
+    const cutoff = new Date("2026-11-10T21:00:00Z");
+    const old = Array.from({ length: 23 }, (_, i) => ({
+      _id: new mongoose.Types.ObjectId(),
+      ...input,
+      taskId: new mongoose.Types.ObjectId(),
+      readAt: i % 2 ? cutoff : null,
+      createdAt: new Date(cutoff.getTime() - 1000),
+    }));
+    await Notification.collection.insertMany([
+      ...old,
+      { ...input, createdAt: new Date(cutoff.getTime() + 1000), readAt: null },
+      {
+        ...input,
+        recipientId: otherId,
+        createdAt: new Date(cutoff.getTime() - 1000),
+        readAt: null,
+      },
+    ]);
+    expect(await repo.deleteAll(String(recipientId), cutoff)).toBe(23);
+    const page = await repo.list(String(recipientId), {
+      pageNo: 1,
+      pageSize: 20,
+      filter: "all",
+    });
+    expect(page.data).toHaveLength(1);
+    expect(page.pageInfo.totalCount).toBe(1);
+    expect(await repo.unreadCount(String(recipientId))).toBe(1);
+    expect(await repo.unreadCount(String(otherId))).toBe(1);
+    expect(
+      await repo.markRead(String(recipientId), String(old[0]._id), cutoff),
+    ).toBeNull();
+    expect(await repo.markAllRead(String(recipientId), cutoff)).toBe(0);
+    expect(await repo.deleteAll(String(recipientId), cutoff)).toBe(0);
+    expect(page.data[0]).not.toHaveProperty("deletedAt");
+  });
+  it("retains the deduplication key after deletion without suppressing a new reminder type", async () => {
+    await repo.insertOnce(input);
+    const item = await Notification.findOne().lean();
+    const cutoff = new Date(Date.now() + 1000);
+    const [deleted] = await Promise.all([
+      repo.deleteAll(String(recipientId), cutoff),
+      repo.insertOnce(input),
+    ]);
+    expect(deleted).toBe(1);
+    expect(await repo.insertOnce(input)).toBe(false);
+    await Promise.all(Array.from({ length: 10 }, () => repo.insertOnce(input)));
+    expect(
+      (
+        await repo.list(String(recipientId), {
+          pageNo: 1,
+          pageSize: 20,
+          filter: "all",
+        })
+      ).data,
+    ).toHaveLength(0);
+    expect(
+      await repo.markRead(String(recipientId), String(item!._id), cutoff),
+    ).toBeNull();
+    expect(await repo.insertOnce({ ...input, type: "overdue" })).toBe(true);
+    expect(await repo.unreadCount(String(recipientId))).toBe(1);
+    expect(await Notification.countDocuments()).toBe(2);
+  });
 });

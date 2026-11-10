@@ -5,6 +5,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
+  useDeleteAllNotificationsMutation,
 } from "../notificationMutations";
 import { notificationService } from "@/shared/services/notificationService";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -23,6 +24,9 @@ it("invalidates all current-user notification views only after successful mutati
   vi.spyOn(notificationService, "markAllRead").mockResolvedValue({
     modifiedCount: 1,
   });
+  const remove = vi
+    .spyOn(notificationService, "deleteAll")
+    .mockResolvedValue({ deletedCount: 5 });
   const mark = vi
     .spyOn(notificationService, "markRead")
     .mockRejectedValue(new Error("offline"));
@@ -30,6 +34,7 @@ it("invalidates all current-user notification views only after successful mutati
     () => ({
       one: useMarkNotificationReadMutation(),
       all: useMarkAllNotificationsReadMutation(),
+      remove: useDeleteAllNotificationsMutation(),
     }),
     { wrapper },
   );
@@ -46,5 +51,20 @@ it("invalidates all current-user notification views only after successful mutati
     queryKey: ["notifications", "alice"],
   });
   expect(mark).toHaveBeenCalledWith("id", expect.anything());
+  invalidate.mockClear();
+  await act(async () => {
+    await result.current.remove.mutateAsync();
+  });
+  expect(invalidate).toHaveBeenCalledWith({
+    queryKey: ["notifications", "alice"],
+  });
+  remove.mockRejectedValueOnce(new Error("offline"));
+  invalidate.mockClear();
+  await act(async () => {
+    await expect(result.current.remove.mutateAsync()).rejects.toThrow(
+      "offline",
+    );
+  });
+  expect(invalidate).not.toHaveBeenCalled();
   client.clear();
 });

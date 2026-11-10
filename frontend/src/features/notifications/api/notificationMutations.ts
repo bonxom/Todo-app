@@ -20,3 +20,13 @@ export function useMarkAllNotificationsReadMutation() {
       client.invalidateQueries({ queryKey: notificationKeys.all(userId) }),
   });
 }
+
+export function useDeleteAllNotificationsMutation() {
+  const client = useQueryClient();
+  const { userId } = useNotificationSession();
+  return useMutation({
+    mutationFn: notificationService.deleteAll,
+    onSuccess: () =>
+      client.invalidateQueries({ queryKey: notificationKeys.all(userId) }),
+  });
+}

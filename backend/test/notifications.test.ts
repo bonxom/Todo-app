@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   unreadCount: vi.fn(),
   markRead: vi.fn(),
   markAllRead: vi.fn(),
+  deleteAll: vi.fn(),
 }));
 vi.mock("../repositories/notificationRepository.js", () => ({
   notificationRepository: mocks,
@@ -50,6 +51,7 @@ beforeEach(() => {
   mocks.unreadCount.mockResolvedValue(2);
   mocks.markRead.mockResolvedValue(null);
   mocks.markAllRead.mockResolvedValue(1);
+  mocks.deleteAll.mockResolvedValue(4);
 });
 describe("notification routes", () => {
   it("requires authentication", async () => {
@@ -129,4 +131,33 @@ it("excludes notifications created while readiness is pending", async () => {
     .set("x-user", id)
     .set("x-delay-readiness", "true");
   expect(response.body).toEqual({ modifiedCount: 0 });
+});
+
+it("delete-all requires auth, rejects body injection and scopes admin to itself", async () => {
+  expect((await request(app).delete("/api/notifications")).status).toBe(401);
+  expect(
+    (
+      await request(app)
+        .delete("/api/notifications")
+        .set("x-user", id)
+        .send({ recipientId: "other" })
+    ).status,
+  ).toBe(400);
+  const response = await request(app)
+    .delete("/api/notifications")
+    .set("x-user", id)
+    .set("x-role", "ADMIN");
+  expect(response.status).toBe(200);
+  expect(response.body).toEqual({ deletedCount: 4 });
+  expect(mocks.deleteAll).toHaveBeenCalledWith(id, expect.any(Date));
+});
+it("delete-all preserves items created during readiness", async () => {
+  mocks.deleteAll.mockImplementation(async (_id: string, cutoff: Date) =>
+    cutoff < insertedDuringReadiness ? 0 : 1,
+  );
+  const response = await request(app)
+    .delete("/api/notifications")
+    .set("x-user", id)
+    .set("x-delay-readiness", "true");
+  expect(response.body).toEqual({ deletedCount: 0 });
 });
