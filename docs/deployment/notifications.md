@@ -38,6 +38,12 @@ docker compose logs --tail 30 notification-worker
 ```
 
 The worker shares the backend build and backend environment, with no public port.
+For production CD, `docker-compose.prod.yml` also defines `notification-worker`
+using the same backend image and commit tag as the API. Deploy this updated
+Compose file together with the notification-capable backend image. The CD
+workflow's existing `pull` and `up` commands include all three services.
+Check it on the production host with
+`docker compose -f docker-compose.prod.yml logs --tail 30 notification-worker`.
 Unique index creation must succeed before any scan. Logs contain counts and generic
 failure messages, not task contents or credentials. Multiple workers are safe for
 insert deduplication, but normally run one to avoid unnecessary database load.
