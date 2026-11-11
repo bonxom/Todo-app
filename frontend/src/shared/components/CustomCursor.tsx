@@ -34,9 +34,17 @@ const CARD_SELECTOR = [
   '[data-cursor-target="true"]',
 ].join(", ");
 
+const NATIVE_CURSOR_SELECTOR = [
+  ".calendar-resize-handle",
+  '[data-cursor="native"]',
+  '[data-cursor-target="native"]',
+  '[data-resizing="true"]',
+].join(", ");
+
 type CursorTargetResolution =
   | { mode: "dot"; snapKind: ""; element: null }
   | { mode: "text"; snapKind: ""; element: HTMLElement }
+  | { mode: "native"; snapKind: ""; element: HTMLElement }
   | { mode: "snap"; snapKind: "control" | "card"; element: HTMLElement };
 
 function resolveCursorTarget(
@@ -44,6 +52,11 @@ function resolveCursorTarget(
 ): CursorTargetResolution {
   if (!(target instanceof Element)) {
     return { mode: "dot", snapKind: "", element: null };
+  }
+
+  const native = target.closest(NATIVE_CURSOR_SELECTOR);
+  if (native instanceof HTMLElement) {
+    return { mode: "native", snapKind: "", element: native };
   }
 
   const textInput = target.closest(TEXT_INPUT_SELECTOR);
@@ -105,6 +118,7 @@ export default function CustomCursor() {
     typeof document !== "undefined" ? document.body : null,
   );
   const cursorRef = useRef<HTMLDivElement | null>(null);
+  const pointerRef = useRef<HTMLDivElement | null>(null);
   const activeSnapElementRef = useRef<HTMLElement | null>(null);
   const lastPointerRef = useRef<{ x: number; y: number }>({ x: -100, y: -100 });
 
@@ -190,6 +204,7 @@ export default function CustomCursor() {
 
     const handlePointerMove = (event: PointerEvent | MouseEvent) => {
       const cursorEl = cursorRef.current;
+      const pointerEl = pointerRef.current;
       if (!cursorEl) return;
 
       if (event.target instanceof Element) {
@@ -207,8 +222,24 @@ export default function CustomCursor() {
         : lastPointerRef.current.y;
       lastPointerRef.current = { x, y };
       cursorEl.dataset.visible = "true";
+      if (pointerEl) {
+        pointerEl.style.setProperty("--pointer-x", `${x}px`);
+        pointerEl.style.setProperty("--pointer-y", `${y}px`);
+      }
 
       const resolution = resolveCursorTarget(event.target);
+
+      if (resolution.mode === "native") {
+        activeSnapElementRef.current = null;
+        cursorEl.dataset.mode = "native";
+        cursorEl.dataset.snapKind = "";
+        cursorEl.dataset.visible = "false";
+        if (pointerEl) {
+          pointerEl.dataset.mode = "native";
+          pointerEl.dataset.visible = "false";
+        }
+        return;
+      }
 
       if (resolution.mode === "text") {
         activeSnapElementRef.current = null;
@@ -219,6 +250,10 @@ export default function CustomCursor() {
         cursorEl.style.setProperty("--cursor-w", "4px");
         cursorEl.style.setProperty("--cursor-h", "18px");
         cursorEl.style.setProperty("--cursor-radius", "9999px");
+        if (pointerEl) {
+          pointerEl.dataset.mode = "text";
+          pointerEl.dataset.visible = "false";
+        }
         return;
       }
 
@@ -231,30 +266,46 @@ export default function CustomCursor() {
           x,
           y,
         );
+        if (pointerEl) {
+          pointerEl.dataset.mode = "snap";
+          pointerEl.dataset.visible = "true";
+        }
         return;
       }
 
       activeSnapElementRef.current = null;
       applyDotMetrics(cursorEl, x, y);
+      if (pointerEl) {
+        pointerEl.dataset.mode = "dot";
+        pointerEl.dataset.visible = "false";
+      }
     };
 
     const handlePointerDown = () => {
       const cursorEl = cursorRef.current;
-      if (!cursorEl) return;
-      cursorEl.dataset.pressed = "true";
+      if (cursorEl) cursorEl.dataset.pressed = "true";
+      const pointerEl = pointerRef.current;
+      if (pointerEl) pointerEl.dataset.pressed = "true";
     };
 
     const handlePointerUp = () => {
       const cursorEl = cursorRef.current;
-      if (!cursorEl) return;
-      cursorEl.dataset.pressed = "false";
+      if (cursorEl) cursorEl.dataset.pressed = "false";
+      const pointerEl = pointerRef.current;
+      if (pointerEl) pointerEl.dataset.pressed = "false";
     };
 
     const handleViewportLeave = () => {
       const cursorEl = cursorRef.current;
-      if (!cursorEl) return;
-      cursorEl.dataset.visible = "false";
-      cursorEl.dataset.pressed = "false";
+      if (cursorEl) {
+        cursorEl.dataset.visible = "false";
+        cursorEl.dataset.pressed = "false";
+      }
+      const pointerEl = pointerRef.current;
+      if (pointerEl) {
+        pointerEl.dataset.visible = "false";
+        pointerEl.dataset.pressed = "false";
+      }
       activeSnapElementRef.current = null;
     };
 
@@ -330,16 +381,27 @@ export default function CustomCursor() {
   }
 
   return createPortal(
-    <div
-      ref={cursorRef}
-      className="custom-cursor"
-      data-testid="custom-cursor"
-      data-mode="dot"
-      data-snap-kind=""
-      data-visible="false"
-      data-pressed="false"
-      aria-hidden="true"
-    />,
+    <>
+      <div
+        ref={cursorRef}
+        className="custom-cursor"
+        data-testid="custom-cursor"
+        data-mode="dot"
+        data-snap-kind=""
+        data-visible="false"
+        data-pressed="false"
+        aria-hidden="true"
+      />
+      <div
+        ref={pointerRef}
+        className="custom-cursor-pointer"
+        data-testid="custom-cursor-pointer"
+        data-mode="dot"
+        data-visible="false"
+        data-pressed="false"
+        aria-hidden="true"
+      />
+    </>,
     portalHost,
   );
 }
