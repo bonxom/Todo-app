@@ -1,4 +1,5 @@
 import { attachmentVisionService } from "./attachmentVisionService.js";
+import { createAgentTimeContext } from "../utils/agentTimeContext.js";
 import { createAgentBudget } from "../utils/agentBudget.js";
 import type { McpContext } from "../mcp/context.js";
 import type { ChatTurn, SkillReadMetadata } from "../types/IChatTurn.js";
@@ -90,6 +91,11 @@ export async function runConversationTurn(
         mode: turn.mode ?? "auto",
         intent: turn.intent,
         projectContext,
+        timeContext:
+          turn.timeContext ??
+          createAgentTimeContext(
+            turn.createdAt ? new Date(turn.createdAt) : new Date(),
+          ),
         history: prepareHistory(previous),
         approvedInteraction:
           selectedInteraction?.kind === "confirmation"

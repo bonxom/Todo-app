@@ -1,4 +1,5 @@
 import type { AttachmentView } from "./IAttachment.js";
+import type { AgentTimeContext } from "./IAgentTimeContext.js";
 import type mongoose from "mongoose";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
 import type { AgentInteraction, AgentMode } from "./IAgent.js";
@@ -34,6 +35,7 @@ export interface ChatTurn {
   messages: ChatCompletionMessageParam[];
   activities?: AgentActivity[];
   skillsRead?: SkillReadMetadata[];
+  timeContext?: AgentTimeContext;
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;

@@ -175,6 +175,7 @@ export interface ChatPayload {
   conversationId?: string;
   requestId?: string;
   userInput: string;
+  timeZone?: string;
 }
 
 // --- Pagination Types ---

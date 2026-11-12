@@ -50,6 +50,7 @@ export const chatWithMcp = async (
       intent: body.intent as ProposalIntent | undefined,
       selection: body.selection as InteractionSelection | undefined,
       attachmentIds: body.attachmentIds as string[] | undefined,
+      timeZone: body.timeZone as string | undefined,
     },
     createMcpContext(req, ["tasks:write"]),
   );

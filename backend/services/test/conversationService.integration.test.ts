@@ -1267,4 +1267,86 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     expect(botMessages[1].surface?.a2ui.surfaceId).toBe(proposalSurfaceId);
     expect(botMessages[1].proposal?.status).toBe("draft");
   });
+
+  it("replays exact result when repeating request with same requestId even if timeZone differs", async () => {
+    const conversationId = await create();
+    completion.mockResolvedValueOnce(answer("First answer with time context"));
+
+    const requestId = randomUUID();
+    const firstRes = await post("chat-mcp", {
+      conversationId,
+      requestId,
+      userInput: "What time is it?",
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
+    expect(firstRes.status).toBe(200);
+    expect(firstRes.body.data).toBe("First answer with time context");
+    expect(completion).toHaveBeenCalledTimes(1);
+
+    completion.mockClear();
+    const repeatRes = await post("chat-mcp", {
+      conversationId,
+      requestId,
+      userInput: "What time is it?",
+      timeZone: "America/New_York",
+    });
+    expect(repeatRes.status).toBe(200);
+    expect(repeatRes.body.data).toBe("First answer with time context");
+    expect(completion).not.toHaveBeenCalled();
+  });
+
+  it("creates distinct timeContext snapshot on new requestId", async () => {
+    const conversationId = await create();
+    completion
+      .mockResolvedValueOnce(answer("Turn 1 response"))
+      .mockResolvedValueOnce(answer("Turn 2 response"));
+
+    const res1 = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "First question",
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
+    expect(res1.status).toBe(200);
+
+    const res2 = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Second question",
+      timeZone: "Europe/London",
+    });
+    expect(res2.status).toBe(200);
+
+    const turns = await ChatTurn.find({ conversationId }).sort({ sequence: 1 });
+    expect(turns).toHaveLength(2);
+    expect(turns[0].timeContext).toBeDefined();
+    expect(turns[1].timeContext).toBeDefined();
+    expect(turns[1].timeContext?.timeZone).toBe("Europe/London");
+  });
+
+  it("reads legacy turn without timeContext in history safely", async () => {
+    const conversationId = await create();
+    const legacyTurnId = randomUUID();
+    await ChatTurn.create({
+      _id: legacyTurnId,
+      conversationId,
+      userId: users[0],
+      requestId: randomUUID(),
+      sequence: 1,
+      userInput: "Old query",
+      status: "completed",
+      mode: "auto",
+      response: "Old response",
+      messages: [{ role: "user", content: "Old query" }],
+      expiresAt: new Date(Date.now() + 60000),
+    });
+
+    const historyRes = await get(`conversations/${conversationId}`);
+    expect(historyRes.status).toBe(200);
+    expect(historyRes.body.data).toBeDefined();
+    const userMsg = historyRes.body.data.messages.find(
+      (m: { text: string }) => m.text === "Old query",
+    );
+    expect(userMsg).toBeDefined();
+  });
 });

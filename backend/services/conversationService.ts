@@ -150,6 +150,7 @@ export const conversationService = {
       intent?: ProposalIntent;
       selection?: InteractionSelection;
       attachmentIds?: string[];
+      timeZone?: string;
     },
     context: McpContext,
   ) {
@@ -180,6 +181,7 @@ export const conversationService = {
             input.attachmentIds ?? [],
             session,
           ),
+        input.timeZone,
       );
     if (!claimed) {
       if (turn.status === "processing" && turn.expiresAt.getTime() > Date.now())

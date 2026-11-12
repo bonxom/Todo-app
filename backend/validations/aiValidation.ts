@@ -1,5 +1,5 @@
 import { z } from "zod";
-
+import { normalizeTimeZone } from "../utils/agentTimeContext.js";
 export const generateTasksSchema = z.object({
   userRequirement: z.string().min(1, "userRequirement is required").max(2000),
 });
@@ -46,6 +46,21 @@ export const conversationChatSchema = chatSchema.extend({
   requestId: z.uuid(),
   mode: z.enum(["auto", "ask"]).default("auto"),
   intent: z.enum(["task_proposal"]).optional(),
+  timeZone: z
+    .string()
+    .max(100)
+    .refine(
+      (value) => {
+        try {
+          normalizeTimeZone(value);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: "Invalid IANA time zone" },
+    )
+    .optional(),
   selection: interactionSelectionSchema.optional(),
 });
 export const conversationCreateSchema = z.object({ conversationId: z.uuid() });
