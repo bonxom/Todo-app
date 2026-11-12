@@ -1,5 +1,6 @@
 import { readStorageConfig } from "./storage.js";
-import { CorsOptions } from "cors";
+import { validateWebSearchConfig } from "./webSearch.js";
+import type { CorsOptions } from "cors";
 import { AppError } from "../error/AppError.js";
 import { COMMON_ERROR } from "../error/definitions/commonErrors.js";
 
@@ -67,8 +68,8 @@ export const getServerConfig = (): ServerConfig => ({
 
 export const validateServerEnv = (): void => {
   readStorageConfig();
+  validateWebSearchConfig();
   const missing: string[] = [];
-
   if (!process.env.MONGO_URI) missing.push("MONGO_URI");
   if (!process.env.JWT_SECRET) missing.push("JWT_SECRET");
   if (!process.env.JWT_REFRESH_SECRET) missing.push("JWT_REFRESH_SECRET");

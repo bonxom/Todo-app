@@ -1,5 +1,6 @@
 import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
 import { TASK_PROPOSAL_ERROR } from "../error/definitions/A2UI/taskProposalErrors.js";
+import { createAgentTimeContext } from "../utils/agentTimeContext.js";
 import { taskProposalRepository } from "./A2UI/taskProposalRepository.js";
 import type { AttachmentView } from "../types/IAttachment.js";
 import mongoose from "mongoose";
@@ -85,6 +86,7 @@ export const chatTurnRepository = {
     bindAttachments: (
       session: mongoose.ClientSession,
     ) => Promise<AttachmentView[]> = async () => [],
+    timeZone?: string,
   ) {
     await ChatTurn.init();
     const id = turnId(userId, requestId);
@@ -202,6 +204,7 @@ export const chatTurnRepository = {
               executionToken: randomUUID(),
               messages: [{ role: "user", content: userInput }],
               contextProjectId: conversation.contextProjectId ?? null,
+              timeContext: createAgentTimeContext(new Date(), timeZone),
             },
           ],
           { session },

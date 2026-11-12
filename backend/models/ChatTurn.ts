@@ -55,6 +55,7 @@ const schema = new Schema<ChatTurn>(
       ],
       default: [],
     },
+    timeContext: { type: Schema.Types.Mixed },
     expiresAt: { type: Date, required: true },
   },
   { timestamps: true },

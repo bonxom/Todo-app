@@ -18,6 +18,7 @@ const businessTools = new Set([
   "orbit_create_task",
   "orbit_update_task",
   "orbit_delete_task",
+  "orbit_web_search",
 ]);
 
 const specialistTools = new Map<string, readonly RequiredSkillDocument[]>([

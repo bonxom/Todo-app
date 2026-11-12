@@ -74,6 +74,9 @@ describe("agentUiRuntime", () => {
       .mockImplementationOnce(async (payload) => {
         expect(toolNames(payload)).toContain("load_skill");
         expect(toolNames(payload)).not.toContain("present_ui");
+        const messagesText = JSON.stringify(payload.messages);
+        expect(messagesText).not.toContain("Orbit UI Composition Guidance");
+        expect(messagesText).not.toContain('"skillId":"ui-composition"');
         return response(
           call("load-1", "load_skill", { skillId: "ui-composition" }),
           call("read-1", "orbit_list_categories", {}),
@@ -96,6 +99,101 @@ describe("agentUiRuntime", () => {
       status: "presented",
       componentCount: fixture.readonly.components.length,
     });
+  });
+  it("does not preload full UI guidance or synthetic UI loader exchanges on initial request or greeting", async () => {
+    completionCreate.mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: "Xin chào! Mình có thể giúp gì cho bạn?",
+          },
+        },
+      ],
+    });
+
+    const result = await agentService.chatWithMcp("Hôm nay ngày mấy?", context);
+    expect(result).toBe("Xin chào! Mình có thể giúp gì cho bạn?");
+
+    const firstPayload = completionCreate.mock.calls[0][0];
+    expect(toolNames(firstPayload)).not.toContain("present_ui");
+    const payloadStr = JSON.stringify(firstPayload.messages);
+    expect(payloadStr).not.toContain("Orbit UI Composition Guidance");
+    expect(payloadStr).not.toContain('"skillId":"ui-composition"');
+  });
+
+  it("heals leaked DSML present_ui call from content and presents valid surface", async () => {
+    completionCreate
+      .mockImplementationOnce(async () => {
+        return response(
+          call("load-1", "load_skill", { skillId: "ui-composition" }),
+        );
+      })
+      .mockImplementationOnce(async () => {
+        const dsmlContent = `< | DSML | calls>
+< | DSML | invoke name="present_ui">
+< | DSML | parameter name="fallback_text" string="true">${fixture.readonly.fallbackText}</ | DSML | parameter>
+< | DSML | parameter name="components" string="false">${JSON.stringify(fixture.readonly.components)}</ | DSML | parameter>
+< | DSML | parameter name="displayData" string="false">${JSON.stringify(fixture.readonly.displayData)}</ | DSML | parameter>
+</ | DSML | invoke>
+</ | DSML | calls>`;
+        return {
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: dsmlContent,
+              },
+            },
+          ],
+        };
+      });
+
+    const result = await agentService.chatWithMcp("Tình hình tập gym", context);
+    expect(result).toEqual({ surfaceSpec: fixture.readonly });
+  });
+
+  it("heals leaked DSML business tool call and continues agent loop to final response", async () => {
+    const readCategories = vi
+      .spyOn(categoryService, "getAll")
+      .mockResolvedValue([]);
+
+    completionCreate
+      .mockImplementationOnce(async () => {
+        const dsmlContent = `< | DSML | | calls>
+< | DSML | | invoke name="orbit_list_categories">
+</ | DSML | | invoke>
+</ | DSML | | calls>`;
+        return {
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: dsmlContent,
+              },
+            },
+          ],
+        };
+      })
+      .mockImplementationOnce(async () => {
+        return {
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: "Danh sách danh mục của bạn trống.",
+              },
+            },
+          ],
+        };
+      });
+
+    const result = await agentService.chatWithMcp(
+      "Liệt kê categories",
+      context,
+    );
+    expect(readCategories).toHaveBeenCalledOnce();
+    expect(result).toBe("Danh sách danh mục của bạn trống.");
   });
 
   it("executes load guidance -> propose_tasks with presentation", async () => {

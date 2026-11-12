@@ -158,6 +158,10 @@ describe("agentUiCapability", () => {
     const contextText = formatDeveloperUiSkillContext(registry, capability);
 
     expect(contextText).toContain("ui-composition");
+    expect(contextText).toContain("proactively consider A2UI");
+    expect(contextText).toContain("statistics, a summary, a progress report");
+    expect(contextText).toContain("never invent numbers");
+    expect(contextText).toContain("Do not ask for permission");
     expect(presentUiTool.type).toBe("function");
     if (presentUiTool.type === "function") {
       expect(presentUiTool.function.name).toBe("present_ui");

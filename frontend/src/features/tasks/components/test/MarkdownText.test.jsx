@@ -131,3 +131,71 @@ it("keeps incomplete HTML fences as code until closed", () => {
   rerender(<MarkdownText text={"```html\n<h1>Loading</h1>\n```"} />);
   expect(screen.getByTitle("HTML preview")).toBeInTheDocument();
 });
+
+it("renders safe external links with target blank and rel noopener noreferrer", () => {
+  render(
+    <MarkdownText text="Nguồn: [Docs](https://example.org/docs?q=react#intro)" />,
+  );
+  const link = screen.getByRole("link", { name: "Docs" });
+  expect(link).toHaveAttribute(
+    "href",
+    "https://example.org/docs?q=react#intro",
+  );
+  expect(link).toHaveAttribute("target", "_blank");
+  expect(link).toHaveAttribute("rel", "noopener noreferrer");
+});
+
+it("supports URLs containing balanced parentheses", () => {
+  render(
+    <MarkdownText text="Xem thêm: [React Wiki](https://en.wikipedia.org/wiki/React_(software))" />,
+  );
+  const link = screen.getByRole("link", { name: "React Wiki" });
+  expect(link).toHaveAttribute(
+    "href",
+    "https://en.wikipedia.org/wiki/React_(software)",
+  );
+});
+
+it("renders an unterminated link promptly as text", () => {
+  const text = "[x](" + "a".repeat(28);
+  const started = performance.now();
+  const { container } = render(<MarkdownText text={text} />);
+  expect(performance.now() - started).toBeLessThan(500);
+  expect(container.textContent).toBe(text);
+  expect(screen.queryByRole("link")).not.toBeInTheDocument();
+});
+
+it("supports nested URL parentheses without truncating the destination", () => {
+  render(<MarkdownText text="[Docs](https://example.org/a_(b_(c)))" />);
+  expect(screen.getByRole("link", { name: "Docs" })).toHaveAttribute(
+    "href",
+    "https://example.org/a_(b_(c))",
+  );
+});
+
+it("rejects unsafe URLs and renders them as plain text instead of links", () => {
+  const { container } = render(
+    <MarkdownText
+      text={
+        "Dangerous: [Bad JS](javascript:alert(1)) and [Bad Creds](https://user:pass@example.com/api) and [Data](data:text/html,bad) and [Proto](//example.com)"
+      }
+    />,
+  );
+  expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  expect(container.textContent).toContain("[Bad JS](javascript:alert(1))");
+  expect(container.textContent).toContain(
+    "[Bad Creds](https://user:pass@example.com/api)",
+  );
+});
+
+it("does not render link syntax inside inline code or fenced code blocks", () => {
+  render(
+    <MarkdownText
+      text={
+        "Inline: `[Docs](https://example.org)`\n\n```text\n[Fenced](https://example.org)\n```"
+      }
+    />,
+  );
+  expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  expect(screen.getByText("[Docs](https://example.org)").tagName).toBe("CODE");
+});

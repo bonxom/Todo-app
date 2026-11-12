@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
-
+import { healDsmlToolCalls, type RawAgentMessage } from "./dsmlParser.js";
 const messageSchema = z.object({
   role: z.literal("assistant"),
   reasoning_content: z.string().nullable().optional(),
@@ -22,7 +22,18 @@ export function validateAgentResponse(
   finalOnly: boolean,
   seen: ReadonlySet<string>,
 ) {
-  const parsed = messageSchema.safeParse(value);
+  let normalizedValue = value;
+  if (
+    !finalOnly &&
+    normalizedValue &&
+    typeof normalizedValue === "object" &&
+    "role" in normalizedValue &&
+    normalizedValue.role === "assistant"
+  ) {
+    normalizedValue = healDsmlToolCalls(normalizedValue as RawAgentMessage);
+  }
+
+  const parsed = messageSchema.safeParse(normalizedValue);
   if (!parsed.success) throw new AppError(AI_ERROR.RESPONSE_INVALID);
   const message = parsed.data;
   const calls = message.tool_calls ?? [];

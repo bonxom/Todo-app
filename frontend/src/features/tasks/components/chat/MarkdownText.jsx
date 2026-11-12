@@ -2,7 +2,7 @@ import CodeBlock from "./CodeBlock";
 import HtmlPreview from "./HtmlPreview";
 import MermaidDiagram from "./MermaidDiagram";
 import SvgPreview from "./SvgPreview";
-
+import { safeExternalUrl } from "./safeExternalUrl";
 const MarkdownText = ({ text }) => {
   if (!text) return null;
 
@@ -13,8 +13,10 @@ const MarkdownText = ({ text }) => {
     let lastIndex = 0;
     let key = 0;
 
-    // Pattern for `code`, **bold**, *italic*, _italic_
-    const tokenRegex = /(?:`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_)/g;
+    // Match only the link opener; scan its destination without backtracking.
+    // Excluding nested '[' prevents rescanning long runs of unmatched openers.
+    const tokenRegex =
+      /(?:`([^`]+)`|\[([^[\]]+)\]\(|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_)/g;
     let match;
 
     while ((match = tokenRegex.exec(rawText)) !== null) {
@@ -35,29 +37,66 @@ const MarkdownText = ({ text }) => {
           </code>,
         );
       } else if (match[2] !== undefined) {
+        // Markdown Link: [label](url)
+        const destinationStart = tokenRegex.lastIndex;
+        let end = destinationStart;
+        let depth = 1;
+        while (end < rawText.length && !/\s/.test(rawText[end])) {
+          const char = rawText[end];
+          if (char === "(") depth++;
+          if (char === ")") depth--;
+          if (depth === 0) break;
+          end++;
+        }
+        const safeUrl =
+          depth === 0
+            ? safeExternalUrl(rawText.slice(destinationStart, end))
+            : null;
+        // Consume malformed destinations too, so each URL is scanned once.
+        tokenRegex.lastIndex = depth === 0 ? end + 1 : end;
+        if (safeUrl) {
+          parts.push(
+            <a
+              key={key++}
+              href={safeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--color-accent-strong)] underline hover:text-[var(--color-accent)] inline-flex items-center gap-0.5"
+            >
+              {match[2]}
+            </a>,
+          );
+        } else {
+          parts.push(
+            <span key={key++}>
+              {rawText.slice(match.index, tokenRegex.lastIndex)}
+            </span>,
+          );
+        }
+      } else if (match[3] !== undefined) {
         // Bold
         parts.push(
           <strong key={key++} className="font-semibold">
-            {match[2]}
+            {match[3]}
           </strong>,
         );
-      } else if (match[3] !== undefined) {
-        // Italic with *
-        parts.push(
-          <em key={key++} className="italic">
-            {match[3]}
-          </em>,
-        );
       } else if (match[4] !== undefined) {
-        // Italic with _
+        // Italic with *
         parts.push(
           <em key={key++} className="italic">
             {match[4]}
           </em>,
         );
+      } else if (match[5] !== undefined) {
+        // Italic with _
+        parts.push(
+          <em key={key++} className="italic">
+            {match[5]}
+          </em>,
+        );
       }
 
-      lastIndex = match.index + match[0].length;
+      lastIndex = tokenRegex.lastIndex;
     }
 
     if (lastIndex < rawText.length) {

@@ -3,9 +3,15 @@ import type { McpContext } from "./context.js";
 import { registerOrbitTools } from "./tools.js";
 import type { SkillRegistry } from "../skills/types.js";
 import { registerSkillResources } from "./resources/skills.js";
-export function createOrbitMcpServer(context: McpContext, registry?: SkillRegistry): McpServer {
+import type { AgentBudget } from "../utils/agentBudget.js";
+
+export function createOrbitMcpServer(
+  context: McpContext,
+  registry?: SkillRegistry,
+  options?: { budget?: AgentBudget },
+): McpServer {
   const server = new McpServer({ name: "orbit-mcp-server", version: "0.1.0" });
-  registerOrbitTools(server, context);
+  registerOrbitTools(server, context, options);
   if (registry) registerSkillResources(server, registry);
   return server;
 }

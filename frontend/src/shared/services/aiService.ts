@@ -96,9 +96,18 @@ export const aiService = {
   getAgenticChatResponse: async (
     userInput: ChatPayload,
   ): Promise<ChatResponse> => {
+    let timeZone = userInput.timeZone;
+    if (!timeZone) {
+      try {
+        timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      } catch {
+        /* Older clients fall back on the backend. */
+      }
+    }
+    const payload = { ...userInput, ...(timeZone ? { timeZone } : {}) };
     const response = await axiosInstance.post<ChatResponse>(
       "/api/ai/chat-mcp",
-      userInput,
+      payload,
     );
     return response.data;
   },

@@ -3,3 +3,4 @@ export * from "./Task.js";
 export * from "./Project.js";
 export * from "./Category.js";
 export * from "./TaskWrite.js";
+export * from "./WebSearch.js";
