@@ -85,7 +85,10 @@ export function formatDeveloperUiSkillContext(
     .filter((s): s is NonNullable<typeof s> => Boolean(s))
     .map((s) => ({ id: s.id, description: s.description }));
 
-  return `Developer UI composition guidance is enabled. Available code-owned developer UI skills (load via load_skill before calling present_ui or passing presentation to propose_tasks): ${JSON.stringify(summaries)}. Plain text remains appropriate for simple answers.`;
+  return `Developer UI composition guidance is enabled. Available code-owned developer UI skills: ${JSON.stringify(summaries)}.
+When the user asks for statistics, a summary, a progress report, comparisons, a schedule, or an explanation of a process, proactively consider A2UI if a visual layout makes the answer easier to understand. Do not wait for an explicit request for a chart or dashboard.
+When a visual response is useful, call load_skill for the available developer UI skill and read its guidance before calling present_ui or passing presentation to propose_tasks.
+Gather the required data before presenting; never invent numbers to create a chart. Use plain text for brief answers or when the user requests text only. Do not ask for permission merely to choose a visual format.`;
 }
 
 const surfaceSpecJsonSchema = z.toJSONSchema(surfaceSpecBaseSchema) as Record<
