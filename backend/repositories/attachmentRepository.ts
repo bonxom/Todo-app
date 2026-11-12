@@ -42,6 +42,12 @@ export const attachmentRepository = {
       userId: string;
       conversationId: string;
       objectKey: string;
+      analysis?: {
+        status: "succeeded" | "failed";
+        description?: string;
+        model?: string;
+        updatedAt: Date;
+      };
     },
   ) => Attachment.create(record),
   async ready(id: string) {

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { ClientSession } from "mongoose";
 import { attachmentRepository as repository } from "../repositories/attachmentRepository.js";
 import { conversationRepository } from "../repositories/conversationRepository.js";
+import { describeImage } from "../libs/visionClient.js";
 import { objectStorage } from "../libs/objectStorage.js";
 import {
   validateAttachment,
@@ -36,13 +37,47 @@ export const attachmentService = {
     await conversationRepository.get(userId, conversationId);
     const metadata = validateAttachment(file);
     const id = randomUUID();
+    let analysis:
+      | {
+          status: "succeeded" | "failed";
+          description?: string;
+          model?: string;
+          updatedAt: Date;
+        }
+      | undefined;
+    if (metadata.mimeType.startsWith("image/")) {
+      try {
+        const result = await describeImage(
+          file.buffer,
+          metadata.mimeType,
+          AbortSignal.timeout(20_000),
+        );
+        analysis = { status: "succeeded", ...result, updatedAt: new Date() };
+      } catch {
+        analysis = { status: "failed", updatedAt: new Date() };
+      }
+    }
     const record = await repository.create({
       _id: id,
       userId,
       conversationId,
       objectKey: `${userId}/${conversationId}/${id}`,
       ...metadata,
+      ...(analysis ? { analysis } : {}),
     });
+    if (analysis) {
+      if (!(await repository.ready(id)))
+        throw new AppError(ATTACHMENT_ERROR.UNAVAILABLE);
+      // Chat consumes persisted analysis immediately; original bytes are best-effort storage.
+      void objectStorage
+        .put(record.objectKey, file.buffer, metadata.mimeType)
+        .catch(() => {
+          console.warn("Image storage failed after vision analysis", {
+            attachmentId: id,
+          });
+        });
+      return view(record);
+    }
     try {
       await objectStorage.put(record.objectKey, file.buffer, metadata.mimeType);
       if (!(await repository.ready(id))) throw new Error("Upload expired");
