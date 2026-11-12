@@ -226,6 +226,7 @@ const WeekTimeline = memo(
         )}
         <div
           className="calendar-week-timeline-scroll ui-focus-ring"
+          data-cursor-clip-header=".calendar-week-timeline-header"
           ref={scrollContainerRef}
           tabIndex={0}
           role="region"

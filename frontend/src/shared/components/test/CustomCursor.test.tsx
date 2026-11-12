@@ -235,6 +235,55 @@ describe("CustomCursor", () => {
     expect(pointer).toHaveAttribute("data-visible", "true");
   });
 
+  it("clips the highlight to nested scroll containers and updates on scroll", () => {
+    render(
+      <div data-testid="outer" style={{ overflowX: "hidden" }}>
+        <CustomCursor />
+        <div data-testid="scroller" style={{ overflowY: "auto" }}>
+          <button data-testid="clipped">Task</button>
+        </div>
+      </div>,
+    );
+    const bounds = (
+      left: number,
+      top: number,
+      width: number,
+      height: number,
+    ) => ({
+      left,
+      top,
+      width,
+      height,
+      right: left + width,
+      bottom: top + height,
+      x: left,
+      y: top,
+      toJSON: () => ({}),
+    });
+    const outer = screen.getByTestId("outer");
+    const scroller = screen.getByTestId("scroller");
+    const button = screen.getByTestId("clipped");
+    vi.spyOn(outer, "getBoundingClientRect").mockReturnValue(
+      bounds(120, 0, 160, 700),
+    );
+    vi.spyOn(scroller, "getBoundingClientRect").mockReturnValue(
+      bounds(100, 200, 200, 300),
+    );
+    Object.defineProperty(outer, "clientWidth", { value: 160 });
+    Object.defineProperty(scroller, "clientHeight", { value: 300 });
+    const taskBounds = vi
+      .spyOn(button, "getBoundingClientRect")
+      .mockReturnValue(bounds(100, 50, 200, 600));
+    fireEvent.mouseMove(button, { clientX: 150, clientY: 300 });
+    const cursor = screen.getByTestId("custom-cursor");
+    expect(cursor.style.clipPath).toBe("inset(150px 20px 150px 20px)");
+    taskBounds.mockReturnValue(bounds(100, -50, 200, 600));
+    fireEvent.scroll(scroller);
+    expect(cursor.style.clipPath).toBe("inset(250px 20px 50px 20px)");
+    fireEvent.mouseMove(document.body, { clientX: 400, clientY: 300 });
+    expect(cursor.style.clipPath).toBe("none");
+  });
+
   it("updates snapped bounds on scroll and falls back to dot when target is removed from DOM", () => {
     render(
       <div>

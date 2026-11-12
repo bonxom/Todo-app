@@ -167,6 +167,8 @@ export default function CustomCursor() {
       x: number,
       y: number,
     ) => {
+      cursorEl.style.clipPath = "none";
+      cursorEl.style.removeProperty("transition");
       cursorEl.dataset.mode = "dot";
       cursorEl.dataset.snapKind = "";
       cursorEl.style.setProperty("--cursor-x", `${x}px`);
@@ -188,6 +190,60 @@ export default function CustomCursor() {
         applyDotMetrics(cursorEl, fallbackX, fallbackY);
         return;
       }
+
+      // The cursor lives in a portal, outside the target's clipping ancestors.
+      // Recreate their scrollport intersection without changing the target shape.
+      let left = Math.max(0, rect.left);
+      let top = Math.max(0, rect.top);
+      let right = Math.min(window.innerWidth, rect.right);
+      let bottom = Math.min(window.innerHeight, rect.bottom);
+      for (
+        let parent = targetEl.parentElement;
+        parent;
+        parent = parent.parentElement
+      ) {
+        const style = window.getComputedStyle(parent);
+        const clipsX = /^(auto|scroll|hidden|clip)$/.test(
+          style.overflowX || style.overflow,
+        );
+        const clipsY = /^(auto|scroll|hidden|clip)$/.test(
+          style.overflowY || style.overflow,
+        );
+        if (!clipsX && !clipsY) continue;
+        const bounds = parent.getBoundingClientRect();
+        if (clipsX) {
+          const edge = bounds.left + parent.clientLeft;
+          left = Math.max(left, edge);
+          right = Math.min(right, edge + parent.clientWidth);
+        }
+        if (clipsY) {
+          const edge = bounds.top + parent.clientTop;
+          top = Math.max(top, edge);
+          bottom = Math.min(bottom, edge + parent.clientHeight);
+          // Sticky headers occlude content even though they are inside the scrollport.
+          const headerSelector = parent.dataset.cursorClipHeader;
+          const header = headerSelector
+            ? parent.querySelector(headerSelector)
+            : null;
+          if (header && !header.contains(targetEl)) {
+            top = Math.max(top, header.getBoundingClientRect().bottom);
+          }
+        }
+      }
+      const clipped =
+        left > rect.left ||
+        top > rect.top ||
+        right < rect.right ||
+        bottom < rect.bottom;
+      cursorEl.style.clipPath =
+        right <= left || bottom <= top
+          ? "inset(50%)"
+          : clipped
+            ? `inset(${top - rect.top}px ${rect.right - right}px ${rect.bottom - bottom}px ${left - rect.left}px)`
+            : "none";
+      // Interpolating old bounds would briefly paint outside the scrollport.
+      if (clipped) cursorEl.style.transition = "none";
+      else cursorEl.style.removeProperty("transition");
 
       const centerX = Math.round((rect.left + rect.width / 2) * 100) / 100;
       const centerY = Math.round((rect.top + rect.height / 2) * 100) / 100;
