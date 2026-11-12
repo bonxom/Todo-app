@@ -1,8 +1,16 @@
 import { workspaceKey } from "@/features/tasks/utils/workspaceTranslation";
 import { useTranslation } from "react-i18next";
-import { useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  LoaderCircle,
+  List,
+  Clock3,
+} from "lucide-react";
+import CustomSelect from "@/shared/components/CustomSelect";
 import DayCell from "./DayCell";
+import WeekTimeline from "./WeekTimeline";
 import {
   buildMonthDays,
   buildWeekDays,
@@ -24,6 +32,7 @@ const CalendarGrid = ({
   tasksByDate,
   onTaskUpdated,
   onTaskDueDateChange,
+  onTaskDatesChange,
   onTaskCopy,
   isRangeLoading = false,
   viewMode = "month",
@@ -32,6 +41,9 @@ const CalendarGrid = ({
   actions,
 }) => {
   const { t } = useTranslation("workspace");
+  const [intervalMinutes, setIntervalMinutes] = useState(30);
+  const [weekMode, setWeekMode] = useState("detailed");
+  const timelineViewport = useRef({ minute: 480 });
 
   const gridRef = useRef(null);
   useEffect(() => {
@@ -43,7 +55,7 @@ const CalendarGrid = ({
         grid.getBoundingClientRect().left -
         (grid.clientWidth - selected.clientWidth) / 2;
     }
-  }, [selectedDate, viewMode]);
+  }, [selectedDate, viewMode, weekMode]);
 
   const calendarDays =
     viewMode === "week"
@@ -57,7 +69,11 @@ const CalendarGrid = ({
       : formatMonthLabel(currentDate);
 
   return (
-    <div className="ui-section-card calendar-board" data-view={viewMode}>
+    <div
+      className="ui-section-card calendar-board"
+      data-view={viewMode}
+      data-week-mode={weekMode}
+    >
       <div className="calendar-board-toolbar">
         <div>
           <div className="flex items-center gap-2">
@@ -83,7 +99,55 @@ const CalendarGrid = ({
         </div>
 
         <div className="flex flex-col gap-3 sm:items-end">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="calendar-toolbar-controls">
+            {viewMode === "week" && (
+              <div className="calendar-week-controls">
+                <div
+                  className="calendar-week-modes"
+                  role="group"
+                  aria-label={t("weekLayout")}
+                >
+                  <button
+                    type="button"
+                    className="ui-focus-ring"
+                    aria-pressed={weekMode === "detailed"}
+                    onClick={() => setWeekMode("detailed")}
+                  >
+                    <Clock3 size={15} aria-hidden="true" />
+                    {t("weekDetailed")}
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-focus-ring"
+                    aria-pressed={weekMode === "compact"}
+                    onClick={() => setWeekMode("compact")}
+                  >
+                    <List size={15} aria-hidden="true" />
+                    {t("weekCompact")}
+                  </button>
+                </div>
+                {weekMode === "detailed" && (
+                  <label className="calendar-time-detail">
+                    <span>{t("timeDetail")}</span>
+                    <CustomSelect
+                      className="ui-focus-ring calendar-interval-trigger"
+                      aria-label={t("timeDetail")}
+                      value={String(intervalMinutes)}
+                      onChange={(event) =>
+                        setIntervalMinutes(Number(event.target.value))
+                      }
+                    >
+                      {[15, 30, 60].map((minutes) => (
+                        <option key={minutes} value={minutes}>
+                          {t("calendarMinutes", { count: minutes })}
+                        </option>
+                      ))}
+                    </CustomSelect>
+                  </label>
+                )}
+              </div>
+            )}
+
             {showViewModeToggle && (
               <div className="inline-flex rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] p-1">
                 <button
@@ -150,55 +214,80 @@ const CalendarGrid = ({
         </div>
       </div>
 
-      <div
-        className="calendar-grid-scroll ui-focus-ring"
-        ref={gridRef}
-        tabIndex={0}
-        role="region"
-        aria-label={t("calendarDates")}
-      >
-        <div className="calendar-weekdays" data-cal-header-grid>
-          {WEEK_DAYS.map((day) => (
-            <div
-              key={t(workspaceKey(day), { defaultValue: day })}
-              className="py-2 text-center text-xs font-semibold text-[var(--color-text-muted)] sm:text-sm"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
+      {viewMode === "week" && weekMode === "detailed" ? (
+        <WeekTimeline
+          currentDate={currentDate}
+          selectedDate={selectedDate}
+          onDateSelect={onDateSelect}
+          tasksByDate={tasksByDate}
+          onTaskDueDateChange={onTaskDueDateChange}
+          onTaskCopy={onTaskCopy}
+          onTaskDatesChange={onTaskDatesChange}
+          intervalMinutes={intervalMinutes}
+          viewportRef={timelineViewport}
+          onTaskUpdated={onTaskUpdated}
+        />
+      ) : (
+        <div
+          className="calendar-grid-scroll ui-focus-ring"
+          ref={gridRef}
+          tabIndex={0}
+          role="region"
+          aria-label={t("calendarDates")}
+        >
+          <div className="calendar-weekdays" data-cal-header-grid>
+            {WEEK_DAYS.map((day) => (
+              <div
+                key={t(workspaceKey(day), { defaultValue: day })}
+                className="py-2 text-center text-xs font-semibold text-[var(--color-text-muted)] sm:text-sm"
+              >
+                {t(workspaceKey(day), { defaultValue: day })}
+              </div>
+            ))}
+          </div>
 
-        <div className="calendar-days" data-cal-day-grid>
-          {calendarDays.map(({ date, isCurrentMonth }, index) => {
-            const dateKey = getDateKey(date);
-            const isToday = isSameDay(date, today);
-            const isSelected = isSameDay(date, selectedDate);
-            const tasks = tasksByDate[dateKey] || [];
+          <div className="calendar-days" data-cal-day-grid>
+            {calendarDays.map(({ date, isCurrentMonth }, index) => {
+              const dateKey = getDateKey(date);
+              const isToday = isSameDay(date, today);
+              const isSelected = isSameDay(date, selectedDate);
+              const tasks = tasksByDate[dateKey] || [];
 
-            return (
-              <DayCell
-                key={`${dateKey}-${index}`}
-                day={date}
-                isToday={isToday}
-                isSelected={isSelected}
-                isCurrentMonth={isCurrentMonth}
-                tasks={tasks}
-                onClick={onDateSelect}
-                onTaskUpdated={onTaskUpdated}
-                onTaskDueDateChange={onTaskDueDateChange}
-                onTaskCopy={onTaskCopy}
-                viewMode={viewMode}
-              />
-            );
-          })}
+              return (
+                <DayCell
+                  key={`${dateKey}-${index}`}
+                  day={date}
+                  isToday={isToday}
+                  isSelected={isSelected}
+                  isCurrentMonth={isCurrentMonth}
+                  tasks={tasks}
+                  onClick={onDateSelect}
+                  onTaskUpdated={onTaskUpdated}
+                  onTaskDueDateChange={onTaskDueDateChange}
+                  onTaskCopy={onTaskCopy}
+                  viewMode={viewMode}
+                />
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
+
       <footer className="calendar-board-footer">
         <span>
           <i /> {t("today")}
           <b /> {t("selectedDay")}
         </span>
-        <span>{t("chooseADayToSeeItsTasksDragTasksToReschedule")}</span>
+        <span>
+          <span className="calendar-board-help">
+            {t("chooseADayToSeeItsTasksDragTasksToReschedule")}
+          </span>
+          {viewMode === "week" && (
+            <span className="calendar-week-mobile-hint">
+              {t("calendarSwipeWeek")}
+            </span>
+          )}
+        </span>
       </footer>
     </div>
   );

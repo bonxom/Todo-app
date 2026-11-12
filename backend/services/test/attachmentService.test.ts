@@ -14,6 +14,8 @@ const storage = vi.hoisted(() => ({
   get: vi.fn(),
   remove: vi.fn(),
 }));
+const vision = vi.hoisted(() => vi.fn());
+vi.mock("../../libs/visionClient.js", () => ({ describeImage: vision }));
 const conversations = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock("../../repositories/attachmentRepository.js", () => ({
   attachmentRepository: repo,
@@ -22,6 +24,7 @@ vi.mock("../../libs/objectStorage.js", () => ({ objectStorage: storage }));
 vi.mock("../../repositories/conversationRepository.js", () => ({
   conversationRepository: conversations,
 }));
+import { attachmentVisionService } from "../attachmentVisionService.js";
 import { attachmentService } from "../attachmentService.js";
 import {
   validateAttachment,
@@ -30,6 +33,10 @@ import {
 import { readStorageConfig } from "../../config/storage.js";
 const file = { originalname: "notes.txt", buffer: Buffer.from("hello") };
 
+const image = {
+  originalname: "photo.png",
+  buffer: Buffer.from("89504e470d0a1a0a00000000", "hex"),
+};
 describe("private attachments", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -38,6 +45,87 @@ describe("private attachments", () => {
     storage.put.mockResolvedValue(undefined);
     storage.remove.mockResolvedValue(undefined);
     repo.create.mockImplementation(async (value) => value);
+  });
+  it.each(["unconfigured", "down", "pending"])(
+    "uses direct vision and cached chat context when storage is %s",
+    async (mode) => {
+      vision.mockImplementation(async (bytes, mime) => {
+        expect(bytes).toEqual(image.buffer);
+        expect(mime).toBe("image/png");
+        expect(storage.put).not.toHaveBeenCalled();
+        return { description: "A blue cup", model: "vision" };
+      });
+      storage.put.mockImplementation(() =>
+        mode === "pending"
+          ? new Promise(() => {})
+          : Promise.reject(new Error(mode)),
+      );
+      const uploaded = await attachmentService.upload(
+        "user",
+        "conversation",
+        image,
+      );
+      const record = repo.create.mock.calls[0][0];
+      repo.get.mockResolvedValue({ ...record, state: "attached" });
+      expect(
+        await attachmentVisionService.context("user", "conversation", [
+          uploaded,
+        ]),
+      ).toContain("A blue cup");
+      expect(vision).toHaveBeenCalledTimes(1);
+      expect(vision).toHaveBeenCalledWith(
+        image.buffer,
+        "image/png",
+        expect.any(AbortSignal),
+      );
+      expect(vision.mock.invocationCallOrder[0]).toBeLessThan(
+        storage.put.mock.invocationCallOrder[0],
+      );
+      expect(storage.get).not.toHaveBeenCalled();
+      expect(repo.claimUnused).not.toHaveBeenCalled();
+      expect(storage.put).toHaveBeenCalledWith(
+        record.objectKey,
+        image.buffer,
+        "image/png",
+      );
+    },
+  );
+  it("rejects unauthorized and invalid images before calling vision", async () => {
+    conversations.get.mockRejectedValueOnce(new Error("not found"));
+    await expect(
+      attachmentService.upload("user", "other", image),
+    ).rejects.toThrow("not found");
+    await expect(
+      attachmentService.upload("user", "conversation", {
+        ...image,
+        buffer: Buffer.from("invalid"),
+      }),
+    ).rejects.toThrow();
+    expect(vision).not.toHaveBeenCalled();
+    expect(storage.put).not.toHaveBeenCalled();
+  });
+  it("retains explicit failed vision analysis and still stores the image", async () => {
+    vision.mockRejectedValue(new Error("vision down"));
+    const uploaded = await attachmentService.upload(
+      "user",
+      "conversation",
+      image,
+    );
+    const record = repo.create.mock.calls[0][0];
+    expect(record.analysis.status).toBe("failed");
+    repo.get.mockResolvedValue({ ...record, state: "attached" });
+    expect(
+      await attachmentVisionService.context("user", "conversation", [uploaded]),
+    ).toContain('"status":"failed"');
+    expect(storage.put).toHaveBeenCalled();
+  });
+  it("does not store image bytes when persistence fails", async () => {
+    vision.mockResolvedValue({ description: "A cup", model: "vision" });
+    repo.ready.mockResolvedValue(false);
+    await expect(
+      attachmentService.upload("user", "conversation", image),
+    ).rejects.toThrow();
+    expect(storage.put).not.toHaveBeenCalled();
   });
   it("allows disabled storage and supports LAN, localhost and Docker endpoints", () => {
     expect(readStorageConfig({})).toBeNull();
@@ -69,7 +157,9 @@ describe("private attachments", () => {
       validateAttachment({ ...file, originalname: "../notes.txt" }).name,
     ).toBe("notes.txt");
     const vietnameseName = "IT3120 Phân tích và thiết.txt";
-    const multerLatin1Name = Buffer.from(vietnameseName, "utf-8").toString("latin1");
+    const multerLatin1Name = Buffer.from(vietnameseName, "utf-8").toString(
+      "latin1",
+    );
     expect(
       validateAttachment({
         ...file,

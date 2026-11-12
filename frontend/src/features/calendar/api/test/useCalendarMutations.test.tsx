@@ -185,4 +185,37 @@ describe("useCalendarMutations", () => {
         .status,
     ).toBe("active");
   });
+  it("updates start time optimistically and restores both dates on failure", async () => {
+    const wrapper = createWrapper();
+    const task = makeTask("resize");
+    queryClient.setQueryData(calendarKey, [task]);
+    let reject!: (error: Error) => void;
+    vi.spyOn(taskService, "updateTask").mockReturnValueOnce(
+      new Promise<Task>((_resolve, fail) => {
+        reject = fail;
+      }),
+    );
+    const { result } = renderHook(() => useCalendarMutations(), { wrapper });
+    let pending!: Promise<Task>;
+    act(() => {
+      pending = result.current.changeTaskDates(task, {
+        startDate: "2026-08-14T08:00:00.000Z",
+      });
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(queryClient.getQueryData<Task[]>(calendarKey)?.[0]).toMatchObject({
+      startDate: "2026-08-14T08:00:00.000Z",
+      dueDate: task.dueDate,
+    });
+    expect(taskService.updateTask).toHaveBeenCalledWith("resize", {
+      startDate: "2026-08-14T08:00:00.000Z",
+    });
+    await act(async () => {
+      reject(new Error("Failed to save"));
+      await pending.catch(() => {});
+    });
+    expect(queryClient.getQueryData<Task[]>(calendarKey)).toEqual([task]);
+  });
 });

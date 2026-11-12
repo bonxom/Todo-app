@@ -42,6 +42,7 @@ const CalendarView = ({
   onTaskStatusChange,
   onTaskDelete,
   onTaskDueDateChange,
+  onTaskDatesChange,
   onTaskCopy,
   onProjectStatusChange,
 }) => {
@@ -294,6 +295,7 @@ const CalendarView = ({
             tasksByDate={activeTasksByDate}
             onTaskUpdated={onTaskUpdated}
             onTaskDueDateChange={onTaskDueDateChange}
+            onTaskDatesChange={onTaskDatesChange}
             onTaskCopy={onTaskCopy}
             viewMode={viewMode}
             isRangeLoading={isRangeLoading}

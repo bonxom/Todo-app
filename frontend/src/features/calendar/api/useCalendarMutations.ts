@@ -112,18 +112,18 @@ export const useCalendarMutations = () => {
     },
   });
 
-  const dueDateMutation = useMutation<
+  const dateMutation = useMutation<
     Task,
     Error,
-    { task: Task; nextDueDate: string | null },
+    { task: Task; dates: { startDate?: string; dueDate?: string | null } },
     { snapshot: CalendarSnapshot }
   >({
-    mutationFn: async ({ task, nextDueDate }) => {
+    mutationFn: async ({ task, dates }) => {
       const taskId = getTaskId(task);
       if (!taskId) throw new Error("Task ID is required");
-      return taskService.updateTask(taskId, { dueDate: nextDueDate });
+      return taskService.updateTask(taskId, dates);
     },
-    onMutate: async ({ task, nextDueDate }) => {
+    onMutate: async ({ task, dates }) => {
       await Promise.all([
         queryClient.cancelQueries({ queryKey: taskKeys.all }),
         queryClient.cancelQueries({ queryKey: projectKeys.all }),
@@ -131,7 +131,9 @@ export const useCalendarMutations = () => {
       const snapshot = createCalendarSnapshot(queryClient);
       upsertTaskInCollections(queryClient, {
         ...task,
-        dueDate: nextDueDate || undefined,
+        ...dates,
+        dueDate:
+          dates.dueDate === null ? undefined : (dates.dueDate ?? task.dueDate),
       });
       return { snapshot };
     },
@@ -234,7 +236,11 @@ export const useCalendarMutations = () => {
       statusMutation.mutateAsync({ task, nextStatus }),
     deleteTask: (taskId: EntityId) => deleteMutation.mutateAsync(taskId),
     changeTaskDueDate: (task: Task, nextDueDate: string | null) =>
-      dueDateMutation.mutateAsync({ task, nextDueDate }),
+      dateMutation.mutateAsync({ task, dates: { dueDate: nextDueDate } }),
+    changeTaskDates: (
+      task: Task,
+      dates: { startDate?: string; dueDate?: string | null },
+    ) => dateMutation.mutateAsync({ task, dates }),
     copyTask: (
       taskCopyPayload: Partial<TaskMutationPayload>,
       nextDueDate: string,
@@ -244,7 +250,7 @@ export const useCalendarMutations = () => {
     isMutating:
       statusMutation.isPending ||
       deleteMutation.isPending ||
-      dueDateMutation.isPending ||
+      dateMutation.isPending ||
       copyMutation.isPending ||
       projectStatusMutation.isPending,
   };

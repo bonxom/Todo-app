@@ -193,7 +193,13 @@ a {
           [type="color"]
         ),
       textarea,
-      [contenteditable="true"]
+      [contenteditable="true"],
+      .calendar-resize-handle,
+      .calendar-resize-handle *,
+      [data-cursor="native"],
+      [data-cursor="native"] *,
+      [data-cursor-target="native"],
+      [data-cursor-target="native"] *
     ) {
     cursor: none !important;
   }
@@ -209,6 +215,16 @@ a {
       [contenteditable="true"]
     ) {
     cursor: text !important;
+  }
+
+  html.has-custom-cursor .calendar-resize-handle,
+  html.has-custom-cursor .calendar-resize-handle *,
+  html.has-custom-cursor .calendar-resize-handle::after,
+  html.has-custom-cursor [data-cursor="native"],
+  html.has-custom-cursor [data-cursor="native"] *,
+  html.has-custom-cursor [data-cursor-target="native"],
+  html.has-custom-cursor [data-cursor-target="native"] * {
+    cursor: ns-resize !important;
   }
 }
 
@@ -275,7 +291,8 @@ a {
   background-color: var(--cursor-snap-card-bg);
 }
 
-.custom-cursor[data-mode="text"] {
+.custom-cursor[data-mode="text"],
+.custom-cursor[data-mode="native"] {
   opacity: 0;
   box-shadow: none;
 }
@@ -286,6 +303,51 @@ a {
 
 .custom-cursor[data-mode="snap"][data-snap-kind="card"][data-pressed="true"] {
   --cursor-scale: 0.99;
+}
+
+.custom-cursor-pointer {
+  --pointer-x: -100px;
+  --pointer-y: -100px;
+  --pointer-scale: 1;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483647;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background-color: var(--cursor-dot-bg);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.28), 0 0 8px var(--cursor-dot-bg);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  transform: translate3d(
+      calc(var(--pointer-x) - 50%),
+      calc(var(--pointer-y) - 50%),
+      0
+    )
+    scale(var(--pointer-scale));
+  transition: opacity 120ms ease;
+  will-change: transform, opacity;
+}
+
+:root[data-theme="dark"] .custom-cursor-pointer {
+  border-color: rgba(17, 24, 39, 0.9);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 0 10px var(--cursor-dot-bg);
+}
+
+.custom-cursor-pointer[data-mode="snap"][data-visible="true"] {
+  opacity: 0.72;
+}
+
+.custom-cursor-pointer[data-pressed="true"] {
+  --pointer-scale: 0.88;
+}
+
+.custom-cursor-pointer[data-mode="snap"][data-visible="true"][data-pressed="true"] {
+  opacity: 0.88;
 }
 
 .ui-custom-select {
@@ -467,7 +529,8 @@ a {
     animation: none !important;
   }
 
-  .custom-cursor {
+  .custom-cursor,
+  .custom-cursor-pointer {
     display: none !important;
   }
 }

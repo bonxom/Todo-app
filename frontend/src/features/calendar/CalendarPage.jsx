@@ -85,6 +85,12 @@ const CalendarPage = () => {
     }
   };
 
+  const handleTaskDatesChange = async (taskId, dates) => {
+    const task = rawTasks.find((task) => (task._id || task.id) === taskId);
+    if (!task) throw new Error("Task not found");
+    return calendarMutations.changeTaskDates(task, dates);
+  };
+
   const handleTaskCopy = async (taskCopyPayload, nextDueDate) => {
     try {
       await calendarMutations.copyTask(taskCopyPayload, nextDueDate);
@@ -166,6 +172,7 @@ const CalendarPage = () => {
           onTaskStatusChange={handleTaskStatusChange}
           onTaskDelete={handleTaskDelete}
           onTaskDueDateChange={handleTaskDueDateChange}
+          onTaskDatesChange={handleTaskDatesChange}
           onTaskCopy={handleTaskCopy}
           onProjectStatusChange={handleProjectStatusChange}
         />
