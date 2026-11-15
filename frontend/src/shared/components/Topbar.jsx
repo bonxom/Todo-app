@@ -3,6 +3,7 @@ import { getLocale } from "../i18n";
 import NotificationBell from "@/features/notifications/components/NotificationBell";
 import LanguageSelect from "./LanguageSelect";
 import ThemeToggle from "./ThemeToggle";
+import VersionSwitcher from "./VersionSwitcher";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -165,6 +166,7 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
         <NotificationBell />
         <LanguageSelect />
         <ThemeToggle />
+        <VersionSwitcher />
         {!isAgentPage && (
           <div
             className="ui-global-task-filter"

@@ -1,0 +1,48 @@
+.v2-app {
+  --v2-canvas: #e7efef;
+  --v2-ink: #213d43;
+  --v2-muted: #526c72;
+  --v2-accent: #14675f;
+  --v2-accent-ink: #fff;
+  --v2-success: #23735c;
+  --v2-warning: #835815;
+  --v2-surface-solid: #f2f8f7;
+  --v2-glass-fill: rgb(248 255 253 / 68%);
+  --v2-shell-fill: rgb(249 255 254 / 47%);
+  --v2-glass-border: rgb(255 255 255 / 88%);
+  --v2-border: rgb(56 93 99 / 15%);
+  --v2-grid: rgb(61 106 113 / 12%);
+  --v2-input-fill: rgb(255 255 255 / 76%);
+  --v2-shadow-sm: 0 2px 5px rgb(37 77 82 / 4%);
+  --v2-shadow-md:
+    0 14px 36px -20px rgb(31 73 80 / 28%), inset 0 1px 0 rgb(255 255 255 / 95%);
+  --v2-shadow-lg:
+    0 28px 80px -28px rgb(18 58 65 / 35%), inset 0 1px 0 rgb(255 255 255 / 90%);
+  --v2-radius-card: 24px;
+  --v2-radius-control: 12px;
+  --v2-radius-pill: 9999px;
+  --v2-font-heading: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --v2-font-body:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+[data-theme="dark"] .v2-app {
+  --v2-canvas: #102126;
+  --v2-ink: #e4f3ef;
+  --v2-muted: #adc5c8;
+  --v2-accent: #a3e4ce;
+  --v2-accent-ink: #123d35;
+  --v2-success: #a3e4ce;
+  --v2-warning: #eac889;
+  --v2-surface-solid: #1c3439;
+  --v2-glass-fill: rgb(25 49 55 / 76%);
+  --v2-shell-fill: rgb(34 65 70 / 56%);
+  --v2-glass-border: rgb(205 245 237 / 25%);
+  --v2-border: rgb(190 232 229 / 15%);
+  --v2-grid: rgb(175 222 217 / 9%);
+  --v2-input-fill: rgb(15 37 42 / 88%);
+  --v2-shadow-sm: 0 2px 8px rgb(0 0 0 / 12%);
+  --v2-shadow-md:
+    0 16px 40px -16px rgb(0 0 0 / 35%), inset 0 1px 0 rgb(225 255 250 / 15%);
+  --v2-shadow-lg:
+    0 30px 90px -25px rgb(0 0 0 / 65%), inset 0 1px 0 rgb(225 255 250 / 20%);
+}

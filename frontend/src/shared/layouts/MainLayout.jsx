@@ -64,7 +64,7 @@ const MainLayout = ({ children = null, assistant = null }) => {
       className="ui-workspace-layout"
       style={{
         "--sidebar-w": `${sidebarWidth}px`,
-        "--topbar-height": `${TOPBAR_HEIGHT}px`,
+        "--topbar-base-height": `${TOPBAR_HEIGHT}px`,
       }}
     >
       <Sidebar
@@ -85,7 +85,7 @@ const MainLayout = ({ children = null, assistant = null }) => {
         className="ui-main-shell"
         style={{
           marginLeft: isDesktop ? "var(--sidebar-w)" : 0,
-          paddingTop: `${TOPBAR_HEIGHT}px`,
+          paddingTop: "var(--topbar-height)",
         }}
       >
         <div className="ui-main-content">{children || <Outlet />}</div>

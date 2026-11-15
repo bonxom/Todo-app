@@ -5,6 +5,7 @@ import AuthLayout from "./components/AuthLayout";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import { useLoginMutation, useRegisterMutation } from "./api/authMutations";
+import { resolveEntryTarget } from "@/shared/navigation/entryTarget";
 import "@/styles/auth.css";
 
 const AuthPage = () => {
@@ -28,7 +29,8 @@ const AuthPage = () => {
     try {
       setIsLoading(true);
       await loginMutation.mutateAsync(credentials);
-      navigate("/dashboard", { replace: true });
+      const target = resolveEntryTarget(location.state?.returnTo);
+      navigate(target, { replace: true });
     } catch (error) {
       console.error("Login error:", error);
       const errorMessage = error?.message || {
@@ -49,7 +51,8 @@ const AuthPage = () => {
         name: credentials.name,
         dob: credentials.dob,
       });
-      navigate("/dashboard", { replace: true });
+      const target = resolveEntryTarget(location.state?.returnTo);
+      navigate(target, { replace: true });
     } catch (error) {
       const errorMessage = error?.message || {
         key: "registrationFailedPleaseTryAgain",
@@ -62,7 +65,10 @@ const AuthPage = () => {
 
   const switchMode = (newMode) => {
     setMode(newMode);
-    navigate(newMode === "login" ? "/login" : "/register", { replace: true });
+    navigate(newMode === "login" ? "/login" : "/register", {
+      replace: true,
+      state: location.state,
+    });
   };
 
   return (
