@@ -161,6 +161,63 @@ Hy vọng thông tin này hữu ích!`;
 });
 
 describe("validateAgentResponse with DSML", () => {
+  it.each(["| |", "｜｜"])(
+    "rejects final-only leaked proposals with %s delimiters",
+    (pipes) => {
+      const content = `<${pipes}DSML${pipes}calls>
+<${pipes}DSML${pipes}invoke name="propose_tasks">
+<${pipes}DSML${pipes}parameter name="items" string="false">[{"title":"Work"}]</${pipes}DSML${pipes}parameter>
+</${pipes}DSML${pipes}invoke>
+</${pipes}DSML${pipes}calls>`;
+      expect(() =>
+        validateAgentResponse({ role: "assistant", content }, true, new Set()),
+      ).toThrow("AI provider returned an invalid response");
+    },
+  );
+
+  it.each([true, false])(
+    "rejects incomplete DSML instead of returning markup (finalOnly=%s)",
+    (finalOnly) => {
+      expect(() =>
+        validateAgentResponse(
+          { role: "assistant", content: "< | DSML | calls>..." },
+          finalOnly,
+          new Set(),
+        ),
+      ).toThrow("AI provider returned an invalid response");
+    },
+  );
+
+  it("rejects residual DSML alongside structured calls", () => {
+    expect(() =>
+      validateAgentResponse(
+        {
+          role: "assistant",
+          content: "< | DSML | calls>...",
+          tool_calls: [
+            {
+              id: "read-1",
+              type: "function",
+              function: { name: "orbit_list_categories", arguments: "{}" },
+            },
+          ],
+        },
+        false,
+        new Set(),
+      ),
+    ).toThrow("AI provider returned an invalid response");
+  });
+
+  it("allows ordinary final text mentioning DSML", () => {
+    expect(
+      validateAgentResponse(
+        { role: "assistant", content: "DSML is a tool-call format." },
+        true,
+        new Set(),
+      ).content,
+    ).toBe("DSML is a tool-call format.");
+  });
+
   it("validates and heals DSML message into structured tool_calls", () => {
     const rawContent = `< | DSML | calls>
 < | DSML | invoke name="present_ui">

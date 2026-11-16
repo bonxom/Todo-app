@@ -82,9 +82,13 @@ describe("V2Layout shell", () => {
   it("keeps navigation within implemented V2 pages", () => {
     renderLayout();
 
-    expect(
-      screen.queryByRole("link", { name: /Calendar/i }),
-    ).not.toBeInTheDocument();
+    const v2Hrefs = screen
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"))
+      .filter((href): href is string => Boolean(href?.startsWith("/v2")));
+    expect(v2Hrefs).toEqual(
+      expect.arrayContaining(["/v2/dashboard", "/v2/agents", "/v2/calendar"]),
+    );
     expect(screen.queryByText("V1")).not.toBeInTheDocument();
     for (const link of screen.getAllByRole("link")) {
       expect(link.getAttribute("href")).toMatch(/^(#|\/v2)/);

@@ -1,19 +1,40 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LayoutDashboard, LogOut, Orbit } from "lucide-react";
+import {
+  BotMessageSquare,
+  CalendarDays,
+  LayoutDashboard,
+  LogOut,
+  Orbit,
+} from "lucide-react";
 import { useLogoutMutation } from "@/features/auth/api/authMutations";
 
 export interface V2SidebarProps {
   onNavigate?: () => void;
   className?: string;
 }
+
+const NAV_ITEMS = [
+  { to: "/v2/dashboard", label: "dashboard", Icon: LayoutDashboard },
+  { to: "/v2/agents", label: "agents", Icon: BotMessageSquare },
+  { to: "/v2/calendar", label: "calendar", Icon: CalendarDays },
+] as const;
+
 export default function V2Sidebar({
   onNavigate,
   className = "",
 }: V2SidebarProps) {
   const { t } = useTranslation("v2");
   const navigate = useNavigate();
+  const location = useLocation();
   const logout = useLogoutMutation();
+
+  const activeTo = NAV_ITEMS.reduce<string | null>((active, item) => {
+    if (!location.pathname.startsWith(item.to)) return active;
+    if (active && active.length >= item.to.length) return active;
+    return item.to;
+  }, null);
+
   const signOut = async () => {
     try {
       await logout.mutateAsync();
@@ -40,16 +61,22 @@ export default function V2Sidebar({
         </span>
       </Link>
       <nav aria-label={t("dashboard")}>
-        <Link
-          to="/v2/dashboard"
-          onClick={onNavigate}
-          className="v2-nav-item"
-          data-active="true"
-          aria-current="page"
-        >
-          <LayoutDashboard size={21} strokeWidth={1.7} aria-hidden="true" />
-          <span>{t("dashboard")}</span>
-        </Link>
+        {NAV_ITEMS.map(({ to, label, Icon }) => {
+          const isActive = activeTo === to;
+          return (
+            <Link
+              key={to}
+              to={to}
+              onClick={onNavigate}
+              className="v2-nav-item"
+              data-active={isActive}
+              aria-current={isActive ? "page" : undefined}
+            >
+              <Icon size={21} strokeWidth={1.7} aria-hidden="true" />
+              <span>{t(label)}</span>
+            </Link>
+          );
+        })}
       </nav>
       <button
         type="button"

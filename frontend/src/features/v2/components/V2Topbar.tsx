@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { Menu, Sun, Moon } from "lucide-react";
 import { getLocale, setLanguage } from "@/shared/i18n";
 import { useTheme } from "@/shared/theme/theme";
@@ -11,6 +12,12 @@ export interface V2TopbarProps {
 export default function V2Topbar({ onOpenNavigation }: V2TopbarProps) {
   const { t, i18n } = useTranslation(["v2", "common"]);
   const { theme, setTheme } = useTheme();
+  const location = useLocation();
+  const sectionTitle = location.pathname.startsWith("/v2/agents")
+    ? t("v2:agents")
+    : location.pathname.startsWith("/v2/calendar")
+      ? t("v2:calendar")
+      : t("v2:dashboard");
 
   const isDark = theme === "dark";
   const formattedDate = new Intl.DateTimeFormat(getLocale(), {
@@ -34,7 +41,7 @@ export default function V2Topbar({ onOpenNavigation }: V2TopbarProps) {
         </button>
         <div>
           <p className="text-base sm:text-lg font-semibold text-[var(--v2-ink)] leading-tight">
-            {t("v2:dashboard")}
+            {sectionTitle}
           </p>
           <p className="text-xs text-[var(--v2-muted)] font-normal">
             {formattedDate}

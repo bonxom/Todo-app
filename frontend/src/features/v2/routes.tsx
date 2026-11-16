@@ -17,11 +17,71 @@ export const v2Routes: RouteObject[] = [
     children: [
       { index: true, element: <Navigate to="dashboard" replace /> },
       {
+        path: "calendar",
+        errorElement: <RouteLoadError />,
+        lazy: async () => {
+          try {
+            const mod = await import("./pages/CalendarPage");
+            return { Component: mod.default };
+          } catch (err) {
+            return { Component: () => <RouteLoadError error={err} /> };
+          }
+        },
+      },
+      {
         path: "dashboard",
         errorElement: <RouteLoadError />,
         lazy: async () => {
           try {
             const mod = await import("./pages/DashboardPage");
+            return { Component: mod.default };
+          } catch (err) {
+            return { Component: () => <RouteLoadError error={err} /> };
+          }
+        },
+      },
+      {
+        path: "agents",
+        errorElement: <RouteLoadError />,
+        lazy: async () => {
+          try {
+            const mod = await import("./pages/AgentsPage");
+            return { Component: mod.default };
+          } catch (err) {
+            return { Component: () => <RouteLoadError error={err} /> };
+          }
+        },
+      },
+      {
+        path: "agents/skills",
+        errorElement: <RouteLoadError />,
+        lazy: async () => {
+          try {
+            const mod = await import("./pages/SkillsPage");
+            return { Component: mod.default };
+          } catch (err) {
+            return { Component: () => <RouteLoadError error={err} /> };
+          }
+        },
+      },
+      {
+        path: "agents/skills/new",
+        errorElement: <RouteLoadError />,
+        lazy: async () => {
+          try {
+            const mod = await import("./pages/SkillEditorPage");
+            return { Component: mod.default };
+          } catch (err) {
+            return { Component: () => <RouteLoadError error={err} /> };
+          }
+        },
+      },
+      {
+        path: "agents/skills/:skillId",
+        errorElement: <RouteLoadError />,
+        lazy: async () => {
+          try {
+            const mod = await import("./pages/SkillEditorPage");
             return { Component: mod.default };
           } catch (err) {
             return { Component: () => <RouteLoadError error={err} /> };

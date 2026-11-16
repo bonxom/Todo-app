@@ -14,6 +14,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import V2Dialog from "./V2Dialog";
+import TaskStatusActions from "./TaskStatusActions";
 import { useTaskQuery } from "@/features/tasks/api/taskQueries";
 import { getLocale } from "@/shared/i18n";
 import type { Category, Project } from "@/shared/types/domain";
@@ -206,7 +207,8 @@ export default function TaskDetailsDialog({
           </div>
 
           {/* Footer action */}
-          <div className="pt-4 border-t border-[var(--v2-border)] flex justify-end">
+          <div className="pt-4 border-t border-[var(--v2-border)] flex flex-wrap items-center justify-between gap-3">
+            <TaskStatusActions task={task} />
             <button
               type="button"
               onClick={() => setEditing(true)}
