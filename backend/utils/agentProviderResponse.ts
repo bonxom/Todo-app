@@ -24,7 +24,6 @@ export function validateAgentResponse(
 ) {
   let normalizedValue = value;
   if (
-    !finalOnly &&
     normalizedValue &&
     typeof normalizedValue === "object" &&
     "role" in normalizedValue &&
@@ -37,7 +36,10 @@ export function validateAgentResponse(
   if (!parsed.success) throw new AppError(AI_ERROR.RESPONSE_INVALID);
   const message = parsed.data;
   const calls = message.tool_calls ?? [];
+  // Final-only responses must obey the same protocol checks as earlier
+  // rounds. Never persist unparsed or partially healed tool markup as text.
   if (
+    /<\s*\/?\s*[|｜\s]*DSML[|｜\s]/i.test(message.content ?? "") ||
     (finalOnly && calls.length) ||
     (!calls.length && !message.content?.trim())
   ) {

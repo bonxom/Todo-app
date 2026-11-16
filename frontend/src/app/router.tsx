@@ -1,8 +1,5 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import { RootGuard, PublicOnlyGuard, ProtectedGuard } from "./routeGuards";
-import MainLayout from "../shared/layouts/MainLayout";
-import { AgentChatBubble } from "../features/agent/AgentChatBubble";
-import { AgentSessionProvider } from "../features/agent/AgentSessionProvider";
 import ErrorPage from "../features/errors/ErrorPage";
 import { landingRoutes } from "../features/landing/routes";
 import { authRoutes } from "../features/auth/routes";
@@ -13,6 +10,7 @@ import { calendarRoutes } from "../features/calendar/routes";
 import { statisticsRoutes } from "../features/statistics/routes";
 import { profileRoutes } from "../features/profile/routes";
 import { errorRoutes } from "../features/errors/routes";
+import { v2Routes } from "../features/v2/routes";
 
 export const routes: RouteObject[] = [
   {
@@ -36,11 +34,10 @@ export const routes: RouteObject[] = [
     errorElement: <ErrorPage code="500" />,
     children: [
       {
-        element: (
-          <AgentSessionProvider>
-            <MainLayout assistant={<AgentChatBubble />} />
-          </AgentSessionProvider>
-        ),
+        // Code splitting: isolate V1 presentation from initial V2 bundle
+        lazy: async () => ({
+          Component: (await import("./V1RouteLayout")).default,
+        }),
         children: [
           ...taskRoutes,
           ...notificationRoutes,
@@ -79,6 +76,7 @@ export const routes: RouteObject[] = [
           },
         ],
       },
+      ...v2Routes,
     ],
   },
   ...errorRoutes,

@@ -716,6 +716,42 @@ textarea.ui-input {
   gap: 0.75rem;
 }
 
+.ui-version-switcher {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: none;
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1;
+  padding: 0 0.625rem;
+  touch-action: manipulation;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.ui-version-switcher:hover {
+  background: var(--color-surface-hover, var(--color-surface));
+  border-color: var(--color-line-hover, var(--color-line));
+  color: var(--color-accent);
+}
+
+.ui-version-switcher:focus-visible {
+  outline: 2px solid var(--ring-focus-outline);
+  outline-offset: 2px;
+}
+
 .ui-project-focus-rail {
   position: sticky;
   top: calc(4.5rem);
@@ -1324,5 +1360,33 @@ textarea.ui-input {
 @media (max-width: 420px) {
   .ui-topbar-back {
     display: none;
+  }
+}
+
+/* Accommodate the shared version switcher without squeezing V1 controls. */
+.ui-workspace-layout {
+  --topbar-height: var(--topbar-base-height, 64px);
+}
+@media (max-width: 600px) {
+  .ui-workspace-layout {
+    --topbar-height: 112px;
+  }
+  .ui-topbar {
+    height: var(--topbar-height);
+    align-content: center;
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .ui-topbar-navigation {
+    width: 100%;
+  }
+  .ui-topbar-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .ui-topbar-actions .ui-version-switcher {
+    position: absolute;
+    top: 10px;
+    right: 12px;
   }
 }

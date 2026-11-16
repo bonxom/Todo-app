@@ -1,5 +1,9 @@
 {
   "language": "Ngôn ngữ",
+  "version": {
+    "tryV2": "Thử V2",
+    "backToV1": "Về V1"
+  },
   "navigation": {
     "calendar": "Lịch",
     "todos": "Công việc",

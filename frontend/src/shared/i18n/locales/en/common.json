@@ -1,5 +1,9 @@
 {
   "language": "Language",
+  "version": {
+    "tryV2": "Try V2",
+    "backToV1": "Back to V1"
+  },
   "navigation": {
     "calendar": "Calendar",
     "todos": "Todos",

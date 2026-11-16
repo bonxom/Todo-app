@@ -52,6 +52,42 @@ const toolResults = (messages: ChatCompletionMessageParam[]) =>
     .map((m) => JSON.parse(m.content as string));
 
 describe("agentUiRuntime", () => {
+  it("rejects a leaked proposal on round six before checkpointing it", async () => {
+    const readCategories = vi
+      .spyOn(categoryService, "getAll")
+      .mockResolvedValue([]);
+    const checkpoints: ChatCompletionMessageParam[][] = [];
+    for (let i = 0; i < 5; i++) {
+      completionCreate.mockResolvedValueOnce(
+        response(call(`read-${i}`, "orbit_list_categories")),
+      );
+    }
+    completionCreate.mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content:
+              '<｜｜DSML｜｜calls><｜｜DSML｜｜invoke name="propose_tasks"><｜｜DSML｜｜parameter name="items" string="false">[{"title":"Work"}]</｜｜DSML｜｜parameter></｜｜DSML｜｜invoke></｜｜DSML｜｜calls>',
+          },
+        },
+      ],
+    });
+
+    await expect(
+      agentService.chatWithMcp("Plan next week", context, {
+        checkpoint: async (messages) => {
+          checkpoints.push(structuredClone(messages));
+        },
+      }),
+    ).rejects.toMatchObject({ code: "AI_0005" });
+    expect(completionCreate).toHaveBeenCalledTimes(6);
+    expect(completionCreate.mock.calls[5][0].tool_choice).toBe("none");
+    expect(readCategories).toHaveBeenCalledTimes(5);
+    expect(JSON.stringify(checkpoints)).not.toContain("DSML");
+    expect(JSON.stringify(checkpoints)).not.toContain('"name":"propose_tasks"');
+  });
+
   beforeEach(() => {
     vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
     vi.stubEnv("A2UI_COMPOSITION_ENABLED", "true");

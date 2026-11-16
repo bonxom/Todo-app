@@ -1,11 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/useAuthStore";
 import {
   getProtectedDecision,
   getPublicOnlyDecision,
   getRootDecision,
 } from "./guardDecisions";
+import { resolveEntryTarget } from "@/shared/navigation/entryTarget";
 
 export const AuthLoadingScreen = () => {
   const { t } = useTranslation("common");
@@ -17,6 +18,7 @@ export const AuthLoadingScreen = () => {
 };
 
 export const ProtectedGuard = () => {
+  const location = useLocation();
   const isAuthReady = useAuthStore((state) => state.isAuthReady);
   const token = useAuthStore((state) => state.token);
   const decision = getProtectedDecision({ isAuthReady, token });
@@ -26,13 +28,22 @@ export const ProtectedGuard = () => {
   }
 
   if (decision === "/login") {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{
+          returnTo: location.pathname + location.search + location.hash,
+        }}
+      />
+    );
   }
 
   return <Outlet />;
 };
 
 export const PublicOnlyGuard = () => {
+  const location = useLocation();
   const isAuthReady = useAuthStore((state) => state.isAuthReady);
   const token = useAuthStore((state) => state.token);
   const decision = getPublicOnlyDecision({ isAuthReady, token });
@@ -42,7 +53,10 @@ export const PublicOnlyGuard = () => {
   }
 
   if (decision === "/dashboard") {
-    return <Navigate to="/dashboard" replace />;
+    const returnTo = (location.state as { returnTo?: unknown } | null)
+      ?.returnTo;
+    const target = resolveEntryTarget(returnTo);
+    return <Navigate to={target} replace />;
   }
 
   return <Outlet />;
@@ -58,7 +72,8 @@ export const RootGuard = () => {
   }
 
   if (decision === "/dashboard") {
-    return <Navigate to="/dashboard" replace />;
+    const target = resolveEntryTarget();
+    return <Navigate to={target} replace />;
   }
 
   return <Outlet />;

@@ -110,7 +110,7 @@ export type TaskMutationPayload = Partial<{
   priority: TaskPriority;
   categoryId: EntityId | null;
   projectId: EntityId | null;
-  startDate: string;
+  startDate: string | null;
   dueDate: string | null;
 }>;
 
