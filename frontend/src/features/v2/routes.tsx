@@ -17,6 +17,13 @@ export const v2Routes: RouteObject[] = [
     children: [
       { index: true, element: <Navigate to="dashboard" replace /> },
       {
+        path: "notifications",
+        errorElement: <RouteLoadError />,
+        lazy: async () => ({
+          Component: (await import("./pages/NotificationsPage")).default,
+        }),
+      },
+      {
         path: "calendar",
         errorElement: <RouteLoadError />,
         lazy: async () => {

@@ -171,17 +171,15 @@ test.describe("Frontend V2 Liquid Glass & Coexistence", () => {
     ).toBeVisible();
 
     // 6. Start action on pending task
-    const pendingTaskRow = page
-      .locator("div")
-      .filter({ hasText: /^Task Item 7/ })
-      .first();
-    const startBtn = pendingTaskRow.getByRole("button", { name: /^Start$/i });
-    if (await startBtn.isVisible()) {
-      await startBtn.click();
-      await expect(
-        pendingTaskRow.getByRole("button", { name: /^Finish$/i }),
-      ).toBeVisible();
-    }
+    const pendingTaskRow = page.getByRole("listitem").filter({
+      has: page.getByRole("button", { name: "Task Item 7", exact: true }),
+    });
+    await pendingTaskRow
+      .getByRole("button", { name: "Start", exact: true })
+      .click();
+    await expect(
+      pendingTaskRow.getByRole("button", { name: "Finish", exact: true }),
+    ).toBeVisible();
 
     // 7. Open details dialog
     await page

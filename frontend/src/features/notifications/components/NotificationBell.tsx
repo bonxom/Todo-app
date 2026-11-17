@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { Bell, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,7 +17,15 @@ import type { NotificationDto } from "@/shared/types/notification";
 import NotificationList from "./NotificationList";
 import NotificationBulkActions from "./NotificationBulkActions";
 import "../notifications.css";
-function NotificationPanel({ onClose }: { onClose: () => void }) {
+function NotificationPanel({
+  onClose,
+  version,
+  top,
+}: {
+  onClose: () => void;
+  version: "v1" | "v2";
+  top: number;
+}) {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
   const panel = useRef<HTMLElement>(null);
@@ -36,14 +44,25 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
     try {
       await read.mutateAsync(item._id);
       onClose();
-      void navigate(`/dashboard?taskId=${encodeURIComponent(item.taskId)}`);
+      void navigate(
+        `${version === "v2" ? "/v2/dashboard" : "/dashboard"}?taskId=${encodeURIComponent(item.taskId)}`,
+      );
     } catch {
       /* mutation error is shown below */
     }
   };
   return createPortal(
     <div
-      className="notification-overlay"
+      className={
+        version === "v2"
+          ? "notification-overlay v2-app v2-notification-overlay"
+          : "notification-overlay"
+      }
+      style={
+        version === "v2"
+          ? ({ "--notification-top": `${top}px` } as CSSProperties)
+          : undefined
+      }
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -109,7 +128,11 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
             <p className="notification-state">{t("notifications.empty")}</p>
           ))}
         <footer>
-          <Link className="ui-focus-ring" to="/notifications" onClick={onClose}>
+          <Link
+            className="ui-focus-ring"
+            to={version === "v2" ? "/v2/notifications" : "/notifications"}
+            onClick={onClose}
+          >
             {t("notifications.viewAll")}
           </Link>
         </footer>
@@ -118,16 +141,19 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
     document.body,
   );
 }
-export default function NotificationBell() {
+export default function NotificationBell({
+  version = "v1",
+}: { version?: "v1" | "v2" } = {}) {
   const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
+  const [top, setTop] = useState(88);
   const count = useUnreadCountQuery();
   const value = count.data?.count;
   return (
     <>
       <button
         type="button"
-        className="ui-icon-button ui-focus-ring notification-trigger"
+        className={`ui-icon-button ui-focus-ring notification-trigger${version === "v2" ? " v2-btn v2-notification-trigger" : ""}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={
@@ -140,7 +166,8 @@ export default function NotificationBell() {
             ? t("notifications.loadError")
             : t("notifications.title")
         }
-        onClick={() => {
+        onClick={(event) => {
+          setTop(event.currentTarget.getBoundingClientRect().bottom + 12);
           setOpen(true);
           void count.refetch();
         }}
@@ -164,7 +191,13 @@ export default function NotificationBell() {
           </span>
         )}
       </button>
-      {open && <NotificationPanel onClose={() => setOpen(false)} />}
+      {open && (
+        <NotificationPanel
+          onClose={() => setOpen(false)}
+          version={version}
+          top={top}
+        />
+      )}
     </>
   );
 }

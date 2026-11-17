@@ -1,9 +1,10 @@
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import type { TaskStatus } from "@/shared/types/domain";
 
 export interface TaskToolbarProps {
+  onCreate: () => void;
   searchDraft: string;
   onSearchChange: (value: string) => void;
   onSubmitSearch: () => void;
@@ -12,6 +13,7 @@ export interface TaskToolbarProps {
 }
 
 export default function TaskToolbar({
+  onCreate,
   searchDraft,
   onSearchChange,
   onSubmitSearch,
@@ -33,7 +35,7 @@ export default function TaskToolbar({
         </h2>
       </div>
 
-      <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+      <div className="v2-task-tools">
         {/* Search form */}
         <form
           onSubmit={handleSubmit}
@@ -72,6 +74,14 @@ export default function TaskToolbar({
             <option value="given-up">{t("givenUp")}</option>
           </select>
         </div>
+        <button
+          type="button"
+          className="v2-btn v2-btn-primary v2-create-task"
+          onClick={onCreate}
+        >
+          <Plus size={17} aria-hidden="true" />
+          {t("newTask")}
+        </button>
       </div>
     </div>
   );

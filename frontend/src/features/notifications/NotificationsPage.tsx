@@ -16,7 +16,9 @@ import {
 import NotificationList from "./components/NotificationList";
 import NotificationBulkActions from "./components/NotificationBulkActions";
 import "./notifications.css";
-export default function NotificationsPage() {
+export default function NotificationsPage({
+  version = "v1",
+}: { version?: "v1" | "v2" } = {}) {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
   const [pageNo, setPageNo] = useState(1);
@@ -39,13 +41,17 @@ export default function NotificationsPage() {
   const open = async (item: NotificationDto) => {
     try {
       await read.mutateAsync(item._id);
-      void navigate(`/dashboard?taskId=${encodeURIComponent(item.taskId)}`);
+      void navigate(
+        `${version === "v2" ? "/v2/dashboard" : "/dashboard"}?taskId=${encodeURIComponent(item.taskId)}`,
+      );
     } catch {
       /* render mutation error */
     }
   };
   return (
-    <div className="ui-page-shell notifications-page">
+    <div
+      className={`ui-page-shell notifications-page${version === "v2" ? " v2-notifications-page" : ""}`}
+    >
       <header className="ui-workspace-heading">
         <div>
           <h1 className="ui-page-title">{t("notifications.title")}</h1>

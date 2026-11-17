@@ -105,12 +105,22 @@ test("mobile topbar controls fit the viewport", async ({ page }) => {
     .evaluateAll((elements) =>
       elements.map((el) => {
         const r = el.getBoundingClientRect();
-        return { left: r.left, right: r.right };
+        return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
       }),
     );
-  bounds.sort((a, b) => a.left - b.left);
-  for (let i = 1; i < bounds.length; i++)
-    expect(bounds[i - 1].right).toBeLessThanOrEqual(bounds[i].left + 1);
+  // V1 intentionally places its version switcher on a separate row on mobile.
+  for (let i = 0; i < bounds.length; i++) {
+    for (let j = i + 1; j < bounds.length; j++) {
+      const a = bounds[i],
+        b = bounds[j];
+      const overlaps =
+        a.left < b.right - 1 &&
+        a.right > b.left + 1 &&
+        a.top < b.bottom - 1 &&
+        a.bottom > b.top + 1;
+      expect(overlaps).toBe(false);
+    }
+  }
   for (const bound of bounds) {
     expect(bound.left).toBeGreaterThanOrEqual(0);
     expect(bound.right).toBeLessThanOrEqual(390);

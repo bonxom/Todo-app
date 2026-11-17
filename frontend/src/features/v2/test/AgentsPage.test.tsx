@@ -89,7 +89,7 @@ describe("V2 Agents page", () => {
     renderWithSession(<AgentsPage />);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: /Your agent/i }),
+      screen.getByRole("heading", { level: 1, name: "Agents" }),
     ).toBeInTheDocument();
     expect(screen.getByTestId("agent-history")).toBeInTheDocument();
     expect(screen.getByTestId("agent-context")).toBeInTheDocument();
@@ -151,7 +151,9 @@ describe("V2 assistant bubble", () => {
     await waitFor(() =>
       expect(screen.getByTestId("v2-assistant-panel")).not.toBeVisible(),
     );
-    expect(screen.getByRole("button", { name: "Open assistant" })).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: "Open assistant" }),
+    ).toHaveFocus();
   });
 
   it("renders the live chat session in the panel", async () => {

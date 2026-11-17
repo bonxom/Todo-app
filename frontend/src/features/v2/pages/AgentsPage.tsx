@@ -62,27 +62,15 @@ export default function AgentsPage() {
       <AgentDiscardDialog
         isOpen={discardPromptOpen || chat.discardRequest}
         onConfirm={
-          chat.discardRequest
-            ? () => chat.resolveDiscard(true)
-            : confirmDiscard
+          chat.discardRequest ? () => chat.resolveDiscard(true) : confirmDiscard
         }
         onCancel={
           chat.discardRequest ? () => chat.resolveDiscard(false) : cancelDiscard
         }
       />
 
-      <header className="v2-agents-heading">
-        <div>
-          <p className="v2-eyebrow">
-            <span aria-hidden="true" />
-            {t("agentsEyebrow")}
-          </p>
-          <h1>
-            {t("agentsHeading")}
-            <span>{t("agentsHeadingAccent")}</span>
-          </h1>
-          <p className="v2-heading-description">{t("agentsDescription")}</p>
-        </div>
+      <h1 className="sr-only">{t("agents")}</h1>
+      <header className="v2-agent-mobile-tools">
         <div className="v2-agents-heading-actions">
           <button
             type="button"

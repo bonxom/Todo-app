@@ -26,7 +26,7 @@ export default function TaskPagination({
   return (
     <nav
       aria-label="Pagination"
-      className="flex items-center justify-between pt-4 border-t border-[var(--v2-border)]"
+      className="v2-pagination flex items-center justify-between pt-4 border-t border-[var(--v2-border)]"
     >
       <button
         type="button"

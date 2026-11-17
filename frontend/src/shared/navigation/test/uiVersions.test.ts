@@ -16,7 +16,7 @@ describe("uiVersions", () => {
       expect(UI_VERSION_STORAGE_KEY).toBe("orbit.ui-version");
     });
 
-    it("has registered UI routes with only dashboard implemented for v2", () => {
+    it("has registered UI routes and their available version counterparts", () => {
       const dashboardRoute = UI_ROUTES.find((r) => r.id === "dashboard");
       expect(dashboardRoute).toBeDefined();
       expect(dashboardRoute?.v1).toBe("/dashboard");
@@ -205,4 +205,15 @@ describe("uiVersions", () => {
       });
     });
   });
+});
+
+it("maps notification history between versions and accepts the V2 destination", () => {
+  expect(getVersionDestination({ pathname: "/notifications" }, "v2")).toEqual({
+    to: "/v2/notifications",
+    isFallback: false,
+  });
+  expect(
+    getVersionDestination({ pathname: "/v2/notifications" }, "v1"),
+  ).toEqual({ to: "/notifications", isFallback: false });
+  expect(isSupportedProtectedPath("/v2/notifications")).toBe(true);
 });

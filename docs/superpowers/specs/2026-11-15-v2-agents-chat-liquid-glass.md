@@ -53,22 +53,22 @@ router.tsx (unchanged registration mechanism)
 
 ## 4. Behavior contract
 
-| Concern | Required behavior |
-| --- | --- |
-| Send message | Real `POST` through the existing AI mutation; identical payload/paths to V1. Errors surface inline, never swallowed. |
-| Bubble open/close | Trigger toggles panel. `Escape` closes. Focus returns to the trigger on close. Panel is removed from the a11y tree while closed (`hidden` + `aria-expanded`). |
-| Composer state | Shared with the page through the provider draft: text typed in the bubble is present on the Agents page and vice versa. |
-| Conversation selection | History selection, new conversation and discard confirmation behave as in V1 (same `useAgentNavigation` + `chat` state). |
-| `?conversation=` | Read once at layout mount as the initial conversation; later selection is explicit. |
-| Loading | Loading conversation shows a status message; empty conversation shows the starter prompts. |
-| Unavailable conversation | Explicit message plus `startNewConversation`; no blank panel. |
-| Disabled state | While `chat.locked` the composer is disabled (V1 parity). |
+| Concern                  | Required behavior                                                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Send message             | Real `POST` through the existing AI mutation; identical payload/paths to V1. Errors surface inline, never swallowed.                                          |
+| Bubble open/close        | Trigger toggles panel. `Escape` closes. Focus returns to the trigger on close. Panel is removed from the a11y tree while closed (`hidden` + `aria-expanded`). |
+| Composer state           | Shared with the page through the provider draft: text typed in the bubble is present on the Agents page and vice versa.                                       |
+| Conversation selection   | History selection, new conversation and discard confirmation behave as in V1 (same `useAgentNavigation` + `chat` state).                                      |
+| `?conversation=`         | Read once at layout mount as the initial conversation; later selection is explicit.                                                                           |
+| Loading                  | Loading conversation shows a status message; empty conversation shows the starter prompts.                                                                    |
+| Unavailable conversation | Explicit message plus `startNewConversation`; no blank panel.                                                                                                 |
+| Disabled state           | While `chat.locked` the composer is disabled (V1 parity).                                                                                                     |
 
 ## 5. Visual contract
 
 - Materials follow the refinement spec: shell glass ~45–60% light fill, frosted content panels 65–80%, near-opaque controls, 18–24px backdrop blur on major surfaces only, directional edge highlight, graded elevation.
 - Agents workspace: three inset glass columns at ≥1200px (`history 240px / conversation / context 300px`), two at ≥900px (context hidden), one below 900px (history and context collapse into toggled panels).
-- Chat bubble: 56px circular glass trigger, bottom-right, 24px inset; panel `min(380px, 100vw - 32px)` × `min(560px, 100dvh - 140px)`, radius 26px, above the topbar.
+- Chat bubble (updated 2026-11-18): glass pill launcher in the topbar; compact panel up to 420×640 at the bottom-right, 24px desktop / 12px mobile inset, radius 26px.
 - Text contrast from `--v2-ink`/`--v2-muted`; no per-row blur; no continuous animation; `prefers-reduced-motion` and no-`backdrop-filter` fallbacks honored (opaque surfaces).
 - All classes prefixed `.v2-`; no `:root` overrides; V2 stylesheet remains imported only from the lazy entry.
 
@@ -81,15 +81,15 @@ router.tsx (unchanged registration mechanism)
 
 ## 7. Acceptance criteria
 
-| ID | Condition | Evidence |
-| --- | --- | --- |
-| AC01 | `/v2/agents` renders the workspace with history, conversation and context regions | Component test + browser |
-| AC02 | Bubble trigger opens/closes the glass panel, `Escape` closes, focus returns | Component test |
+| ID   | Condition                                                                                                      | Evidence                                    |
+| ---- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| AC01 | `/v2/agents` renders the workspace with history, conversation and context regions                              | Component test + browser                    |
+| AC02 | Bubble trigger opens/closes the glass panel, `Escape` closes, focus returns                                    | Component test                              |
 | AC03 | Sending from bubble and page uses the real shared chat session (`ChatField` with `chat.send`, `chat.messages`) | Component test + manual run against backend |
-| AC04 | Sidebar exposes `Agents`, marked current on `/v2/agents` | Component test |
-| AC05 | `?conversation=` becomes the initial conversation | Code path + manual check |
-| AC06 | `pnpm run lint` and `pnpm run build` exit 0 | Command output |
-| AC07 | No file outside the allowed set changed | `git status --short` |
+| AC04 | Sidebar exposes `Agents`, marked current on `/v2/agents`                                                       | Component test                              |
+| AC05 | `?conversation=` becomes the initial conversation                                                              | Code path + manual check                    |
+| AC06 | `pnpm run lint` and `pnpm run build` exit 0                                                                    | Command output                              |
+| AC07 | No file outside the allowed set changed                                                                        | `git status --short`                        |
 
 ## 8. Known limits
 
@@ -99,17 +99,17 @@ router.tsx (unchanged registration mechanism)
 
 ## 9. Follow-up increment: bubble modes and Skills (2026-11-15)
 
-User-reported gaps after the first delivery: the bubble lacks *New chat* and its display modes (expand, side/docked chat); the Agents tab lacks Skills.
+User-reported gaps after the first delivery: the bubble lacks _New chat_ and its display modes (expand, side/docked chat); the Agents tab lacks Skills.
 
 ### 9.1 Bubble — parity with V1 `SmallChat`
 
-| Control | Behavior |
-| --- | --- |
-| New chat | `chat.newConversation()`; the discard prompt still governs an unsaved conversation; composer gains focus on success. |
-| History | Toggles a glass popover rendering the existing `RecentConversations` (`onOpen` → `chat.openConversation`). Escape closes history first, then the panel. |
-| Open in Agents | Navigates to `/v2/agents`, carrying `?conversation=<id>` when a conversation exists. |
-| Display modes | Cycle `compact → expanded → docked`. Compact: 380×560 anchored bottom-right. Expanded: `min(720px, 100vw-48px)` × `min(760px, 100dvh-120px)`. Docked: right edge, full height, `--v2-dock-width` (default 420px). |
-| Resize (docked only) | Left-edge `role="separator"` handle; pointer drag plus ArrowLeft/ArrowRight (32px steps). Minimum 320px, maximum 50vw; dragging below the minimum closes the panel (V1 parity). |
+| Control              | Behavior                                                                                                                                                                                                                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New chat             | `chat.newConversation()`; the discard prompt still governs an unsaved conversation; composer gains focus on success.                                                                                                                                                                              |
+| History              | Toggles a glass popover rendering the existing `RecentConversations` (`onOpen` → `chat.openConversation`). Escape closes history first, then the panel.                                                                                                                                           |
+| Open in Agents       | Navigates to `/v2/agents`, carrying `?conversation=<id>` when a conversation exists.                                                                                                                                                                                                              |
+| Display modes        | Toggle `compact ↔ docked` directly (updated 2026-11-18). Compact: up to 420×640, at the bottom-right of the viewport and constrained to the viewport. Docked: right-side inset glass panel using `--v2-dock-width` (default 420px); mobile uses an inset overlay. Expanded mode has been removed. |
+| Resize (docked only) | Left-edge `role="separator"` handle; pointer drag plus ArrowLeft/ArrowRight (32px steps). Minimum 320px, maximum 50vw; dragging below the minimum closes the panel (V1 parity).                                                                                                                   |
 
 State is presentation-only: no new session, no new query keys.
 
@@ -148,25 +148,22 @@ Template import dialog: lists templates from `useSkillTemplates`, shows name/des
 
 ### 9.3 Acceptance for this increment
 
-| ID | Condition |
-| --- | --- |
-| AC08 | Bubble exposes New chat, History, Open in Agents and cycles compact/expanded/docked with a keyboard-operable resize handle. |
-| AC09 | New chat creates a conversation through the existing AI mutation and focuses the composer. |
-| AC10 | Skills library lists, searches, toggles and navigates; create/edit/delete round-trip against the real API. |
-| AC11 | Skills editor enforces V1 limits, blocks dirty navigation, and surfaces 409 conflicts. |
-| AC12 | `lint`, `typecheck`, `build` and the V2 Vitest suite pass; no file outside the allowed set changes. |
+| ID   | Condition                                                                                                                     |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------- |
+| AC08 | Bubble exposes New chat, History, Open in Agents and switches compact/docked directly with a keyboard-operable resize handle. |
+| AC09 | New chat creates a conversation through the existing AI mutation and focuses the composer.                                    |
+| AC10 | Skills library lists, searches, toggles and navigates; create/edit/delete round-trip against the real API.                    |
+| AC11 | Skills editor enforces V1 limits, blocks dirty navigation, and surfaces 409 conflicts.                                        |
+| AC12 | `lint`, `typecheck`, `build` and the V2 Vitest suite pass; no file outside the allowed set changes.                           |
 
 ### 9.4 Not included
 
 Skills read-records/analytics beyond the V1 fields, skill sharing/export, template authoring, and bubble drag-to-reposition (V1 has none either).
 
-## 10. Bubble layout refinement (2026-11-15, third pass)
+## 10. Current bubble layout refinement (2026-11-18)
 
-User decision: *expanded* must open in the middle of the screen; *docked* (side chat) must push the workspace aside instead of covering it.
+The user's latest decision supersedes the earlier expanded-mode design. Only compact popup and docked side chat remain. See `2026-11-18-v2-chat-two-modes.md` for the current acceptance criteria and checks.
 
-- **Expanded** — the assistant wrapper becomes a viewport-sized layer with a soft scrim (`rgb(14 34 39 / 22%)`); the panel is centred both axes (`min(760px, 100vw−64px)` × `min(720px, 100dvh−120px)`). A click on the scrim closes the panel; clicks inside the panel do not.
-- **Docked** — the panel is a real side column: `width: var(--v2-dock-width)`, full height, attached to the right edge. `V2AgentChatBubble` reports `{open, width}` through `onDockChange`; `V2Layout` sets `data-dock="open"` and `--v2-dock-width` on `.v2-app`, and `.v2-main-area` gains `margin-right` so the shell, topbar and content shrink instead of being covered. Closing resets the margin with a 160 ms transition (`prefers-reduced-motion` disables it).
-- Resizing the dock handle moves the content in lockstep.
-- Below 900px the dock remains a full-width overlay and the margin stays 0 — a phone-width viewport has no room for a side column.
-
-Measured (1365×768): expanded centre offset `0,0`; docked content right edge 923 vs panel left 945 (22px gap, no overlap); widening the dock to 452 moves the content edge to 891; closing restores 1343; 360×800 docked stays an overlay with no horizontal scroll.
+- Compact opens at the bottom-right of the viewport; the launcher remains in the topbar.
+- Docked reserves workspace room on desktop and uses an inset overlay below 900px. Pointer/keyboard resizing remains available on desktop.
+- Both share a V2 glass shell, two-row header, V2 message colors and a rounded composer. Closing resets to compact; draft and session persist across mode changes.

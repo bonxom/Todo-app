@@ -161,6 +161,18 @@ export async function agentWorkspaceFixture(
 
     if (path === "/api/ai/chat-mcp" && method === "POST") {
       const payload = route.request().postDataJSON();
+      // Mirror persisted history so the client's post-send refresh keeps the reply.
+      const timestamp = new Date().toISOString();
+      const replyText = "Phản hồi mẫu từ Orbit Agent cho: " + payload.userInput;
+      defaultSnapshot.messages.push(
+        {
+          id: `user-${Date.now()}`,
+          sender: "user",
+          text: payload.userInput,
+          timestamp,
+        },
+        { id: `bot-${Date.now()}`, sender: "bot", text: replyText, timestamp },
+      );
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -169,7 +181,7 @@ export async function agentWorkspaceFixture(
           status: "completed",
           conversationId: payload.conversationId || activeConvId,
           requestId: payload.requestId || "req-reply",
-          data: "Phản hồi mẫu từ Orbit Agent cho: " + payload.userInput,
+          data: replyText,
           activities: [
             {
               id: "act-new-" + Date.now(),

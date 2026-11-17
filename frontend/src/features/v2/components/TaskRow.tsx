@@ -132,56 +132,7 @@ export default function TaskRow({ task, onOpen, actions }: TaskRowProps) {
 
   return (
     <div className="v2-task-row" role="listitem">
-      <div className="space-y-1.5 flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Status badge */}
-          <span
-            data-status={task.status}
-            className={`v2-status inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-              task.status === "completed"
-                ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                : task.status === "in-progress"
-                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                  : task.status === "given-up"
-                    ? "bg-gray-500/10 text-gray-500 dark:text-gray-400"
-                    : "bg-[var(--v2-accent)]/10 text-[var(--v2-accent)]"
-            }`}
-          >
-            <StatusIcon size={12} aria-hidden="true" />
-            <span>
-              {t(
-                task.status === "in-progress"
-                  ? "inProgress"
-                  : task.status === "given-up"
-                    ? "givenUp"
-                    : task.status,
-              )}
-            </span>
-          </span>
-
-          {/* Priority */}
-          <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 text-[var(--v2-muted)]">
-            {t(`priority${task.priority}`)}
-          </span>
-
-          {/* Project tag */}
-          {projectName && (
-            <span className="inline-flex items-center gap-1 text-xs text-[var(--v2-muted)]">
-              <FolderKanban size={12} aria-hidden="true" />
-              <span>{projectName}</span>
-            </span>
-          )}
-
-          {/* Category tag */}
-          {categoryName && (
-            <span className="inline-flex items-center gap-1 text-xs text-[var(--v2-muted)]">
-              <Tag size={12} aria-hidden="true" />
-              <span>{categoryName}</span>
-            </span>
-          )}
-        </div>
-
-        {/* Task Title */}
+      <div className="v2-task-identity">
         <button
           type="button"
           onClick={() => onOpen(taskId)}
@@ -189,23 +140,49 @@ export default function TaskRow({ task, onOpen, actions }: TaskRowProps) {
         >
           {task.title}
         </button>
-
-        {/* Due date */}
-        <div className="flex items-center gap-1.5 text-xs text-[var(--v2-muted)]">
-          <CalendarIcon size={12} aria-hidden="true" />
-          <span>{formattedDueDate}</span>
-        </div>
-
-        {/* Inline action error */}
-        {actionError && (
-          <p className="text-xs text-red-500 font-medium pt-1">{actionError}</p>
+        {(projectName || categoryName) && (
+          <div className="v2-task-context">
+            {projectName && (
+              <span>
+                <FolderKanban size={12} aria-hidden="true" />
+                {projectName}
+              </span>
+            )}
+            {categoryName && (
+              <span>
+                <Tag size={12} aria-hidden="true" />
+                {categoryName}
+              </span>
+            )}
+          </div>
         )}
       </div>
-
-      {/* Action buttons slot */}
-      <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
+      <span data-status={task.status} className="v2-status">
+        <StatusIcon size={13} aria-hidden="true" />
+        {t(
+          task.status === "in-progress"
+            ? "inProgress"
+            : task.status === "given-up"
+              ? "givenUp"
+              : task.status,
+        )}
+      </span>
+      <span className="v2-task-priority" data-priority={task.priority}>
+        <span aria-hidden="true" />
+        {t(`priority${task.priority}`)}
+      </span>
+      <div className="v2-task-due">
+        <CalendarIcon size={13} aria-hidden="true" />
+        <span>{formattedDueDate}</span>
+      </div>
+      <div className="v2-task-row-actions">
         {actions !== undefined ? actions : renderDefaultAction()}
       </div>
+      {actionError && (
+        <p className="v2-task-action-error" role="alert">
+          {actionError}
+        </p>
+      )}
     </div>
   );
 }
