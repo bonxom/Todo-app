@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { Plus, ArrowUpRight } from "lucide-react";
 import TaskEditor from "../components/TaskEditor";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -60,27 +59,7 @@ export default function DashboardPage() {
 
   return (
     <div data-testid="v2-dashboard-page" className="v2-dashboard">
-      <section className="v2-dashboard-heading">
-        <div>
-          <p className="v2-eyebrow">
-            <span />
-            {t("workspaceLabel")}
-          </p>
-          <h1>
-            {t("focusHeading")}
-            <span>{t("focusHeadingAccent")}</span>
-          </h1>
-          <p className="v2-heading-description">{t("focusDescription")}</p>
-        </div>
-        <button
-          className="v2-btn v2-btn-primary v2-new-task"
-          onClick={() => setIsCreating(true)}
-        >
-          <Plus size={19} aria-hidden="true" />
-          {t("newTask")}
-          <ArrowUpRight size={16} aria-hidden="true" />
-        </button>
-      </section>
+      <h1 className="sr-only">{t("dashboard")}</h1>
       {/* Summary Statistics */}
       <DashboardSummary
         stats={statsQuery.data}
@@ -96,6 +75,7 @@ export default function DashboardPage() {
           onSubmitSearch={submitSearch}
           status={status}
           onStatusChange={setStatus}
+          onCreate={() => setIsCreating(true)}
         />
 
         {/* Task List */}

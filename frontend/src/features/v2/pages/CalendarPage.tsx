@@ -1,12 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  X,
-} from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { useCalendarTasksQuery } from "@/features/tasks/api/taskQueries";
 import { useCalendarMutations } from "@/features/calendar/api/useCalendarMutations";
 import {
@@ -158,8 +152,7 @@ export default function CalendarPage() {
     if (!task) return;
     const source = task.dueDate ? new Date(task.dueDate) : null;
     const targetMinute =
-      minute ??
-      (source ? source.getHours() * 60 + source.getMinutes() : 0);
+      minute ?? (source ? source.getHours() * 60 + source.getMinutes() : 0);
     const next = new Date(target);
     next.setHours(Math.floor(targetMinute / 60), targetMinute % 60, 0, 0);
 
@@ -167,29 +160,21 @@ export default function CalendarPage() {
     try {
       await calendarMutations.changeTaskDueDate(task, toISOStringLocal(next));
     } catch (err) {
-      setMoveError(
-        err instanceof Error ? err.message : t("errorMovingTask"),
-      );
+      setMoveError(err instanceof Error ? err.message : t("errorMovingTask"));
     }
   };
   const selectedTasks = selectedDate ? dayTasks(tasksByDay, selectedDate) : [];
 
   return (
     <div className="v2-calendar" data-testid="v2-calendar-page">
-      <header className="v2-agents-heading">
-        <div>
-          <p className="v2-eyebrow">
-            <span aria-hidden="true" />
-            {t("calendarEyebrow")}
-          </p>
-          <h1>
-            {t("calendarHeading")}
-            <span>{t("calendarHeadingAccent")}</span>
-          </h1>
-          <p className="v2-heading-description">{t("calendarDescription")}</p>
-        </div>
+      <h1 className="sr-only">{t("calendar")}</h1>
+      <header className="v2-page-actions">
         <div className="v2-agents-heading-actions">
-          <div className="v2-calendar-nav" role="group" aria-label={t("calendar")}>
+          <div
+            className="v2-calendar-nav"
+            role="group"
+            aria-label={t("calendar")}
+          >
             <button
               type="button"
               className="v2-btn v2-calendar-nav-btn"
@@ -352,6 +337,11 @@ export default function CalendarPage() {
                       <button
                         type="button"
                         className="v2-calendar-day"
+                        aria-current={isToday ? "date" : undefined}
+                        aria-pressed={
+                          selectedDate !== null &&
+                          dayKey(selectedDate) === dayKey(date)
+                        }
                         onClick={() => openDay(date)}
                         aria-label={`${fullDateFormat.format(date)} · ${tasks.length} ${t("tasks")}`}
                       >
@@ -378,7 +368,9 @@ export default function CalendarPage() {
                               title={task.title}
                             >
                               {task.dueDate && (
-                                <time>{timeFormat.format(new Date(task.dueDate))}</time>
+                                <time>
+                                  {timeFormat.format(new Date(task.dueDate))}
+                                </time>
                               )}
                               <span>{task.title}</span>
                             </button>
@@ -442,7 +434,9 @@ export default function CalendarPage() {
                             onClick={() => setSelectedTaskId(task._id)}
                           >
                             {task.dueDate && (
-                              <time>{timeFormat.format(new Date(task.dueDate))}</time>
+                              <time>
+                                {timeFormat.format(new Date(task.dueDate))}
+                              </time>
                             )}
                             <span>{task.title}</span>
                           </button>

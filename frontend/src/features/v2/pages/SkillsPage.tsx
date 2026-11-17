@@ -41,9 +41,7 @@ function SkillsLibrary() {
     const list = skills ?? [];
     if (!needle) return list;
     return list.filter((skill) =>
-      `${skill.name} ${skill.description}`
-        .toLocaleLowerCase()
-        .includes(needle),
+      `${skill.name} ${skill.description}`.toLocaleLowerCase().includes(needle),
     );
   }, [skills, query]);
 
@@ -68,17 +66,8 @@ function SkillsLibrary() {
 
   return (
     <div className="v2-skills" data-testid="v2-skills-page">
-      <header className="v2-agents-heading">
-        <div>
-          <p className="v2-eyebrow">
-            <span aria-hidden="true" />
-            {t("agentsEyebrow")}
-          </p>
-          <h1>
-            {tAgent("personalSkills")}
-            <span>{tAgent("customizeHowAgentWorksWithYou")}</span>
-          </h1>
-        </div>
+      <h1 className="sr-only">{tAgent("personalSkills")}</h1>
+      <header className="v2-page-actions">
         <div className="v2-agents-heading-actions">
           <button
             type="button"
@@ -123,7 +112,10 @@ function SkillsLibrary() {
         </div>
       )}
 
-      <section className="v2-agent-panel v2-skills-library" aria-label={tAgent("personalSkillsLibrary")}>
+      <section
+        className="v2-agent-panel v2-skills-library"
+        aria-label={tAgent("personalSkillsLibrary")}
+      >
         <div className="v2-skills-toolbar">
           <div>
             <h2>

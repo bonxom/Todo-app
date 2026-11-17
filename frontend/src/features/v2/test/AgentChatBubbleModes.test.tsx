@@ -66,13 +66,15 @@ describe("V2 assistant bubble modes", () => {
     vi.clearAllMocks();
   });
 
-  it("opens with the chat actions and cycles compact → expanded → docked", async () => {
+  it("opens with the chat actions and switches directly between compact and docked", async () => {
     const user = userEvent.setup();
     const { container } = renderBubble();
 
     await user.click(screen.getByRole("button", { name: "Open assistant" }));
 
-    expect(screen.getByRole("button", { name: "New chat" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "New chat" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "History" })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Open in Agents" }),
@@ -81,12 +83,9 @@ describe("V2 assistant bubble modes", () => {
     const shell = container.querySelector(".v2-assistant");
     expect(shell).toHaveAttribute("data-mode", "compact");
 
-    await user.click(screen.getByRole("button", { name: "Expand chat" }));
-    expect(shell).toHaveAttribute("data-mode", "expanded");
     expect(
-      screen.getByRole("button", { name: "Dock chat to the side" }),
-    ).toBeInTheDocument();
-
+      screen.queryByRole("button", { name: "Expand chat" }),
+    ).not.toBeInTheDocument();
     await user.click(
       screen.getByRole("button", { name: "Dock chat to the side" }),
     );
@@ -102,7 +101,6 @@ describe("V2 assistant bubble modes", () => {
     const { container } = renderBubble();
 
     await user.click(screen.getByRole("button", { name: "Open assistant" }));
-    await user.click(screen.getByRole("button", { name: "Expand chat" }));
     await user.click(
       screen.getByRole("button", { name: "Dock chat to the side" }),
     );
@@ -148,7 +146,6 @@ describe("V2 assistant bubble modes", () => {
     await user.click(screen.getByRole("button", { name: "Open assistant" }));
     expect(onDockChange).toHaveBeenLastCalledWith(false, 420);
 
-    await user.click(screen.getByRole("button", { name: "Expand chat" }));
     await user.click(
       screen.getByRole("button", { name: "Dock chat to the side" }),
     );
@@ -173,4 +170,23 @@ describe("V2 assistant bubble modes", () => {
     await user.keyboard("{Escape}");
     expect(screen.getByTestId("v2-assistant-panel")).not.toBeVisible();
   });
+});
+
+it("Escape from docked reopens as compact and restores the launcher focus", async () => {
+  resetTestSession();
+  const user = userEvent.setup();
+  const { container } = renderBubble();
+  await user.click(screen.getByRole("button", { name: "Open assistant" }));
+  await user.click(
+    screen.getByRole("button", { name: "Dock chat to the side" }),
+  );
+  await user.keyboard("{Escape}");
+  await expect(
+    screen.getByRole("button", { name: "Open assistant" }),
+  ).toHaveFocus();
+  await user.click(screen.getByRole("button", { name: "Open assistant" }));
+  expect(container.querySelector(".v2-assistant")).toHaveAttribute(
+    "data-mode",
+    "compact",
+  );
 });

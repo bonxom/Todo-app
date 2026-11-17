@@ -9,12 +9,18 @@ import V2Dialog from "../components/V2Dialog";
 import V2AgentChatBubble from "../components/V2AgentChatBubble";
 import "../styles/tokens.css";
 import "../styles/v2.css";
+import "../styles/workspace.css";
+import "../styles/topbar.css";
+import "../styles/assistant.css";
 
 export default function V2Layout() {
   const { t } = useTranslation("v2");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const initialConversationId = searchParams.get("conversation") || undefined;
+  const [assistantTarget, setAssistantTarget] = useState<HTMLDivElement | null>(
+    null,
+  );
   const [dock, setDock] = useState({ open: false, width: 420 });
   const handleDockChange = useCallback(
     (open: boolean, width: number) => setDock({ open, width }),
@@ -53,7 +59,10 @@ export default function V2Layout() {
 
           {/* Main Content Area */}
           <div className="v2-main-area">
-            <V2Topbar onOpenNavigation={() => setIsDrawerOpen(true)} />
+            <V2Topbar
+              onOpenNavigation={() => setIsDrawerOpen(true)}
+              assistantSlotRef={setAssistantTarget}
+            />
             <main
               id="v2-main-content"
               className="v2-content-wrapper"
@@ -64,7 +73,10 @@ export default function V2Layout() {
           </div>
         </div>
 
-        <V2AgentChatBubble onDockChange={handleDockChange} />
+        <V2AgentChatBubble
+          onDockChange={handleDockChange}
+          triggerContainer={assistantTarget}
+        />
       </div>
     </AgentSessionProvider>
   );

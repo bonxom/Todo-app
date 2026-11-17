@@ -129,15 +129,24 @@ export default function TaskCollection({
   }
 
   return (
-    <div className="v2-task-list" role="list">
-      {tasks.map((task) => (
-        <TaskRow
-          key={task._id || task.id}
-          task={task}
-          onOpen={onOpenTask}
-          actions={renderActions?.(task)}
-        />
-      ))}
-    </div>
+    <>
+      <div className="v2-task-columns" aria-hidden="true">
+        <span>{t("title")}</span>
+        <span>{t("status")}</span>
+        <span>{t("priority")}</span>
+        <span>{t("dueDate")}</span>
+        <span />
+      </div>
+      <div className="v2-task-list" role="list">
+        {tasks.map((task) => (
+          <TaskRow
+            key={task._id || task.id}
+            task={task}
+            onOpen={onOpenTask}
+            actions={renderActions?.(task)}
+          />
+        ))}
+      </div>
+    </>
   );
 }

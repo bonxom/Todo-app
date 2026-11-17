@@ -1,0 +1,334 @@
+/* A single family of glass lenses, following the topbar reference. */
+.v2-topbar-actions,
+.v2-topbar-utilities,
+.v2-topbar-primary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.v2-topbar-actions {
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.v2-assistant-slot {
+  display: flex;
+}
+
+.v2-app .v2-topbar .v2-btn,
+.v2-app .v2-topbar .v2-assistant-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  width: auto;
+  height: 44px;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  border: 1px solid var(--v2-glass-border);
+  color: var(--v2-ink);
+  background: linear-gradient(
+    150deg,
+    rgb(255 255 255 / 66%),
+    rgb(255 255 255 / 22%) 62%,
+    rgb(230 246 243 / 38%)
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 95%),
+    inset 0 -1px 0 rgb(60 100 105 / 8%),
+    0 3px 5px rgb(37 77 82 / 5%),
+    0 9px 18px -12px rgb(37 77 82 / 38%);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+[data-theme="dark"] .v2-topbar .v2-btn,
+[data-theme="dark"] .v2-topbar .v2-assistant-trigger {
+  background: linear-gradient(
+    150deg,
+    rgb(99 141 141 / 36%),
+    rgb(40 66 72 / 28%) 62%,
+    rgb(66 109 99 / 28%)
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(224 255 249 / 26%),
+    inset 0 -1px 0 rgb(0 0 0 / 22%),
+    0 4px 7px rgb(0 0 0 / 10%),
+    0 12px 22px -14px rgb(0 0 0 / 50%);
+}
+
+.v2-app .v2-topbar .v2-assistant-trigger-label {
+  display: inline;
+}
+
+.v2-app .v2-topbar .v2-notification-trigger {
+  width: 44px;
+  padding: 10px;
+  flex: 0 0 44px;
+  overflow: visible;
+}
+
+.v2-notification-trigger .notification-badge {
+  top: -3px;
+  right: -3px;
+  min-width: 19px;
+  padding: 2px 5px;
+  border: 2px solid var(--v2-canvas);
+  background: #c7473c;
+  color: #fff;
+  font-size: 10px;
+  box-shadow: 0 2px 5px rgb(93 27 22 / 15%);
+}
+
+.v2-topbar .v2-assistant-pulse {
+  top: 4px;
+  right: 6px;
+  background: var(--v2-accent);
+}
+
+@media (hover: hover) {
+  .v2-app .v2-topbar .v2-btn:hover,
+  .v2-app .v2-topbar .v2-assistant-trigger:hover {
+    box-shadow:
+      inset 0 1px 0 var(--v2-glass-border),
+      0 4px 10px rgb(37 77 82 / 10%),
+      0 12px 22px -12px rgb(37 77 82 / 24%);
+    background-color: var(--v2-shell-fill);
+  }
+}
+
+/* The launcher lives in the topbar; its compact panel opens bottom-right. */
+.v2-app .v2-assistant[data-mode="compact"] {
+  top: auto;
+  right: 24px;
+  bottom: 24px;
+  left: auto;
+  align-items: flex-end;
+}
+
+.v2-assistant[data-mode="compact"] .v2-assistant-panel {
+  max-height: calc(100dvh - 48px);
+}
+
+/* The shared V1 notification UI receives V2 tokens, including inside its body portal. */
+.v2-notification-overlay,
+.v2-notifications-page {
+  --color-text: var(--v2-ink);
+  --color-text-muted: var(--v2-muted);
+  --color-accent: var(--v2-accent);
+  --color-accent-soft: color-mix(
+    in srgb,
+    var(--v2-accent) 10%,
+    var(--v2-surface-solid)
+  );
+  --color-surface: var(--v2-surface-solid);
+  --color-surface-muted: var(--v2-shell-fill);
+  --color-line: var(--v2-border);
+  --color-danger: #ab3c35;
+  --color-danger-soft: rgb(171 60 53 / 9%);
+}
+
+[data-theme="dark"] .v2-notification-overlay,
+[data-theme="dark"] .v2-notifications-page {
+  --color-danger: #f3a9a2;
+}
+
+.v2-app.v2-notification-overlay {
+  z-index: 2100;
+  padding: 0;
+  background: rgb(14 34 39 / 12%);
+}
+
+.v2-notification-overlay .notification-panel {
+  top: var(--notification-top, 88px);
+  right: 24px;
+  max-height: calc(100dvh - var(--notification-top, 88px) - 16px);
+  border: 1px solid var(--v2-glass-border);
+  border-radius: 24px;
+  background: var(--v2-glass-fill);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  box-shadow: var(--v2-shadow-lg);
+  overscroll-behavior: contain;
+}
+
+.v2-notification-overlay .ui-btn-secondary,
+.v2-notifications-page .ui-btn-secondary {
+  min-height: 44px;
+  border: 1px solid var(--v2-border);
+  border-radius: 9999px;
+  background: var(--v2-input-fill);
+  color: var(--v2-ink);
+}
+
+.v2-notification-overlay .notification-delete,
+.v2-notifications-page .notification-delete {
+  color: var(--color-danger);
+}
+
+.v2-notification-overlay .ui-icon-button,
+.v2-notifications-page .ui-icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+}
+
+.v2-notification-overlay :focus-visible,
+.v2-notifications-page :focus-visible {
+  outline: 2px solid var(--v2-accent);
+  outline-offset: 3px;
+}
+
+.v2-notifications-page {
+  max-width: none;
+  padding: 0;
+}
+
+.v2-notifications-page .ui-page-title {
+  font-family: var(--v2-font-heading);
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+
+.v2-notifications-page .notification-history {
+  background: var(--v2-glass-fill);
+  border-color: var(--v2-glass-border);
+  border-radius: 24px;
+  box-shadow: var(--v2-shadow-md);
+}
+
+@media (max-width: 767px) {
+  .v2-app .v2-topbar {
+    gap: 12px;
+  }
+
+  .v2-topbar > div:first-child,
+  .v2-topbar > .v2-topbar-actions:last-child {
+    width: 100%;
+  }
+
+  .v2-topbar > .v2-topbar-actions:last-child {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .v2-topbar-utilities,
+  .v2-topbar-primary {
+    gap: 8px;
+  }
+
+  .v2-app .v2-topbar .v2-btn {
+    padding-inline: 12px;
+  }
+
+  .v2-topbar .ui-version-switcher {
+    width: 44px;
+  }
+
+  .v2-topbar .ui-version-switcher svg {
+    display: none;
+  }
+
+  .v2-topbar .ui-version-switcher > span {
+    font-size: 0;
+  }
+
+  .v2-topbar .ui-version-switcher > span::after {
+    content: "V1";
+    font-size: 12px;
+  }
+
+  .v2-app .v2-assistant[data-mode="compact"] {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .v2-notification-overlay .notification-panel {
+    right: 12px;
+  }
+}
+
+@media (max-width: 359px) {
+  .v2-app .v2-topbar .v2-assistant-trigger {
+    width: 44px;
+    padding: 10px;
+  }
+
+  .v2-app .v2-topbar .v2-assistant-trigger-label {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .v2-app .v2-topbar .v2-btn,
+  .v2-app .v2-topbar .v2-assistant-trigger,
+  .v2-notification-overlay .notification-panel {
+    background: var(--v2-surface-solid);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-notification-overlay *,
+  .v2-notification-overlay *::before,
+  .v2-notification-overlay *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .v2-app .v2-topbar .v2-btn,
+  .v2-app .v2-topbar .v2-assistant-trigger,
+  .v2-notification-overlay .notification-panel,
+  .v2-notifications-page .notification-history {
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid ButtonText;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .v2-notification-trigger .notification-badge {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+
+@media (min-width: 1024px) {
+  .v2-app .v2-topbar .v2-mobile-menu {
+    display: none;
+  }
+}
+
+.v2-notification-overlay .notification-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.v2-notification-overlay .notification-panel > header,
+.v2-notification-overlay .notification-panel > footer,
+.v2-notification-overlay .notification-bulk-actions {
+  flex-shrink: 0;
+}
+
+.v2-notification-overlay .notification-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

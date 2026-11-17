@@ -237,7 +237,7 @@ export async function installV2Fixture(
     }
 
     // Tasks Mutations: start / finish
-    if (path.endsWith("/start") && method === "PATCH") {
+    if (path.endsWith("/start") && method === "PUT") {
       const parts = path.split("/");
       const id = parts[parts.length - 2];
       const task = tasks.find((t) => t._id === id);
@@ -256,7 +256,7 @@ export async function installV2Fixture(
       });
     }
 
-    if (path.endsWith("/finish") && method === "PATCH") {
+    if (path.endsWith("/finish") && method === "PUT") {
       const parts = path.split("/");
       const id = parts[parts.length - 2];
       const task = tasks.find((t) => t._id === id);

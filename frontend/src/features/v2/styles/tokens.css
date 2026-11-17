@@ -11,7 +11,7 @@
   --v2-shell-fill: rgb(249 255 254 / 47%);
   --v2-glass-border: rgb(255 255 255 / 88%);
   --v2-border: rgb(56 93 99 / 15%);
-  --v2-grid: rgb(61 106 113 / 12%);
+  --v2-grid: rgb(61 106 113 / 4%);
   --v2-input-fill: rgb(255 255 255 / 76%);
   --v2-shadow-sm: 0 2px 5px rgb(37 77 82 / 4%);
   --v2-shadow-md:
@@ -38,7 +38,7 @@
   --v2-shell-fill: rgb(34 65 70 / 56%);
   --v2-glass-border: rgb(205 245 237 / 25%);
   --v2-border: rgb(190 232 229 / 15%);
-  --v2-grid: rgb(175 222 217 / 9%);
+  --v2-grid: rgb(175 222 217 / 3%);
   --v2-input-fill: rgb(15 37 42 / 88%);
   --v2-shadow-sm: 0 2px 8px rgb(0 0 0 / 12%);
   --v2-shadow-md:

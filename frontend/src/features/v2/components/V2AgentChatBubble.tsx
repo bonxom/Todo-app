@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   ArrowUpRight,
   History,
-  Maximize2,
-  MessageSquare,
-  Minimize2,
+  Sparkles,
+  PanelRightClose,
   PanelRight,
   Plus,
   X,
@@ -16,28 +16,29 @@ import ChatField from "@/features/tasks/components/chat/ChatField";
 import RecentConversations from "@/features/tasks/components/chat/RecentConversations";
 import "@/styles/chat.css";
 
-const MODES = ["compact", "expanded", "docked"] as const;
-type DisplayMode = (typeof MODES)[number];
+type DisplayMode = "compact" | "docked";
 
 const MIN_DOCK_WIDTH = 320;
 const DEFAULT_DOCK_WIDTH = 420;
 const DOCK_STEP = 32;
 
-const modeIcon: Record<DisplayMode, typeof Maximize2> = {
-  compact: Maximize2,
-  expanded: PanelRight,
-  docked: Minimize2,
+const modeIcon: Record<DisplayMode, typeof PanelRight> = {
+  compact: PanelRight,
+  docked: PanelRightClose,
 };
 
 export interface V2AgentChatBubbleProps {
+  triggerContainer?: HTMLElement | null;
   onDockChange?: (open: boolean, width: number) => void;
 }
 
 export default function V2AgentChatBubble({
   onDockChange,
+  triggerContainer,
 }: V2AgentChatBubbleProps = {}) {
   const { t } = useTranslation("v2");
   const navigate = useNavigate();
+  const location = useLocation();
   const { chat } = useAgentSession();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<DisplayMode>("compact");
@@ -74,13 +75,14 @@ export default function V2AgentChatBubble({
         return;
       }
       setIsOpen(false);
+      setMode("compact");
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, historyOpen]);
 
   const cycleMode = () => {
-    setMode((current) => MODES[(MODES.indexOf(current) + 1) % MODES.length]);
+    setMode((current) => (current === "compact" ? "docked" : "compact"));
   };
 
   const close = () => {
@@ -108,7 +110,9 @@ export default function V2AgentChatBubble({
       close();
       return;
     }
-    setDockWidth(Math.min(Math.max(width, MIN_DOCK_WIDTH), window.innerWidth / 2));
+    setDockWidth(
+      Math.min(Math.max(width, MIN_DOCK_WIDTH), window.innerWidth / 2),
+    );
   };
 
   useEffect(() => {
@@ -116,12 +120,40 @@ export default function V2AgentChatBubble({
   }, [onDockChange, mode, isOpen, dockWidth]);
 
   const modeLabel = {
-    compact: t("expandChat"),
-    expanded: t("dockChat"),
+    compact: t("dockChat"),
     docked: t("compactChat"),
   }[mode];
   const ModeIcon = modeIcon[mode];
   const busy = chat.loading || chat.sending || Boolean(chat.pending);
+
+  const isFullChatPage =
+    Boolean(triggerContainer) && location.pathname === "/v2/agents";
+  const trigger = (
+    <button
+      ref={triggerRef}
+      type="button"
+      className="v2-assistant-trigger"
+      onClick={() => {
+        if (isFullChatPage) {
+          document
+            .querySelector<HTMLTextAreaElement>(".v2-agent-center textarea")
+            ?.focus();
+          return;
+        }
+        if (isOpen) close();
+        else setIsOpen(true);
+      }}
+      aria-label={t("openAssistant")}
+      aria-expanded={isFullChatPage ? undefined : isOpen}
+      aria-haspopup={isFullChatPage ? undefined : "dialog"}
+      aria-controls={isFullChatPage ? undefined : "v2-assistant-panel"}
+      data-testid="v2-assistant-trigger"
+    >
+      <Sparkles size={18} strokeWidth={1.7} aria-hidden="true" />
+      <span className="v2-assistant-trigger-label">{t("assistant")}</span>
+      {chat.sending && <span className="v2-assistant-pulse" />}
+    </button>
+  );
 
   return (
     <div
@@ -132,21 +164,8 @@ export default function V2AgentChatBubble({
         if (event.target === event.currentTarget) close();
       }}
     >
-      {!isOpen && (
-        <button
-          ref={triggerRef}
-          type="button"
-          className="v2-assistant-trigger"
-          onClick={() => setIsOpen(true)}
-          aria-label={t("openAssistant")}
-          aria-expanded={false}
-          aria-controls="v2-assistant-panel"
-          data-testid="v2-assistant-trigger"
-        >
-          <MessageSquare size={22} strokeWidth={1.8} aria-hidden="true" />
-          {chat.sending && <span className="v2-assistant-pulse" />}
-        </button>
-      )}
+      {!triggerContainer && !isOpen && trigger}
+      {triggerContainer && createPortal(trigger, triggerContainer)}
 
       <div
         ref={panelRef}
@@ -178,14 +197,17 @@ export default function V2AgentChatBubble({
               event.preventDefault();
               dragRef.current = {
                 startX: event.clientX,
-                startWidth: panelRef.current?.getBoundingClientRect().width ?? dockWidth,
+                startWidth:
+                  panelRef.current?.getBoundingClientRect().width ?? dockWidth,
               };
               event.currentTarget.setPointerCapture(event.pointerId);
             }}
             onPointerMove={(event) => {
               if (!dragRef.current) return;
               resizeTo(
-                dragRef.current.startWidth + dragRef.current.startX - event.clientX,
+                dragRef.current.startWidth +
+                  dragRef.current.startX -
+                  event.clientX,
               );
             }}
             onPointerUp={() => {
@@ -207,65 +229,77 @@ export default function V2AgentChatBubble({
         )}
 
         <header className="v2-assistant-header">
-          <div>
-            <p className="v2-assistant-title">{t("agents")}</p>
-            <p className="v2-assistant-subtitle">{t("assistantSubtitle")}</p>
-          </div>
-          <div className="v2-assistant-actions">
-            <button
-              type="button"
-              className="v2-btn v2-assistant-action"
-              onClick={() => void handleNewChat()}
-              disabled={busy}
-              aria-label={t("newChat")}
-              title={t("newChat")}
-            >
-              <Plus size={16} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="v2-btn v2-assistant-action"
-              onClick={() => setHistoryOpen((open) => !open)}
-              aria-expanded={historyOpen}
-              aria-controls="v2-assistant-history"
-              aria-label={t("chatHistory")}
-              title={t("chatHistory")}
-            >
-              <History size={16} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="v2-btn v2-assistant-action"
-              onClick={() => {
-                close();
-                navigate(
-                  chat.conversationId
-                    ? `/v2/agents?conversation=${chat.conversationId}`
-                    : "/v2/agents",
-                );
-              }}
-              aria-label={t("openInAgents")}
-              title={t("openInAgents")}
-            >
-              <ArrowUpRight size={16} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="v2-btn v2-assistant-action"
-              onClick={cycleMode}
-              aria-label={modeLabel}
-              title={modeLabel}
-            >
-              <ModeIcon size={16} aria-hidden="true" />
-            </button>
+          <div className="v2-assistant-heading">
+            <div className="v2-assistant-identity">
+              <span className="v2-assistant-brand">
+                <Sparkles size={20} aria-hidden="true" />
+              </span>
+              <div>
+                <p className="v2-assistant-title">{t("assistant")}</p>
+                <p className="v2-assistant-subtitle">
+                  {t("assistantSubtitle")}
+                </p>
+              </div>
+            </div>
             <button
               type="button"
               className="v2-btn v2-assistant-close"
               onClick={close}
               aria-label={t("closeAssistant")}
             >
-              <X size={16} aria-hidden="true" />
+              <X size={18} aria-hidden="true" />
             </button>
+          </div>
+          <div className="v2-assistant-toolbar">
+            <button
+              type="button"
+              className="v2-btn v2-assistant-new"
+              onClick={() => void handleNewChat()}
+              disabled={busy}
+              aria-label={t("newChat")}
+            >
+              <Plus size={16} aria-hidden="true" />
+              <span>{t("newChat")}</span>
+            </button>
+            <div className="v2-assistant-actions">
+              <button
+                type="button"
+                className="v2-btn v2-assistant-action"
+                onClick={() => setHistoryOpen((open) => !open)}
+                aria-expanded={historyOpen}
+                aria-controls="v2-assistant-history"
+                aria-label={t("chatHistory")}
+                title={t("chatHistory")}
+              >
+                <History size={17} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="v2-btn v2-assistant-action"
+                onClick={() => {
+                  close();
+                  navigate(
+                    chat.conversationId
+                      ? `/v2/agents?conversation=${chat.conversationId}`
+                      : "/v2/agents",
+                  );
+                }}
+                aria-label={t("openInAgents")}
+                title={t("openInAgents")}
+              >
+                <ArrowUpRight size={17} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="v2-btn v2-assistant-action"
+                onClick={cycleMode}
+                aria-label={modeLabel}
+                aria-pressed={mode === "docked"}
+                title={modeLabel}
+              >
+                <ModeIcon size={17} aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </header>
 
