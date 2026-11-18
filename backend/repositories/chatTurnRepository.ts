@@ -388,6 +388,10 @@ export const chatTurnRepository = {
     response: string,
     skillsRead?: SkillReadMetadata[],
     uiSurface?: StoredUiSurface | null,
+    finishStream?: (
+      proposal: ITaskProposal,
+      session: mongoose.ClientSession,
+    ) => Promise<void>,
   ): Promise<ITaskProposal | null> {
     await taskProposalRepository.initIndexes();
     return mongoose.connection.transaction(async (session) => {
@@ -415,6 +419,10 @@ export const chatTurnRepository = {
       };
 
       const [proposal] = await TaskProposal.create([proposalData], { session });
+      if (finishStream) {
+        await finishStream(proposal.toObject(), session);
+        return proposal.toObject();
+      }
 
       await ChatTurn.updateOne(
         { _id: id, status: "processing", executionToken },

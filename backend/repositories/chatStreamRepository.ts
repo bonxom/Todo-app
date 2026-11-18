@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { publicInteraction } from "../utils/conversationView.js";
 import ChatTurn from "../models/ChatTurn.js";
 import ChatTurnEvent from "../models/ChatTurnEvent.js";
 import ChatRunSlot from "../models/ChatRunSlot.js";
@@ -53,7 +54,13 @@ export function toSnapshot(turn: IChatTurn): TurnSnapshot {
       status: turn.status as PublicChatResult["status"],
       mode: turn.mode ?? "auto",
       response: turn.response || turn.partialResponse || "",
-      interactions: turn.interactions,
+      ...(turn.interactions?.find((i) => i.status === "pending")
+        ? {
+            interaction: publicInteraction(
+              turn.interactions.find((i) => i.status === "pending")!,
+            ),
+          }
+        : {}),
       activities: turn.activities,
       skillsRead: turn.skillsRead,
       uiSurface: turn.uiSurface,
@@ -74,7 +81,7 @@ export function toSnapshot(turn: IChatTurn): TurnSnapshot {
     toolProgress: turn.toolProgress ?? [],
     deadlineAt: deadlineDate.toISOString(),
     ...(turn.terminalReason ? { terminalReason: turn.terminalReason } : {}),
-    ...(result ? { result } : {}),
+    ...(result ? { result: turn.finalResult ?? result } : {}),
   };
 }
 
@@ -225,6 +232,11 @@ export const chatStreamRepository = {
         }
         turn.toolProgress = list;
         turn.markModified("toolProgress");
+      } else if (event.type === "activity.recorded") {
+        turn.activities = deduplicateActivities([
+          ...(turn.activities ?? []),
+          event.payload.activity,
+        ]);
       } else if (event.type === "turn.stopping") {
         turn.status = "stopping";
         turn.stopRequestedAt = new Date();
@@ -326,83 +338,129 @@ export const chatStreamRepository = {
     executionToken: string,
     outcome: TurnOutcome,
   ): Promise<TurnSnapshot> {
-    return mongoose.connection.transaction(async (session) => {
-      const turn = await ChatTurn.findOne({ _id: turnId }).session(session);
-      if (!turn) {
-        throw new AppError(AI_ERROR.TURN_NOT_FOUND);
-      }
+    return mongoose.connection.transaction((session) =>
+      this.finishInSession(turnId, executionToken, outcome, session),
+    );
+  },
 
-      const terminalStatuses = [
-        "completed",
-        "failed",
-        "cancelled",
-        "timed_out",
-        "interrupted",
-      ];
-      if (terminalStatuses.includes(turn.status)) {
-        return toSnapshot(turn as unknown as IChatTurn);
-      }
+  async finishInSession(
+    turnId: string,
+    executionToken: string,
+    outcome: TurnOutcome,
+    session: mongoose.ClientSession,
+  ): Promise<TurnSnapshot> {
+    const turn = await ChatTurn.findOne({ _id: turnId }).session(session);
+    if (!turn) {
+      throw new AppError(AI_ERROR.TURN_NOT_FOUND);
+    }
 
-      if (turn.executionToken !== executionToken) {
-        throw new AppError(AI_ERROR.PROVIDER_TIMEOUT);
-      }
-
-      turn.status = outcome.status;
-      turn.terminalReason = outcome.terminalReason;
-      turn.response = outcome.result.response || turn.partialResponse || "";
-      turn.finishedAt = new Date();
-
-      if (outcome.result.uiSurface !== undefined) {
-        turn.uiSurface = outcome.result.uiSurface;
-      }
-      if (outcome.result.activities) {
-        turn.activities = deduplicateActivities(outcome.result.activities);
-      }
-      if (outcome.result.skillsRead) {
-        turn.skillsRead = outcome.result.skillsRead;
-      }
-      if (
-        outcome.status === "interrupted" &&
-        Array.isArray(turn.toolProgress)
-      ) {
-        turn.toolProgress = turn.toolProgress.map((tp) =>
-          tp.status === "started" ? { ...tp, status: "unknown" } : tp,
-        );
-      }
-
-      const nextSeq = (turn.lastEventSeq ?? 0) + 1;
-      turn.lastEventSeq = nextSeq;
-      await turn.save({ session });
-
-      await ChatTurnEvent.create(
-        [
-          {
-            turnId,
-            userId: turn.userId,
-            conversationId: turn.conversationId,
-            seq: nextSeq,
-            type: "turn.finished",
-            payload: {
-              status: outcome.status,
-              ...(outcome.terminalReason
-                ? { terminalReason: outcome.terminalReason }
-                : {}),
-              result: outcome.result,
-            },
-            createdAt: new Date(),
-          },
-        ],
-        { session },
-      );
-
-      await ChatRunSlot.deleteOne({ turnId, executionToken }, { session });
-      await Conversation.updateOne(
-        { _id: turn.conversationId, activeTurn: turnId },
-        { $set: { activeTurn: null, busyUntil: null } },
-        { session },
-      );
-
+    const terminalStatuses = [
+      "completed",
+      "failed",
+      "cancelled",
+      "timed_out",
+      "interrupted",
+    ];
+    if (terminalStatuses.includes(turn.status)) {
       return toSnapshot(turn as unknown as IChatTurn);
-    });
+    }
+
+    if (turn.executionToken !== executionToken) {
+      throw new AppError(AI_ERROR.PROVIDER_TIMEOUT);
+    }
+
+    // Stop/deadline wins over a completion that has not committed yet.
+    if (
+      outcome.status === "completed" &&
+      (turn.status === "stopping" ||
+        (turn.deadlineAt && turn.deadlineAt.getTime() <= Date.now()))
+    ) {
+      const status =
+        turn.stopReason === "deadline" ||
+        (turn.deadlineAt && turn.deadlineAt.getTime() <= Date.now())
+          ? "timed_out"
+          : "cancelled";
+      outcome = {
+        status,
+        terminalReason:
+          status === "timed_out" ? "deadline_exceeded" : "user_cancelled",
+        result: {
+          conversationId: turn.conversationId,
+          status,
+          response: turn.partialResponse || "",
+        },
+      };
+    }
+    turn.status = outcome.status;
+    turn.terminalReason = outcome.terminalReason;
+    turn.response = outcome.result.response || turn.partialResponse || "";
+    turn.finishedAt = new Date();
+    if (outcome.interaction)
+      turn.interactions = [...turn.interactions, outcome.interaction];
+    if (outcome.uiSurface !== undefined) turn.uiSurface = outcome.uiSurface;
+    if (outcome.proposalId) turn.proposalId = outcome.proposalId;
+    const canonicalResult: PublicChatResult = {
+      ...outcome.result,
+      requestId: turn.requestId,
+      turnId,
+      status: outcome.status,
+      data: turn.response,
+      response: turn.response,
+      activities: outcome.result.activities ?? turn.activities ?? [],
+      skillsRead: outcome.result.skillsRead ?? turn.skillsRead ?? [],
+      ...(outcome.terminalReason
+        ? { terminalReason: outcome.terminalReason }
+        : {}),
+    };
+    turn.finalResult = canonicalResult;
+
+    if (outcome.result.uiSurface !== undefined) {
+      turn.uiSurface = outcome.result.uiSurface;
+    }
+    if (outcome.result.activities) {
+      turn.activities = deduplicateActivities(outcome.result.activities);
+    }
+    if (outcome.result.skillsRead) {
+      turn.skillsRead = outcome.result.skillsRead;
+    }
+    if (outcome.status === "interrupted" && Array.isArray(turn.toolProgress)) {
+      turn.toolProgress = turn.toolProgress.map((tp) =>
+        tp.status === "started" ? { ...tp, status: "unknown" } : tp,
+      );
+    }
+
+    const nextSeq = (turn.lastEventSeq ?? 0) + 1;
+    turn.lastEventSeq = nextSeq;
+    await turn.save({ session });
+
+    await ChatTurnEvent.create(
+      [
+        {
+          turnId,
+          userId: turn.userId,
+          conversationId: turn.conversationId,
+          seq: nextSeq,
+          type: "turn.finished",
+          payload: {
+            status: outcome.status,
+            ...(outcome.terminalReason
+              ? { terminalReason: outcome.terminalReason }
+              : {}),
+            result: canonicalResult,
+          },
+          createdAt: new Date(),
+        },
+      ],
+      { session },
+    );
+
+    await ChatRunSlot.deleteOne({ turnId, executionToken }, { session });
+    await Conversation.updateOne(
+      { _id: turn.conversationId, activeTurn: turnId },
+      { $set: { activeTurn: null, busyUntil: null } },
+      { session },
+    );
+
+    return toSnapshot(turn as unknown as IChatTurn);
   },
 };

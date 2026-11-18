@@ -46,11 +46,19 @@ export function projectMessage(
 ): ConversationMessage[] {
   if (!snapshot) return [];
   const res = snapshot.result as ResultEnvelope | undefined;
-  const text = snapshot.partialResponse || res?.response || res?.data || "";
+  const terminal = !["processing", "stopping"].includes(snapshot.status);
+  const text = terminal
+    ? (res?.data ?? res?.response ?? snapshot.partialResponse ?? "")
+    : snapshot.partialResponse || "";
 
   const botMessage: ConversationMessage = {
     id: `${snapshot.turnId}:bot`,
     sender: "bot",
+    ...(["failed", "cancelled", "timed_out", "interrupted"].includes(
+      snapshot.status,
+    )
+      ? { turnStatus: snapshot.status as ConversationMessage["turnStatus"] }
+      : {}),
     text,
     timestamp: snapshot.deadlineAt || new Date().toISOString(),
     ...(res?.interaction ? { interaction: res.interaction } : {}),

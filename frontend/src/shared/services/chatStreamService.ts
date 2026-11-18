@@ -57,6 +57,14 @@ function parseAndEmitFrame(
 
 export const chatStreamService = {
   async startTurn(payload: ChatPayload): Promise<TurnSnapshot> {
+    let timeZone = payload.timeZone;
+    if (!timeZone) {
+      try {
+        timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      } catch {
+        /* The server supplies its fallback time zone. */
+      }
+    }
     const response = await axiosInstance.post<{ data: TurnSnapshot }>(
       `/api/ai/conversations/${payload.conversationId}/turns`,
       {
@@ -66,7 +74,7 @@ export const chatStreamService = {
         intent: payload.intent,
         selection: payload.selection,
         attachmentIds: payload.attachmentIds,
-        timeZone: payload.timeZone,
+        timeZone,
       },
     );
     if (!response.data?.data?.turnId) {

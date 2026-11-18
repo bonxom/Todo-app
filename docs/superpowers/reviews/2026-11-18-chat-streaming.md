@@ -1,102 +1,77 @@
-# Báo Cáo Kiểm Tra và Nghiệm Thu (Acceptance Criteria Review): Chat Streaming
+# Kiểm chứng streaming chat sau review và sửa lỗi
 
-**Tính năng:** Resumable Streaming Chat Turn, Concurrency Quotas & Crash Recovery  
-**Spec:** `docs/superpowers/specs/2026-11-18-chat-streaming.md`  
-**Plan:** `docs/superpowers/plans/2026-11-18-chat-streaming.md`  
-**Nhánh:** `feat/stream-chat-statistic`  
-**Ngày nghiệm thu:** 2026-11-18
+Ngày: 2026-11-18. Worktree: `/home/bonxom/.codex/worktrees/1579/TodoApp`, nhánh `feat/stream-chat-statistic`.
 
----
+Báo cáo này thay thế kết luận nghiệm thu trước đó. Bộ test mock từng tầng không phát hiện lỗi tại ranh giới runner/finalizer; không thể dùng kết quả của chúng để khẳng định toàn bộ acceptance criteria đã được kiểm chứng.
 
-## 1. Tổng quan Kết quả Thực thi
+## Lỗi đã tái hiện và sửa
 
-Toàn bộ 10 nhiệm vụ trong Kế hoạch thực hiện (`docs/superpowers/plans/2026-11-18-chat-streaming.md`) đã được triển khai hoàn chỉnh và nghiệm thu thành công:
+1. Lượt hoàn tất hoặc provider lỗi không phát `turn.finished`: luồng streaming dùng finalizer riêng, ghi canonical result, terminal event và release slot/lock trong cùng transaction. Runner không gọi finalizer thành công thêm lần nữa.
+2. Dừng/timeout bị biến thành completed/failed: lỗi execution truyền lên runner; giữ cancelled/timed_out/interrupted đúng nguyên nhân và giữ partial text đã persist.
+3. Streaming mất write tools: controller dùng `createMcpContext(req, ["tasks:write"])` như API cũ.
+4. Callback terminal nhận snapshot cũ: reducer ref cập nhật đồng bộ trước khi thông báo session; lấy lại menu/proposal/history và invalidate cache sau terminal.
+5. Cursor bị hụt nhưng không replay: abort subscriber cũ và reconnect từ cursor cuối; retry không dùng closure của conversation cũ. Kết quả cancel/reconnect đến trễ bị chặn theo generation.
+6. MCP `isError` bị báo succeeded: kiểm tra kết quả thực tế; internal skill tools cũng phát finished để không để spinner chạy mãi.
+7. Nhãn terminal biến mất sau reload: history có `turnStatus`; partial response và nhãn được render ở chính message. `finalResult` giữ public menu/proposal/surface nhất quán giữa terminal event và snapshot, không trả internal tool arguments trong interaction.
+8. Review bổ sung phát hiện hai race: deadline vượt qua trong transaction tạo proposal phải rollback draft; cancel trả snapshot đã terminal phải đi qua completion notification/cache invalidation.
+9. API mới giữ timezone trình duyệt như API chat cũ, tránh đổi nghĩa ngày tương đối sang UTC ngoài ý muốn.
 
-1. **Task 1:** Database Schema & Migration (`ChatTurn`, `ChatTurnEvent`, `ChatRunSlot`) - Commit `2a5b47d`
-2. **Task 2:** Streaming Provider Client Adapter (`aiStream.ts`, `agentStreaming.ts`) - Commit `5b779e6`
-3. **Task 3:** Admission & Quota Management (`chatStreamRepository.ts`, atomic transactions) - Commit `449c8c6`
-4. **Task 4:** SSE Stream Controller & Broadcast Buffer (`chatEventStreamService.ts`, `chatStreamController.ts`) - Commit `2ed4541`
-5. **Task 5:** Stop, Timeout & Crash Recovery (`chatRunService.ts`, `chatRunRecoveryService.ts`) - Commit `57ab17d`
-6. **Task 6:** Frontend Stream Client & Types (`chatStreamService.ts`, `chatStream.ts`) - Commit `c3ee5ed`
-7. **Task 7:** Frontend Run State & Hook Orchestration (`chatStreamReducer.ts`, `useChatRunStream.ts`) - Commit `052ce5c`
-8. **Task 8:** Chat UI Streaming Controls & Usability (`ChatRunStatus.tsx`, `ChatField.jsx`, i18n) - Commit `c127760`
-9. **Task 9:** Nginx Reverse Proxy, E2E Tests & Operations (`nginx.conf`, `chat-streaming.spec.ts`, ops doc) - Commit `fce5eaf`
-10. **Task 10:** Final Verification & Comprehensive Acceptance Check (tài liệu này)
+Các regression test đã được chạy đỏ trước khi sửa và chạy lại xanh. Hai integration suite mới giữ service/controller/runner/repository/SDK thật, chỉ thay provider bên ngoài bằng HTTP fixture deterministic hoặc thay agent boundary trong test lifecycle để ép lỗi/race.
 
----
+## Lệnh kiểm tra và kết quả
 
-## 2. Đối chiếu Tiêu chuẩn Nghiệm thu (Acceptance Criteria AC01 - AC16)
+Từ `backend/`:
 
-| Mã AC    | Tiêu chí Nghiệm thu                                                                               | Trạng thái     | Bằng chứng Kiểm thử (Test Evidence)                                                                                                                                                                                                                    |
-| -------- | ------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **AC01** | Real-time text delta streaming qua HTTP POST 202 + GET SSE                                        | **ĐẠT (PASS)** | `services/test/agentStreaming.test.ts` (3 tests pass), `frontend/e2e/chat-streaming.spec.ts` (test 1: text delta hiển thị trước khi hoàn thành)                                                                                                        |
-| **AC02** | Khôi phục stream sau mất kết nối/reload bằng cursor `after=:seq`                                  | **ĐẠT (PASS)** | `services/test/chatRunService.test.ts` (replay từ last seq), `repositories/test/chatStreamRepository.integration.test.ts` (`readEvents(turnId, after)`), `frontend/src/features/tasks/hooks/test/useChatRunStream.test.tsx` (reconnect passing cursor) |
-| **AC03** | Bảo đảm thứ tự sự kiện, không lặp văn bản khi nhận trùng sự kiện, phát hiện gap                   | **ĐẠT (PASS)** | `frontend/src/features/tasks/hooks/test/chatStreamReducer.test.ts` (test duplicate seq <= current ignored, test gap triggers reconnect)                                                                                                                |
-| **AC04** | Nút Stop dừng run đang chạy, API idempotent 202/200, chuyển `stopping` -> `cancelled`             | **ĐẠT (PASS)** | `controllers/test/chatStreamController.test.ts` (idempotent cancel), `frontend/src/features/tasks/components/test/ChatStreaming.test.tsx` (dừng -> đang dừng), `frontend/e2e/chat-streaming.spec.ts` (test 2)                                          |
-| **AC05** | Giới hạn đồng thời 3 runs/tài khoản (HTTP 429 `CHAT_CONCURRENCY_LIMIT`), bảo toàn draft           | **ĐẠT (PASS)** | `repositories/test/chatStreamRepository.integration.test.ts` (tối đa 3 slots), `frontend/e2e/chat-streaming.spec.ts` (test 3: nhận 429, hiển thị giải thích, giữ draft trong composer)                                                                 |
-| **AC06** | Tuần tự hóa hội thoại: Tối đa 1 run active/hội thoại (HTTP 409 `CONVERSATION_BUSY`)               | **ĐẠT (PASS)** | `repositories/test/chatStreamRepository.integration.test.ts` (rejects concurrent claim on same conversation)                                                                                                                                           |
-| **AC07** | Chuyển đổi hội thoại không bị khóa khi hội thoại khác đang stream                                 | **ĐẠT (PASS)** | `frontend/src/features/tasks/hooks/test/useChatRunStream.test.tsx` (generation guard ignores old conversation events), `frontend/src/features/agent/test/AgentSessionProvider.test.tsx` (10 tests pass)                                                |
-| **AC08** | Nginx cấu hình bypass proxy buffering, cache, gzip cho endpoint SSE `/events$`                    | **ĐẠT (PASS)** | `frontend/nginx.conf` (`proxy_buffering off`, `proxy_cache off`, `gzip off`), Docker Nginx syntax test passed (`nginx -t: syntax ok, test successful`)                                                                                                 |
-| **AC09** | Tự động hủy sau hạn chót (300s deadline), chuyển trạng thái `timed_out`                           | **ĐẠT (PASS)** | `repositories/test/chatStreamRepository.integration.test.ts` (claim deadlineAt set to 300s), `controllers/test/chatStreamController.test.ts`                                                                                                           |
-| **AC10** | Tự động phục hồi khi restart server: turn dở dang chuyển `interrupted`, giải phóng slot           | **ĐẠT (PASS)** | `services/test/chatRunRecovery.integration.test.ts` (quét processing/stopping -> interrupted, giải phóng ChatRunSlot), `services/test/interruptedReply.test.ts` (6 tests pass)                                                                         |
-| **AC11** | Hiển thị tiến trình tool call thời gian thực (`tool.started`, `tool.finished`) với tên thân thiện | **ĐẠT (PASS)** | `frontend/src/features/tasks/components/test/ChatStreaming.test.tsx` (hiển thị spinner, nhãn tiếng Việt/Anh, dấu tích xanh/đỏ, summary kết quả), `frontend/e2e/chat-streaming.spec.ts`                                                                 |
-| **AC12** | Lưu snapshot định kỳ (mỗi batch 300ms) lên MongoDB để khôi phục nhanh                             | **ĐẠT (PASS)** | `repositories/test/chatStreamRepository.integration.test.ts` (`appendDeltaAndSnapshot`), `services/test/chatEventStreamService.test.ts`                                                                                                                |
-| **AC13** | Tự động thử lại khi rớt mạng với exponential backoff (1s, 2s, 4s, 8s, 10s max), dừng sau 10 lần   | **ĐẠT (PASS)** | `frontend/src/features/tasks/hooks/test/useChatRunStream.test.tsx` (backoff delays, reconnect attempts max 10, offline detection via navigator.onLine)                                                                                                 |
-| **AC14** | Xử lý lỗi khi dừng: Không giả báo "đã dừng" nếu request cancel thất bại                           | **ĐẠT (PASS)** | `frontend/src/features/tasks/components/test/ChatStreaming.test.tsx` (test onStop failure does not falsely set cancelled)                                                                                                                              |
-| **AC15** | MongoDB multi-document transactions đảm bảo tính nguyên tử khi cấp/thu hồi slot                   | **ĐẠT (PASS)** | `repositories/test/chatStreamRepository.integration.test.ts` (chạy trên live MongoDB replica set `rs0`)                                                                                                                                                |
-| **AC16** | Tái hiện phản hồi gián đoạn/thất bại trong lịch sử chat khi tải lại                               | **ĐẠT (PASS)** | `services/test/interruptedReply.test.ts` (reconstructs bot message from partial text or fallback note), `services/test/conversationService.integration.test.ts`                                                                                        |
+```bash
+pnpm test
+pnpm run lint
+pnpm run build
+CHAT_TEST_MONGO_URI='mongodb://127.0.0.1:27017/?replicaSet=rs0&directConnection=true' pnpm run test:chat:integration
+pnpm run format:check
+```
 
----
+- `pnpm test`: 574 passed, 120 skipped, 67 files passed. Các suite DB tùy chọn không tự chạy nếu thiếu biến môi trường.
+- `test:chat:integration`: chạy riêng trên MongoDB replica set local trong database test sinh tên riêng và được xóa sau test. 23 test đạt trong 4 suite repository/admission/recovery/lifecycle/HTTP streaming.
+- `lint`: không có lỗi; 21 warning `no-explicit-any` còn lại trong test/controller có sẵn.
+- `build`: TypeScript đạt.
+- Format toàn package còn 6 file ngoài phạm vi chưa đúng Prettier: `mcp/resources/skills.ts`, `mcp/routes/mcpRoute.ts`, `services/test/agentSkillService.test.ts`, `skills/registry.ts`, `skills/test/policy.test.ts`, `validations/agentValidation.ts`. File sửa trong task này được check riêng và đạt.
 
-## 3. Báo Cáo Kiểm Tra Thực Tế (Execution Evidence)
+Từ `frontend/`:
 
-### 3.1 Backend Tests
+```bash
+pnpm test
+pnpm run lint
+pnpm run build
+pnpm exec playwright test e2e/chat-streaming.spec.ts e2e/v2-chat-two-modes.spec.ts
+pnpm run format:check
+```
 
-- **Bộ kiểm thử toàn diện:** `cd backend && pnpm test`
-  - Kết quả: **67 test files passed**, **12 test files skipped** (do yêu cầu replica set khi chạy command mặc định không có DB), **572 tests passed**.
-- **Bộ kiểm thử Streaming & Replica Set:**
-  - Lệnh: `cd backend && CHAT_TEST_MONGO_URI="mongodb://127.0.0.1:27017/chat-stream-test?replicaSet=rs0" pnpm test controllers/test/chatStreamController.test.ts services/test/chatRunService.test.ts services/test/agentStreaming.test.ts services/test/interruptedReply.test.ts repositories/test/chatStreamRepository.integration.test.ts services/test/chatRunRecovery.integration.test.ts`
-  - Kết quả: **6 test files passed**, **42 tests passed**, **0 failed**.
-- **Kiểm tra TypeScript & Lint:**
-  - `cd backend && pnpm run build` (`tsc --noEmit`): **0 errors**.
-  - `cd backend && pnpm run lint` (`eslint .`): **0 errors**.
+- `pnpm test`: 529 passed, 100 files passed. Log có cảnh báo jsdom/network của test hiện hữu; không có test thất bại ở lượt cuối.
+- `lint`: đạt, không warning.
+- `build`: typecheck và bundle đạt; Vite vẫn cảnh báo chunk lớn hơn 500 kB.
+- Playwright hai file trên: 12 passed. Đây là E2E với API mock để kiểm tra UI/layout; không dùng làm bằng chứng backend stream thật.
+- Format toàn package còn 16 file ngoài phạm vi chưa đúng Prettier. Lỗi format ở `src/shared/services/test/chatStreamService.test.ts` được review chỉ ra đã được sửa. Các file thay đổi được check riêng và đạt.
 
-### 3.2 Frontend Tests
+Format scoped dùng project-local `pnpm exec prettier --check` với danh sách file thay đổi lấy từ `git diff --name-only` và file test mới, tách theo package. `git diff --check` không có lỗi whitespace.
 
-- **Bộ kiểm thử Vitest toàn diện:** `cd frontend && pnpm test`
-  - Kết quả: **100 test files passed**, **524 tests passed**, **0 failed**.
-- **Kiểm tra TypeScript & Vite Bundle:**
-  - `cd frontend && pnpm run build` (`tsc -b && vite build`): **0 errors**.
-  - Tất cả bundle chunks tạo thành công trong `dist/`.
-- **Kiểm tra Lint:**
-  - `cd frontend && pnpm run lint` (`eslint .`): **0 errors**.
-- **Kiểm tra End-to-End Playwright:**
-  - `cd frontend && pnpm exec playwright test e2e/chat-streaming.spec.ts`
-  - Kết quả: **3 passed (3.1s)**:
-    1. `displays live text delta, tool progress, and stop button during streaming` (PASSED)
-    2. `clicking Stop button transitions to Stopping state and triggers cancellation` (PASSED)
-    3. `handles 429 concurrency limit error, displays explanation, and preserves draft` (PASSED)
-  - Các suite E2E liên quan (`chat-attachments.spec.ts`, `chat-usability.spec.ts`, `task-proposals.spec.ts`, `v2-chat-two-modes.spec.ts`, `v2-workspace-layout.spec.ts`, `agent-time-web-search.spec.ts`): Tất cả đều **PASSED**.
+## Bằng chứng tích hợp thật
 
-### 3.3 Format & Code Style
+`services/test/chatStreamingHttp.integration.test.ts` khởi động HTTP provider fixture có gate phần cuối, SDK OpenAI-compatible thật, Express routes/auth thật, runner thật và MongoDB transaction thật:
 
-- **Backend modified files:** Prettier check **PASSED** (`All matched files use Prettier code style!`).
-- **Frontend modified files:** Prettier check **PASSED** (`All matched files use Prettier code style!`).
-- **Git diff check:** `git diff --check` sạch, không có lỗi whitespace hay conflict marker.
+- Ask và Auto nhận `tool.started`, `tool.finished`, `assistant.delta` trong khi GET snapshot vẫn processing và provider chưa được release.
+- Ngắt subscription không hủy runner; release provider, GET nhận completed; reconnect bằng `after` nhận đúng phần còn lại và một terminal event.
+- Cancel stream provider đang mở cho kết quả cancelled và giữ nguyên partial text.
 
-### 3.4 Docker & Nginx Reverse Proxy
+`services/test/chatStreamingLifecycle.integration.test.ts` kiểm tra success, cancel, provider error, deadline, menu, proposal và deadline vượt qua bên trong transaction tạo proposal. Assert đúng một terminal event, giữ lịch sử dở, public interaction và rollback proposal khi timeout thắng.
 
-- Cú pháp Nginx được xác thực bằng container Docker chính thức `nginx:alpine`:
-  `docker run --rm --add-host backend:127.0.0.1 -v $(pwd)/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro nginx:alpine nginx -t`
-  - Kết quả: `nginx: the configuration file /etc/nginx/nginx.conf syntax is ok`, `nginx: configuration file /etc/nginx/nginx.conf test is successful`.
+Kiểm tra browser thủ công bằng Chromium/Playwright trên Vite + backend HTTP thật + MongoDB test, không route-mock API:
 
----
+- Trang `/agent`: thấy partial text và nút Stop trước khi release provider; sau release composer mở khóa, reload vẫn giữ câu trả lời. Bấm Stop giữ text và nhãn Đã dừng.
+- Chat cũ `/dashboard`, chat V2 `/v2/dashboard`, trang `/v2/agents`: kiểm tra Ask/Auto, thấy text trước completion và mở khóa composer sau terminal.
+- Không có pageerror trong smoke Agent. Ảnh/log của phiên smoke lưu tạm dưới `/tmp/chat-live-*`, không chứa token production. Chỉ dùng token fixture local; database fixture được dọn sau phiên.
 
-## 4. Hạn chế Kiến trúc & Khuyến nghị Vận hành
+## Giới hạn kiểm chứng
 
-1. **Mô hình Single-Process Invariant:**
-   - Phiên bản hiện tại sử dụng `ChatStreamBroadcaster` in-memory. Phải đảm bảo luôn chạy **duy nhất 1 backend process/container**. Nếu scale đa node trong tương lai, cần tích hợp Redis Pub/Sub để đồng bộ broadcast SSE giữa các worker.
-2. **MongoDB Replica Set:**
-   - Cơ chế cấp slot đồng thời `ChatRunSlot` bắt buộc sử dụng Multi-Document Transaction, do đó cluster MongoDB phải luôn là replica set (kể cả môi trường dev/staging).
-3. **Rollback An toàn:**
-   - Thực hiện theo tài liệu `docs/ai/chat-streaming-operations.vi.md`: giải phóng slot và chuyển turn sang `interrupted` trước khi nạp binary cũ.
+Không triển khai production, không gọi model production và không xác nhận nhà cung cấp AI thực tế đang cấu hình có hỗ trợ streaming hay không. Phiên này không dựng lại Docker/Nginx end-to-end hoặc chạy load test. Các tuyên bố Nginx/restart của báo cáo cũ không được tự động chuyển thành PASS mới: recovery đã có integration DB, còn restart tiến trình/container thật cần smoke trên môi trường triển khai.
+
+Kiến trúc vẫn yêu cầu một backend process/container và MongoDB replica set. Không tự scale nhiều runner. Các lỗi format toàn repo ngoài phạm vi được ghi rõ ở trên; không format hàng loạt các file không liên quan.

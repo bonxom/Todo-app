@@ -49,7 +49,7 @@ Deadline 300.000 ms ngăn bước mới và abort provider/vision/tool có hỗ 
 
 ## Dữ liệu và persistence
 
-Mở rộng `ChatTurn`: `partialResponse`, `lastEventSeq` (mặc định 0), `deadlineAt`, `stopRequestedAt`, `stopReason` (`user` hoặc `deadline`), `terminalReason`, `runnerInstanceId`, `toolProgress`, `finishedAt`. `response` là kết quả canonical khi terminal; trạng thái dở giữ chính xác text đã persist, không bị thay bằng thông báo lỗi chung. `executionToken` vẫn chỉ nội bộ.
+Mở rộng `ChatTurn`: `finalResult` (public canonical result để replay/snapshot không mất menu/proposal/surface), `partialResponse`, `lastEventSeq` (mặc định 0), `deadlineAt`, `stopRequestedAt`, `stopReason` (`user` hoặc `deadline`), `terminalReason`, `runnerInstanceId`, `toolProgress`, `finishedAt`. `response` là kết quả canonical khi terminal; trạng thái dở giữ chính xác text đã persist, không bị thay bằng thông báo lỗi chung. `executionToken` vẫn chỉ nội bộ.
 
 Thêm collection `ChatTurnEvent` với `turnId`, `userId`, `conversationId`, `seq`, `type`, `payload`, `createdAt`; unique index `(turnId, seq)`, index đọc theo owner/turn/seq. Sự kiện dùng collection riêng để tránh tăng document `ChatTurn` không giới hạn. Trong bản đầu giữ event cùng vòng đời lịch sử chat; không TTL event độc lập làm đứt cursor. Không lưu raw provider chunk, reasoning, credentials hoặc raw tool arguments/results vào payload công khai.
 

@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import express from "express";
 import request from "supertest";
@@ -50,7 +51,7 @@ describe("chatStreamController HTTP API", () => {
   app.use("/api/ai", aiRoutes);
   app.use(errorHandler);
 
-  const authHeader = "Bearer valid-token";
+  const authHeader = `Bearer ${jwt.sign({}, "stream-test-secret", { expiresIn: "1h" })}`;
   const conversationId = "550e8400-e29b-41d4-a716-446655440000";
   const turnId = "550e8400-e29b-41d4-a716-446655440001";
   const requestId = "550e8400-e29b-41d4-a716-446655440002";
@@ -96,6 +97,10 @@ describe("chatStreamController HTTP API", () => {
         });
 
       expect(res.status).toBe(202);
+      expect(conversationService.startStreamTurn).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ scopes: ["tasks:write"] }),
+      );
       expect(res.body).toEqual({ data: snapshot });
     });
 

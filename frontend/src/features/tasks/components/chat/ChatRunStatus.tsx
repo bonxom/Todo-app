@@ -16,12 +16,14 @@ import type { ConnectionState } from "@/features/tasks/hooks/chatStreamReducer";
 export interface ChatRunStatusProps {
   run: TurnSnapshot | null;
   connection?: ConnectionState;
+  status?: TurnSnapshot["status"];
   onStop?: () => Promise<TurnSnapshot | null | void>;
   onReconnect?: () => Promise<void>;
 }
 
 export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
   run,
+  status,
   connection = "idle",
   onStop,
   onReconnect,
@@ -29,7 +31,8 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
   const { t } = useTranslation("agent");
   const [isStopping, setIsStopping] = useState(false);
 
-  if (!run && connection === "idle") {
+  const runStatus = run?.status ?? status;
+  if (!run && !status && connection === "idle") {
     return null;
   }
 
@@ -45,8 +48,8 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
     }
   };
 
-  const isProcessing = run?.status === "processing";
-  const isStoppingState = isStopping || run?.status === "stopping";
+  const isProcessing = runStatus === "processing";
+  const isStoppingState = isStopping || runStatus === "stopping";
 
   return (
     <div className="chat-run-status my-2 flex flex-col gap-2 text-xs">
@@ -131,7 +134,7 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
       )}
 
       {/* Terminal run status badges */}
-      {run?.status === "cancelled" && (
+      {runStatus === "cancelled" && (
         <div
           data-testid="run-status-cancelled"
           className="inline-flex items-center gap-1.5 self-start rounded-md bg-[var(--color-surface-muted)] px-2 py-1 text-xs font-medium text-[var(--color-text-muted)]"
@@ -141,7 +144,7 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
         </div>
       )}
 
-      {run?.status === "failed" && (
+      {runStatus === "failed" && (
         <div
           data-testid="run-status-failed"
           className="inline-flex items-center gap-1.5 self-start rounded-md bg-[var(--color-surface-danger,#fef2f2)] px-2 py-1 text-xs font-medium text-[var(--color-text-danger,#b91c1c)]"
@@ -151,7 +154,7 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
         </div>
       )}
 
-      {run?.status === "timed_out" && (
+      {runStatus === "timed_out" && (
         <div
           data-testid="run-status-timed_out"
           className="inline-flex items-center gap-1.5 self-start rounded-md bg-[var(--color-surface-warning,#fffbeb)] px-2 py-1 text-xs font-medium text-[var(--color-text-warning,#b45309)]"
@@ -161,7 +164,7 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
         </div>
       )}
 
-      {run?.status === "interrupted" && (
+      {runStatus === "interrupted" && (
         <div
           data-testid="run-status-interrupted"
           className="inline-flex items-center gap-1.5 self-start rounded-md bg-[var(--color-surface-muted)] px-2 py-1 text-xs font-medium text-[var(--color-text-muted)]"

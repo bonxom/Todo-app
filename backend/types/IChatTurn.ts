@@ -1,3 +1,4 @@
+import type { PublicChatResult } from "./IChatStream.js";
 import type { AttachmentView } from "./IAttachment.js";
 import type { AgentTimeContext } from "./IAgentTimeContext.js";
 import type mongoose from "mongoose";
@@ -41,6 +42,7 @@ export interface ChatTurn {
   executionToken: string;
   interactions: AgentInteraction[];
   response: string;
+  finalResult?: PublicChatResult;
   partialResponse?: string;
   lastEventSeq?: number;
   deadlineAt?: Date;

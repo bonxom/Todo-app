@@ -83,6 +83,9 @@ export interface TurnOutcome {
   status: TerminalStatus;
   terminalReason?: string;
   result: PublicChatResult;
+  interaction?: AgentInteraction;
+  uiSurface?: StoredUiSurface | null;
+  proposalId?: string;
 }
 
 export interface TurnSnapshot {

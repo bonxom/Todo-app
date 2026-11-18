@@ -62,22 +62,10 @@ export const chatRunService = {
 
     const runPromise = (async () => {
       try {
-        const result = await runConversationTurn(turn, context, selected, {
+        await runConversationTurn(turn, context, selected, {
           signal: abortController.signal,
           deadlineAt,
           emit,
-        });
-
-        await chatStreamRepository.finish(turn._id, turn.executionToken, {
-          status: "completed",
-          result: {
-            ...result,
-            turnId: turn._id,
-            conversationId: turn.conversationId,
-            status: "completed",
-            mode: turn.mode ?? "auto",
-            response: result.data || turn.response || "",
-          },
         });
       } catch (err: unknown) {
         const isAbort =

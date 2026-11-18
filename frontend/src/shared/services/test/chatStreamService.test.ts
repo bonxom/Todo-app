@@ -107,7 +107,9 @@ describe("chatStreamService", () => {
     expect(events).toHaveLength(2);
     expect(events[0].event).toBe("turn.started");
     expect(events[1].event).toBe("tool.started");
-    expect((events[1].data.payload as Record<string, unknown>).label).toBe("Tạo");
+    expect((events[1].data.payload as Record<string, unknown>).label).toBe(
+      "Tạo",
+    );
   });
 
   it("concatenates multi-line data fields and ignores comments", async () => {
@@ -131,7 +133,9 @@ describe("chatStreamService", () => {
     });
 
     expect(events).toHaveLength(1);
-    expect((events[0].data.payload as Record<string, unknown>).msg).toBe("multiline");
+    expect((events[0].data.payload as Record<string, unknown>).msg).toBe(
+      "multiline",
+    );
   });
 
   it("safely ignores malformed JSON or unsupported version without crashing", async () => {
@@ -335,4 +339,29 @@ describe("chatStreamService", () => {
     mock.restore();
     rootAxiosMock.restore();
   });
+});
+
+it("sends the browser time zone when starting a streaming turn", async () => {
+  const mock = new MockAdapter(axiosInstance);
+  mock.onPost(/\/turns$/).reply((config) => {
+    const body = JSON.parse(config.data);
+    return [
+      200,
+      { data: { turnId: "zone-test", observedTimeZone: body.timeZone } },
+    ];
+  });
+  try {
+    const result = await chatStreamService.startTurn({
+      conversationId: "conv-zone",
+      requestId: "request-zone",
+      userInput: "Plan today",
+      mode: "auto",
+    });
+    expect(result).toHaveProperty(
+      "observedTimeZone",
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+    );
+  } finally {
+    mock.restore();
+  }
 });

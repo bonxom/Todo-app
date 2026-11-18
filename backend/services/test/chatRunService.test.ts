@@ -84,28 +84,18 @@ describe("chatRunService detached runner and cancellation", () => {
 
   it("registers run and executes in background without awaiting caller", async () => {
     const gate = deferred<void>();
-    const finishSpy = vi
-      .spyOn(chatStreamRepository, "finish")
-      .mockImplementation(async () => {
-        gate.resolve();
-        return {} as any;
-      });
-
-    vi.spyOn(chatStreamRepository, "append").mockResolvedValue({} as any);
-
-    chatRunService.start(
-      {
-        ...fakeTurn,
-        _id: "turn-bg-1",
-      },
-      fakeContext,
+    vi.mocked(runConversationTurn).mockImplementationOnce(async () => {
+      await gate.promise;
+      return { data: "Done", status: "completed" } as Awaited<
+        ReturnType<typeof runConversationTurn>
+      >;
+    });
+    chatRunService.start({ ...fakeTurn, _id: "turn-bg-1" }, fakeContext);
+    expect(chatRunService.hasActiveRun("turn-bg-1")).toBe(true);
+    gate.resolve();
+    await vi.waitFor(() =>
+      expect(chatRunService.hasActiveRun("turn-bg-1")).toBe(false),
     );
-
-    // Caller is not blocked; start returns void synchronously
-    expect(finishSpy).not.toHaveBeenCalled();
-    // Wait for background execution to complete
-    await gate.promise;
-    expect(finishSpy).toHaveBeenCalled();
   });
 
   it("cancel triggers abort controller and marks turn stopping", async () => {

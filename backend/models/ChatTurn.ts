@@ -51,6 +51,7 @@ const schema = new Schema<ChatTurn>(
     executionToken: { type: String, default: "" },
     interactions: { type: Schema.Types.Mixed, default: [] },
     response: { type: String, default: "" },
+    finalResult: { type: Schema.Types.Mixed },
     partialResponse: { type: String, default: "" },
     lastEventSeq: { type: Number, default: 0 },
     deadlineAt: { type: Date },

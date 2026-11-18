@@ -1,3 +1,4 @@
+import { createMcpContext } from "../mcp/context.js";
 import type { NextFunction, Request, Response } from "express";
 import { conversationService } from "../services/conversationService.js";
 import { chatStreamRepository } from "../repositories/chatStreamRepository.js";
@@ -27,10 +28,7 @@ export const startChatTurn = async (
         attachmentIds: body.attachmentIds,
         timeZone: body.timeZone,
       },
-      {
-        user: req.user!,
-        requestId: body.requestId,
-      },
+      createMcpContext(req, ["tasks:write"]),
     );
 
     const isPending =

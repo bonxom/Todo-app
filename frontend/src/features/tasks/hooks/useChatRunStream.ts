@@ -7,6 +7,7 @@ import {
   reduceChatRun,
   createInitialChatRunState,
   type ConnectionState,
+  type ChatRunAction,
 } from "./chatStreamReducer";
 import { invalidateWorkspaceQueries } from "../api/invalidation";
 
@@ -51,7 +52,13 @@ export function useChatRunStream(
   const activeAbort = useRef<AbortController | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef(state);
-  stateRef.current = state;
+  const apply = useCallback((action: ChatRunAction) => {
+    stateRef.current = reduceChatRun(stateRef.current, action);
+    dispatch(action);
+  }, []);
+  const subscriptionRef = useRef<
+    (generation: number, target?: TurnSnapshot) => void
+  >(() => {});
 
   const currentTurnId = snapshot?.turnId;
 
@@ -82,9 +89,9 @@ export function useChatRunStream(
       clearTimeout(reconnectTimer.current);
       reconnectTimer.current = null;
     }
-    dispatch({ type: "RESET", snapshot });
+    apply({ type: "RESET", snapshot });
     stateRef.current = createInitialChatRunState(snapshot);
-  }, [conversationId, currentTurnId, snapshot]);
+  }, [conversationId, currentTurnId, snapshot, apply]);
 
   const scheduleReconnect = useCallback(
     (currentGeneration: number) => {
@@ -94,19 +101,19 @@ export function useChatRunStream(
       }
 
       if (typeof navigator !== "undefined" && !navigator.onLine) {
-        dispatch({ type: "SET_CONNECTION", connection: "offline" });
+        apply({ type: "SET_CONNECTION", connection: "offline" });
         return;
       }
 
       const nextAttempts = stateRef.current.reconnectAttempts + 1;
-      dispatch({ type: "SET_RECONNECT_ATTEMPTS", attempts: nextAttempts });
+      apply({ type: "SET_RECONNECT_ATTEMPTS", attempts: nextAttempts });
 
       if (nextAttempts > 10) {
-        dispatch({ type: "SET_CONNECTION", connection: "error" });
+        apply({ type: "SET_CONNECTION", connection: "error" });
         return;
       }
 
-      dispatch({ type: "SET_CONNECTION", connection: "reconnecting" });
+      apply({ type: "SET_CONNECTION", connection: "reconnecting" });
 
       // Backoff delays: 1s, 2s, 4s, 8s, max 10s with jitter +- 20%
       const base = Math.min(10_000, 1_000 * Math.pow(2, nextAttempts - 1));
@@ -115,12 +122,11 @@ export function useChatRunStream(
 
       reconnectTimer.current = setTimeout(() => {
         if (generation.current === currentGeneration) {
-          startSubscription(currentGeneration);
+          subscriptionRef.current(currentGeneration);
         }
       }, delay);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [apply],
   );
 
   const startSubscription = useCallback(
@@ -131,7 +137,7 @@ export function useChatRunStream(
         !activeSnapshot ||
         TERMINAL_STATUSES.has(activeSnapshot.status)
       ) {
-        dispatch({ type: "SET_CONNECTION", connection: "idle" });
+        apply({ type: "SET_CONNECTION", connection: "idle" });
         return;
       }
 
@@ -142,7 +148,7 @@ export function useChatRunStream(
       const abortController = new AbortController();
       activeAbort.current = abortController;
 
-      dispatch({ type: "SET_CONNECTION", connection: "connecting" });
+      apply({ type: "SET_CONNECTION", connection: "connecting" });
 
       void (async () => {
         try {
@@ -155,8 +161,21 @@ export function useChatRunStream(
               if (generation.current !== currentGeneration) {
                 return;
               }
-              dispatch({ type: "EVENT", event });
-              dispatch({ type: "SET_CONNECTION", connection: "live" });
+              if (abortController.signal.aborted) return;
+              const current = stateRef.current.snapshot;
+              if (!current || event.data.turnId !== current.turnId) return;
+              if (event.data.seq > current.lastEventSeq + 1) {
+                abortController.abort();
+                scheduleReconnect(currentGeneration);
+                return;
+              }
+              if (event.data.seq <= current.lastEventSeq) return;
+              apply({ type: "EVENT", event });
+              apply({ type: "SET_RECONNECT_ATTEMPTS", attempts: 0 });
+              apply({
+                type: "SET_CONNECTION",
+                connection: event.event === "turn.finished" ? "idle" : "live",
+              });
 
               if (event.event === "turn.finished") {
                 if (queryClient) {
@@ -165,6 +184,7 @@ export function useChatRunStream(
                 if (onSnapshotChange && stateRef.current.snapshot) {
                   onSnapshotChange(stateRef.current.snapshot);
                 }
+                abortController.abort();
               } else if (event.event === "activity.recorded") {
                 if (queryClient) {
                   void invalidateWorkspaceQueries(queryClient);
@@ -173,14 +193,18 @@ export function useChatRunStream(
             },
           });
 
-          if (generation.current !== currentGeneration) return;
+          if (
+            abortController.signal.aborted ||
+            generation.current !== currentGeneration
+          )
+            return;
 
           // Subscription finished cleanly; check if snapshot is now terminal
           if (
             stateRef.current.snapshot &&
             TERMINAL_STATUSES.has(stateRef.current.snapshot.status)
           ) {
-            dispatch({ type: "SET_CONNECTION", connection: "idle" });
+            apply({ type: "SET_CONNECTION", connection: "idle" });
           } else {
             // Premature stream end before terminal event: reconnect
             scheduleReconnect(currentGeneration);
@@ -196,8 +220,12 @@ export function useChatRunStream(
         }
       })();
     },
-    [conversationId, onSnapshotChange, queryClient, scheduleReconnect],
+    [conversationId, onSnapshotChange, queryClient, scheduleReconnect, apply],
   );
+
+  useEffect(() => {
+    subscriptionRef.current = startSubscription;
+  }, [startSubscription]);
 
   // Trigger subscription when snapshot is non-terminal
   useEffect(() => {
@@ -207,6 +235,7 @@ export function useChatRunStream(
     }
 
     return () => {
+      generation.current = curGen + 1;
       if (activeAbort.current) {
         activeAbort.current.abort();
         activeAbort.current = null;
@@ -229,14 +258,14 @@ export function useChatRunStream(
           clearTimeout(reconnectTimer.current);
           reconnectTimer.current = null;
         }
-        dispatch({ type: "SET_RECONNECT_ATTEMPTS", attempts: 0 });
+        apply({ type: "SET_RECONNECT_ATTEMPTS", attempts: 0 });
         startSubscription(generation.current);
       }
     };
 
     window.addEventListener("online", onOnline);
     return () => window.removeEventListener("online", onOnline);
-  }, [startSubscription]);
+  }, [startSubscription, apply]);
 
   const reconnect = useCallback(async () => {
     if (!conversationId || !stateRef.current.snapshot) return;
@@ -246,29 +275,49 @@ export function useChatRunStream(
       reconnectTimer.current = null;
     }
 
-    dispatch({ type: "SET_RECONNECT_ATTEMPTS", attempts: 0 });
+    apply({ type: "SET_RECONNECT_ATTEMPTS", attempts: 0 });
+    const currentGeneration = generation.current;
+    activeAbort.current?.abort();
     const freshSnapshot = await chatStreamService.getTurn(
       conversationId,
       stateRef.current.snapshot.turnId,
     );
-    dispatch({ type: "SET_SNAPSHOT", snapshot: freshSnapshot });
-    startSubscription(generation.current);
-  }, [conversationId, startSubscription]);
+    if (currentGeneration !== generation.current) return;
+    apply({ type: "SET_SNAPSHOT", snapshot: freshSnapshot });
+    if (TERMINAL_STATUSES.has(freshSnapshot.status)) {
+      apply({ type: "SET_CONNECTION", connection: "idle" });
+      onSnapshotChange?.(freshSnapshot);
+    } else {
+      startSubscription(currentGeneration, freshSnapshot);
+    }
+  }, [conversationId, startSubscription, apply, onSnapshotChange]);
 
   const stop = useCallback(async (): Promise<TurnSnapshot | null> => {
     if (!conversationId || !stateRef.current.snapshot) return null;
+    const currentGeneration = generation.current;
     const stoppedSnapshot = await chatStreamService.cancelTurn(
       conversationId,
       stateRef.current.snapshot.turnId,
     );
-    dispatch({ type: "SET_SNAPSHOT", snapshot: stoppedSnapshot });
+    if (currentGeneration !== generation.current) return null;
+    if (
+      stoppedSnapshot.lastEventSeq >=
+      (stateRef.current.snapshot?.lastEventSeq ?? 0)
+    ) {
+      apply({ type: "SET_SNAPSHOT", snapshot: stoppedSnapshot });
+      if (TERMINAL_STATUSES.has(stoppedSnapshot.status)) {
+        activeAbort.current?.abort();
+        if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+        apply({ type: "SET_CONNECTION", connection: "idle" });
+        if (queryClient) void invalidateWorkspaceQueries(queryClient);
+        onSnapshotChange?.(stoppedSnapshot);
+      }
+    }
     return stoppedSnapshot;
-  }, [conversationId]);
+  }, [conversationId, apply, queryClient, onSnapshotChange]);
 
   const isStreaming =
-    Boolean(state.snapshot) &&
-    !TERMINAL_STATUSES.has(state.snapshot!.status) &&
-    state.connection !== "error";
+    Boolean(state.snapshot) && !TERMINAL_STATUSES.has(state.snapshot!.status);
 
   return {
     snapshot: state.snapshot,

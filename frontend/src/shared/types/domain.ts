@@ -243,6 +243,7 @@ export interface ChatResponse extends ApiEnvelope<string> {
 }
 
 export interface ConversationMessage {
+  turnStatus?: "failed" | "cancelled" | "timed_out" | "interrupted";
   skillsRead?: SkillReadRecord[];
   attachments?: ChatAttachment[];
   replyToInteractionId?: string;

@@ -316,3 +316,16 @@ Fixture là provider HTTP OpenAI-compatible chạy riêng chỉ trong test, khô
 ## Trạng thái tại thời điểm bàn giao tài liệu
 
 Chỉ có spec và plan được viết; chưa cài dependencies, viết feature test, sửa runtime, chạy baseline suite hoặc triển khai streaming. Các test/code snippet ở trên là hướng dẫn thực thi, không phải bằng chứng tính năng đã tồn tại. Mặc định kỹ thuật mới trong spec (batch/limits/backoff/single-instance) phải được giữ nhất quán khi triển khai; thay đổi thiết kế thì cập nhật cả hai tài liệu trước code.
+
+## Review remediation — 2026-11-18
+
+Các lỗi phát hiện sau implementation được sửa trên cùng worktree, không đổi thiết kế HTTP + SSE:
+
+- [x] Thêm regression test đỏ cho success/cancel/error/deadline/menu; chỉ finalizer streaming ghi kết quả + event + release slot. Proposal được finalize cùng transaction tạo draft; deadline thắng phải rollback draft.
+- [x] Khôi phục context `tasks:write` bằng `createMcpContext`; xét `isError` thật của MCP và kết thúc progress của internal skill tools.
+- [x] Đồng bộ reducer/cursor trước callback; replay ngay khi gap, bỏ phản hồi session cũ, reconcile cả cancel response đã terminal và giữ composer khóa khi transport lỗi.
+- [x] Giữ partial text và nhãn terminal trong lịch sử sau reload; bảo toàn timezone của browser khi gửi API mới.
+- [x] Thêm kiểm thử HTTP dùng SDK thật + provider HTTP fixture + auth thật + Mongo replica set: text/tool events trước completion, disconnect/replay và cancel provider đang stream.
+- [x] Kiểm tra browser với backend thật trên Agent, chat cũ và V2; provider fixture giữ phần cuối để chứng minh UI hiển thị trước completion.
+
+Kết quả command và giới hạn kiểm chứng được ghi trong `docs/superpowers/reviews/2026-11-18-chat-streaming.md`. Không diễn giải E2E mock hoặc Nginx syntax check thành bằng chứng tích hợp production.

@@ -1,3 +1,4 @@
+import { categoryService } from "../categoryService.js";
 vi.mock("../personalSkillService.js", () => ({
   personalSkillService: { getEnabledSnapshot: async () => [] },
 }));
@@ -169,4 +170,113 @@ describe("agentService streaming integration", () => {
       statusCode: 502,
     });
   });
+});
+
+it("emits failed tool progress for an MCP error result", async () => {
+  vi.spyOn(categoryService, "getAll").mockRejectedValue(
+    new Error("database offline"),
+  );
+  async function* calls() {
+    yield streamChunk({
+      tool_calls: [
+        {
+          index: 0,
+          id: "error-call",
+          type: "function",
+          function: { name: "orbit_list_categories", arguments: "{}" },
+        },
+      ],
+    });
+    yield streamChunk({}, "tool_calls");
+  }
+  async function* done() {
+    yield streamChunk({ content: "Không lấy được dữ liệu" }, "stop");
+  }
+  createMock.mockResolvedValueOnce(calls()).mockResolvedValueOnce(done());
+  const events: unknown[] = [];
+  try {
+    await agentService.chatWithMcp(
+      "List categories",
+      {
+        user: {
+          _id: "507f1f77bcf86cd799439011",
+          role: "USER",
+        } as unknown as IUserDocument,
+        requestId: "tool-error",
+      },
+      {
+        stream: {
+          signal: new AbortController().signal,
+          emit: async (event) => {
+            events.push(event);
+          },
+        },
+      },
+    );
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: "tool.finished",
+        payload: expect.objectContaining({
+          toolCallId: "error-call",
+          status: "failed",
+        }),
+      }),
+    );
+  } finally {
+    vi.restoreAllMocks();
+    createMock.mockReset();
+  }
+});
+
+it("finishes progress for internal skill tools instead of leaving a spinner", async () => {
+  async function* calls() {
+    yield streamChunk({
+      tool_calls: [
+        {
+          index: 0,
+          id: "skill-list-call",
+          type: "function",
+          function: { name: "list_skills", arguments: "{}" },
+        },
+      ],
+    });
+    yield streamChunk({}, "tool_calls");
+  }
+  async function* done() {
+    yield streamChunk({ content: "Done" }, "stop");
+  }
+  createMock.mockResolvedValueOnce(calls()).mockResolvedValueOnce(done());
+  const events: unknown[] = [];
+  try {
+    await agentService.chatWithMcp(
+      "List my skills",
+      {
+        user: {
+          _id: "507f1f77bcf86cd799439011",
+          role: "USER",
+        } as unknown as IUserDocument,
+        requestId: "skill-progress",
+      },
+      {
+        stream: {
+          signal: new AbortController().signal,
+          emit: async (event) => {
+            events.push(event);
+          },
+        },
+      },
+    );
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: "tool.finished",
+        payload: expect.objectContaining({
+          toolCallId: "skill-list-call",
+          status: "succeeded",
+        }),
+      }),
+    );
+  } finally {
+    vi.restoreAllMocks();
+    createMock.mockReset();
+  }
 });

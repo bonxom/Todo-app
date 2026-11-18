@@ -689,6 +689,14 @@ ${webSearchInstruction}`,
               });
             } catch (error) {
               if (!(error instanceof SkillError)) throw error;
+              await memory.stream?.emit({
+                type: "tool.finished",
+                payload: {
+                  toolCallId: toolCall.id,
+                  status: "failed",
+                  summary: getToolSummary(name, "failed"),
+                },
+              });
               await rejectCall(toolCall.id, error.code, error.message);
               continue;
             }
@@ -759,8 +767,11 @@ ${webSearchInstruction}`,
                 type: "tool.finished",
                 payload: {
                   toolCallId: toolCall.id,
-                  status: "succeeded",
-                  summary: getToolSummary(name, "succeeded"),
+                  status: toolResult.isError ? "failed" : "succeeded",
+                  summary: getToolSummary(
+                    name,
+                    toolResult.isError ? "failed" : "succeeded",
+                  ),
                 },
               });
               const serialized = JSON.stringify(toolResult);
@@ -783,6 +794,16 @@ ${webSearchInstruction}`,
               });
               throw toolErr;
             }
+          }
+          if (loader || isPersonal) {
+            await memory.stream?.emit({
+              type: "tool.finished",
+              payload: {
+                toolCallId: toolCall.id,
+                status: "succeeded",
+                summary: getToolSummary(name, "succeeded"),
+              },
+            });
           }
           await checkpoint();
         }

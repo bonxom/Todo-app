@@ -473,6 +473,9 @@ const ChatField = ({
                         ))}
                       </div>
                     )}
+                  {message.turnStatus && (
+                    <ChatRunStatus run={null} status={message.turnStatus} />
+                  )}
                   <AttachmentList
                     conversationId={chat?.conversationId}
                     files={message.attachments}
@@ -526,7 +529,13 @@ const ChatField = ({
         )}
 
         <ChatRunStatus
-          run={chat?.runStream?.snapshot ?? chat?.activeRun ?? null}
+          run={
+            ["processing", "stopping"].includes(
+              chat?.runStream?.snapshot?.status ?? chat?.activeRun?.status,
+            )
+              ? (chat?.runStream?.snapshot ?? chat?.activeRun ?? null)
+              : null
+          }
           connection={chat?.runStream?.connection ?? chat?.connection ?? "idle"}
           onStop={chat?.stop}
           onReconnect={chat?.reconnect}
