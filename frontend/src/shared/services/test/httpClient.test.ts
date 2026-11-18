@@ -41,7 +41,7 @@ describe("httpClient", () => {
     });
 
     mock.onGet("/api/secure").replyOnce(401, { message: "Expired" });
-    rootAxiosMock.onPost("http://localhost:4000/api/auth/refresh").reply(200, {
+    rootAxiosMock.onPost(new RegExp("/api/auth/refresh")).reply(200, {
       accessToken: "new-access-token",
       refreshToken: "new-refresh-token",
     });
@@ -60,7 +60,7 @@ describe("httpClient", () => {
     });
 
     let refreshCalls = 0;
-    rootAxiosMock.onPost("http://localhost:4000/api/auth/refresh").reply(() => {
+    rootAxiosMock.onPost(new RegExp("/api/auth/refresh")).reply(() => {
       refreshCalls += 1;
       return [200, { accessToken: "new-token", refreshToken: "new-refresh" }];
     });
@@ -88,7 +88,7 @@ describe("httpClient", () => {
     });
 
     mock.onGet("/api/secure").reply(401, { message: "Expired" });
-    rootAxiosMock.onPost("http://localhost:4000/api/auth/refresh").reply(401, {
+    rootAxiosMock.onPost(new RegExp("/api/auth/refresh")).reply(401, {
       message: "Refresh token invalid",
     });
 
@@ -104,7 +104,7 @@ describe("httpClient", () => {
     });
 
     mock.onGet("/api/secure").reply(401, { message: "Expired" });
-    rootAxiosMock.onPost("http://localhost:4000/api/auth/refresh").reply(500, {
+    rootAxiosMock.onPost(new RegExp("/api/auth/refresh")).reply(500, {
       message: "Database down",
     });
 
@@ -131,7 +131,7 @@ describe("httpClient", () => {
     useAuthStore
       .getState()
       .setSession({ accessToken: expired, refreshToken: "refresh" });
-    rootAxiosMock.onPost("http://localhost:4000/api/auth/refresh").reply(200, {
+    rootAxiosMock.onPost(new RegExp("/api/auth/refresh")).reply(200, {
       accessToken: "renewed",
       refreshToken: "rotated",
     });
@@ -167,7 +167,7 @@ describe("httpClient", () => {
     useAuthStore
       .getState()
       .setSession({ accessToken: expired, refreshToken: "refresh" });
-    rootAxiosMock.onPost("http://localhost:4000/api/auth/refresh").reply(503);
+    rootAxiosMock.onPost(new RegExp("/api/auth/refresh")).reply(503);
     await expect(axiosInstance.get("/api/auth/me")).rejects.toBeInstanceOf(
       ApiError,
     );
@@ -203,7 +203,7 @@ describe("httpClient", () => {
       .getState()
       .setSession({ accessToken: "old", refreshToken: "refresh" });
     mock.onGet("/api/secure").reply(401);
-    rootAxiosMock.onPost("http://localhost:4000/api/auth/refresh").reply(() => {
+    rootAxiosMock.onPost(new RegExp("/api/auth/refresh")).reply(() => {
       useAuthStore.getState().clearSession();
       return [200, { accessToken: "new", refreshToken: "rotated" }];
     });
