@@ -19,6 +19,7 @@ import { formatDateTime } from "@/shared/utils/dateTime";
 import { TaskProposalMessage } from "./A2UI/TaskProposalMessage";
 import { UiSurfaceMessage } from "./A2UI/UiSurfaceMessage";
 import { SkillReadBadge } from "@/features/agent/skills/SkillReadBadge";
+import { ChatRunStatus } from "./ChatRunStatus";
 
 const ChatField = ({
   messages,
@@ -147,7 +148,18 @@ const ChatField = ({
     boxShadow: "var(--shadow-xs)",
   };
 
+  const scrollContainerRef = useRef(null);
+  const isUserScrolledUp = useRef(false);
+
+  const handleScroll = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    isUserScrolledUp.current = distanceFromBottom > 100;
+  };
+
   const scrollToBottom = () => {
+    if (isUserScrolledUp.current) return;
     if (
       messagesEndRef.current?.closest(
         '.ui-assistant-presence[data-open="false"]',
@@ -225,6 +237,7 @@ const ChatField = ({
         return;
       }
       setSubmitting(true);
+      isUserScrolledUp.current = false;
       try {
         const accepted = files.length
           ? await onSendMessage(fullMessage, undefined, files)
@@ -294,7 +307,11 @@ const ChatField = ({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="chat-messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="chat-messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4"
+      >
         {chat?.before && (
           <button
             type="button"
@@ -478,7 +495,7 @@ const ChatField = ({
             ))
         )}
 
-        {isTyping && (
+        {isTyping && !chat?.runStream?.streamingMessage && (
           <div className="chat-message-row chat-message-row--agent">
             <ChatAvatar />
             <div
@@ -507,6 +524,13 @@ const ChatField = ({
             </div>
           </div>
         )}
+
+        <ChatRunStatus
+          run={chat?.runStream?.snapshot ?? chat?.activeRun ?? null}
+          connection={chat?.runStream?.connection ?? chat?.connection ?? "idle"}
+          onStop={chat?.stop}
+          onReconnect={chat?.reconnect}
+        />
 
         <div ref={messagesEndRef} />
       </div>

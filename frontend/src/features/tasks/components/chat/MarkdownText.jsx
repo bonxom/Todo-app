@@ -151,7 +151,17 @@ const MarkdownText = ({ text }) => {
           ),
         );
       } else if (langLower === "mermaid") {
-        blocks.push(<MermaidDiagram key={blockKey++} code={codeContent} />);
+        blocks.push(
+          isClosed ? (
+            <MermaidDiagram key={blockKey++} code={codeContent} />
+          ) : (
+            <CodeBlock
+              key={blockKey++}
+              code={codeContent}
+              language={language}
+            />
+          ),
+        );
       } else if (
         langLower === "svg" ||
         ((langLower === "xml" || langLower === "text" || !language) &&
