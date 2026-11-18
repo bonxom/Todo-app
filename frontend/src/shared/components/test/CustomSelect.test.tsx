@@ -86,3 +86,17 @@ describe("CustomSelect", () => {
     expect(onSelect).toHaveBeenCalledWith("__add_more__");
   });
 });
+it("keeps locally scoped theme values on its body portal", () => {
+  render(<StatefulHarness />);
+  const trigger = screen.getByTestId("custom-select-trigger");
+  trigger.style.setProperty("--color-surface", "rgb(242, 248, 247)");
+  trigger.style.setProperty("--color-accent", "rgb(20, 103, 95)");
+  fireEvent.click(trigger);
+  const menu = screen.getByRole("listbox");
+  expect(menu.style.getPropertyValue("--color-surface")).toBe(
+    "rgb(242, 248, 247)",
+  );
+  expect(menu.style.getPropertyValue("--color-accent")).toBe(
+    "rgb(20, 103, 95)",
+  );
+});

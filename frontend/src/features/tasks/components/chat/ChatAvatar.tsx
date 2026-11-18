@@ -8,9 +8,11 @@ export const DEFAULT_CHAT_AVATAR =
 export default function ChatAvatar({
   src,
   isUser = false,
+  appearance = "default",
 }: {
   src?: string;
   isUser?: boolean;
+  appearance?: "default" | "orbit";
 }) {
   const { t } = useTranslation("agent");
 
@@ -19,7 +21,10 @@ export default function ChatAvatar({
   const current = failed.includes(preferred) ? DEFAULT_CHAT_AVATAR : preferred;
   const label = isUser ? t("yourAvatar") : t("agentAvatar");
   const Icon = isUser ? UserRound : Bot;
-  if (failed.includes(current))
+  if (
+    (appearance === "orbit" && (!src?.trim() || failed.includes(preferred))) ||
+    failed.includes(current)
+  )
     return (
       <span
         className="chat-avatar chat-avatar--fallback"

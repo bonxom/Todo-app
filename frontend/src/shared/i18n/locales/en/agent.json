@@ -360,5 +360,6 @@
   "proposalRequestFailed": "Unable to complete the request.",
   "proposalNotFound": "Proposal not found.",
   "conversationUnavailableOrDeleted": "Conversation is unavailable or was deleted.",
-  "taskCompletedSuffix": " (completed)"
+  "taskCompletedSuffix": " (completed)",
+  "taskCreated": "Task created"
 }

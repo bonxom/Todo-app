@@ -67,7 +67,8 @@ function SkillsLibrary() {
   return (
     <div className="v2-skills" data-testid="v2-skills-page">
       <h1 className="sr-only">{tAgent("personalSkills")}</h1>
-      <header className="v2-page-actions">
+      <header className="v2-page-actions v2-skills-header">
+        <V2AgentTabs />
         <div className="v2-agents-heading-actions">
           <button
             type="button"
@@ -83,8 +84,6 @@ function SkillsLibrary() {
           </Link>
         </div>
       </header>
-
-      <V2AgentTabs />
 
       {(toggleError || notice) && (
         <div

@@ -360,5 +360,6 @@
   "proposalRequestFailed": "Không thể thực hiện yêu cầu.",
   "proposalNotFound": "Không tìm thấy đề xuất.",
   "conversationUnavailableOrDeleted": "Hội thoại không khả dụng hoặc đã bị xóa.",
-  "taskCompletedSuffix": " (đã hoàn thành)"
+  "taskCompletedSuffix": " (đã hoàn thành)",
+  "taskCreated": "Đã tạo công việc"
 }

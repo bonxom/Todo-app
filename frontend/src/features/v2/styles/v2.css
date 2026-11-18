@@ -62,6 +62,7 @@
 .v2-topbar,
 .v2-glass-panel,
 .v2-workspace-panel,
+.v2-agent-panel,
 .v2-dialog-panel {
   background: var(--v2-surface-solid);
   border: 1px solid var(--v2-glass-border);
@@ -78,6 +79,7 @@
     -webkit-backdrop-filter: blur(20px) saturate(145%);
   }
   .v2-workspace-panel,
+  .v2-agent-panel,
   .v2-glass-panel,
   .v2-dialog-panel {
     background: var(--v2-glass-fill);
@@ -654,7 +656,8 @@
     0 3px 6px -4px rgb(24 69 75 / 14%),
     0 16px 28px -18px rgb(24 69 75 / 30%);
 }
-.v2-workspace-panel {
+.v2-workspace-panel,
+.v2-agent-panel {
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 90%),
     0 3px 8px -5px rgb(24 69 75 / 12%),
@@ -691,7 +694,8 @@
     backdrop-filter: blur(12px) saturate(125%);
     -webkit-backdrop-filter: blur(12px) saturate(125%);
   }
-  .v2-workspace-panel {
+  .v2-workspace-panel,
+  .v2-agent-panel {
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
   }
@@ -736,7 +740,8 @@
 [data-theme="dark"] .v2-navigation::before {
   opacity: 0.45;
 }
-[data-theme="dark"] .v2-workspace-panel {
+[data-theme="dark"] .v2-workspace-panel,
+[data-theme="dark"] .v2-agent-panel {
   box-shadow:
     inset 0 1px 0 rgb(217 255 246 / 22%),
     0 3px 10px rgb(0 0 0 / 12%),
@@ -788,6 +793,7 @@
   .v2-app .v2-topbar,
   .v2-app .v2-navigation,
   .v2-app .v2-summary-item,
+  .v2-app .v2-agent-panel,
   .v2-app .v2-workspace-panel {
     background: var(--v2-surface-solid);
     backdrop-filter: none;
@@ -803,6 +809,7 @@
   .v2-app .v2-topbar,
   .v2-app .v2-navigation,
   .v2-app .v2-summary-item,
+  .v2-app .v2-agent-panel,
   .v2-app .v2-workspace-panel {
     background: Canvas;
     box-shadow: none;
@@ -861,6 +868,8 @@
   height: clamp(520px, calc(100dvh - 200px), 880px);
 }
 
+/* Agent and calendar panels share the Dashboard workspace material above.
+   Keep only their layout here so theme/fallback rules stay consistent. */
 .v2-agent-panel {
   position: relative;
   display: flex;
@@ -868,30 +877,6 @@
   min-width: 0;
   min-height: 0;
   padding: 16px;
-  border: 1px solid var(--v2-glass-border);
-  border-radius: var(--v2-radius-card);
-  background: var(--v2-glass-fill);
-  background-image: linear-gradient(
-    180deg,
-    rgb(255 255 255 / 60%),
-    transparent 46%
-  );
-  box-shadow:
-    var(--v2-shadow-md),
-    inset 0 0 0 1px rgb(255 255 255 / 22%);
-  backdrop-filter: blur(22px) saturate(150%);
-  -webkit-backdrop-filter: blur(22px) saturate(150%);
-}
-
-[data-theme="dark"] .v2-agent-panel {
-  background-image: linear-gradient(
-    180deg,
-    rgb(226 255 249 / 8%),
-    transparent 46%
-  );
-  box-shadow:
-    var(--v2-shadow-md),
-    inset 0 0 0 1px rgb(226 255 249 / 6%);
 }
 
 .v2-agent-panel-head {
@@ -1248,6 +1233,16 @@
 }
 
 /* ---------- Skills library ---------- */
+.v2-page-actions.v2-skills-header {
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.v2-skills-header > .v2-agent-tabs {
+  align-self: auto;
+}
+
 .v2-skills {
   display: flex;
   flex-direction: column;
