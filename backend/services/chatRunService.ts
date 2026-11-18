@@ -4,6 +4,8 @@ import type { ChatTurn } from "../types/IChatTurn.js";
 import type { McpContext } from "../mcp/context.js";
 import type { AgentInteraction } from "../types/IAgent.js";
 import type { ChatEventInput, TurnSnapshot } from "../types/IChatStream.js";
+import { AppError } from "../error/AppError.js";
+import { AI_ERROR } from "../error/definitions/aiErrors.js";
 
 export type TurnExecution = {
   signal: AbortSignal;
@@ -20,6 +22,7 @@ interface ActiveRun {
 }
 
 const activeRuns = new Map<string, ActiveRun>();
+let isShuttingDown = false;
 
 export const chatRunService = {
   getActiveRunCount(): number {
@@ -35,6 +38,10 @@ export const chatRunService = {
     context: McpContext,
     selected?: AgentInteraction,
   ): void {
+    if (isShuttingDown) {
+      throw new AppError(AI_ERROR.CONVERSATION_BUSY);
+    }
+
     if (activeRuns.has(turn._id)) {
       return;
     }
@@ -88,20 +95,25 @@ export const chatRunService = {
         const isDeadline =
           abortReason.includes("deadline") ||
           Date.now() >= deadlineAt.getTime();
+        const isShutdown = abortReason.includes("process_shutdown");
 
         const terminalStatus = isDeadline
           ? "timed_out"
-          : isAbort
-            ? "cancelled"
-            : "failed";
+          : isShutdown
+            ? "interrupted"
+            : isAbort
+              ? "cancelled"
+              : "failed";
 
         const terminalReason = isDeadline
           ? "deadline_exceeded"
-          : isAbort
-            ? "user_cancelled"
-            : err instanceof Error
-              ? err.message
-              : "unknown_error";
+          : isShutdown
+            ? "process_shutdown"
+            : isAbort
+              ? "user_cancelled"
+              : err instanceof Error
+                ? err.message
+                : "unknown_error";
 
         await chatStreamRepository.finish(turn._id, turn.executionToken, {
           status: terminalStatus,
@@ -151,7 +163,8 @@ export const chatRunService = {
     return snapshot;
   },
 
-  async shutdown(): Promise<void> {
+  async shutdown(timeoutMs = 10_000): Promise<void> {
+    isShuttingDown = true;
     const promises: Promise<void>[] = [];
     for (const active of activeRuns.values()) {
       clearTimeout(active.timer);
@@ -159,6 +172,22 @@ export const chatRunService = {
       promises.push(active.promise);
     }
     activeRuns.clear();
-    await Promise.allSettled(promises);
+
+    let timer: NodeJS.Timeout | undefined;
+    const timeoutPromise = new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, timeoutMs);
+    });
+
+    const allSettledPromise = Promise.allSettled(promises).then(() => {});
+
+    await Promise.race([allSettledPromise, timeoutPromise]);
+    if (timer) {
+      clearTimeout(timer);
+    }
+  },
+
+  _resetForTest(): void {
+    isShuttingDown = false;
+    activeRuns.clear();
   },
 };

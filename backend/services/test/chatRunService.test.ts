@@ -79,6 +79,7 @@ describe("chatRunService detached runner and cancellation", () => {
   afterEach(async () => {
     vi.restoreAllMocks();
     await chatRunService.shutdown();
+    chatRunService._resetForTest();
   });
 
   it("registers run and executes in background without awaiting caller", async () => {
@@ -167,5 +168,49 @@ describe("chatRunService detached runner and cancellation", () => {
     await expect(
       chatRunService.cancel(String(fakeUser._id), "conv-1", "turn-shutdown-1"),
     ).rejects.toThrow();
+  });
+
+  it("rejects new run admission when server is shutting down", async () => {
+    await chatRunService.shutdown();
+    expect(() =>
+      chatRunService.start(
+        {
+          ...fakeTurn,
+          _id: "turn-shutting-down-1",
+        },
+        fakeContext,
+      ),
+    ).toThrowError();
+  });
+
+  it("bounds wait time on shutdown using timeout when execution hangs", async () => {
+    vi.useFakeTimers();
+    vi.mocked(runConversationTurn).mockImplementation(
+      () => new Promise(() => {}),
+    );
+    // Also mock finish to hang so abort does not immediately finish it
+    vi.spyOn(chatStreamRepository, "finish").mockImplementation(
+      () => new Promise(() => {}),
+    );
+
+    chatRunService.start(
+      {
+        ...fakeTurn,
+        _id: "turn-hang-1",
+      },
+      fakeContext,
+    );
+
+    let resolved = false;
+    const shutdownPromise = chatRunService.shutdown(2000).then(() => {
+      resolved = true;
+    });
+
+    expect(resolved).toBe(false);
+    await vi.advanceTimersByTimeAsync(2000);
+    await shutdownPromise;
+    expect(resolved).toBe(true);
+
+    vi.useRealTimers();
   });
 });

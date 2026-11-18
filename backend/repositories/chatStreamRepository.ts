@@ -361,6 +361,14 @@ export const chatStreamRepository = {
       if (outcome.result.skillsRead) {
         turn.skillsRead = outcome.result.skillsRead;
       }
+      if (
+        outcome.status === "interrupted" &&
+        Array.isArray(turn.toolProgress)
+      ) {
+        turn.toolProgress = turn.toolProgress.map((tp) =>
+          tp.status === "started" ? { ...tp, status: "unknown" } : tp,
+        );
+      }
 
       const nextSeq = (turn.lastEventSeq ?? 0) + 1;
       turn.lastEventSeq = nextSeq;
