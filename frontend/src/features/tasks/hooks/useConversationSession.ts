@@ -4,6 +4,7 @@ import { ApiError } from "@/shared/services/apiError";
 import { aiService } from "@/shared/services/aiService";
 import { generateUUID } from "@/shared/utils/id";
 import { useAuthStore } from "@/stores/useAuthStore";
+import type { TurnSnapshot } from "@/shared/types/chatStream";
 import type {
   AgentMode,
   AgentInteraction,
@@ -39,6 +40,7 @@ export function useConversationSession(options?: ConversationSessionOptions) {
   });
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<ChatPayload | null>(null);
+  const [activeRun, setActiveRun] = useState<TurnSnapshot | null>(null);
   const [context, setContext] = useState<
     { projectId: string | null; available: boolean } | undefined
   >();
@@ -71,6 +73,7 @@ export function useConversationSession(options?: ConversationSessionOptions) {
       setInteraction(result?.interaction);
       setContext(result?.context);
       setActivities(result?.activities ?? []);
+      setActiveRun(result?.activeRun ?? null);
       const turn = result?.pending[0];
       setPending(
         turn ? { ...turn, conversationId: result!.conversationId } : null,
@@ -87,6 +90,7 @@ export function useConversationSession(options?: ConversationSessionOptions) {
       setConversationId(undefined);
       setInteraction(undefined);
       setPending(null);
+      setActiveRun(null);
       setError(null);
       setContext(undefined);
       setActivities([]);
@@ -181,6 +185,7 @@ export function useConversationSession(options?: ConversationSessionOptions) {
       setActivities([]);
       setBefore(null);
       setPending(null);
+      setActiveRun(null);
       setError(null);
       return true;
     } catch {
@@ -278,6 +283,8 @@ export function useConversationSession(options?: ConversationSessionOptions) {
     setActivities,
     loadEarlier,
     newConversation,
+    activeRun,
+    setActiveRun,
   };
 }
 

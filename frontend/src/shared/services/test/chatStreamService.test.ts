@@ -75,7 +75,7 @@ describe("chatStreamService", () => {
 
     expect(events).toHaveLength(1);
     expect(events[0].event).toBe("assistant.delta");
-    expect(events[0].data.payload.text).toBe(text);
+    expect((events[0].data.payload as Record<string, unknown>).text).toBe(text);
   });
 
   it("handles multiple events in one chunk and frames split across CRLF", async () => {
@@ -107,7 +107,7 @@ describe("chatStreamService", () => {
     expect(events).toHaveLength(2);
     expect(events[0].event).toBe("turn.started");
     expect(events[1].event).toBe("tool.started");
-    expect(events[1].data.payload.label).toBe("Tạo");
+    expect((events[1].data.payload as Record<string, unknown>).label).toBe("Tạo");
   });
 
   it("concatenates multi-line data fields and ignores comments", async () => {
@@ -131,7 +131,7 @@ describe("chatStreamService", () => {
     });
 
     expect(events).toHaveLength(1);
-    expect(events[0].data.payload.msg).toBe("multiline");
+    expect((events[0].data.payload as Record<string, unknown>).msg).toBe("multiline");
   });
 
   it("safely ignores malformed JSON or unsupported version without crashing", async () => {

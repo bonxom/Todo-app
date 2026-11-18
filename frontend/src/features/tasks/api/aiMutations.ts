@@ -4,6 +4,8 @@ import {
   type UseMutationOptions,
 } from "@tanstack/react-query";
 import { aiService } from "../../../shared/services/aiService";
+import { chatStreamService } from "../../../shared/services/chatStreamService";
+import type { TurnSnapshot } from "../../../shared/types/chatStream";
 import type {
   ChatPayload,
   ChatResponse,
@@ -49,6 +51,20 @@ export const useAgenticChatMutation = (
     mutationFn: (payload: ChatPayload) =>
       aiService.getAgenticChatResponse(payload),
     // A tool may commit even if the provider subsequently fails to reply.
+    onSettled: async (...args) => {
+      await invalidateWorkspaceQueries(queryClient);
+      await options?.onSettled?.(...args);
+    },
+  });
+};
+
+export const useStartChatTurnMutation = (
+  options?: UseMutationOptions<TurnSnapshot, Error, ChatPayload>,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...options,
+    mutationFn: (payload: ChatPayload) => chatStreamService.startTurn(payload),
     onSettled: async (...args) => {
       await invalidateWorkspaceQueries(queryClient);
       await options?.onSettled?.(...args);

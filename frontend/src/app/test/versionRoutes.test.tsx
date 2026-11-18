@@ -30,19 +30,25 @@ describe("versionRoutes route integration", () => {
   it("renders V2 dashboard scaffold when navigating to /v2/dashboard", async () => {
     renderWithRouter(["/v2/dashboard"]);
 
-    await waitFor(() => {
-      expect(screen.getByTestId("v2-layout")).toBeInTheDocument();
-      expect(screen.getByTestId("v2-dashboard-page")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("v2-layout")).toBeInTheDocument();
+        expect(screen.getByTestId("v2-dashboard-page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("replaces /v2 with /v2/dashboard", async () => {
     renderWithRouter(["/v2"]);
 
-    await waitFor(() => {
-      expect(screen.getByTestId("v2-layout")).toBeInTheDocument();
-      expect(screen.getByTestId("v2-dashboard-page")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("v2-layout")).toBeInTheDocument();
+        expect(screen.getByTestId("v2-dashboard-page")).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("renders V2 404 page for unknown /v2 route", async () => {

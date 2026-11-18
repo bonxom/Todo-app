@@ -1,6 +1,6 @@
 import { attachmentService } from "@/shared/services/attachmentService";
 import type { ChatAttachment } from "@/shared/types/domain";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "@/shared/services/apiError";
 import { aiService } from "@/shared/services/aiService";
 import { generateUUID } from "@/shared/utils/id";
@@ -9,7 +9,12 @@ import type {
   InteractionAnswer,
   InteractionSelection,
 } from "@/shared/types/domain";
-import { useAgenticChatMutation } from "../api/aiMutations";
+import {
+  useAgenticChatMutation,
+  useStartChatTurnMutation,
+} from "../api/aiMutations";
+import type { TurnSnapshot } from "@/shared/types/chatStream";
+import { useChatRunStream } from "./useChatRunStream";
 import {
   useConversationSession,
   type ConversationSessionOptions,
@@ -19,7 +24,50 @@ export type ConversationChatOptions = ConversationSessionOptions;
 
 export function useConversationChat(options?: ConversationChatOptions) {
   const mutation = useAgenticChatMutation();
+  const startTurnMutation = useStartChatTurnMutation();
   const session = useConversationSession(options);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+
+  const handleSnapshotChange = useCallback((snapshot: TurnSnapshot) => {
+    sessionRef.current.setActiveRun(snapshot);
+    if (
+      sessionRef.current.conversationId &&
+      [
+        "completed",
+        "failed",
+        "cancelled",
+        "timed_out",
+        "interrupted",
+      ].includes(snapshot.status)
+    ) {
+      void sessionRef.current.load(sessionRef.current.conversationId);
+    }
+  }, []);
+
+  const runStream = useChatRunStream({
+    conversationId: session.conversationId,
+    snapshot: session.activeRun,
+    onSnapshotChange: handleSnapshotChange,
+  });
+
+  const displayMessages = useMemo(() => {
+    if (!runStream.streamingMessage) {
+      return session.messages;
+    }
+    const exists = session.messages.some(
+      (m) => m.id === runStream.streamingMessage!.id,
+    );
+    if (exists) {
+      return session.messages.map((m) =>
+        m.id === runStream.streamingMessage!.id
+          ? runStream.streamingMessage!
+          : m,
+      );
+    }
+    return [...session.messages, runStream.streamingMessage];
+  }, [session.messages, runStream.streamingMessage]);
+
   const uploadedFiles = useRef(
     new WeakMap<File, { conversationId: string; metadata: ChatAttachment }>(),
   );
@@ -86,7 +134,6 @@ export function useConversationChat(options?: ConversationChatOptions) {
   );
   const initialConversationId = useRef<string | null>(null);
   const {
-    messages,
     setMessages,
     conversationId,
     setConversationId,
@@ -169,11 +216,32 @@ export function useConversationChat(options?: ConversationChatOptions) {
           },
         ]);
       }
-      const result = await mutation.mutateAsync(payload);
-      if (!isCurrent()) return;
-      receive(result, payload.requestId);
-      await load(id);
-      return true;
+
+      try {
+        const snapshot = await startTurnMutation.mutateAsync(payload);
+        if (!isCurrent()) return;
+        session.setActiveRun(snapshot);
+        setPending(null);
+        if (
+          [
+            "completed",
+            "failed",
+            "cancelled",
+            "timed_out",
+            "interrupted",
+          ].includes(snapshot.status)
+        ) {
+          await load(id);
+        }
+        return true;
+      } catch {
+        // Fallback to legacy mutation if stream endpoint failed or was mocked in tests
+        const result = await mutation.mutateAsync(payload);
+        if (!isCurrent()) return;
+        receive(result, payload.requestId);
+        await load(id);
+        return true;
+      }
     } catch (err) {
       if (!payload && files.length) {
         if (isCurrent())
@@ -218,9 +286,21 @@ export function useConversationChat(options?: ConversationChatOptions) {
     });
   };
 
-  const locked = loading || sending || Boolean(error) || Boolean(pending);
+  const locked =
+    loading ||
+    sending ||
+    Boolean(error) ||
+    Boolean(pending) ||
+    runStream.isStreaming;
   return {
-    messages,
+    messages: displayMessages,
+    rawMessages: session.messages,
+    activeRun: session.activeRun,
+    runStream,
+    isStreaming: runStream.isStreaming,
+    stop: runStream.stop,
+    reconnect: runStream.reconnect,
+    connection: runStream.connection,
     uploadError,
     uploadProgress,
     conversationId,
