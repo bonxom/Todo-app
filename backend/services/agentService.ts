@@ -32,9 +32,11 @@ import { createAgentBudget } from "../utils/agentBudget.js";
 import { prepareAgentProviderMessages } from "../utils/agentProviderMessages.js";
 import { validateAgentResponse } from "../utils/agentProviderResponse.js";
 import type {
+  ChatCompletionMessage,
   ChatCompletionMessageParam,
   ChatCompletionTool,
 } from "openai/resources/chat/completions.js";
+import { readAiStream } from "../libs/aiStream.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createOrbitMcpServer } from "../mcp/server.js";
@@ -734,23 +736,81 @@ ${webSearchInstruction}`,
             sum + registry.read(doc.skillId, doc.document).text.length,
           0,
         );
-        const response = await callAiProvider(() =>
-          ai.chat.completions.create(
-            {
-              model,
-              messages: payloadMessages,
-              tools,
-              tool_choice: finalOnly ? "none" : "auto",
+        let message: ReturnType<typeof validateAgentResponse>;
+        if (memory.stream) {
+          const stream = await callAiProvider(async () => {
+            try {
+              return await (
+                ai.chat.completions.create as unknown as (
+                  params: unknown,
+                  options?: unknown,
+                ) => Promise<AsyncIterable<ChatCompletionChunk>>
+              )(
+                {
+                  model,
+                  messages: payloadMessages,
+                  tools,
+                  tool_choice: finalOnly ? "none" : "auto",
+                  stream: true,
+                },
+                { timeout, maxRetries: 0, signal: memory.stream!.signal },
+              );
+            } catch (err: unknown) {
+              const anyErr = err as {
+                status?: number;
+                code?: string;
+                message?: string;
+              };
+              if (
+                anyErr?.status === 400 &&
+                (anyErr?.code === "stream_not_supported" ||
+                  anyErr?.message?.toLowerCase().includes("stream"))
+              ) {
+                throw new AppError(AI_ERROR.CHAT_STREAM_UNSUPPORTED, {
+                  cause: err,
+                });
+              }
+              throw err;
+            }
+          });
+
+          stage = "provider_response";
+          const messageId = memory.turnId
+            ? `${memory.turnId}:bot`
+            : `${context.requestId}:bot`;
+
+          const rawMessage = await readAiStream(stream, {
+            signal: memory.stream.signal,
+            onText: async (text) => {
+              await memory.stream!.emit({
+                type: "assistant.delta",
+                payload: {
+                  messageId,
+                  text,
+                },
+              });
             },
-            { timeout, maxRetries: 0 },
-          ),
-        );
-        stage = "provider_response";
-        const message = validateAgentResponse(
-          response.choices?.[0]?.message,
-          finalOnly,
-          seenIds,
-        );
+          });
+          message = validateAgentResponse(rawMessage, finalOnly, seenIds);
+        } else {
+          const response = await callAiProvider(() =>
+            ai.chat.completions.create(
+              {
+                model,
+                messages: payloadMessages,
+                tools,
+                tool_choice: finalOnly ? "none" : "auto",
+              },
+              { timeout, maxRetries: 0 },
+            ),
+          );
+          stage = "provider_response";
+          message = validateAgentResponse(
+            response.choices?.[0]?.message,
+            finalOnly,
+            seenIds,
+          );
+        }
         messages.push(message);
         await checkpoint();
         session.acceptProviderContext(snapshot);
