@@ -123,6 +123,16 @@ export async function agentWorkspaceFixture(
       });
     }
 
+    if (path.includes("/turns")) {
+      return route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({
+          message: "Turns not mocked in fixture default",
+        }),
+      });
+    }
+
     if (path.startsWith("/api/ai/conversations/")) {
       const convId = path.split("/")[4];
       if (convId === "unowned-or-invalid") {

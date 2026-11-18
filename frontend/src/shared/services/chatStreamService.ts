@@ -69,6 +69,13 @@ export const chatStreamService = {
         timeZone: payload.timeZone,
       },
     );
+    if (!response.data?.data?.turnId) {
+      throw new ApiError(
+        "Endpoint not found or invalid turn response",
+        404,
+        "http",
+      );
+    }
     return response.data.data;
   },
 

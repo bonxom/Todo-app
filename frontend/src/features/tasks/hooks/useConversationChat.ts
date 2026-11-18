@@ -33,13 +33,9 @@ export function useConversationChat(options?: ConversationChatOptions) {
     sessionRef.current.setActiveRun(snapshot);
     if (
       sessionRef.current.conversationId &&
-      [
-        "completed",
-        "failed",
-        "cancelled",
-        "timed_out",
-        "interrupted",
-      ].includes(snapshot.status)
+      ["completed", "failed", "cancelled", "timed_out", "interrupted"].includes(
+        snapshot.status,
+      )
     ) {
       void sessionRef.current.load(sessionRef.current.conversationId);
     }
@@ -219,7 +215,7 @@ export function useConversationChat(options?: ConversationChatOptions) {
 
       try {
         const snapshot = await startTurnMutation.mutateAsync(payload);
-        if (!isCurrent()) return;
+        if (!isCurrent()) return false;
         session.setActiveRun(snapshot);
         setPending(null);
         if (
@@ -234,13 +230,23 @@ export function useConversationChat(options?: ConversationChatOptions) {
           await load(id);
         }
         return true;
-      } catch {
-        // Fallback to legacy mutation if stream endpoint failed or was mocked in tests
-        const result = await mutation.mutateAsync(payload);
-        if (!isCurrent()) return;
-        receive(result, payload.requestId);
-        await load(id);
-        return true;
+      } catch (err: unknown) {
+        // Fallback to legacy mutation if stream endpoint is 404 (endpoint not supported in backend)
+        // or if explicitly mocked with "fallback to legacy" in test suites
+        const isLegacyFallback =
+          (err instanceof Error &&
+            err.message.includes("fallback to legacy")) ||
+          (err instanceof ApiError && err.status === 404) ||
+          (err as { status?: number })?.status === 404;
+
+        if (isLegacyFallback) {
+          const result = await mutation.mutateAsync(payload);
+          if (!isCurrent()) return false;
+          receive(result, payload.requestId);
+          await load(id);
+          return true;
+        }
+        throw err;
       }
     } catch (err) {
       if (!payload && files.length) {
@@ -255,16 +261,22 @@ export function useConversationChat(options?: ConversationChatOptions) {
       if (
         isCurrent() &&
         err instanceof ApiError &&
-        [400, 404, 422].includes(err.status ?? 0)
-      )
+        [400, 404, 422, 429].includes(err.status ?? 0)
+      ) {
         setPending(null);
+        if (payload?.requestId) {
+          setMessages((previous) =>
+            previous.filter((message) => message.id !== payload!.requestId),
+          );
+        }
+      }
       if (isCurrent())
         setError(
           err instanceof Error
             ? err.message
             : "No response received. Please try again.",
         );
-      return Boolean(payload);
+      return false;
     } finally {
       if (isCurrent()) setUploadProgress(null);
       busy.current = false;

@@ -83,6 +83,7 @@ export function useChatRunStream(
       reconnectTimer.current = null;
     }
     dispatch({ type: "RESET", snapshot });
+    stateRef.current = createInitialChatRunState(snapshot);
   }, [conversationId, currentTurnId, snapshot]);
 
   const scheduleReconnect = useCallback(
@@ -123,8 +124,8 @@ export function useChatRunStream(
   );
 
   const startSubscription = useCallback(
-    (currentGeneration: number) => {
-      const activeSnapshot = stateRef.current.snapshot;
+    (currentGeneration: number, targetSnapshot?: TurnSnapshot) => {
+      const activeSnapshot = targetSnapshot ?? stateRef.current.snapshot;
       if (
         !conversationId ||
         !activeSnapshot ||
@@ -148,7 +149,7 @@ export function useChatRunStream(
           await chatStreamService.subscribeTurn({
             conversationId,
             turnId: activeSnapshot.turnId,
-            after: stateRef.current.snapshot?.lastEventSeq ?? 0,
+            after: activeSnapshot.lastEventSeq ?? 0,
             signal: abortController.signal,
             onEvent: (event) => {
               if (generation.current !== currentGeneration) {
@@ -202,7 +203,7 @@ export function useChatRunStream(
   useEffect(() => {
     const curGen = generation.current;
     if (snapshot && !TERMINAL_STATUSES.has(snapshot.status)) {
-      startSubscription(curGen);
+      startSubscription(curGen, snapshot);
     }
 
     return () => {

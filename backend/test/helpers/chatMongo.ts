@@ -8,6 +8,12 @@ import type { ProposalIntent } from "../../types/A2UI/ITaskProposal.js";
 import type { InteractionSelection } from "../../types/IChatTurn.js";
 import type { AgentMode } from "../../types/IAgent.js";
 
+export function hasChatTestMongo(): boolean {
+  return Boolean(
+    process.env.CHAT_TEST_MONGO_URI || process.env.ORBIT_MCP_TEST_MONGO_URI,
+  );
+}
+
 export function getChatTestMongoUri(): string {
   const uri =
     process.env.CHAT_TEST_MONGO_URI || process.env.ORBIT_MCP_TEST_MONGO_URI;

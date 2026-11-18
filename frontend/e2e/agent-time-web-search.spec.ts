@@ -128,10 +128,61 @@ test.describe("Agent Time & Web Search E2E", () => {
   });
 
   test("remains interactive when search is unavailable", async ({ page }) => {
-    await agentWorkspaceFixture(page);
+    const messages = [
+      {
+        id: "msg-1",
+        sender: "user" as const,
+        text: "What is the plan for this week?",
+        timestamp: "2026-11-06T00:00:00.000Z",
+      },
+      {
+        id: "msg-2",
+        sender: "bot" as const,
+        text: "I have prepared the plan and created the required tasks.",
+        timestamp: "2026-11-06T00:00:05.000Z",
+      },
+    ];
+
+    await agentWorkspaceFixture(page, {
+      conversationId: "conv-e2e-1",
+      initialMessages: messages,
+    });
+
+    await page.route("**/api/ai/conversations/**", async (route) => {
+      const url = new URL(route.request().url());
+      if (
+        url.pathname.match(/\/api\/ai\/conversations\/[^/]+$/) &&
+        route.request().method() === "GET"
+      ) {
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            data: {
+              conversationId: "conv-e2e-1",
+              title: "E2E Workspace Planning",
+              mode: "auto",
+              before: null,
+              pending: [],
+              context: { projectId: null, available: true },
+              activities: [],
+              messages,
+            },
+          }),
+        });
+      }
+      return route.continue();
+    });
 
     await page.route("**/api/ai/chat-mcp", async (route) => {
       const payload = route.request().postDataJSON();
+      messages.push({
+        id: "msg-fail",
+        sender: "bot",
+        text: "Chưa thể tra cứu thông tin web lúc này do dịch vụ tìm kiếm tạm thời gián đoạn.",
+        timestamp: new Date().toISOString(),
+      });
       return route.fulfill({
         status: 200,
         contentType: "application/json",
