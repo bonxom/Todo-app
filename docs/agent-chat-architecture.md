@@ -108,3 +108,13 @@ Backend Vitest suite: 26 test files passed (213 unit/integration tests). Integra
 ## Task deletion
 
 `orbit_delete_task` deletes one explicitly requested, owned task using `taskId` and `idempotencyKey`. Deletion, stats rebuild and receipt persistence share the existing per-user write transaction. A matching deletion retry returns the owned receipt without looking up the deleted resource. Verified results include `deleted: true` and produce `task_deleted` activities without a detail link. Explicit proposal-generation turns continue to forbid direct writes.
+
+## Streaming Chat Turns & Real-time Progress (SSE)
+
+- Lượt chat hỗ trợ streaming thời gian thực qua Server-Sent Events (SSE) theo đặc tả `docs/superpowers/specs/2026-11-18-chat-streaming.md`.
+- `POST /api/ai/conversations/:id/turns`: Khởi tạo turn mới, trả HTTP 202 kèm initial snapshot và deadline 300s. Kiểm tra quota 3 runs/tài khoản và 1 run/hội thoại bằng transaction trên collection `ChatRunSlot`.
+- `GET /api/ai/conversations/:id/turns/:turnId/events?after=:seq`: Đăng ký nhận stream sự kiện có sequence number tăng dần (`turn.started`, `assistant.delta`, `tool.started`, `tool.finished`, `turn.finished`). Hỗ trợ resume stream liền mạch khi mất kết nối hoặc reload.
+- `POST /api/ai/conversations/:id/turns/:turnId/cancel`: Hủy turn đang chạy, chuyển trạng thái `stopping` -> `cancelled`, dừng provider call tức thì.
+- Phục hồi sự cố: Server restart tự động chuyển các turn dở dang sang `interrupted`, đánh dấu unfinished tools là `unknown` và giải phóng quota slot.
+- Nginx reverse proxy được cấu hình `proxy_buffering off`, `proxy_cache off` và `gzip off` cho endpoint events.
+- Tài liệu vận hành chi tiết: `docs/ai/chat-streaming-operations.vi.md`.

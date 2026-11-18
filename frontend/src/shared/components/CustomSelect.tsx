@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
@@ -104,6 +105,7 @@ export default function CustomSelect({
 }: CustomSelectProps) {
   const { t } = useTranslation("common");
   const [isOpen, setIsOpen] = useState(false);
+  const [menuTheme, setMenuTheme] = useState<CSSProperties>({});
   const [menuPos, setMenuPos] = useState<MenuPosition>({
     top: 0,
     left: 0,
@@ -131,6 +133,23 @@ export default function CustomSelect({
     const triggerEl = triggerRef.current;
     if (!triggerEl || typeof window === "undefined") return;
 
+    // The menu lives under body; carry scoped theme values from its trigger.
+    const computed = getComputedStyle(triggerEl);
+    const theme = Object.fromEntries(
+      [
+        "--color-text",
+        "--color-text-muted",
+        "--color-line",
+        "--color-surface",
+        "--color-surface-muted",
+        "--color-accent",
+        "--color-accent-soft",
+        "--shadow-lg",
+      ]
+        .map((key) => [key, computed.getPropertyValue(key).trim()])
+        .filter(([, value]) => value),
+    );
+    setMenuTheme(theme as CSSProperties);
     const rect = triggerEl.getBoundingClientRect();
     const viewportW = window.innerWidth || 1024;
     const viewportH = window.innerHeight || 768;
@@ -313,6 +332,7 @@ export default function CustomSelect({
             }
             className="ui-custom-select-menu"
             style={{
+              ...menuTheme,
               top: menuPos.top !== undefined ? `${menuPos.top}px` : undefined,
               bottom:
                 menuPos.bottom !== undefined

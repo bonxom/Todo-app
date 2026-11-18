@@ -360,5 +360,19 @@
   "proposalRequestFailed": "Unable to complete the request.",
   "proposalNotFound": "Proposal not found.",
   "conversationUnavailableOrDeleted": "Conversation is unavailable or was deleted.",
-  "taskCompletedSuffix": " (completed)"
+  "taskCompletedSuffix": " (completed)",
+  "stop": "Stop",
+  "stopping": "Stopping...",
+  "stopped": "Stopped",
+  "failedStatus": "Failed",
+  "timedOut": "Timed out",
+  "interrupted": "Interrupted",
+  "reconnect": "Reconnect",
+  "offlineMessage": "You are offline. Waiting for network...",
+  "connecting": "Connecting...",
+  "reconnecting": "Reconnecting...",
+  "connectionError": "Connection lost to the active run.",
+  "concurrencyLimit": "You have 3 active runs. Please wait for one to finish before starting another.",
+  "processingTask": "Processing task",
+  "taskCreated": "Task created"
 }

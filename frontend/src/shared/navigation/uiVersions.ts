@@ -12,7 +12,7 @@ export const UI_ROUTES: ReadonlyArray<{
   { id: "dashboard", v1: "/dashboard", v2: "/v2/dashboard" },
   { id: "calendar", v1: "/calendar" },
   { id: "categories", v1: "/categories" },
-  { id: "statistics", v1: "/statistics" },
+  { id: "statistics", v1: "/statistics", v2: "/v2/statistics" },
   { id: "profile", v1: "/profile" },
   { id: "notifications", v1: "/notifications", v2: "/v2/notifications" },
   { id: "agent", v1: "/agent" },
@@ -44,7 +44,8 @@ export function isSupportedProtectedPath(pathname: string): boolean {
   if (
     normalized === "/v2" ||
     normalized === "/v2/dashboard" ||
-    normalized === "/v2/notifications"
+    normalized === "/v2/notifications" ||
+    normalized === "/v2/statistics"
   ) {
     return true;
   }
@@ -89,6 +90,11 @@ export function getVersionDestination(
     return { to: "/v2/notifications", isFallback: false };
   if (normalized === "/v2/notifications" && target === "v1")
     return { to: "/notifications", isFallback: false };
+
+  if (normalized === "/statistics" && target === "v2")
+    return { to: "/v2/statistics", isFallback: false };
+  if (normalized === "/v2/statistics" && target === "v1")
+    return { to: "/statistics", isFallback: false };
 
   if (target === "v2") {
     if (normalized === "/dashboard") {

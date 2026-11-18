@@ -18,3 +18,22 @@ it("updates when the profile avatar changes", () => {
     "https://example.test/two.jpg",
   );
 });
+it("uses local icons for the Orbit appearance without replacing a profile image", () => {
+  const { rerender } = render(<ChatAvatar appearance="orbit" />);
+  expect(screen.getByRole("img", { name: "Agent avatar" }).tagName).toBe(
+    "SPAN",
+  );
+  rerender(
+    <ChatAvatar
+      appearance="orbit"
+      src="https://example.test/profile.jpg"
+      isUser
+    />,
+  );
+  expect(screen.getByRole("img", { name: "Your avatar" })).toHaveAttribute(
+    "src",
+    "https://example.test/profile.jpg",
+  );
+  fireEvent.error(screen.getByRole("img", { name: "Your avatar" }));
+  expect(screen.getByRole("img", { name: "Your avatar" }).tagName).toBe("SPAN");
+});

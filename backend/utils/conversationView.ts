@@ -84,6 +84,12 @@ export function turnMessages(
     text?: string;
   },
 ) {
+  const incomplete = [
+    "failed",
+    "cancelled",
+    "timed_out",
+    "interrupted",
+  ].includes(turn.status);
   const expired =
     turn.status === "processing" && turn.expiresAt.getTime() < Date.now();
   return [
@@ -112,11 +118,12 @@ export function turnMessages(
       interaction: publicInteraction(i),
       skillsRead: turn.skillsRead ?? [],
     })),
-    ...((turn.response && !turn.interactions?.length) || expired
+    ...((turn.response && !turn.interactions?.length) || incomplete || expired
       ? [
           {
             id: `${turn._id}:bot`,
             sender: "bot",
+            ...(incomplete ? { turnStatus: turn.status } : {}),
             text:
               envelope?.text ??
               (turn.response || interruptedReply(turn.messages)),

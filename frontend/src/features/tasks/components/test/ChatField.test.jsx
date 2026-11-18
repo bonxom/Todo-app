@@ -228,3 +228,22 @@ describe("ChatField", () => {
     expect(screen.getByText("screenshot.png")).toBeInTheDocument();
   });
 });
+
+it("keeps the stopped label on a saved partial response after reload", () => {
+  render(
+    <ChatField
+      onSendMessage={vi.fn()}
+      messages={[
+        {
+          id: "stopped:bot",
+          sender: "bot",
+          text: "Partial answer",
+          timestamp: new Date().toISOString(),
+          turnStatus: "cancelled",
+        },
+      ]}
+    />,
+  );
+  expect(screen.getByText("Partial answer")).toBeVisible();
+  expect(screen.getByTestId("run-status-cancelled")).toBeVisible();
+});

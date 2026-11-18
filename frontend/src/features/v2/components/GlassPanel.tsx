@@ -1,12 +1,19 @@
-import type { PropsWithChildren } from "react";
+import type { HTMLAttributes, PropsWithChildren } from "react";
 
-export type GlassPanelProps = PropsWithChildren<{
-  className?: string;
-}>;
+export type GlassPanelProps = PropsWithChildren<
+  HTMLAttributes<HTMLDivElement> & {
+    className?: string;
+  }
+>;
 
 export default function GlassPanel({
   className = "",
   children,
+  ...props
 }: GlassPanelProps) {
-  return <div className={`v2-glass-panel ${className}`.trim()}>{children}</div>;
+  return (
+    <div className={`v2-glass-panel ${className}`.trim()} {...props}>
+      {children}
+    </div>
+  );
 }

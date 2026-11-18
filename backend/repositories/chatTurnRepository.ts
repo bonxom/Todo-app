@@ -7,6 +7,8 @@ import mongoose from "mongoose";
 import { createHash, randomUUID } from "node:crypto";
 import Conversation from "../models/Conversation.js";
 import ChatTurn from "../models/ChatTurn.js";
+import ChatRunSlot from "../models/ChatRunSlot.js";
+import ChatTurnEvent from "../models/ChatTurnEvent.js";
 import type {
   InteractionSelection,
   SkillReadMetadata,
@@ -28,7 +30,6 @@ import type { StoredUiSurface } from "../types/A2UI/IUiSurface.js";
 
 const turnId = (userId: string, requestId: string) =>
   createHash("sha256").update(`${userId}:${requestId}`).digest("hex");
-const lease = () => new Date(Date.now() + 5 * 60_000);
 
 const selectionKey = (s?: InteractionSelection) =>
   JSON.stringify([
@@ -88,7 +89,11 @@ export const chatTurnRepository = {
     ) => Promise<AttachmentView[]> = async () => [],
     timeZone?: string,
   ) {
-    await ChatTurn.init();
+    await Promise.all([
+      ChatTurn.init(),
+      ChatRunSlot.init(),
+      ChatTurnEvent.init(),
+    ]);
     const id = turnId(userId, requestId);
     // Retry a duplicate-key race after the winning transaction commits.
     const attempt = () =>
@@ -134,7 +139,41 @@ export const chatTurnRepository = {
             : intent;
         if (effectiveIntent === "task_proposal" && !isTaskProposalsEnabled())
           throw new AppError(TASK_PROPOSAL_ERROR.DISABLED);
-        const expiresAt = lease();
+
+        // Admission control: Maximum 3 active runs per user account
+        const userSlots = await ChatRunSlot.find({ userId }).session(session);
+        if (userSlots.length > 0) {
+          const turnIds = userSlots.map((s) => s.turnId);
+          const activeTurns = await ChatTurn.find({
+            _id: { $in: turnIds },
+            status: { $in: ["processing", "stopping"] },
+            expiresAt: { $gt: new Date() },
+          })
+            .select({ _id: 1 })
+            .session(session);
+          const activeTurnIds = new Set(activeTurns.map((t) => t._id));
+          const staleTurnIds = turnIds.filter((tid) => !activeTurnIds.has(tid));
+          if (staleTurnIds.length > 0) {
+            await ChatRunSlot.deleteMany(
+              { userId, turnId: { $in: staleTurnIds } },
+              { session },
+            );
+          }
+        }
+
+        const refreshedSlots = await ChatRunSlot.find({ userId }).session(
+          session,
+        );
+        const occupied = new Set(refreshedSlots.map((s) => s.slot));
+        const availableSlot = [0, 1, 2].find((s) => !occupied.has(s));
+        if (availableSlot === undefined) {
+          throw new AppError(AI_ERROR.CHAT_CONCURRENCY_LIMIT);
+        }
+
+        const deadlineAt = new Date(Date.now() + 5 * 60_000);
+        const expiresAt = new Date(deadlineAt.getTime() + 30_000);
+        const executionToken = randomUUID();
+
         const conversation = await Conversation.findOneAndUpdate(
           {
             _id: conversationId,
@@ -186,6 +225,34 @@ export const chatTurnRepository = {
           await pendingTurn.save({ session });
         }
         const attachments = await bindAttachments(session);
+
+        await ChatRunSlot.create(
+          [
+            {
+              userId,
+              slot: availableSlot,
+              turnId: id,
+              executionToken,
+            },
+          ],
+          { session },
+        );
+
+        await ChatTurnEvent.create(
+          [
+            {
+              turnId: id,
+              userId,
+              conversationId,
+              seq: 1,
+              type: "turn.started",
+              payload: { deadlineAt: deadlineAt.toISOString() },
+              createdAt: new Date(),
+            },
+          ],
+          { session },
+        );
+
         const [turn] = await ChatTurn.create(
           [
             {
@@ -197,11 +264,16 @@ export const chatTurnRepository = {
               selection,
               attachments,
               sequence: conversation.sequence,
+              deadlineAt,
               expiresAt,
+              lastEventSeq: 1,
+              partialResponse: "",
+              toolProgress: [],
+              status: "processing",
               mode,
               intent: effectiveIntent,
               requestIntent: intent ?? null,
-              executionToken: randomUUID(),
+              executionToken,
               messages: [{ role: "user", content: userInput }],
               contextProjectId: conversation.contextProjectId ?? null,
               timeContext: createAgentTimeContext(new Date(), timeZone),
@@ -295,6 +367,13 @@ export const chatTurnRepository = {
         { session },
       );
       if (!result.matchedCount) return;
+      await ChatRunSlot.deleteOne(
+        {
+          turnId: id,
+          ...(executionToken === undefined ? {} : { executionToken }),
+        },
+        { session },
+      );
       await Conversation.updateOne(
         { activeTurn: id },
         { $set: { activeTurn: null, busyUntil: null } },
@@ -309,6 +388,10 @@ export const chatTurnRepository = {
     response: string,
     skillsRead?: SkillReadMetadata[],
     uiSurface?: StoredUiSurface | null,
+    finishStream?: (
+      proposal: ITaskProposal,
+      session: mongoose.ClientSession,
+    ) => Promise<void>,
   ): Promise<ITaskProposal | null> {
     await taskProposalRepository.initIndexes();
     return mongoose.connection.transaction(async (session) => {
@@ -336,6 +419,10 @@ export const chatTurnRepository = {
       };
 
       const [proposal] = await TaskProposal.create([proposalData], { session });
+      if (finishStream) {
+        await finishStream(proposal.toObject(), session);
+        return proposal.toObject();
+      }
 
       await ChatTurn.updateOne(
         { _id: id, status: "processing", executionToken },
@@ -350,6 +437,8 @@ export const chatTurnRepository = {
         },
         { session },
       );
+
+      await ChatRunSlot.deleteOne({ turnId: id, executionToken }, { session });
 
       await Conversation.updateOne(
         { activeTurn: id },

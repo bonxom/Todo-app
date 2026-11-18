@@ -26,6 +26,8 @@ export function AgentHistoryList({
 
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [failedFor, setFailedFor] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const loading = loadedFor !== (activeConversationId ?? "latest");
 
@@ -34,10 +36,13 @@ export function AgentHistoryList({
     aiService
       .listConversations()
       .then((items) => {
-        if (active) setConversations(items || []);
+        if (active) {
+          setConversations(items || []);
+          setFailedFor(null);
+        }
       })
       .catch(() => {
-        if (active) setConversations([]);
+        if (active) setFailedFor(activeConversationId ?? "latest");
       })
       .finally(() => {
         if (active) setLoadedFor(activeConversationId ?? "latest");
@@ -45,7 +50,7 @@ export function AgentHistoryList({
     return () => {
       active = false;
     };
-  }, [activeConversationId]);
+  }, [activeConversationId, attempt]);
 
   const filtered = conversations.filter((c) =>
     (c.title || t("newConversation"))
@@ -54,7 +59,7 @@ export function AgentHistoryList({
   );
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="agent-history-list flex h-full min-h-0 flex-col">
       <div className="p-3">
         <button
           type="button"
@@ -81,8 +86,30 @@ export function AgentHistoryList({
 
       <div className="flex-1 overflow-y-auto px-2 pb-3">
         {loading && conversations.length === 0 ? (
-          <div className="flex justify-center py-6 text-[var(--color-text-muted)]">
+          <div
+            role="status"
+            aria-label={t("loadingConversations")}
+            className="flex justify-center py-6 text-[var(--color-text-muted)]"
+          >
             <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : failedFor === (activeConversationId ?? "latest") ? (
+          <div
+            role="alert"
+            className="agent-history-error space-y-3 px-2 py-4 text-xs text-[var(--color-text-muted)]"
+          >
+            <p>{t("unableToLoadPreviousConversations")}</p>
+            <button
+              type="button"
+              className="ui-btn-secondary"
+              disabled={loading}
+              onClick={() => {
+                setLoadedFor(null);
+                setAttempt((value) => value + 1);
+              }}
+            >
+              {t("tryAgain")}
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-6 text-center text-xs text-[var(--color-text-muted)]">
@@ -98,7 +125,9 @@ export function AgentHistoryList({
                   type="button"
                   onClick={() => onSelectConversation(item.id)}
                   disabled={disabled}
-                  className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs transition-colors ${
+                  aria-current={isActive ? "true" : undefined}
+                  title={item.title || t("newConversation")}
+                  className={`agent-history-item flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs transition-colors ${
                     isActive
                       ? "bg-[var(--color-accent-soft)] font-medium text-[var(--color-accent)]"
                       : "text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"

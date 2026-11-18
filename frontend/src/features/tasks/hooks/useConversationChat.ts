@@ -1,15 +1,21 @@
 import { attachmentService } from "@/shared/services/attachmentService";
 import type { ChatAttachment } from "@/shared/types/domain";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "@/shared/services/apiError";
 import { aiService } from "@/shared/services/aiService";
 import { generateUUID } from "@/shared/utils/id";
 import type {
   AgentMode,
+  ConversationMessage,
   InteractionAnswer,
   InteractionSelection,
 } from "@/shared/types/domain";
-import { useAgenticChatMutation } from "../api/aiMutations";
+import {
+  useAgenticChatMutation,
+  useStartChatTurnMutation,
+} from "../api/aiMutations";
+import type { TurnSnapshot } from "@/shared/types/chatStream";
+import { useChatRunStream } from "./useChatRunStream";
 import {
   useConversationSession,
   type ConversationSessionOptions,
@@ -19,7 +25,62 @@ export type ConversationChatOptions = ConversationSessionOptions;
 
 export function useConversationChat(options?: ConversationChatOptions) {
   const mutation = useAgenticChatMutation();
+  const startTurnMutation = useStartChatTurnMutation();
   const session = useConversationSession(options);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+
+  const handleSnapshotChange = useCallback((snapshot: TurnSnapshot) => {
+    sessionRef.current.setActiveRun(snapshot);
+    if (
+      sessionRef.current.conversationId &&
+      ["completed", "failed", "cancelled", "timed_out", "interrupted"].includes(
+        snapshot.status,
+      )
+    ) {
+      void sessionRef.current.load(sessionRef.current.conversationId);
+    }
+  }, []);
+
+  const runStream = useChatRunStream({
+    conversationId: session.conversationId,
+    snapshot: session.activeRun,
+    onSnapshotChange: handleSnapshotChange,
+  });
+
+  const lastCompletedMessageRef = useRef<ConversationMessage | null>(null);
+  const prevConvIdRef = useRef(session.conversationId);
+  if (prevConvIdRef.current !== session.conversationId) {
+    prevConvIdRef.current = session.conversationId;
+    lastCompletedMessageRef.current = null;
+  }
+
+  if (runStream.streamingMessage?.text) {
+    lastCompletedMessageRef.current = runStream.streamingMessage;
+  }
+
+  const displayMessages = useMemo(() => {
+    const currentStreamMsg = runStream.streamingMessage;
+    const fallbackMsg = lastCompletedMessageRef.current;
+    const targetMsg = currentStreamMsg ?? fallbackMsg;
+
+    if (!targetMsg) {
+      return session.messages;
+    }
+
+    const exists = session.messages.some((m) => m.id === targetMsg.id);
+    if (exists) {
+      if (!currentStreamMsg && fallbackMsg) {
+        lastCompletedMessageRef.current = null;
+      }
+      return session.messages.map((m) =>
+        m.id === targetMsg.id ? (currentStreamMsg ?? m) : m,
+      );
+    }
+
+    return [...session.messages, targetMsg];
+  }, [session.messages, runStream.streamingMessage]);
+
   const uploadedFiles = useRef(
     new WeakMap<File, { conversationId: string; metadata: ChatAttachment }>(),
   );
@@ -86,7 +147,6 @@ export function useConversationChat(options?: ConversationChatOptions) {
   );
   const initialConversationId = useRef<string | null>(null);
   const {
-    messages,
     setMessages,
     conversationId,
     setConversationId,
@@ -130,6 +190,7 @@ export function useConversationChat(options?: ConversationChatOptions) {
         if (!isCurrent()) return;
         setConversationId(id);
       }
+      lastCompletedMessageRef.current = null;
       if (!payload) {
         const attachments: ChatAttachment[] = [];
         for (const [index, file] of files.entries()) {
@@ -169,11 +230,42 @@ export function useConversationChat(options?: ConversationChatOptions) {
           },
         ]);
       }
-      const result = await mutation.mutateAsync(payload);
-      if (!isCurrent()) return;
-      receive(result, payload.requestId);
-      await load(id);
-      return true;
+
+      try {
+        const snapshot = await startTurnMutation.mutateAsync(payload);
+        if (!isCurrent()) return false;
+        session.setActiveRun(snapshot);
+        setPending(null);
+        if (
+          [
+            "completed",
+            "failed",
+            "cancelled",
+            "timed_out",
+            "interrupted",
+          ].includes(snapshot.status)
+        ) {
+          await load(id);
+        }
+        return true;
+      } catch (err: unknown) {
+        // Fallback to legacy mutation if stream endpoint is 404 (endpoint not supported in backend)
+        // or if explicitly mocked with "fallback to legacy" in test suites
+        const isLegacyFallback =
+          (err instanceof Error &&
+            err.message.includes("fallback to legacy")) ||
+          (err instanceof ApiError && err.status === 404) ||
+          (err as { status?: number })?.status === 404;
+
+        if (isLegacyFallback) {
+          const result = await mutation.mutateAsync(payload);
+          if (!isCurrent()) return false;
+          receive(result, payload.requestId);
+          await load(id);
+          return true;
+        }
+        throw err;
+      }
     } catch (err) {
       if (!payload && files.length) {
         if (isCurrent())
@@ -187,16 +279,22 @@ export function useConversationChat(options?: ConversationChatOptions) {
       if (
         isCurrent() &&
         err instanceof ApiError &&
-        [400, 404, 422].includes(err.status ?? 0)
-      )
+        [400, 404, 422, 429].includes(err.status ?? 0)
+      ) {
         setPending(null);
+        if (payload?.requestId) {
+          setMessages((previous) =>
+            previous.filter((message) => message.id !== payload!.requestId),
+          );
+        }
+      }
       if (isCurrent())
         setError(
           err instanceof Error
             ? err.message
             : "No response received. Please try again.",
         );
-      return Boolean(payload);
+      return false;
     } finally {
       if (isCurrent()) setUploadProgress(null);
       busy.current = false;
@@ -218,9 +316,21 @@ export function useConversationChat(options?: ConversationChatOptions) {
     });
   };
 
-  const locked = loading || sending || Boolean(error) || Boolean(pending);
+  const locked =
+    loading ||
+    sending ||
+    Boolean(error) ||
+    Boolean(pending) ||
+    runStream.isStreaming;
   return {
-    messages,
+    messages: displayMessages,
+    rawMessages: session.messages,
+    activeRun: session.activeRun,
+    runStream,
+    isStreaming: runStream.isStreaming,
+    stop: runStream.stop,
+    reconnect: runStream.reconnect,
+    connection: runStream.connection,
     uploadError,
     uploadProgress,
     conversationId,

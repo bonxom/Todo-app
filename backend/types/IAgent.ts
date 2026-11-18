@@ -27,8 +27,15 @@ export type AgentInteraction = {
 import type { AgentActivity } from "./IAgentActivity.js";
 import type { SkillReadMetadata } from "./IChatTurn.js";
 import type { PersonalSkillSnapshot } from "../services/agentPersonalSkillService.js";
+import type { ChatEventInput } from "./IChatStream.js";
+
+export type AgentStreamHooks = {
+  signal: AbortSignal;
+  emit(event: ChatEventInput): Promise<void>;
+};
 
 export interface AgentMemory {
+  turnId?: string;
   attachmentContext?: string;
   budget?: AgentBudget;
   mode?: AgentMode;
@@ -38,6 +45,7 @@ export interface AgentMemory {
   timeContext?: AgentTimeContext;
   history?: ChatCompletionMessageParam[];
   personalSnapshot?: PersonalSkillSnapshot;
+  stream?: AgentStreamHooks;
   onSkillsRead?: (skills: SkillReadMetadata[]) => void;
   checkpoint?: (
     messages: ChatCompletionMessageParam[],

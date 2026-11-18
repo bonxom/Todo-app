@@ -42,6 +42,9 @@ const message = (text, sender = "bot") => ({
 vi.mock("../../api/aiMutations", () => ({
   useAgenticChatMutation: () => ({ mutateAsync: send }),
   useGenerateTasksMutation: () => ({ mutateAsync: vi.fn() }),
+  useStartChatTurnMutation: () => ({
+    mutateAsync: vi.fn().mockRejectedValue(new Error("fallback to legacy")),
+  }),
 }));
 
 beforeEach(() => {

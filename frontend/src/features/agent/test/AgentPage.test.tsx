@@ -47,6 +47,7 @@ vi.mock("@/shared/services/attachmentService", () => ({
 vi.mock("@/features/tasks/api/aiMutations", () => ({
   useAgenticChatMutation: () => ({ mutateAsync: vi.fn() }),
   useGenerateTasksMutation: () => ({ mutateAsync: vi.fn() }),
+  useStartChatTurnMutation: () => ({ mutateAsync: vi.fn() }),
 }));
 
 describe("AgentPage and Agent routing", () => {

@@ -129,7 +129,9 @@ export function prepareHistory(
       }
     }
     if (
-      (turn.status === "failed" || turn.status === "cancelled") &&
+      ["failed", "cancelled", "timed_out", "interrupted"].includes(
+        turn.status ?? "",
+      ) &&
       turn.response
     ) {
       messages.push({ role: "assistant", content: turn.response });

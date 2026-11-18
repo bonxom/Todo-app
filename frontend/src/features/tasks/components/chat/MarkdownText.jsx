@@ -1,3 +1,4 @@
+import { memo } from "react";
 import CodeBlock from "./CodeBlock";
 import HtmlPreview from "./HtmlPreview";
 import MermaidDiagram from "./MermaidDiagram";
@@ -151,7 +152,17 @@ const MarkdownText = ({ text }) => {
           ),
         );
       } else if (langLower === "mermaid") {
-        blocks.push(<MermaidDiagram key={blockKey++} code={codeContent} />);
+        blocks.push(
+          isClosed ? (
+            <MermaidDiagram key={blockKey++} code={codeContent} />
+          ) : (
+            <CodeBlock
+              key={blockKey++}
+              code={codeContent}
+              language={language}
+            />
+          ),
+        );
       } else if (
         langLower === "svg" ||
         ((langLower === "xml" || langLower === "text" || !language) &&
@@ -371,4 +382,4 @@ const MarkdownText = ({ text }) => {
   return <>{blocks}</>;
 };
 
-export default MarkdownText;
+export default memo(MarkdownText);

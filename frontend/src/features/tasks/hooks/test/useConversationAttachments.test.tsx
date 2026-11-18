@@ -13,6 +13,9 @@ vi.mock("@/shared/services/attachmentService", () => ({
 }));
 vi.mock("../../api/aiMutations", () => ({
   useAgenticChatMutation: () => ({ mutateAsync: mocks.mutate }),
+  useStartChatTurnMutation: () => ({
+    mutateAsync: vi.fn().mockRejectedValue(new Error("fallback to legacy")),
+  }),
 }));
 vi.mock("../useConversationSession", () => ({
   useConversationSession: () => ({

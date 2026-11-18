@@ -1,4 +1,6 @@
 import type { SkillReadRecord } from "./skill";
+import type { TurnSnapshot } from "./chatStream";
+export type { TurnSnapshot } from "./chatStream";
 export type EntityId = string;
 export type TaskStatus = "pending" | "in-progress" | "completed" | "given-up";
 export type TaskPriority = "Low" | "Medium" | "High";
@@ -241,6 +243,7 @@ export interface ChatResponse extends ApiEnvelope<string> {
 }
 
 export interface ConversationMessage {
+  turnStatus?: "failed" | "cancelled" | "timed_out" | "interrupted";
   skillsRead?: SkillReadRecord[];
   attachments?: ChatAttachment[];
   replyToInteractionId?: string;
@@ -269,6 +272,7 @@ export interface ConversationSnapshot {
     taskProposals?: boolean;
     uiComposition?: boolean;
   };
+  activeRun?: TurnSnapshot | null;
   pending: Array<{
     attachmentIds?: string[];
     requestId: string;

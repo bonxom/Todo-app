@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import {
   BotMessageSquare,
   CalendarDays,
+  ChartNoAxesCombined,
   LayoutDashboard,
   LogOut,
   Orbit,
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
   { to: "/v2/dashboard", label: "dashboard", Icon: LayoutDashboard },
   { to: "/v2/agents", label: "agents", Icon: BotMessageSquare },
   { to: "/v2/calendar", label: "calendar", Icon: CalendarDays },
+  { to: "/v2/statistics", label: "statistics", Icon: ChartNoAxesCombined },
 ] as const;
 
 export default function V2Sidebar({

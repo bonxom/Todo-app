@@ -46,6 +46,9 @@ vi.mock("@/shared/services/attachmentService", () => ({
 vi.mock("@/features/tasks/api/aiMutations", () => ({
   useAgenticChatMutation: () => ({ mutateAsync: send }),
   useGenerateTasksMutation: () => ({ mutateAsync: vi.fn() }),
+  useStartChatTurnMutation: () => ({
+    mutateAsync: vi.fn().mockRejectedValue(new Error("fallback to legacy")),
+  }),
 }));
 
 const snapshot = (

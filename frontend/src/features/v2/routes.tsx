@@ -48,6 +48,18 @@ export const v2Routes: RouteObject[] = [
         },
       },
       {
+        path: "statistics",
+        errorElement: <RouteLoadError />,
+        lazy: async () => {
+          try {
+            const mod = await import("./pages/StatisticsPage");
+            return { Component: mod.default };
+          } catch (err) {
+            return { Component: () => <RouteLoadError error={err} /> };
+          }
+        },
+      },
+      {
         path: "agents",
         errorElement: <RouteLoadError />,
         lazy: async () => {

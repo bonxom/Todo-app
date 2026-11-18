@@ -1,0 +1,206 @@
+vi.mock("../conversationTurnService.js", () => ({
+  runConversationTurn: vi.fn(),
+}));
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { chatRunService } from "../chatRunService.js";
+import { chatStreamRepository } from "../../repositories/chatStreamRepository.js";
+import { runConversationTurn } from "../conversationTurnService.js";
+import type { ChatTurn } from "../../types/IChatTurn.js";
+import type { TurnSnapshot } from "../../types/IChatStream.js";
+import type { McpContext } from "../../mcp/context.js";
+import type { IUserDocument } from "../../types/IUser.js";
+import { AppError } from "../../error/AppError.js";
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+describe("chatRunService detached runner and cancellation", () => {
+  const fakeUser = {
+    _id: "507f1f77bcf86cd799439011",
+    role: "USER",
+    name: "Runner User",
+  } as unknown as IUserDocument;
+
+  const fakeContext: McpContext = {
+    user: fakeUser,
+    requestId: "runner-req-1",
+  };
+
+  const fakeTurn: ChatTurn = {
+    _id: "turn-runner-1",
+    conversationId: "conv-runner-1",
+    userId: fakeUser._id,
+    requestId: "runner-req-1",
+    sequence: 1,
+    userInput: "Hello runner",
+    status: "processing",
+    mode: "auto",
+    executionToken: "token-runner-1",
+    messages: [{ role: "user", content: "Hello runner" }],
+    interactions: [],
+    response: "",
+    expiresAt: new Date(Date.now() + 330_000),
+    deadlineAt: new Date(Date.now() + 300_000),
+    lastEventSeq: 1,
+    partialResponse: "",
+    toolProgress: [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  beforeEach(() => {
+    vi.spyOn(chatStreamRepository, "finish").mockResolvedValue({
+      turnId: "turn-runner-1",
+      conversationId: "conv-runner-1",
+      requestId: "runner-req-1",
+      status: "completed",
+      partialResponse: "",
+      lastEventSeq: 1,
+      toolProgress: [],
+      deadlineAt: new Date().toISOString(),
+    });
+    vi.mocked(runConversationTurn).mockResolvedValue({
+      turnId: "turn-runner-1",
+      conversationId: "conv-runner-1",
+      status: "completed",
+      mode: "auto",
+      response: "Mocked response",
+    } as any);
+  });
+
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    await chatRunService.shutdown();
+    chatRunService._resetForTest();
+  });
+
+  it("registers run and executes in background without awaiting caller", async () => {
+    const gate = deferred<void>();
+    vi.mocked(runConversationTurn).mockImplementationOnce(async () => {
+      await gate.promise;
+      return { data: "Done", status: "completed" } as Awaited<
+        ReturnType<typeof runConversationTurn>
+      >;
+    });
+    chatRunService.start({ ...fakeTurn, _id: "turn-bg-1" }, fakeContext);
+    expect(chatRunService.hasActiveRun("turn-bg-1")).toBe(true);
+    gate.resolve();
+    await vi.waitFor(() =>
+      expect(chatRunService.hasActiveRun("turn-bg-1")).toBe(false),
+    );
+  });
+
+  it("cancel triggers abort controller and marks turn stopping", async () => {
+    const turnId = "turn-cancel-1";
+    const requestStopSpy = vi
+      .spyOn(chatStreamRepository, "requestStop")
+      .mockResolvedValue({
+        turnId,
+        conversationId: "conv-1",
+        requestId: "req-1",
+        status: "stopping",
+        partialResponse: "",
+        lastEventSeq: 2,
+        toolProgress: [],
+        deadlineAt: new Date().toISOString(),
+      });
+
+    vi.spyOn(chatStreamRepository, "finish").mockResolvedValue(
+      {} as TurnSnapshot,
+    );
+
+    chatRunService.start(
+      {
+        ...fakeTurn,
+        _id: turnId,
+      },
+      fakeContext,
+    );
+
+    const snapshot = await chatRunService.cancel(
+      String(fakeUser._id),
+      "conv-1",
+      turnId,
+    );
+
+    expect(snapshot.status).toBe("stopping");
+    expect(requestStopSpy).toHaveBeenCalledWith(
+      String(fakeUser._id),
+      "conv-1",
+      turnId,
+      "user",
+    );
+  });
+
+  it("cleans up timers and registry entries on shutdown", async () => {
+    chatRunService.start(
+      {
+        ...fakeTurn,
+        _id: "turn-shutdown-1",
+      },
+      fakeContext,
+    );
+
+    await chatRunService.shutdown();
+    // Subsequent cancel on shut-down run throws or delegates safely
+    vi.spyOn(chatStreamRepository, "requestStop").mockRejectedValue(
+      new AppError({ code: "AI_0016", message: "Not found", statusCode: 404 }),
+    );
+
+    await expect(
+      chatRunService.cancel(String(fakeUser._id), "conv-1", "turn-shutdown-1"),
+    ).rejects.toThrow();
+  });
+
+  it("rejects new run admission when server is shutting down", async () => {
+    await chatRunService.shutdown();
+    expect(() =>
+      chatRunService.start(
+        {
+          ...fakeTurn,
+          _id: "turn-shutting-down-1",
+        },
+        fakeContext,
+      ),
+    ).toThrowError();
+  });
+
+  it("bounds wait time on shutdown using timeout when execution hangs", async () => {
+    vi.useFakeTimers();
+    vi.mocked(runConversationTurn).mockImplementation(
+      () => new Promise(() => {}),
+    );
+    // Also mock finish to hang so abort does not immediately finish it
+    vi.spyOn(chatStreamRepository, "finish").mockImplementation(
+      () => new Promise(() => {}),
+    );
+
+    chatRunService.start(
+      {
+        ...fakeTurn,
+        _id: "turn-hang-1",
+      },
+      fakeContext,
+    );
+
+    let resolved = false;
+    const shutdownPromise = chatRunService.shutdown(2000).then(() => {
+      resolved = true;
+    });
+
+    expect(resolved).toBe(false);
+    await vi.advanceTimersByTimeAsync(2000);
+    await shutdownPromise;
+    expect(resolved).toBe(true);
+
+    vi.useRealTimers();
+  });
+});

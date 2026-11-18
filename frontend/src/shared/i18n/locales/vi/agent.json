@@ -360,5 +360,19 @@
   "proposalRequestFailed": "Không thể thực hiện yêu cầu.",
   "proposalNotFound": "Không tìm thấy đề xuất.",
   "conversationUnavailableOrDeleted": "Hội thoại không khả dụng hoặc đã bị xóa.",
-  "taskCompletedSuffix": " (đã hoàn thành)"
+  "taskCompletedSuffix": " (đã hoàn thành)",
+  "stop": "Dừng",
+  "stopping": "Đang dừng...",
+  "stopped": "Đã dừng",
+  "failedStatus": "Bị lỗi",
+  "timedOut": "Hết thời gian",
+  "interrupted": "Bị gián đoạn",
+  "reconnect": "Kết nối lại",
+  "offlineMessage": "Mất kết nối mạng. Đang chờ kết nối lại...",
+  "connecting": "Đang kết nối...",
+  "reconnecting": "Đang kết nối lại...",
+  "connectionError": "Mất kết nối với lượt chạy.",
+  "concurrencyLimit": "Bạn đang có 3 lượt xử lý cùng lúc. Vui lòng chờ một lượt kết thúc trước khi gửi tiếp.",
+  "processingTask": "Đang xử lý tác vụ",
+  "taskCreated": "Đã tạo công việc"
 }

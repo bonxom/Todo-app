@@ -10,6 +10,7 @@ import { agentService } from "./agentService.js";
 import { chatTurnRepository as repository } from "../repositories/chatTurnRepository.js";
 import { interruptedReply } from "../utils/interruptedReply.js";
 import { AppError } from "../error/AppError.js";
+import { AI_ERROR } from "../error/definitions/aiErrors.js";
 import { TASK_PROPOSAL_ERROR } from "../error/definitions/A2UI/taskProposalErrors.js";
 import { prepareHistory } from "../utils/agentMessages.js";
 import { resultFor } from "../utils/conversationView.js";
@@ -19,21 +20,72 @@ import {
 } from "./A2UI/taskProposalGenerationService.js";
 import { uiPresentationService } from "./A2UI/uiPresentationService.js";
 import { projectPersistedProposal } from "../utils/agentActivity.js";
+import {
+  chatStreamRepository,
+  toSnapshot,
+} from "../repositories/chatStreamRepository.js";
+import type { TurnOutcome } from "../types/IChatStream.js";
+import { publicInteraction } from "../utils/conversationView.js";
 import { projectRepository } from "../repositories/projectRepository.js";
+import type { TurnExecution } from "./chatRunService.js";
 
 export async function runConversationTurn(
   turn: ChatTurn,
   context: McpContext,
   selectedInteraction?: AgentInteraction,
+  execution?: TurnExecution,
 ) {
-  const budget = createAgentBudget();
+  const totalBudgetMs = execution
+    ? Math.max(0, execution.deadlineAt.getTime() - Date.now())
+    : 50_000;
+  const budget = createAgentBudget(() => performance.now(), totalBudgetMs);
   let latestMessages = turn.messages;
   let latestActivities: AgentActivity[] = turn.activities ?? [];
   let latestSkillsRead: SkillReadMetadata[] = turn.skillsRead ?? [];
+  const finish = async (...args: Parameters<typeof repository.finish>) => {
+    if (!execution) return repository.finish(...args);
+    execution.signal.throwIfAborted();
+    const [, response, status, , interaction, skillsRead, uiSurface] = args;
+    const stored = {
+      ...turn,
+      response,
+      uiSurface: uiSurface ?? turn.uiSurface,
+    };
+    const envelope = uiPresentationService.forTurn(stored);
+    const outcome: TurnOutcome = {
+      status,
+      result: {
+        conversationId: turn.conversationId,
+        status,
+        response: interaction
+          ? response
+          : uiSurface
+            ? envelope.text
+            : undefined,
+        ...(interaction ? { interaction: publicInteraction(interaction) } : {}),
+        ...(envelope.surface ? { surface: envelope.surface } : {}),
+        activities: latestActivities,
+        skillsRead,
+      },
+      interaction,
+      uiSurface,
+    };
+    // Text rounds are accumulated durably; a non-text result has its own canonical text.
+    if (!interaction && !uiSurface) {
+      const snapshot = await chatStreamRepository.getSnapshot(
+        String(context.user._id),
+        turn.conversationId,
+        turn._id,
+      );
+      outcome.result.response = snapshot.partialResponse || response;
+    }
+    await chatStreamRepository.finish(turn._id, turn.executionToken, outcome);
+  };
   try {
+    execution?.signal.throwIfAborted();
     if (selectedInteraction?.status === "cancelled") {
       const response = "";
-      await repository.finish(
+      await finish(
         turn._id,
         response,
         "completed",
@@ -73,11 +125,15 @@ export async function runConversationTurn(
       turn.conversationId,
       turn.attachments ?? [],
     );
+    execution?.signal.throwIfAborted();
     const response = await agentService.chatWithMcp(
       turn.userInput,
       {
         ...context,
         beforeWrite: async () => {
+          if (execution?.signal.aborted) {
+            throw new AppError(AI_ERROR.PROVIDER_TIMEOUT);
+          }
           await context.beforeWrite?.();
           if (turn.intent === "task_proposal") {
             throw new AppError(TASK_PROPOSAL_ERROR.WRITE_FORBIDDEN);
@@ -88,6 +144,13 @@ export async function runConversationTurn(
       {
         budget,
         attachmentContext,
+        turnId: turn._id,
+        stream: execution
+          ? {
+              signal: execution.signal,
+              emit: execution.emit,
+            }
+          : undefined,
         mode: turn.mode ?? "auto",
         intent: turn.intent,
         projectContext,
@@ -124,7 +187,7 @@ export async function runConversationTurn(
     );
     if (typeof response !== "string") {
       if ("interaction" in response) {
-        await repository.finish(
+        await finish(
           turn._id,
           response.interaction.question,
           "completed",
@@ -146,7 +209,7 @@ export async function runConversationTurn(
           response.surfaceSpec,
           "readonly",
         );
-        await repository.finish(
+        await finish(
           turn._id,
           response.surfaceSpec.fallbackText,
           "completed",
@@ -179,7 +242,7 @@ export async function runConversationTurn(
         } catch {
           const guidance =
             "Đề xuất công việc không hợp lệ. Vui lòng thử lại với các thông tin rõ ràng hơn.";
-          await repository.finish(
+          await finish(
             turn._id,
             guidance,
             "completed",
@@ -211,7 +274,59 @@ export async function runConversationTurn(
           finalResponse,
           latestSkillsRead,
           storedSurface,
+          execution
+            ? async (created, session) => {
+                execution.signal.throwIfAborted();
+                const activities = [
+                  ...latestActivities,
+                  ...projectPersistedProposal(created),
+                ];
+                const envelope = uiPresentationService.forTurn(
+                  {
+                    ...turn,
+                    response: finalResponse,
+                    uiSurface: storedSurface,
+                  },
+                  toProposalView(created),
+                );
+                const finalized = await chatStreamRepository.finishInSession(
+                  turn._id,
+                  turn.executionToken,
+                  {
+                    status: "completed",
+                    proposalId: created.proposalId,
+                    uiSurface: storedSurface,
+                    result: {
+                      ...resultFor(
+                        {
+                          ...turn,
+                          status: "completed",
+                          response: finalResponse,
+                          activities,
+                          skillsRead: latestSkillsRead,
+                        },
+                        envelope,
+                      ),
+                      response: envelope.text,
+                      status: "completed",
+                    },
+                  },
+                  session,
+                );
+                if (finalized.status !== "completed") {
+                  // Roll back the draft as well as terminalization; the runner will
+                  // persist the stopped outcome outside this transaction.
+                  throw new Error(
+                    finalized.status === "timed_out"
+                      ? "deadline_exceeded"
+                      : "user_cancelled",
+                  );
+                }
+              }
+            : undefined,
         );
+        if (execution && !proposal)
+          throw new AppError(AI_ERROR.PROVIDER_TIMEOUT);
         if (proposal)
           latestActivities = [
             ...latestActivities,
@@ -231,7 +346,7 @@ export async function runConversationTurn(
               toProposalView(proposal),
             )
           : undefined;
-        return resultFor(
+        const finalResult = resultFor(
           completedTurn,
           envelope
             ? {
@@ -241,9 +356,20 @@ export async function runConversationTurn(
               }
             : undefined,
         );
+        if (execution && proposal) {
+          chatStreamRepository.postFinishNotification(
+            turn._id,
+            {
+              status: "completed",
+              result: { ...finalResult, status: "completed" },
+            },
+            toSnapshot(completedTurn),
+          );
+        }
+        return finalResult;
       }
     }
-    await repository.finish(
+    await finish(
       turn._id,
       response,
       "completed",
@@ -259,8 +385,9 @@ export async function runConversationTurn(
       skillsRead: latestSkillsRead,
     });
   } catch (error) {
+    if (execution) throw error;
     const response = interruptedReply(latestMessages);
-    await repository.finish(
+    await finish(
       turn._id,
       response,
       "failed",

@@ -217,3 +217,34 @@ it("maps notification history between versions and accepts the V2 destination", 
   ).toEqual({ to: "/notifications", isFallback: false });
   expect(isSupportedProtectedPath("/v2/notifications")).toBe(true);
 });
+
+it("maps statistics between versions and accepts the V2 destination", () => {
+  expect(getVersionDestination({ pathname: "/statistics" }, "v2")).toEqual({
+    to: "/v2/statistics",
+    isFallback: false,
+  });
+  expect(getVersionDestination({ pathname: "/v2/statistics" }, "v1")).toEqual({
+    to: "/statistics",
+    isFallback: false,
+  });
+  expect(isSupportedProtectedPath("/v2/statistics")).toBe(true);
+  expect(isSupportedProtectedPath("/v2/statistics/unknown")).toBe(false);
+  expect(
+    getVersionDestination(
+      { pathname: "/statistics", search: "?tab=monthly", hash: "#chart" },
+      "v2",
+    ),
+  ).toEqual({
+    to: "/v2/statistics",
+    isFallback: false,
+  });
+  expect(
+    getVersionDestination(
+      { pathname: "/v2/statistics", search: "?range=30d", hash: "#heatmap" },
+      "v1",
+    ),
+  ).toEqual({
+    to: "/statistics",
+    isFallback: false,
+  });
+});

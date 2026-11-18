@@ -37,6 +37,7 @@ vi.mock("@/shared/services/aiService", () => ({
 vi.mock("@/features/tasks/api/aiMutations", () => ({
   useAgenticChatMutation: () => ({ mutateAsync: vi.fn() }),
   useGenerateTasksMutation: () => ({ mutateAsync: vi.fn() }),
+  useStartChatTurnMutation: () => ({ mutateAsync: vi.fn() }),
 }));
 
 function NavigationTestComponent() {

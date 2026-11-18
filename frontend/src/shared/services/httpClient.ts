@@ -7,8 +7,11 @@ import axios, {
 import { env } from "../../config/env";
 import { useAuthStore } from "../../stores/useAuthStore";
 import { ApiError } from "./apiError";
-import { readAuthSnapshot } from "./authStorage";
-import { resetUserCache } from "./sessionCache";
+import {
+  handleTerminalAuthFailure,
+  isExpired,
+  refreshAccessToken,
+} from "./authSession";
 
 export type RequestOptions = Pick<
   AxiosRequestConfig,
@@ -22,34 +25,6 @@ const axiosInstance = axios.create({
     "Content-Type": "application/json",
   },
 });
-
-let refreshPromise: Promise<string> | null = null;
-
-const isExpired = (token: string): boolean => {
-  try {
-    const payload = JSON.parse(
-      atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
-    );
-    return (
-      typeof payload.exp === "number" &&
-      payload.exp * 1000 <= Date.now() + 30_000
-    );
-  } catch {
-    return false;
-  }
-};
-
-const handleTerminalAuthFailure = async () => {
-  await resetUserCache();
-  useAuthStore.getState().clearSession();
-
-  if (typeof window !== "undefined") {
-    const currentPath = window.location.pathname;
-    if (!["/login", "/register"].includes(currentPath)) {
-      window.location.replace("/login");
-    }
-  }
-};
 
 const normalizeToApiError = (error: unknown): ApiError => {
   if (error instanceof ApiError) {
@@ -113,74 +88,6 @@ const normalizeToApiError = (error: unknown): ApiError => {
     undefined,
     error,
   );
-};
-
-// Serialize rotation within a tab and, where supported, across browser tabs.
-const refreshAccessToken = (): Promise<string> => {
-  if (refreshPromise) return refreshPromise;
-  const revision = useAuthStore.getState().sessionRevision;
-  const previousToken = useAuthStore.getState().token;
-  const rotate = async (): Promise<string> => {
-    const stored = readAuthSnapshot();
-    if (
-      useAuthStore.getState().sessionRevision !== revision ||
-      !stored.refreshToken
-    ) {
-      throw new ApiError(i18n.t("network.ended"), 401, "http");
-    }
-    if (
-      stored.token &&
-      stored.token !== previousToken &&
-      !isExpired(stored.token)
-    ) {
-      useAuthStore.getState().updateTokens({
-        accessToken: stored.token,
-        refreshToken: stored.refreshToken,
-      });
-      return stored.token;
-    }
-    const response = await axios.post(
-      `${env.serverUrl || ""}/api/auth/refresh`,
-      {
-        refreshToken: stored.refreshToken,
-      },
-      { timeout: 30000 },
-    );
-    const accessToken = response.data.accessToken || response.data.token;
-    if (typeof accessToken !== "string" || !accessToken) {
-      throw new ApiError(i18n.t("network.refresh"), 502, "http");
-    }
-    if (
-      useAuthStore.getState().sessionRevision !== revision ||
-      readAuthSnapshot().refreshToken !== stored.refreshToken
-    ) {
-      throw new ApiError(i18n.t("network.changed"), 401, "http");
-    }
-    useAuthStore
-      .getState()
-      .updateTokens({ accessToken, refreshToken: response.data.refreshToken });
-    return accessToken;
-  };
-  refreshPromise = Promise.resolve(
-    typeof navigator !== "undefined" && navigator.locks
-      ? navigator.locks.request("orbit-auth-refresh", rotate)
-      : rotate(),
-  )
-    .then((token) => token)
-    .catch(async (error) => {
-      const normalized = normalizeToApiError(error);
-      if (
-        [401, 403].includes(normalized.status ?? 0) &&
-        useAuthStore.getState().sessionRevision === revision
-      ) {
-        await handleTerminalAuthFailure();
-      }
-      throw normalized;
-    })
-    .finally(() => {
-      refreshPromise = null;
-    });
-  return refreshPromise;
 };
 
 const isPublicAuthEndpoint = (url: string) =>
