@@ -6,6 +6,7 @@ import { aiService } from "@/shared/services/aiService";
 import { generateUUID } from "@/shared/utils/id";
 import type {
   AgentMode,
+  ConversationMessage,
   InteractionAnswer,
   InteractionSelection,
 } from "@/shared/types/domain";
@@ -47,21 +48,37 @@ export function useConversationChat(options?: ConversationChatOptions) {
     onSnapshotChange: handleSnapshotChange,
   });
 
+  const lastCompletedMessageRef = useRef<ConversationMessage | null>(null);
+  const prevConvIdRef = useRef(session.conversationId);
+  if (prevConvIdRef.current !== session.conversationId) {
+    prevConvIdRef.current = session.conversationId;
+    lastCompletedMessageRef.current = null;
+  }
+
+  if (runStream.streamingMessage?.text) {
+    lastCompletedMessageRef.current = runStream.streamingMessage;
+  }
+
   const displayMessages = useMemo(() => {
-    if (!runStream.streamingMessage) {
+    const currentStreamMsg = runStream.streamingMessage;
+    const fallbackMsg = lastCompletedMessageRef.current;
+    const targetMsg = currentStreamMsg ?? fallbackMsg;
+
+    if (!targetMsg) {
       return session.messages;
     }
-    const exists = session.messages.some(
-      (m) => m.id === runStream.streamingMessage!.id,
-    );
+
+    const exists = session.messages.some((m) => m.id === targetMsg.id);
     if (exists) {
+      if (!currentStreamMsg && fallbackMsg) {
+        lastCompletedMessageRef.current = null;
+      }
       return session.messages.map((m) =>
-        m.id === runStream.streamingMessage!.id
-          ? runStream.streamingMessage!
-          : m,
+        m.id === targetMsg.id ? (currentStreamMsg ?? m) : m,
       );
     }
-    return [...session.messages, runStream.streamingMessage];
+
+    return [...session.messages, targetMsg];
   }, [session.messages, runStream.streamingMessage]);
 
   const uploadedFiles = useRef(
@@ -173,6 +190,7 @@ export function useConversationChat(options?: ConversationChatOptions) {
         if (!isCurrent()) return;
         setConversationId(id);
       }
+      lastCompletedMessageRef.current = null;
       if (!payload) {
         const attachments: ChatAttachment[] = [];
         for (const [index, file] of files.entries()) {

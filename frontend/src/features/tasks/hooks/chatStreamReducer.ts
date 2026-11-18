@@ -123,7 +123,9 @@ export function reduceChatRun(
       }
 
       // Gap detected in event sequence: trigger reconnect to replay from last cursor
-      if (event.data.seq > currentSeq + 1) {
+      // Note: If turn.finished arrives, the turn is terminal and carries the final canonical result.
+      // We should accept it to complete cleanly rather than getting stuck in reconnecting.
+      if (event.data.seq > currentSeq + 1 && event.event !== "turn.finished") {
         return {
           ...state,
           connection: "reconnecting",
@@ -136,6 +138,12 @@ export function reduceChatRun(
         lastEventSeq: event.data.seq,
       };
 
+      const baseNextState: ChatRunState = {
+        ...state,
+        connection: event.event === "turn.finished" ? "idle" : "live",
+        reconnectAttempts: 0,
+      };
+
       const payload = event.data.payload as EventPayload | undefined;
 
       if (event.event === "assistant.delta") {
@@ -143,7 +151,7 @@ export function reduceChatRun(
         const nextPartial = (updatedSnapshot.partialResponse || "") + deltaText;
         updatedSnapshot.partialResponse = nextPartial;
         return {
-          ...state,
+          ...baseNextState,
           snapshot: updatedSnapshot,
           messages: projectMessage(updatedSnapshot),
         };
@@ -153,7 +161,7 @@ export function reduceChatRun(
         const toolCallId = payload?.toolCallId;
         if (!toolCallId) {
           return {
-            ...state,
+            ...baseNextState,
             snapshot: updatedSnapshot,
           };
         }
@@ -177,7 +185,7 @@ export function reduceChatRun(
         }
         updatedSnapshot.toolProgress = nextToolProgress;
         return {
-          ...state,
+          ...baseNextState,
           snapshot: updatedSnapshot,
         };
       }
@@ -197,7 +205,7 @@ export function reduceChatRun(
         );
         updatedSnapshot.toolProgress = nextToolProgress;
         return {
-          ...state,
+          ...baseNextState,
           snapshot: updatedSnapshot,
         };
       }
@@ -205,7 +213,7 @@ export function reduceChatRun(
       if (event.event === "turn.stopping") {
         updatedSnapshot.status = "stopping";
         return {
-          ...state,
+          ...baseNextState,
           snapshot: updatedSnapshot,
         };
       }
@@ -218,7 +226,7 @@ export function reduceChatRun(
           updatedSnapshot.result = payload.result;
         }
         return {
-          ...state,
+          ...baseNextState,
           snapshot: updatedSnapshot,
           connection: "idle",
           messages: projectMessage(updatedSnapshot),
@@ -226,7 +234,7 @@ export function reduceChatRun(
       }
 
       return {
-        ...state,
+        ...baseNextState,
         snapshot: updatedSnapshot,
       };
     }

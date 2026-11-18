@@ -20,7 +20,10 @@ import {
 } from "./A2UI/taskProposalGenerationService.js";
 import { uiPresentationService } from "./A2UI/uiPresentationService.js";
 import { projectPersistedProposal } from "../utils/agentActivity.js";
-import { chatStreamRepository } from "../repositories/chatStreamRepository.js";
+import {
+  chatStreamRepository,
+  toSnapshot,
+} from "../repositories/chatStreamRepository.js";
 import type { TurnOutcome } from "../types/IChatStream.js";
 import { publicInteraction } from "../utils/conversationView.js";
 import { projectRepository } from "../repositories/projectRepository.js";
@@ -343,7 +346,7 @@ export async function runConversationTurn(
               toProposalView(proposal),
             )
           : undefined;
-        return resultFor(
+        const finalResult = resultFor(
           completedTurn,
           envelope
             ? {
@@ -353,6 +356,17 @@ export async function runConversationTurn(
               }
             : undefined,
         );
+        if (execution && proposal) {
+          chatStreamRepository.postFinishNotification(
+            turn._id,
+            {
+              status: "completed",
+              result: { ...finalResult, status: "completed" },
+            },
+            toSnapshot(completedTurn),
+          );
+        }
+        return finalResult;
       }
     }
     await finish(

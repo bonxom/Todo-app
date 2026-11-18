@@ -7,6 +7,7 @@ import Conversation from "../models/Conversation.js";
 import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
 import { deduplicateActivities } from "../utils/agentActivity.js";
+import { chatStreamBus } from "../services/chatStreamBus.js";
 import type {
   ChatEventInput,
   ChatStreamEvent,
@@ -104,7 +105,20 @@ export const chatStreamRepository = {
       throw new AppError(AI_ERROR.TURN_NOT_FOUND);
     }
 
-    return toSnapshot(turn as unknown as IChatTurn);
+    const baseSnapshot = toSnapshot(turn as unknown as IChatTurn);
+    const live = chatStreamBus.getLiveSnapshot(turnId);
+
+    if (live) {
+      return {
+        ...baseSnapshot,
+        status: live.status,
+        partialResponse: live.partialResponse,
+        lastEventSeq: live.lastEventSeq,
+        toolProgress: live.toolProgress,
+      };
+    }
+
+    return baseSnapshot;
   },
 
   async readEvents(
@@ -122,6 +136,15 @@ export const chatStreamRepository = {
 
     if (!turn) {
       throw new AppError(AI_ERROR.TURN_NOT_FOUND);
+    }
+
+    const liveEvents = chatStreamBus.getLiveEvents(turnId, after, limit);
+    if (liveEvents !== null) {
+      const live = chatStreamBus.getLiveSnapshot(turnId);
+      if (live && after > live.lastEventSeq) {
+        throw new AppError(AI_ERROR.CHAT_CURSOR_INVALID);
+      }
+      return liveEvents;
     }
 
     if (
@@ -262,7 +285,7 @@ export const chatStreamRepository = {
         { session },
       );
 
-      return {
+      const streamEvent: ChatStreamEvent = {
         id: String(nextSeq),
         event: event.type,
         data: {
@@ -273,6 +296,10 @@ export const chatStreamRepository = {
           payload: event.payload,
         },
       };
+
+      chatStreamBus.publish(turnId, streamEvent);
+
+      return streamEvent;
     });
   },
 
@@ -310,27 +337,67 @@ export const chatStreamRepository = {
       turn.status = "stopping";
       turn.stopRequestedAt = new Date();
       turn.stopReason = reason;
-      const nextSeq = (turn.lastEventSeq ?? 0) + 1;
-      turn.lastEventSeq = nextSeq;
-      await turn.save({ session });
 
-      await ChatTurnEvent.create(
-        [
-          {
-            turnId,
-            userId: turn.userId,
-            conversationId: turn.conversationId,
-            seq: nextSeq,
-            type: "turn.stopping",
-            payload: { reason },
-            createdAt: new Date(),
-          },
-        ],
-        { session },
-      );
+      const live = chatStreamBus.getLiveSnapshot(turnId);
+      const currentLastSeq = live?.lastEventSeq ?? turn.lastEventSeq ?? 0;
+
+      if (!chatStreamBus.hasLiveTurn(turnId)) {
+        const nextSeq = currentLastSeq + 1;
+        turn.lastEventSeq = nextSeq;
+        await turn.save({ session });
+
+        await ChatTurnEvent.create(
+          [
+            {
+              turnId,
+              userId: turn.userId,
+              conversationId: turn.conversationId,
+              seq: nextSeq,
+              type: "turn.stopping",
+              payload: { reason },
+              createdAt: new Date(),
+            },
+          ],
+          { session },
+        );
+      } else {
+        turn.lastEventSeq = currentLastSeq;
+        await turn.save({ session });
+      }
+
+      chatStreamBus.publish(turnId);
 
       return toSnapshot(turn as unknown as IChatTurn);
     });
+  },
+
+  postFinishNotification(
+    turnId: string,
+    outcome: TurnOutcome,
+    snapshot: TurnSnapshot,
+  ): void {
+    const finishPayload = {
+      status: outcome.status,
+      ...(outcome.terminalReason
+        ? { terminalReason: outcome.terminalReason }
+        : {}),
+      result: snapshot.result ?? {
+        turnId,
+        conversationId: snapshot.conversationId,
+        status: outcome.status,
+        response: snapshot.partialResponse || "",
+      },
+    };
+
+    if (chatStreamBus.hasLiveTurn(turnId)) {
+      chatStreamBus.emitLiveEvent(turnId, {
+        type: "turn.finished",
+        payload: finishPayload,
+      });
+      chatStreamBus.scheduleCleanup(turnId, 60_000);
+    } else {
+      chatStreamBus.publish(turnId);
+    }
   },
 
   async finish(
@@ -338,9 +405,11 @@ export const chatStreamRepository = {
     executionToken: string,
     outcome: TurnOutcome,
   ): Promise<TurnSnapshot> {
-    return mongoose.connection.transaction((session) =>
+    const snapshot = await mongoose.connection.transaction((session) =>
       this.finishInSession(turnId, executionToken, outcome, session),
     );
+    this.postFinishNotification(turnId, outcome, snapshot);
+    return snapshot;
   },
 
   async finishInSession(
@@ -391,9 +460,18 @@ export const chatStreamRepository = {
         },
       };
     }
+    const live = chatStreamBus.getLiveSnapshot(turnId);
+    const finalPartial = live?.partialResponse || turn.partialResponse || "";
+    const finalToolProgress = live?.toolProgress || turn.toolProgress || [];
+    const finalLastSeq = live?.lastEventSeq ?? turn.lastEventSeq ?? 0;
+
     turn.status = outcome.status;
     turn.terminalReason = outcome.terminalReason;
-    turn.response = outcome.result.response || turn.partialResponse || "";
+    turn.response = outcome.result.response || finalPartial;
+    turn.partialResponse = turn.response;
+    if (finalToolProgress.length > 0) {
+      turn.toolProgress = finalToolProgress;
+    }
     turn.finishedAt = new Date();
     if (outcome.interaction)
       turn.interactions = [...turn.interactions, outcome.interaction];
@@ -429,30 +507,60 @@ export const chatStreamRepository = {
       );
     }
 
-    const nextSeq = (turn.lastEventSeq ?? 0) + 1;
+    const finishPayload = {
+      status: outcome.status,
+      ...(outcome.terminalReason
+        ? { terminalReason: outcome.terminalReason }
+        : {}),
+      result: canonicalResult,
+    };
+
+    const nextSeq = finalLastSeq + 1;
     turn.lastEventSeq = nextSeq;
     await turn.save({ session });
 
-    await ChatTurnEvent.create(
-      [
+    const liveTurn = chatStreamBus.getLiveTurn(turnId);
+    if (liveTurn && liveTurn.events.length > 0) {
+      const docsToInsert = [
+        ...liveTurn.events.map((e) => ({
+          turnId,
+          userId: turn.userId,
+          conversationId: turn.conversationId,
+          seq: e.data.seq,
+          type: e.event,
+          payload: e.data.payload,
+          createdAt: new Date(e.data.occurredAt || Date.now()),
+        })),
         {
           turnId,
           userId: turn.userId,
           conversationId: turn.conversationId,
           seq: nextSeq,
           type: "turn.finished",
-          payload: {
-            status: outcome.status,
-            ...(outcome.terminalReason
-              ? { terminalReason: outcome.terminalReason }
-              : {}),
-            result: canonicalResult,
-          },
+          payload: finishPayload,
           createdAt: new Date(),
         },
-      ],
-      { session },
-    );
+      ];
+      await ChatTurnEvent.insertMany(docsToInsert, {
+        session,
+        ordered: false,
+      }).catch(() => {});
+    } else {
+      await ChatTurnEvent.create(
+        [
+          {
+            turnId,
+            userId: turn.userId,
+            conversationId: turn.conversationId,
+            seq: nextSeq,
+            type: "turn.finished",
+            payload: finishPayload,
+            createdAt: new Date(),
+          },
+        ],
+        { session },
+      );
+    }
 
     await ChatRunSlot.deleteOne({ turnId, executionToken }, { session });
     await Conversation.updateOne(

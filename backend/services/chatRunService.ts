@@ -1,4 +1,5 @@
 import { chatStreamRepository } from "../repositories/chatStreamRepository.js";
+import { chatStreamBus } from "./chatStreamBus.js";
 import { runConversationTurn } from "./conversationTurnService.js";
 import type { ChatTurn } from "../types/IChatTurn.js";
 import type { McpContext } from "../mcp/context.js";
@@ -46,6 +47,8 @@ export const chatRunService = {
       return;
     }
 
+    chatStreamBus.initLiveTurn(turn);
+
     const abortController = new AbortController();
     const deadlineAt = turn.deadlineAt
       ? new Date(turn.deadlineAt)
@@ -57,7 +60,7 @@ export const chatRunService = {
     }, timeoutMs);
 
     const emit = async (event: ChatEventInput): Promise<void> => {
-      await chatStreamRepository.append(turn._id, turn.executionToken, event);
+      chatStreamBus.emitLiveEvent(turn._id, event);
     };
 
     const runPromise = (async () => {
@@ -103,6 +106,10 @@ export const chatRunService = {
                 ? err.message
                 : "unknown_error";
 
+        const live = chatStreamBus.getLiveSnapshot(turn._id);
+        const finalResponse =
+          live?.partialResponse || turn.partialResponse || "";
+
         await chatStreamRepository.finish(turn._id, turn.executionToken, {
           status: terminalStatus,
           terminalReason,
@@ -111,13 +118,16 @@ export const chatRunService = {
             conversationId: turn.conversationId,
             status: terminalStatus,
             mode: turn.mode ?? "auto",
-            response: turn.partialResponse || "",
+            response: finalResponse,
             terminalReason,
           },
         });
       } finally {
         clearTimeout(timer);
         activeRuns.delete(turn._id);
+        if (chatStreamBus.hasLiveTurn(turn._id)) {
+          chatStreamBus.scheduleCleanup(turn._id, 60_000);
+        }
       }
     })();
 
@@ -138,6 +148,12 @@ export const chatRunService = {
     conversationId: string,
     turnId: string,
   ): Promise<TurnSnapshot> {
+    if (chatStreamBus.hasLiveTurn(turnId)) {
+      chatStreamBus.emitLiveEvent(turnId, {
+        type: "turn.stopping",
+        payload: { reason: "user" },
+      });
+    }
     const snapshot = await chatStreamRepository.requestStop(
       userId,
       conversationId,

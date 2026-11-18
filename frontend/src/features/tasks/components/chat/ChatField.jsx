@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import AttachmentComposer from "./AttachmentComposer";
 import { FILE_ACCEPT, checkFiles } from "./attachmentFiles";
 import AttachmentList from "./AttachmentList";
-import { useState, useRef, useEffect, useContext, useCallback } from "react";
+import { useState, useRef, useEffect, useContext, useCallback, memo } from "react";
 import { Send, ArrowUpRight, Sparkles } from "lucide-react";
 import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import ChatToolbar from "./ChatToolbar";
@@ -20,6 +20,130 @@ import { TaskProposalMessage } from "./A2UI/TaskProposalMessage";
 import { UiSurfaceMessage } from "./A2UI/UiSurfaceMessage";
 import { SkillReadBadge } from "@/features/agent/skills/SkillReadBadge";
 import { ChatRunStatus } from "./ChatRunStatus";
+
+const USER_MESSAGE_STYLE = {
+  color: "var(--chat-user-text, #fff)",
+  borderColor: "var(--color-accent)",
+  background: "var(--color-accent)",
+  boxShadow: "var(--shadow-xs)",
+};
+
+const BOT_MESSAGE_STYLE = {
+  borderColor: "var(--color-line)",
+  background: "var(--color-surface)",
+  color: "var(--color-text)",
+  boxShadow: "var(--shadow-xs)",
+};
+
+const ChatMessageItem = memo(function ChatMessageItem({
+  message,
+  userAvatar,
+  avatarAppearance,
+  conversationId,
+  setProposalDirty,
+  disabled,
+}) {
+  const isUser = message.sender === "user";
+
+  return (
+    <div
+      className={`chat-message-row ${isUser ? "chat-message-row--user" : "chat-message-row--agent"}`}
+    >
+      <ChatAvatar
+        key={isUser ? userAvatar || "default" : "agent"}
+        appearance={avatarAppearance}
+        isUser={isUser}
+        src={isUser ? userAvatar : undefined}
+      />
+      <div
+        className={`chat-message ${isUser ? "chat-message--user" : "chat-message--bot"} rounded-2xl px-4 py-3 ${
+          isUser ? "rounded-br-sm border" : "rounded-bl-sm border"
+        }`}
+        style={isUser ? USER_MESSAGE_STYLE : BOT_MESSAGE_STYLE}
+      >
+        <div className="text-sm whitespace-pre-wrap break-words">
+          {message.surface ? (
+            <UiSurfaceMessage
+              key={`${conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
+              surface={message.surface}
+              proposalEnvelope={
+                message.proposal
+                  ? {
+                      proposal: message.proposal,
+                      text: message.text,
+                      a2ui: message.a2ui,
+                      surface: message.surface,
+                    }
+                  : undefined
+              }
+              onDirtyChange={setProposalDirty}
+              disabled={disabled}
+            />
+          ) : message.proposal ? (
+            <TaskProposalMessage
+              key={`${conversationId}:${message.proposal.id}`}
+              envelope={{
+                proposal: message.proposal,
+                text: message.text,
+                a2ui: message.a2ui,
+              }}
+              onDirtyChange={setProposalDirty}
+              disabled={disabled}
+            />
+          ) : message.interaction ? (
+            <InteractionCard interaction={message.interaction} disabled embedded />
+          ) : (
+            <>
+              {(() => {
+                const match = message.text?.match(
+                  /^\[(?:Skill|Tool):\s*([a-zA-Z0-9_-]+)\]\s*([\s\S]*)$/,
+                );
+                if (match) {
+                  return (
+                    <>
+                      <div className="mb-1.5">
+                        <ToolBadge
+                          tool={match[1]}
+                          size="sm"
+                          className={
+                            isUser ? "bg-white/20 border-white/40 text-inherit" : ""
+                          }
+                        />
+                      </div>
+                      <MarkdownText text={match[2]} />
+                    </>
+                  );
+                }
+                return <MarkdownText text={message.text} />;
+              })()}
+            </>
+          )}
+        </div>
+        {!isUser && message.skillsRead && message.skillsRead.length > 0 && (
+          <div className="mt-2 mb-1 flex flex-wrap gap-1.5">
+            {message.skillsRead.map((skill) => (
+              <SkillReadBadge key={`${skill.id}:${skill.version}`} skill={skill} />
+            ))}
+          </div>
+        )}
+        {message.turnStatus && (
+          <ChatRunStatus run={null} status={message.turnStatus} />
+        )}
+        <AttachmentList conversationId={conversationId} files={message.attachments} />
+        <time
+          className="chat-message-time"
+          dateTime={message.timestamp}
+          title={formatDateTime(message.timestamp)}
+        >
+          {new Date(message.timestamp).toLocaleTimeString(getLocale(), {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </time>
+      </div>
+    </div>
+  );
+});
 
 const ChatField = ({
   messages,
@@ -137,21 +261,9 @@ const ChatField = ({
 
   const availableTools = filterTools(slashQuery);
 
-  const userMessageStyle = {
-    color: "var(--chat-user-text, #fff)",
-    borderColor: "var(--color-accent)",
-    background: "var(--color-accent)",
-    boxShadow: "var(--shadow-xs)",
-  };
-  const botMessageStyle = {
-    borderColor: "var(--color-line)",
-    background: "var(--color-surface)",
-    color: "var(--color-text)",
-    boxShadow: "var(--shadow-xs)",
-  };
-
   const scrollContainerRef = useRef(null);
   const isUserScrolledUp = useRef(false);
+  const scrollRafId = useRef(null);
 
   const handleScroll = () => {
     const el = scrollContainerRef.current;
@@ -160,7 +272,7 @@ const ChatField = ({
     isUserScrolledUp.current = distanceFromBottom > 100;
   };
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (isUserScrolledUp.current) return;
     if (
       messagesEndRef.current?.closest(
@@ -168,15 +280,29 @@ const ChatField = ({
       )
     )
       return;
-    messagesEndRef.current?.scrollIntoView?.({
-      behavior: "instant",
-      block: "end",
+
+    if (scrollRafId.current !== null) return;
+    scrollRafId.current = requestAnimationFrame(() => {
+      scrollRafId.current = null;
+      messagesEndRef.current?.scrollIntoView?.({
+        behavior: "instant",
+        block: "end",
+      });
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (messages.length || isTyping) scrollToBottom();
-  }, [messages, isTyping]);
+  }, [messages, isTyping, scrollToBottom]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollRafId.current !== null) {
+        cancelAnimationFrame(scrollRafId.current);
+        scrollRafId.current = null;
+      }
+    };
+  }, []);
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -374,130 +500,15 @@ const ChatField = ({
                   !message.interaction),
             )
             .map((message) => (
-              <div
+              <ChatMessageItem
                 key={message.id}
-                className={`chat-message-row ${message.sender === "user" ? "chat-message-row--user" : "chat-message-row--agent"}`}
-              >
-                <ChatAvatar
-                  key={
-                    message.sender === "user"
-                      ? userAvatar || "default"
-                      : "agent"
-                  }
-                  appearance={avatarAppearance}
-                  isUser={message.sender === "user"}
-                  src={message.sender === "user" ? userAvatar : undefined}
-                />
-                <div
-                  className={`chat-message ${message.sender === "user" ? "chat-message--user" : "chat-message--bot"} rounded-2xl px-4 py-3 ${
-                    message.sender === "user"
-                      ? "rounded-br-sm border"
-                      : "rounded-bl-sm border"
-                  }`}
-                  style={
-                    message.sender === "user"
-                      ? userMessageStyle
-                      : botMessageStyle
-                  }
-                >
-                  <div className="text-sm whitespace-pre-wrap break-words">
-                    {message.surface ? (
-                      <UiSurfaceMessage
-                        key={`${chat?.conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
-                        surface={message.surface}
-                        proposalEnvelope={
-                          message.proposal
-                            ? {
-                                proposal: message.proposal,
-                                text: message.text,
-                                a2ui: message.a2ui,
-                                surface: message.surface,
-                              }
-                            : undefined
-                        }
-                        onDirtyChange={chat?.setProposalDirty}
-                        disabled={chat?.loading || chat?.sending}
-                      />
-                    ) : message.proposal ? (
-                      <TaskProposalMessage
-                        key={`${chat?.conversationId}:${message.proposal.id}`}
-                        envelope={{
-                          proposal: message.proposal,
-                          text: message.text,
-                          a2ui: message.a2ui,
-                        }}
-                        onDirtyChange={chat?.setProposalDirty}
-                        disabled={chat?.loading || chat?.sending}
-                      />
-                    ) : message.interaction ? (
-                      <InteractionCard
-                        interaction={message.interaction}
-                        disabled
-                        embedded
-                      />
-                    ) : (
-                      <>
-                        {(() => {
-                          const match = message.text?.match(
-                            /^\[(?:Skill|Tool):\s*([a-zA-Z0-9_-]+)\]\s*([\s\S]*)$/,
-                          );
-                          if (match) {
-                            return (
-                              <>
-                                <div className="mb-1.5">
-                                  <ToolBadge
-                                    tool={match[1]}
-                                    size="sm"
-                                    className={
-                                      message.sender === "user"
-                                        ? "bg-white/20 border-white/40 text-inherit"
-                                        : ""
-                                    }
-                                  />
-                                </div>
-                                <MarkdownText text={match[2]} />
-                              </>
-                            );
-                          }
-                          return <MarkdownText text={message.text} />;
-                        })()}
-                      </>
-                    )}
-                  </div>
-                  {message.sender !== "user" &&
-                    message.skillsRead &&
-                    message.skillsRead.length > 0 && (
-                      <div className="mt-2 mb-1 flex flex-wrap gap-1.5">
-                        {message.skillsRead.map((skill) => (
-                          <SkillReadBadge
-                            key={`${skill.id}:${skill.version}`}
-                            skill={skill}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  {message.turnStatus && (
-                    <ChatRunStatus run={null} status={message.turnStatus} />
-                  )}
-                  <AttachmentList
-                    conversationId={chat?.conversationId}
-                    files={message.attachments}
-                  />
-                  <time
-                    className="chat-message-time"
-                    dateTime={message.timestamp}
-                    title={formatDateTime(message.timestamp)}
-                  >
-                    {new Date(message.timestamp).toLocaleTimeString(
-                      getLocale(),
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      },
-                    )}
-                  </time>
-                </div>
-              </div>
+                message={message}
+                userAvatar={userAvatar}
+                avatarAppearance={avatarAppearance}
+                conversationId={chat?.conversationId}
+                setProposalDirty={chat?.setProposalDirty}
+                disabled={chat?.loading || chat?.sending}
+              />
             ))
         )}
 
@@ -506,7 +517,7 @@ const ChatField = ({
             <ChatAvatar appearance={avatarAppearance} />
             <div
               className="rounded-2xl rounded-bl-sm border px-4 py-3"
-              style={botMessageStyle}
+              style={BOT_MESSAGE_STYLE}
             >
               <div
                 className="flex items-center space-x-1"
@@ -755,4 +766,4 @@ const ChatField = ({
   );
 };
 
-export default ChatField;
+export default memo(ChatField);

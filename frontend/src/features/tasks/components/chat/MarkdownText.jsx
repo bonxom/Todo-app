@@ -1,3 +1,4 @@
+import { memo } from "react";
 import CodeBlock from "./CodeBlock";
 import HtmlPreview from "./HtmlPreview";
 import MermaidDiagram from "./MermaidDiagram";
@@ -381,4 +382,4 @@ const MarkdownText = ({ text }) => {
   return <>{blocks}</>;
 };
 
-export default MarkdownText;
+export default memo(MarkdownText);

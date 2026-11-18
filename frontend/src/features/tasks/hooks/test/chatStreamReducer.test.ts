@@ -218,6 +218,38 @@ describe("chatStreamReducer", () => {
     expect(state.messages[0].text).toBe("Hoàn thành nhiệm vụ");
   });
 
+  it("accepts turn.finished even when sequence gap occurs, avoiding endless reconnect", () => {
+    const gapFinishAction = {
+      type: "EVENT" as const,
+      event: {
+        id: "10",
+        event: "turn.finished",
+        data: {
+          version: 1 as const,
+          turnId,
+          seq: 10, // Gap: current is 1, expected 2, but received 10
+          occurredAt: new Date().toISOString(),
+          payload: {
+            status: "completed" as const,
+            result: {
+              turnId,
+              conversationId,
+              status: "completed" as const,
+              mode: "auto" as const,
+              response: "Kết quả cuối cùng đầy đủ",
+            },
+          },
+        },
+      },
+    };
+
+    const state = reduceChatRun(initialState, gapFinishAction);
+    expect(state.snapshot?.status).toBe("completed");
+    expect(state.connection).toBe("idle");
+    expect(state.snapshot?.lastEventSeq).toBe(10);
+    expect(state.messages[0].text).toBe("Kết quả cuối cùng đầy đủ");
+  });
+
   it("SET_SNAPSHOT overwrites state cleanly", () => {
     const newSnapshot: TurnSnapshot = {
       turnId: "turn-new",

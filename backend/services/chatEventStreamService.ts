@@ -1,4 +1,5 @@
 import { chatStreamRepository } from "../repositories/chatStreamRepository.js";
+import { chatStreamBus } from "./chatStreamBus.js";
 import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
 import type { ChatStreamEvent } from "../types/IChatStream.js";
@@ -129,20 +130,7 @@ export const chatEventStreamService = {
         return;
       }
 
-      await new Promise<void>((resolve) => {
-        const timer = setTimeout(() => {
-          signal.removeEventListener("abort", onAbort);
-          resolve();
-        }, pollIntervalMs);
-
-        function onAbort() {
-          clearTimeout(timer);
-          signal.removeEventListener("abort", onAbort);
-          resolve();
-        }
-
-        signal.addEventListener("abort", onAbort, { once: true });
-      });
+      await chatStreamBus.waitForNext(turnId, pollIntervalMs, signal);
     }
   },
 };

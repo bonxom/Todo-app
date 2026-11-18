@@ -63,6 +63,14 @@ export type ChatEventInput =
   | {
       type: "turn.stopping";
       payload: { reason: "user" | "deadline" };
+    }
+  | {
+      type: "turn.finished";
+      payload: {
+        status: TerminalStatus;
+        terminalReason?: string;
+        result: PublicChatResult;
+      };
     };
 
 export interface ChatStreamEventData<T = unknown> {

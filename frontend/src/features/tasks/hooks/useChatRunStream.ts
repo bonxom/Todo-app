@@ -165,17 +165,23 @@ export function useChatRunStream(
               const current = stateRef.current.snapshot;
               if (!current || event.data.turnId !== current.turnId) return;
               if (event.data.seq > current.lastEventSeq + 1) {
+                if (event.event === "turn.finished") {
+                  apply({ type: "EVENT", event });
+                  if (queryClient) {
+                    void invalidateWorkspaceQueries(queryClient);
+                  }
+                  if (onSnapshotChange && stateRef.current.snapshot) {
+                    onSnapshotChange(stateRef.current.snapshot);
+                  }
+                  abortController.abort();
+                  return;
+                }
                 abortController.abort();
                 scheduleReconnect(currentGeneration);
                 return;
               }
               if (event.data.seq <= current.lastEventSeq) return;
               apply({ type: "EVENT", event });
-              apply({ type: "SET_RECONNECT_ATTEMPTS", attempts: 0 });
-              apply({
-                type: "SET_CONNECTION",
-                connection: event.event === "turn.finished" ? "idle" : "live",
-              });
 
               if (event.event === "turn.finished") {
                 if (queryClient) {
