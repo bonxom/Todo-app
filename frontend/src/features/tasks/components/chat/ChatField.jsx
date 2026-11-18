@@ -27,6 +27,8 @@ const ChatField = ({
   isTyping = false,
   disabled = false,
   chat,
+  avatarAppearance = "default",
+  showWelcome = true,
 }) => {
   const { t } = useTranslation("agent");
 
@@ -323,7 +325,7 @@ const ChatField = ({
           </button>
         )}
         {messages.length === 0 ? (
-          chat && !chat.loading && !chat.interaction ? (
+          !showWelcome ? null : chat && !chat.loading && !chat.interaction ? (
             <div className="chat-welcome">
               <div className="chat-welcome-icon">
                 <Sparkles size={24} />
@@ -382,6 +384,7 @@ const ChatField = ({
                       ? userAvatar || "default"
                       : "agent"
                   }
+                  appearance={avatarAppearance}
                   isUser={message.sender === "user"}
                   src={message.sender === "user" ? userAvatar : undefined}
                 />
@@ -500,7 +503,7 @@ const ChatField = ({
 
         {isTyping && !chat?.runStream?.streamingMessage && (
           <div className="chat-message-row chat-message-row--agent">
-            <ChatAvatar />
+            <ChatAvatar appearance={avatarAppearance} />
             <div
               className="rounded-2xl rounded-bl-sm border px-4 py-3"
               style={botMessageStyle}

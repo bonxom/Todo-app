@@ -373,5 +373,6 @@
   "reconnecting": "Reconnecting...",
   "connectionError": "Connection lost to the active run.",
   "concurrencyLimit": "You have 3 active runs. Please wait for one to finish before starting another.",
-  "processingTask": "Processing task"
+  "processingTask": "Processing task",
+  "taskCreated": "Task created"
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AlertCircle,
@@ -17,6 +17,7 @@ import { AgentDiscardDialog } from "@/features/agent/AgentDiscardDialog";
 import V2AgentTabs from "../components/V2AgentTabs";
 import ChatField from "@/features/tasks/components/chat/ChatField";
 import "@/styles/chat.css";
+import "../styles/agents.css";
 
 const STARTER_KEYS = [
   "planTodaySSchedule",
@@ -39,6 +40,31 @@ export default function AgentsPage() {
 
   const [showHistory, setShowHistory] = useState(false);
   const [showContext, setShowContext] = useState(false);
+  const chatfield = useRef<HTMLDivElement>(null);
+  const historyToggle = useRef<HTMLButtonElement>(null);
+  const contextToggle = useRef<HTMLButtonElement>(null);
+  const historyPanel = useRef<HTMLElement>(null);
+  const contextPanel = useRef<HTMLElement>(null);
+  const closeHistory = () => {
+    setShowHistory(false);
+    historyToggle.current?.focus();
+  };
+  const closeContext = () => {
+    setShowContext(false);
+    contextToggle.current?.focus();
+  };
+  useEffect(() => {
+    const panel = showHistory
+      ? historyPanel.current
+      : showContext
+        ? contextPanel.current
+        : null;
+    panel
+      ?.querySelector<HTMLElement>(
+        'input, button:not(:disabled), [tabindex="0"]',
+      )
+      ?.focus();
+  }, [showHistory, showContext]);
 
   const busy = chat.loading || chat.sending || Boolean(chat.pending);
   const conversationUnavailable = Boolean(
@@ -54,7 +80,22 @@ export default function AgentsPage() {
         : "";
 
   return (
-    <div className="v2-agents" data-testid="v2-agents-page">
+    <div
+      className="v2-agents"
+      data-testid="v2-agents-page"
+      onKeyDown={(event) => {
+        if (
+          !event.defaultPrevented &&
+          event.key === "Escape" &&
+          (showHistory || showContext)
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (showHistory) closeHistory();
+          else closeContext();
+        }
+      }}
+    >
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {liveStatus}
       </div>
@@ -75,7 +116,11 @@ export default function AgentsPage() {
           <button
             type="button"
             className="v2-btn v2-agent-toggle"
-            onClick={() => setShowHistory((open) => !open)}
+            ref={historyToggle}
+            onClick={() => {
+              setShowHistory((open) => !open);
+              setShowContext(false);
+            }}
             aria-expanded={showHistory}
             aria-controls="v2-agents-history"
           >
@@ -85,7 +130,11 @@ export default function AgentsPage() {
           <button
             type="button"
             className="v2-btn v2-agent-toggle"
-            onClick={() => setShowContext((open) => !open)}
+            ref={contextToggle}
+            onClick={() => {
+              setShowContext((open) => !open);
+              setShowHistory(false);
+            }}
             aria-expanded={showContext}
             aria-controls="v2-agents-context"
           >
@@ -103,6 +152,7 @@ export default function AgentsPage() {
         data-context={showContext}
       >
         <aside
+          ref={historyPanel}
           id="v2-agents-history"
           className="v2-agent-panel v2-agent-history"
           aria-label={t("conversationHistory")}
@@ -112,8 +162,8 @@ export default function AgentsPage() {
             <button
               type="button"
               className="v2-btn v2-agent-panel-close"
-              onClick={() => setShowHistory(false)}
-              aria-label={t("closeAssistant")}
+              onClick={closeHistory}
+              aria-label={tAgent("closeHistory")}
             >
               <X size={15} aria-hidden="true" />
             </button>
@@ -174,12 +224,15 @@ export default function AgentsPage() {
                           key={key}
                           type="button"
                           className="v2-agent-starter"
-                          onClick={() =>
+                          onClick={() => {
                             setDraft((previous) => ({
                               ...previous,
                               text: tAgent(key),
-                            }))
-                          }
+                            }));
+                            chatfield.current
+                              ?.querySelector("textarea")
+                              ?.focus();
+                          }}
                         >
                           {tAgent(key)}
                         </button>
@@ -187,8 +240,10 @@ export default function AgentsPage() {
                     </div>
                   </div>
                 )}
-                <div className="v2-agent-chatfield">
+                <div ref={chatfield} className="v2-agent-chatfield">
                   <ChatField
+                    showWelcome={false}
+                    avatarAppearance="orbit"
                     chat={chat}
                     messages={chat.messages}
                     onSendMessage={chat.send}
@@ -202,6 +257,7 @@ export default function AgentsPage() {
         </section>
 
         <aside
+          ref={contextPanel}
           id="v2-agents-context"
           className="v2-agent-panel v2-agent-context"
           aria-label={t("contextActions")}
@@ -211,8 +267,8 @@ export default function AgentsPage() {
             <button
               type="button"
               className="v2-btn v2-agent-panel-close"
-              onClick={() => setShowContext(false)}
-              aria-label={t("closeAssistant")}
+              onClick={closeContext}
+              aria-label={tAgent("closeContextPanel")}
             >
               <X size={15} aria-hidden="true" />
             </button>

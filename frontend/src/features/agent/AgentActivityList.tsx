@@ -113,7 +113,7 @@ export function AgentActivityList({
   const formatKindLabel = (kind: AgentActivity["kind"]) => {
     switch (kind) {
       case "task_created":
-        return t("createdTask");
+        return t("taskCreated");
       case "task_deleted":
         return t("taskDeleted");
       case "task_updated":
@@ -139,7 +139,7 @@ export function AgentActivityList({
       {uniqueActivities.map((act) => (
         <div
           key={act.id}
-          className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm shadow-2xs"
+          className="agent-activity-card rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-sm shadow-2xs"
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
