@@ -85,12 +85,29 @@ export const conversationService = {
         };
       }
     }
+    let activeRun: TurnSnapshot | null = null;
+    if (
+      activeTurn &&
+      (activeTurn.status === "processing" || activeTurn.status === "stopping")
+    ) {
+      try {
+        activeRun = await chatStreamRepository.getSnapshot(
+          userId,
+          conversation._id,
+          activeTurn._id,
+        );
+      } catch {
+        activeRun = null;
+      }
+    }
+
     return {
       capabilities: { taskProposals: isTaskProposalsEnabled() },
       conversationId: conversation._id,
       title: conversation.title,
       mode: conversation.mode ?? "auto",
       context: contextResult,
+      activeRun,
       activities: deduplicateActivities(
         visible.flatMap((turn) => [
           ...((turn.activities as AgentActivity[]) ?? []),

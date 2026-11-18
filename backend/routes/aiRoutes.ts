@@ -11,6 +11,12 @@ import {
   getConversationCapabilities,
   updateConversationContext,
 } from "../controllers/aiController.js";
+import {
+  startChatTurn,
+  getChatTurn,
+  streamChatEvents,
+  cancelChatTurn,
+} from "../controllers/chatStreamController.js";
 import { handleProposalAction } from "../controllers/A2UI/taskProposalController.js";
 import { protect } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
@@ -23,6 +29,13 @@ import {
   conversationQuerySchema,
   conversationContextSchema,
 } from "../validations/aiValidation.js";
+import {
+  startChatTurnParamsSchema,
+  startChatTurnBodySchema,
+  chatTurnParamsSchema,
+  chatEventsParamsSchema,
+  cancelChatTurnParamsSchema,
+} from "../validations/chatStreamValidation.js";
 import {
   proposalActionSchema,
   proposalParamsSchema,
@@ -77,6 +90,43 @@ router.get(
     query: conversationQuerySchema,
   }),
   getConversation,
+);
+
+router.post(
+  "/conversations/:conversationId/turns",
+  protect,
+  validate({
+    params: startChatTurnParamsSchema,
+    body: startChatTurnBodySchema,
+  }),
+  startChatTurn,
+);
+
+router.get(
+  "/conversations/:conversationId/turns/:turnId",
+  protect,
+  validate({
+    params: chatTurnParamsSchema,
+  }),
+  getChatTurn,
+);
+
+router.get(
+  "/conversations/:conversationId/turns/:turnId/events",
+  protect,
+  validate({
+    params: chatEventsParamsSchema,
+  }),
+  streamChatEvents,
+);
+
+router.post(
+  "/conversations/:conversationId/turns/:turnId/cancel",
+  protect,
+  validate({
+    params: cancelChatTurnParamsSchema,
+  }),
+  cancelChatTurn,
 );
 
 router.post(

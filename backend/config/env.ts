@@ -52,7 +52,7 @@ export const createCorsOptions = (): CorsOptions => {
       callback(new AppError(COMMON_ERROR.CORS_NOT_ALLOWED));
     },
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Last-Event-ID"],
     credentials: false,
   };
 };
