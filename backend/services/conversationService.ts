@@ -25,6 +25,10 @@ import {
 } from "../utils/conversationView.js";
 import { runConversationTurn } from "./conversationTurnService.js";
 import { prepareInteractionSelection } from "./interactionAnswerService.js";
+import { chatRunService } from "./chatRunService.js";
+import { chatStreamRepository } from "../repositories/chatStreamRepository.js";
+import type { TurnSnapshot } from "../types/IChatStream.js";
+import type { ChatTurn } from "../types/IChatTurn.js";
 
 export const conversationService = {
   list: (userId: string) => repository.list(userId),
@@ -141,7 +145,7 @@ export const conversationService = {
           : [],
     };
   },
-  async send(
+  async claimTurn(
     input: {
       conversationId: string;
       requestId: string;
@@ -157,32 +161,93 @@ export const conversationService = {
     if (input.intent === "task_proposal" && !isTaskProposalsEnabled())
       throw new AppError(TASK_PROPOSAL_ERROR.DISABLED);
     const userId = String(context.user._id);
-    const { turn, claimed, selectedInteraction } =
-      await chatTurnRepository.claim(
-        userId,
-        input.conversationId,
-        input.requestId,
-        input.userInput,
-        input.mode ?? "auto",
-        input.intent,
-        input.selection,
-        (pending) =>
-          prepareInteractionSelection(
-            pending,
-            input.selection,
-            input.requestId,
-            input.mode ?? "auto",
-          ),
-        input.attachmentIds ?? [],
-        (session) =>
-          attachmentService.bind(
-            userId,
-            input.conversationId,
-            input.attachmentIds ?? [],
-            session,
-          ),
-        input.timeZone,
+    return chatTurnRepository.claim(
+      userId,
+      input.conversationId,
+      input.requestId,
+      input.userInput,
+      input.mode ?? "auto",
+      input.intent,
+      input.selection,
+      (pending) =>
+        prepareInteractionSelection(
+          pending,
+          input.selection,
+          input.requestId,
+          input.mode ?? "auto",
+        ),
+      input.attachmentIds ?? [],
+      (session) =>
+        attachmentService.bind(
+          userId,
+          input.conversationId,
+          input.attachmentIds ?? [],
+          session,
+        ),
+      input.timeZone,
+    );
+  },
+
+  async startStreamTurn(
+    input: {
+      conversationId: string;
+      requestId: string;
+      userInput: string;
+      mode?: AgentMode;
+      intent?: ProposalIntent;
+      selection?: InteractionSelection;
+      attachmentIds?: string[];
+      timeZone?: string;
+    },
+    context: McpContext,
+  ): Promise<{ snapshot: TurnSnapshot; isNew: boolean }> {
+    const { turn, claimed, selectedInteraction } = await this.claimTurn(
+      input,
+      context,
+    );
+    const turnObject =
+      turn && typeof turn === "object" && "toObject" in turn
+        ? (turn as { toObject(): ChatTurn }).toObject()
+        : (turn as ChatTurn);
+    if (claimed) {
+      chatRunService.start(
+        turnObject,
+        context,
+        input.selection ? selectedInteraction : undefined,
       );
+      const snapshot = await chatStreamRepository.getSnapshot(
+        String(context.user._id),
+        input.conversationId,
+        turnObject._id,
+      );
+      return { snapshot, isNew: true };
+    }
+    const snapshot = await chatStreamRepository.getSnapshot(
+      String(context.user._id),
+      input.conversationId,
+      turnObject._id,
+    );
+    return { snapshot, isNew: false };
+  },
+
+  async send(
+    input: {
+      conversationId: string;
+      requestId: string;
+      userInput: string;
+      mode?: AgentMode;
+      intent?: ProposalIntent;
+      selection?: InteractionSelection;
+      attachmentIds?: string[];
+      timeZone?: string;
+    },
+    context: McpContext,
+  ) {
+    const userId = String(context.user._id);
+    const { turn, claimed, selectedInteraction } = await this.claimTurn(
+      input,
+      context,
+    );
     if (!claimed) {
       if (turn.status === "processing" && turn.expiresAt.getTime() > Date.now())
         throw new AppError(AI_ERROR.CONVERSATION_BUSY);

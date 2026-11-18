@@ -10,6 +10,7 @@ import { agentService } from "./agentService.js";
 import { chatTurnRepository as repository } from "../repositories/chatTurnRepository.js";
 import { interruptedReply } from "../utils/interruptedReply.js";
 import { AppError } from "../error/AppError.js";
+import { AI_ERROR } from "../error/definitions/aiErrors.js";
 import { TASK_PROPOSAL_ERROR } from "../error/definitions/A2UI/taskProposalErrors.js";
 import { prepareHistory } from "../utils/agentMessages.js";
 import { resultFor } from "../utils/conversationView.js";
@@ -20,13 +21,18 @@ import {
 import { uiPresentationService } from "./A2UI/uiPresentationService.js";
 import { projectPersistedProposal } from "../utils/agentActivity.js";
 import { projectRepository } from "../repositories/projectRepository.js";
+import type { TurnExecution } from "./chatRunService.js";
 
 export async function runConversationTurn(
   turn: ChatTurn,
   context: McpContext,
   selectedInteraction?: AgentInteraction,
+  execution?: TurnExecution,
 ) {
-  const budget = createAgentBudget();
+  const totalBudgetMs = execution
+    ? Math.max(0, execution.deadlineAt.getTime() - Date.now())
+    : 50_000;
+  const budget = createAgentBudget(() => performance.now(), totalBudgetMs);
   let latestMessages = turn.messages;
   let latestActivities: AgentActivity[] = turn.activities ?? [];
   let latestSkillsRead: SkillReadMetadata[] = turn.skillsRead ?? [];
@@ -78,6 +84,9 @@ export async function runConversationTurn(
       {
         ...context,
         beforeWrite: async () => {
+          if (execution?.signal.aborted) {
+            throw new AppError(AI_ERROR.PROVIDER_TIMEOUT);
+          }
           await context.beforeWrite?.();
           if (turn.intent === "task_proposal") {
             throw new AppError(TASK_PROPOSAL_ERROR.WRITE_FORBIDDEN);
@@ -88,6 +97,13 @@ export async function runConversationTurn(
       {
         budget,
         attachmentContext,
+        turnId: turn._id,
+        stream: execution
+          ? {
+              signal: execution.signal,
+              emit: execution.emit,
+            }
+          : undefined,
         mode: turn.mode ?? "auto",
         intent: turn.intent,
         projectContext,

@@ -1,0 +1,164 @@
+import { chatStreamRepository } from "../repositories/chatStreamRepository.js";
+import { runConversationTurn } from "./conversationTurnService.js";
+import type { ChatTurn } from "../types/IChatTurn.js";
+import type { McpContext } from "../mcp/context.js";
+import type { AgentInteraction } from "../types/IAgent.js";
+import type { ChatEventInput, TurnSnapshot } from "../types/IChatStream.js";
+
+export type TurnExecution = {
+  signal: AbortSignal;
+  deadlineAt: Date;
+  emit(event: ChatEventInput): Promise<void>;
+};
+
+interface ActiveRun {
+  turnId: string;
+  executionToken: string;
+  abortController: AbortController;
+  timer: NodeJS.Timeout;
+  promise: Promise<void>;
+}
+
+const activeRuns = new Map<string, ActiveRun>();
+
+export const chatRunService = {
+  getActiveRunCount(): number {
+    return activeRuns.size;
+  },
+
+  hasActiveRun(turnId: string): boolean {
+    return activeRuns.has(turnId);
+  },
+
+  start(
+    turn: ChatTurn,
+    context: McpContext,
+    selected?: AgentInteraction,
+  ): void {
+    if (activeRuns.has(turn._id)) {
+      return;
+    }
+
+    const abortController = new AbortController();
+    const deadlineAt = turn.deadlineAt
+      ? new Date(turn.deadlineAt)
+      : new Date(Date.now() + 300_000);
+    const timeoutMs = Math.max(0, deadlineAt.getTime() - Date.now());
+
+    const timer = setTimeout(() => {
+      abortController.abort(new Error("deadline_exceeded"));
+    }, timeoutMs);
+
+    const emit = async (event: ChatEventInput): Promise<void> => {
+      await chatStreamRepository.append(turn._id, turn.executionToken, event);
+    };
+
+    const runPromise = (async () => {
+      try {
+        const result = await runConversationTurn(turn, context, selected, {
+          signal: abortController.signal,
+          deadlineAt,
+          emit,
+        });
+
+        await chatStreamRepository.finish(turn._id, turn.executionToken, {
+          status: "completed",
+          result: {
+            ...result,
+            turnId: turn._id,
+            conversationId: turn.conversationId,
+            status: "completed",
+            mode: turn.mode ?? "auto",
+            response: result.data || turn.response || "",
+          },
+        });
+      } catch (err: unknown) {
+        const isAbort =
+          abortController.signal.aborted ||
+          (err instanceof Error && err.name === "AbortError");
+        const abortReason =
+          abortController.signal.reason instanceof Error
+            ? abortController.signal.reason.message
+            : typeof abortController.signal.reason === "string"
+              ? abortController.signal.reason
+              : err instanceof Error
+                ? err.message
+                : "";
+
+        const isDeadline =
+          abortReason.includes("deadline") ||
+          Date.now() >= deadlineAt.getTime();
+
+        const terminalStatus = isDeadline
+          ? "timed_out"
+          : isAbort
+            ? "cancelled"
+            : "failed";
+
+        const terminalReason = isDeadline
+          ? "deadline_exceeded"
+          : isAbort
+            ? "user_cancelled"
+            : err instanceof Error
+              ? err.message
+              : "unknown_error";
+
+        await chatStreamRepository.finish(turn._id, turn.executionToken, {
+          status: terminalStatus,
+          terminalReason,
+          result: {
+            turnId: turn._id,
+            conversationId: turn.conversationId,
+            status: terminalStatus,
+            mode: turn.mode ?? "auto",
+            response: turn.partialResponse || "",
+            terminalReason,
+          },
+        });
+      } finally {
+        clearTimeout(timer);
+        activeRuns.delete(turn._id);
+      }
+    })();
+
+    // Ensure background rejection does not leak
+    runPromise.catch(() => {});
+
+    activeRuns.set(turn._id, {
+      turnId: turn._id,
+      executionToken: turn.executionToken,
+      abortController,
+      timer,
+      promise: runPromise,
+    });
+  },
+
+  async cancel(
+    userId: string,
+    conversationId: string,
+    turnId: string,
+  ): Promise<TurnSnapshot> {
+    const snapshot = await chatStreamRepository.requestStop(
+      userId,
+      conversationId,
+      turnId,
+      "user",
+    );
+    const active = activeRuns.get(turnId);
+    if (active) {
+      active.abortController.abort(new Error("user_cancelled"));
+    }
+    return snapshot;
+  },
+
+  async shutdown(): Promise<void> {
+    const promises: Promise<void>[] = [];
+    for (const active of activeRuns.values()) {
+      clearTimeout(active.timer);
+      active.abortController.abort(new Error("process_shutdown"));
+      promises.push(active.promise);
+    }
+    activeRuns.clear();
+    await Promise.allSettled(promises);
+  },
+};

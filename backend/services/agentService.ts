@@ -32,6 +32,7 @@ import { createAgentBudget } from "../utils/agentBudget.js";
 import { prepareAgentProviderMessages } from "../utils/agentProviderMessages.js";
 import { validateAgentResponse } from "../utils/agentProviderResponse.js";
 import type {
+  ChatCompletionChunk,
   ChatCompletionMessage,
   ChatCompletionMessageParam,
   ChatCompletionTool,
@@ -53,6 +54,62 @@ import { pendingCalls, completeMenuMessages } from "../utils/agentMessages.js";
 import { grillUserTool, clarification } from "./agentInteractionService.js";
 import { projectAgentActivity } from "../utils/agentActivity.js";
 import type { AgentActivity } from "../types/IAgentActivity.js";
+
+function getToolLabel(name: string): string {
+  switch (name) {
+    case "orbit_list_tasks":
+      return "Đang tìm kiếm công việc";
+    case "orbit_create_task":
+      return "Đang tạo công việc";
+    case "orbit_update_task":
+      return "Đang cập nhật công việc";
+    case "orbit_delete_task":
+      return "Đang xóa công việc";
+    case "orbit_list_categories":
+      return "Đang xem danh mục";
+    case "orbit_list_projects":
+      return "Đang xem dự án";
+    case "propose_tasks":
+      return "Đang chuẩn bị đề xuất công việc";
+    case "present_ui":
+      return "Đang hiển thị giao diện";
+    case "load_skill":
+    case "read_skill_document":
+    case "list_skills":
+    case "read_skill":
+      return "Đang tải kỹ năng";
+    default:
+      return "Đang xử lý tác vụ";
+  }
+}
+
+function getToolSummary(
+  name: string,
+  status: "succeeded" | "failed" | "unknown",
+): string {
+  if (status === "failed") return "Xử lý tác vụ không thành công";
+  if (status === "unknown") return "Trạng thái tác vụ chưa xác định";
+  switch (name) {
+    case "orbit_list_tasks":
+      return "Đã tìm kiếm công việc";
+    case "orbit_create_task":
+      return "Đã tạo công việc thành công";
+    case "orbit_update_task":
+      return "Đã cập nhật công việc thành công";
+    case "orbit_delete_task":
+      return "Đã xóa công việc thành công";
+    case "orbit_list_categories":
+      return "Đã tải danh mục";
+    case "orbit_list_projects":
+      return "Đã tải dự án";
+    case "propose_tasks":
+      return "Đã chuẩn bị đề xuất công việc";
+    case "present_ui":
+      return "Đã hiển thị giao diện";
+    default:
+      return "Đã hoàn thành tác vụ";
+  }
+}
 
 export const proposeTasksTool: ChatCompletionTool = {
   type: "function",
@@ -586,6 +643,18 @@ ${webSearchInstruction}`,
             continue;
           }
           if (menu) return showMenu(menu);
+
+          if (memory.stream?.signal.aborted) {
+            throw new AppError(AI_ERROR.PROVIDER_TIMEOUT);
+          }
+
+          await memory.stream?.emit({
+            type: "tool.started",
+            payload: {
+              toolCallId: toolCall.id,
+              label: getToolLabel(name),
+            },
+          });
           if (loader) {
             stage = "skill_load";
             try {
@@ -667,27 +736,53 @@ ${webSearchInstruction}`,
             ) {
               throw new AppError(TASK_PROPOSAL_ERROR.WRITE_FORBIDDEN);
             }
-            const toolResult = await mcpClient.callTool({
-              name,
-              arguments: args,
-            });
-            const act = projectAgentActivity({
-              toolName: name,
-              args,
-              result: toolResult,
-              requestId: context.requestId,
-              toolCallId: toolCall.id,
-            });
-            if (act) activities.push(act);
-            const serialized = JSON.stringify(toolResult);
-            messages.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content:
-                serialized.length > 12000
-                  ? `${serialized.slice(0, 12000)}\n[Tool output truncated. Query a smaller page or fetch the specific task for full details.]`
-                  : serialized,
-            });
+            try {
+              const toolResult = await mcpClient.callTool({
+                name,
+                arguments: args,
+              });
+              const act = projectAgentActivity({
+                toolName: name,
+                args,
+                result: toolResult,
+                requestId: context.requestId,
+                toolCallId: toolCall.id,
+              });
+              if (act) {
+                activities.push(act);
+                await memory.stream?.emit({
+                  type: "activity.recorded",
+                  payload: { activity: act },
+                });
+              }
+              await memory.stream?.emit({
+                type: "tool.finished",
+                payload: {
+                  toolCallId: toolCall.id,
+                  status: "succeeded",
+                  summary: getToolSummary(name, "succeeded"),
+                },
+              });
+              const serialized = JSON.stringify(toolResult);
+              messages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content:
+                  serialized.length > 12000
+                    ? `${serialized.slice(0, 12000)}\n[Tool output truncated. Query a smaller page or fetch the specific task for full details.]`
+                    : serialized,
+              });
+            } catch (toolErr) {
+              await memory.stream?.emit({
+                type: "tool.finished",
+                payload: {
+                  toolCallId: toolCall.id,
+                  status: "failed",
+                  summary: getToolSummary(name, "failed"),
+                },
+              });
+              throw toolErr;
+            }
           }
           await checkpoint();
         }

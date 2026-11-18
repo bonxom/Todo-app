@@ -17,15 +17,20 @@ export interface ToolProgress {
 }
 
 export interface PublicChatResult {
-  turnId: string;
+  turnId?: string;
   conversationId: string;
+  requestId?: string;
   status: TerminalStatus;
-  mode: AgentMode;
-  response: string;
+  mode?: AgentMode;
+  data?: string;
+  response?: string;
   interactions?: AgentInteraction[];
+  interaction?: unknown;
   activities?: AgentActivity[];
   skillsRead?: SkillReadMetadata[];
   uiSurface?: StoredUiSurface | null;
+  surface?: unknown;
+  proposal?: unknown;
   proposalId?: string;
   terminalReason?: string;
 }
