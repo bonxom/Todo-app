@@ -6,6 +6,7 @@ import type { AgentInteraction, AgentMode } from "./IAgent.js";
 import type { ProposalIntent } from "./A2UI/ITaskProposal.js";
 import type { StoredUiSurface } from "./A2UI/IUiSurface.js";
 import type { AgentActivity } from "./IAgentActivity.js";
+import type { ToolProgress } from "./IChatStream.js";
 
 export interface SkillReadMetadata {
   id: string;
@@ -22,7 +23,15 @@ export interface ChatTurn {
   userInput: string;
   attachments?: AttachmentView[];
   selection?: InteractionSelection;
-  status: "processing" | "awaiting_user" | "completed" | "failed" | "cancelled";
+  status:
+    | "processing"
+    | "stopping"
+    | "awaiting_user"
+    | "completed"
+    | "failed"
+    | "cancelled"
+    | "timed_out"
+    | "interrupted";
   mode: AgentMode;
   intent?: ProposalIntent;
   requestIntent?: ProposalIntent | null;
@@ -32,6 +41,15 @@ export interface ChatTurn {
   executionToken: string;
   interactions: AgentInteraction[];
   response: string;
+  partialResponse?: string;
+  lastEventSeq?: number;
+  deadlineAt?: Date;
+  stopRequestedAt?: Date;
+  stopReason?: "user" | "deadline";
+  terminalReason?: string;
+  runnerInstanceId?: string;
+  toolProgress?: ToolProgress[];
+  finishedAt?: Date;
   messages: ChatCompletionMessageParam[];
   activities?: AgentActivity[];
   skillsRead?: SkillReadMetadata[];
