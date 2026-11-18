@@ -182,8 +182,7 @@ export function reduceChatRun(
           t.toolCallId === toolCallId
             ? {
                 ...t,
-                status:
-                  (status as ToolProgress["status"]) || t.status,
+                status: (status as ToolProgress["status"]) || t.status,
                 summary: summary || t.summary,
               }
             : t,

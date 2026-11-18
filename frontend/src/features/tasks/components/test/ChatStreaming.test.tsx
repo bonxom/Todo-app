@@ -57,7 +57,9 @@ describe("ChatRunStatus component", () => {
 
     await waitFor(() => {
       // Must not show "Đã dừng" if stop failed
-      expect(screen.queryByTestId("run-status-cancelled")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("run-status-cancelled"),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -177,11 +179,10 @@ describe("Streaming Markdown resilience", () => {
   it("does not crash when rendering partial/unclosed mermaid code block", async () => {
     const { default: MarkdownText } = await import("../chat/MarkdownText");
     const partialMermaid = "```mermaid\ngraph TD\n  A[Start] --> B";
-    
+
     // Should render gracefully as CodeBlock without throwing mermaid syntax error
     const { container } = render(<MarkdownText text={partialMermaid} />);
     expect(container).toBeInTheDocument();
     expect(screen.getByText(/graph TD/)).toBeInTheDocument();
   });
 });
-
