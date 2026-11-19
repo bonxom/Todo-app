@@ -21,6 +21,8 @@ Orbit is a task management application with a React frontend and a TypeScript/Ex
 
 ## Repository layout
 
+For architecture, conventions, and the contribution workflow, see the [engineering documentation index](docs/README.md).
+
 ```text
 backend/
   config/          Runtime configuration and MongoDB connection
