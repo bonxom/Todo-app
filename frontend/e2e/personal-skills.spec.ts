@@ -207,7 +207,7 @@ test.describe("Personal Skills E2E", () => {
         },
       }),
     );
-    await page.goto("/agent");
+    await page.goto("/agent?conversation=conv-e2e-1");
     const badge = page.getByRole("link", { name: "Read: Writing" });
     await badge.hover();
     await expect(page.getByRole("tooltip")).toContainText(

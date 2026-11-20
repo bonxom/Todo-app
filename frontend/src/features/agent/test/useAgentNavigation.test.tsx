@@ -157,7 +157,7 @@ describe("useAgentNavigation hook", () => {
 
     render(<RouterProvider router={router} />);
     await waitFor(() => {
-      expect(screen.getByTestId("chat-conv")).toHaveTextContent("conv-default");
+      expect(screen.getByTestId("chat-conv")).toHaveTextContent("none");
     });
 
     const selectBtn = screen.getByRole("button", { name: "Select Target" });
@@ -197,7 +197,7 @@ describe("useAgentNavigation hook", () => {
 
     render(<RouterProvider router={router} />);
     await waitFor(() => {
-      expect(screen.getByTestId("chat-conv")).toHaveTextContent("conv-default");
+      expect(screen.getByTestId("chat-conv")).toHaveTextContent("none");
     });
 
     // Add draft
@@ -294,7 +294,9 @@ describe("useAgentNavigation hook", () => {
     expect(screen.queryByTestId("discard-dialog")).not.toBeInTheDocument();
     await waitFor(() => {
       expect(router.state.location.pathname).toBe("/agent");
-      expect(router.state.location.search).toBe("?conversation=conv-created");
+      expect(router.state.location.search).toBe("");
+      expect(screen.getByTestId("chat-conv")).toHaveTextContent("none");
+      expect(aiService.createConversation).not.toHaveBeenCalled();
     });
   });
 });

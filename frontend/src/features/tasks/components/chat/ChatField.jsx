@@ -13,7 +13,7 @@ import {
   useCallback,
   memo,
 } from "react";
-import { Send, ArrowUpRight, Sparkles } from "lucide-react";
+import { Send, ArrowUpRight, Sparkles, Square, Loader2 } from "lucide-react";
 import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import ChatToolbar from "./ChatToolbar";
 import InteractionCard from "./InteractionCard";
@@ -49,8 +49,11 @@ const ChatMessageItem = memo(function ChatMessageItem({
   conversationId,
   setProposalDirty,
   disabled,
+  wideTranscript,
 }) {
+  const { t } = useTranslation("agent");
   const isUser = message.sender === "user";
+  const openReply = wideTranscript && !isUser;
 
   return (
     <div
@@ -63,12 +66,35 @@ const ChatMessageItem = memo(function ChatMessageItem({
         src={isUser ? userAvatar : undefined}
       />
       <div
-        className={`chat-message min-w-[0] max-w-full ${isUser ? "chat-message--user max-w-[88%] [@media(max-width:640px)]:max-w-[92%]" : "chat-message--bot w-[fit-content]"} rounded-2xl px-4 py-3 ${
-          isUser ? "rounded-br-sm border" : "rounded-bl-sm border"
+        className={`chat-message min-w-0 ${
+          openReply
+            ? "chat-message--bot w-full max-w-[min(calc(100%_-_36px),88ch)]! pt-0.5 text-base"
+            : isUser
+              ? "chat-message--user rounded-2xl rounded-br-sm border px-4 py-3"
+              : "chat-message--bot w-fit rounded-2xl rounded-bl-sm border px-4 py-3"
         }`}
-        style={isUser ? USER_MESSAGE_STYLE : BOT_MESSAGE_STYLE}
+        style={
+          isUser
+            ? USER_MESSAGE_STYLE
+            : openReply
+              ? undefined
+              : BOT_MESSAGE_STYLE
+        }
       >
-        <div className="text-sm whitespace-pre-wrap break-words">
+        {openReply && (
+          <p className="mb-2 text-sm font-semibold text-[var(--color-text)]">
+            {t("orbitAgent")}
+          </p>
+        )}
+        <div
+          className={`whitespace-pre-wrap ${
+            openReply
+              ? "wrap-anywhere text-[15px] leading-relaxed [&>h1]:text-[19px] [&>h2]:text-[17px] [&>:is(h3,h4,ol,ul)]:[font-size:inherit] [&>:is(ol,ul)]:[line-height:inherit]"
+              : wideTranscript
+                ? "wrap-anywhere text-[15px] leading-normal"
+                : "text-sm break-words"
+          }`}
+        >
           {message.surface ? (
             <UiSurfaceMessage
               key={`${conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
@@ -172,8 +198,12 @@ const ChatField = ({
   chat,
   avatarAppearance = "default",
   showWelcome = true,
+  workspaceComposer = false,
+  startHeading = /** @type {string | undefined} */ (undefined),
+  starters = /** @type {import("react").ReactNode} */ (undefined),
 }) => {
   const { t } = useTranslation("agent");
+  const wideTranscript = workspaceComposer && !startHeading;
 
   const userAvatar = useAuthStore((state) => state.user?.avatarUrl);
   const agentSession = useContext(AgentSessionContext);
@@ -212,6 +242,8 @@ const ChatField = ({
 
   const [fileError, setFileError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [stoppingTurn, setStoppingTurn] = useState(null);
+  const [stopErrorTurn, setStopErrorTurn] = useState(null);
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
   const previousConversation = useRef(chat?.conversationId);
@@ -275,6 +307,31 @@ const ChatField = ({
   const interactionId = chat?.interaction?.id;
   const showChatInput =
     Boolean(interactionId) && messageInteractionId === interactionId;
+  const waitingForAnswer = Boolean(interactionId && !showChatInput);
+  const run = chat?.runStream?.snapshot ?? chat?.activeRun;
+  const activeRun =
+    run?.status === "processing" || run?.status === "stopping" ? run : null;
+  const showStop = Boolean(workspaceComposer && activeRun && chat?.stop);
+  const stopping =
+    showStop &&
+    (activeRun.status === "stopping" || stoppingTurn === activeRun.turnId);
+  const actionLabel = t(
+    showStop ? (stopping ? "stopping" : "stop") : "sendMessage",
+  );
+
+  const stopResponse = async () => {
+    if (!showStop || stopping) return;
+    const turnId = activeRun.turnId;
+    setStoppingTurn(turnId);
+    setStopErrorTurn(null);
+    try {
+      await chat.stop();
+    } catch {
+      setStopErrorTurn(turnId);
+    } finally {
+      setStoppingTurn((current) => (current === turnId ? null : current));
+    }
+  };
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -453,11 +510,22 @@ const ChatField = ({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div
+      className={`flex h-full min-h-0 flex-col ${startHeading ? "overflow-y-auto overscroll-contain" : ""}`}
+    >
+      {startHeading && (
+        <h3 className="mx-auto mt-auto mb-5 w-full max-w-[760px] px-4 pt-6 text-center text-[clamp(1.45rem,3.5vw,2.25rem)] leading-tight font-semibold tracking-tight text-[var(--v2-ink)]">
+          {startHeading}
+        </h3>
+      )}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="chat-messages overscroll-contain [scrollbar-width:thin] [scroll-padding-block:16px] [&_>_*]:w-full [&_>_*]:max-w-[760px] min-h-0 flex-1 space-y-4 overflow-y-auto p-4"
+        className={`chat-messages min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin] [scroll-padding-block:16px] [&>_*]:w-full ${
+          wideTranscript
+            ? "space-y-6 px-1 py-4 sm:space-y-8"
+            : "space-y-4 p-4 [&>_*]:max-w-[760px]"
+        } ${startHeading ? "hidden" : ""}`}
       >
         {chat?.before && (
           <button
@@ -535,6 +603,7 @@ const ChatField = ({
                 conversationId={chat?.conversationId}
                 setProposalDirty={chat?.setProposalDirty}
                 disabled={chat?.loading || chat?.sending}
+                wideTranscript={wideTranscript}
               />
             ))
         )}
@@ -570,15 +639,9 @@ const ChatField = ({
         )}
 
         <ChatRunStatus
-          run={
-            ["processing", "stopping"].includes(
-              chat?.runStream?.snapshot?.status ?? chat?.activeRun?.status,
-            )
-              ? (chat?.runStream?.snapshot ?? chat?.activeRun ?? null)
-              : null
-          }
+          run={activeRun}
           connection={chat?.runStream?.connection ?? chat?.connection ?? "idle"}
-          onStop={chat?.stop}
+          onStop={workspaceComposer ? undefined : chat?.stop}
           onReconnect={chat?.reconnect}
         />
 
@@ -645,7 +708,7 @@ const ChatField = ({
       )}
 
       <div
-        className={`chat-composer relative shrink-0 [&_>_.chat-error]:shrink-0 [&_>_.chat-error]:mb-[10px] ${chat?.interaction && !showChatInput ? "chat-composer--answer flex flex-col min-h-[0] [&_>_form]:min-h-[0]" : ""}`}
+        className={`chat-composer relative shrink-0 ${workspaceComposer ? "agent-workspace-composer mx-auto w-full" : ""} ${startHeading ? "max-w-[760px]" : ""} [&_>_.chat-error]:shrink-0 [&_>_.chat-error]:mb-[10px] ${chat?.interaction && !showChatInput ? "chat-composer--answer flex flex-col min-h-[0] [&_>_form]:min-h-[0]" : ""}`}
       >
         {chat?.error && (
           <div
@@ -746,18 +809,32 @@ const ChatField = ({
             onSwitchToMessage={() => setMessageInteractionId(interactionId)}
           />
         )}
+        {showStop && stopErrorTurn === activeRun.turnId && (
+          <p
+            role="alert"
+            className="mb-2 px-2 text-sm text-[var(--color-danger)]"
+          >
+            {t("stopFailed")}
+          </p>
+        )}
         <form
           onSubmit={handleSubmit}
-          hidden={Boolean(chat?.interaction && !showChatInput)}
-          className="chat-input-form [&[hidden]]:[display:none] flex items-end max-w-[760px] mx-auto"
+          hidden={waitingForAnswer && !showStop}
+          className={`chat-input-form mx-auto [&[hidden]]:[display:none] ${wideTranscript ? "w-full" : "max-w-[760px]"} ${workspaceComposer ? "grid grid-cols-[minmax(0,1fr)_auto] items-center px-1" : "flex items-end"}`}
         >
-          <ChatToolbar
-            chat={chat}
-            disabled={disabled || submitting}
-            onFiles={() => fileInputRef.current?.click()}
-            onImages={() => imageInputRef.current?.click()}
-          />
-          <div className="relative min-w-0 flex-1">
+          {(!workspaceComposer || !waitingForAnswer) && (
+            <ChatToolbar
+              chat={chat}
+              workspace={workspaceComposer}
+              disabled={disabled || submitting}
+              onFiles={() => fileInputRef.current?.click()}
+              onImages={() => imageInputRef.current?.click()}
+            />
+          )}
+          <div
+            hidden={workspaceComposer && waitingForAnswer}
+            className={`relative min-w-0 flex-1 ${workspaceComposer ? "col-span-2 row-start-1" : ""}`}
+          >
             {isSlashMenuOpen && (
               <SlashCommandMenu
                 query={slashQuery}
@@ -778,26 +855,41 @@ const ChatField = ({
               placeholder={
                 chat?.interaction ? t("newRequest") : t("messageOrbit")
               }
-              className="chat-input block w-full resize-none [field-sizing:content] [&:placeholder-shown]:whitespace-nowrap
-                [&:placeholder-shown]:overflow-hidden [&:placeholder-shown]:text-ellipsis ui-focus-ring"
+              className={`chat-input block w-full resize-none [field-sizing:content] [&:placeholder-shown]:whitespace-nowrap
+                [&:placeholder-shown]:overflow-hidden [&:placeholder-shown]:text-ellipsis ui-focus-ring ${startHeading ? "agent-start-input" : wideTranscript ? "agent-active-input" : ""}`}
             />
           </div>
           <button
-            type="submit"
-            aria-label={t("sendMessage")}
-            title={t("sendMessage")}
+            type={showStop ? "button" : "submit"}
+            aria-label={actionLabel}
+            title={actionLabel}
+            onClick={showStop ? stopResponse : undefined}
             disabled={
-              disabled ||
-              submitting ||
-              (!inputValue.trim() && (files.length > 0 || !selectedTool))
+              showStop
+                ? stopping
+                : disabled ||
+                  submitting ||
+                  (!inputValue.trim() && (files.length > 0 || !selectedTool))
             }
-            className="chat-send grid place-items-center shrink-0 w-[44px] h-[44px] [border:1px_solid_transparent]
-              [background:var(--color-accent)] cursor-pointer [&:disabled]:border-[var(--color-line)] ui-focus-ring"
+            className={`chat-send grid size-11 shrink-0 cursor-pointer place-items-center border border-transparent bg-[var(--color-accent)] ui-focus-ring disabled:border-[var(--color-line)] ${workspaceComposer ? "col-start-2 self-end rounded-full!" : ""}`}
           >
-            <Send size={18} />
+            {showStop ? (
+              stopping ? (
+                <Loader2
+                  size={18}
+                  className="motion-safe:animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Square size={16} className="fill-current" aria-hidden="true" />
+              )
+            ) : (
+              <Send size={18} aria-hidden="true" />
+            )}
           </button>
         </form>
       </div>
+      {starters && <div className="mt-4 mb-auto px-0.5 pb-8">{starters}</div>}
     </div>
   );
 };

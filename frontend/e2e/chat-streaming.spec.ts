@@ -203,3 +203,67 @@ test.describe("Chat streaming and live controls", () => {
     await expect(composer).toHaveValue(draftContent);
   });
 });
+
+test("Agent V2 replaces Send with a single Stop in the composer until cancellation finishes", async ({
+  page,
+}) => {
+  await agentWorkspaceFixture(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const snapshot = {
+    turnId: "turn-composer-stop",
+    conversationId: "conv-e2e-1",
+    requestId: "req-composer-stop",
+    status: "processing",
+    partialResponse: "Working on the plan",
+    lastEventSeq: 1,
+    toolProgress: [],
+    deadlineAt: new Date(Date.now() + 300_000).toISOString(),
+  };
+  await page.route("**/api/ai/conversations/conv-e2e-1/turns", (route) =>
+    route.fulfill({ status: 202, json: { data: snapshot } }),
+  );
+  await page.route("**/turn-composer-stop/events?**", (route) =>
+    route.fulfill({ contentType: "text/event-stream", body: "" }),
+  );
+  let complete!: () => void;
+  const cancelPending = new Promise<void>((resolve) => {
+    complete = resolve;
+  });
+  await page.route("**/turn-composer-stop/cancel", async (route) => {
+    await cancelPending;
+    await route.fulfill({
+      json: { data: { ...snapshot, status: "cancelled", lastEventSeq: 2 } },
+    });
+  });
+
+  await page.goto("/v2/agents?conversation=conv-e2e-1");
+  const composer = page.locator(".agent-workspace-composer");
+  const send = composer.getByRole("button", { name: "Send message" });
+  await expect(send).toBeInViewport();
+  await composer.getByRole("textbox", { name: "Message" }).fill("Make a plan");
+  await send.click();
+  const stop = composer.getByRole("button", { name: "Stop", exact: true });
+  await expect(stop).toBeInViewport();
+  await expect(
+    page.getByRole("button", { name: "Stop", exact: true }),
+  ).toHaveCount(1);
+  await expect(send).toHaveCount(0);
+  await page.mouse.move(389, 1);
+  await page.screenshot({
+    path: "/tmp/orbit-chat-review/v2-stop-mobile.png",
+    animations: "disabled",
+  });
+  const cancelled = page.waitForRequest(
+    (request) =>
+      request.method() === "POST" &&
+      request.url().endsWith("/turn-composer-stop/cancel"),
+  );
+  await stop.click();
+  await cancelled;
+  await expect(
+    composer.getByRole("button", { name: "Stopping..." }),
+  ).toBeDisabled();
+  complete();
+  await expect(send).toBeInViewport();
+  await expect(stop).toHaveCount(0);
+});

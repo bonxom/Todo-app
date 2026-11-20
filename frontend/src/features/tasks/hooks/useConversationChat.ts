@@ -145,7 +145,10 @@ export function useConversationChat(options?: ConversationChatOptions) {
     },
     [],
   );
-  const initialConversationId = useRef<string | null>(null);
+  const creationAttempt = useRef<{
+    id: string;
+    projectId?: string;
+  } | null>(null);
   const {
     setMessages,
     conversationId,
@@ -185,8 +188,17 @@ export function useConversationChat(options?: ConversationChatOptions) {
     try {
       let id = conversationId;
       if (!id) {
-        initialConversationId.current ??= generateUUID();
-        id = await aiService.createConversation(initialConversationId.current);
+        const projectId = session.context?.projectId ?? undefined;
+        if (
+          !creationAttempt.current ||
+          creationAttempt.current.projectId !== projectId
+        ) {
+          creationAttempt.current = { id: generateUUID(), projectId };
+        }
+        id = await aiService.createConversation(
+          creationAttempt.current.id,
+          projectId,
+        );
         if (!isCurrent()) return;
         setConversationId(id);
       }
@@ -352,12 +364,22 @@ export function useConversationChat(options?: ConversationChatOptions) {
     before,
     context: session.context,
     setContext: session.setContext,
+    setContextForConversation: session.setContextForConversation,
     activities: session.activities,
     setActivities: session.setActivities,
     send,
     answer,
     reload,
     loadEarlier,
+    resetConversation: (projectId?: string) => {
+      if (!session.resetConversation(projectId)) return false;
+      creationAttempt.current = null;
+      lastCompletedMessageRef.current = null;
+      setDirtyProposals({});
+      setUploadError(null);
+      setUploadProgress(null);
+      return true;
+    },
     newConversation: async (discardConfirmed = false) => {
       if (busy.current || pending) return false;
       if (!discardConfirmed && !(await confirmDiscard())) return false;

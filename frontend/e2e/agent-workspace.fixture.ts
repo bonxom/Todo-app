@@ -66,16 +66,31 @@ export async function agentWorkspaceFixture(
       title: "E2E Workspace Planning",
       createdAt: "2026-11-06T00:00:00.000Z",
       updatedAt: "2026-11-06T00:00:00.000Z",
+      projectId: options.contextProjectId ?? null,
     },
     {
       id: "conv-other-2",
       title: "Personal conversation",
       createdAt: "2026-11-05T00:00:00.000Z",
       updatedAt: "2026-11-05T00:00:00.000Z",
+      projectId: null,
     },
   ];
 
-  let currentContextProjectId = options.contextProjectId ?? null;
+  const snapshots = new Map<string, ConversationSnapshot>([
+    [activeConvId, defaultSnapshot],
+    [
+      "conv-other-2",
+      {
+        ...defaultSnapshot,
+        conversationId: "conv-other-2",
+        title: "Personal conversation",
+        messages: [],
+        activities: [],
+        context: { projectId: null, available: true },
+      },
+    ],
+  ]);
 
   await page.route("**/api/ai/**", async (route) => {
     const url = new URL(route.request().url());
@@ -109,15 +124,22 @@ export async function agentWorkspaceFixture(
       method === "PATCH"
     ) {
       const payload = route.request().postDataJSON();
-      currentContextProjectId = payload.projectId;
+      const conversationId = path.split("/")[4];
+      const snapshot = snapshots.get(conversationId);
+      if (snapshot)
+        snapshot.context = { projectId: payload.projectId, available: true };
+      const summary = conversationsList.find(
+        (item) => item.id === conversationId,
+      );
+      if (summary) summary.projectId = payload.projectId;
       return route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           success: true,
           data: {
-            conversationId: activeConvId,
-            contextProjectId: currentContextProjectId,
+            conversationId,
+            contextProjectId: payload.projectId,
           },
         }),
       });
@@ -151,21 +173,25 @@ export async function agentWorkspaceFixture(
         contentType: "application/json",
         body: JSON.stringify({
           success: true,
-          data: {
-            ...defaultSnapshot,
-            conversationId:
-              convId === "latest" ? activeConvId : convId || activeConvId,
-            context: {
-              projectId: currentContextProjectId,
-              available: true,
-            },
-          },
+          data: snapshots.get(convId === "latest" ? activeConvId : convId),
         }),
       });
     }
 
     if (path === "/api/ai/conversations" && method === "POST") {
-      const newId = route.request().postDataJSON().conversationId;
+      const { conversationId: newId, projectId } = route
+        .request()
+        .postDataJSON();
+      if (!snapshots.has(newId)) {
+        snapshots.set(newId, {
+          ...defaultSnapshot,
+          conversationId: newId,
+          title: "New conversation",
+          messages: [],
+          activities: [],
+          context: { projectId: projectId ?? null, available: true },
+        });
+      }
       return route.fulfill({ status: 201, json: { conversationId: newId } });
     }
 
@@ -174,7 +200,20 @@ export async function agentWorkspaceFixture(
       // Mirror persisted history so the client's post-send refresh keeps the reply.
       const timestamp = new Date().toISOString();
       const replyText = "Phản hồi mẫu từ Orbit Agent cho: " + payload.userInput;
-      defaultSnapshot.messages.push(
+      const snapshot = snapshots.get(payload.conversationId) ?? defaultSnapshot;
+      if (
+        !conversationsList.some((item) => item.id === snapshot.conversationId)
+      ) {
+        snapshot.title = payload.userInput;
+        conversationsList.unshift({
+          id: snapshot.conversationId,
+          title: snapshot.title,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          projectId: snapshot.context?.projectId ?? null,
+        });
+      }
+      snapshot.messages.push(
         {
           id: `user-${Date.now()}`,
           sender: "user",

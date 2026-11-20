@@ -65,10 +65,14 @@ export const createConversation = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const id = req.validatedBody!.conversationId as string;
+  const { conversationId, projectId } = req.validatedBody as {
+    conversationId: string;
+    projectId?: string;
+  };
   const conversation = await conversationService.create(
     String(req.user!._id),
-    id,
+    conversationId,
+    projectId,
   );
   res.status(201).json({ conversationId: conversation._id });
 };
@@ -91,10 +95,11 @@ export const listConversations = async (
 ): Promise<void> => {
   const conversations = await conversationService.list(String(req.user!._id));
   res.json({
-    data: conversations.map(({ _id, title, updatedAt }) => ({
+    data: conversations.map(({ _id, title, updatedAt, contextProjectId }) => ({
       id: _id,
       title,
       updatedAt,
+      projectId: contextProjectId ? String(contextProjectId) : null,
     })),
   });
 };

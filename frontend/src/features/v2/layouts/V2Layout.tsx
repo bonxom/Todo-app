@@ -1,5 +1,5 @@
 import { useCallback, useState, type CSSProperties } from "react";
-import { Outlet, useSearchParams } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import RoutePendingIndicator from "@/app/RoutePendingIndicator";
 import { AgentSessionProvider } from "@/features/agent/AgentSessionProvider";
@@ -11,8 +11,6 @@ import V2AgentChatBubble from "../components/V2AgentChatBubble";
 export default function V2Layout() {
   const { t } = useTranslation("v2");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [searchParams] = useSearchParams();
-  const initialConversationId = searchParams.get("conversation") || undefined;
   const [assistantTarget, setAssistantTarget] = useState<HTMLDivElement | null>(
     null,
   );
@@ -23,7 +21,7 @@ export default function V2Layout() {
   );
 
   return (
-    <AgentSessionProvider initialConversationId={initialConversationId}>
+    <AgentSessionProvider>
       <div
         className="v2-app"
         data-ui-version="v2"

@@ -154,4 +154,64 @@ test.describe("Agent Workspace E2E", () => {
     await projectSelect.selectOption({ label: "Website refresh" });
     await expect(projectSelect).toHaveValue("website");
   });
+
+  test("sets project context before sending the first message on V1", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await agentWorkspaceFixture(page);
+    await page.goto("/agent");
+    const projectSelect = page.getByLabel("Project Context");
+    await expect(projectSelect).toBeEnabled();
+    await projectSelect.selectOption({ label: "Website refresh" });
+    await expect(page).toHaveURL(/\/agent$/);
+
+    const create = page.waitForRequest(
+      (request) =>
+        request.method() === "POST" &&
+        request.url().endsWith("/api/ai/conversations"),
+    );
+    const message = page.getByRole("textbox", { name: "Message" });
+    await message.fill("Plan for the project");
+    await message.press("Enter");
+    expect((await create).postDataJSON()).toMatchObject({
+      projectId: "website",
+    });
+    await expect(
+      page.getByText("Phản hồi mẫu từ Orbit Agent cho: Plan for the project"),
+    ).toBeVisible();
+  });
+
+  test("starts a separate creation attempt when the draft project changes after a failed request", async ({
+    page,
+  }) => {
+    await agentWorkspaceFixture(page);
+    const attempts: { conversationId: string; projectId: string }[] = [];
+    await page.route("**/api/ai/conversations", (route) => {
+      if (route.request().method() !== "POST") return route.fallback();
+      attempts.push(route.request().postDataJSON());
+      if (attempts.length !== 1) return route.fallback();
+      return route.fulfill({ status: 503, json: { message: "Try again" } });
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/agent");
+    const context = page.getByLabel("Project Context");
+    await context.selectOption({ label: "Website refresh" });
+    const message = page.getByRole("textbox", { name: "Message" });
+    await message.fill("Plan for the project");
+    await message.press("Enter");
+    const reload = page.getByRole("button", { name: "Reload conversation" });
+    await expect(reload).toBeVisible();
+    await context.selectOption({ label: "Studio essentials" });
+    await reload.click();
+    await message.press("Enter");
+    await expect(
+      page.getByText("Phản hồi mẫu từ Orbit Agent cho: Plan for the project"),
+    ).toBeVisible();
+    expect(attempts.map((attempt) => attempt.projectId)).toEqual([
+      "website",
+      "studio",
+    ]);
+    expect(attempts[0].conversationId).not.toBe(attempts[1].conversationId);
+  });
 });

@@ -19,6 +19,11 @@ export type ConversationSessionOptions = {
   skipInitialLoad?: boolean;
 };
 
+type ConversationProjectContext = {
+  projectId: string | null;
+  available: boolean;
+};
+
 // Owns the current conversation snapshot and guards asynchronous session updates.
 export function useConversationSession(options?: ConversationSessionOptions) {
   const sessionRevision = useAuthStore((state) => state.sessionRevision);
@@ -41,19 +46,37 @@ export function useConversationSession(options?: ConversationSessionOptions) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<ChatPayload | null>(null);
   const [activeRun, setActiveRun] = useState<TurnSnapshot | null>(null);
-  const [context, setContext] = useState<
-    { projectId: string | null; available: boolean } | undefined
-  >();
+  const [context, setContext] = useState<ConversationProjectContext>();
   const [activities, setActivities] = useState<AgentActivity[]>([]);
   const active = useRef(true);
   const busy = useRef(false);
   const loadVersion = useRef(0);
+  const blank = useRef(Boolean(options?.skipInitialLoad));
+  const currentConversationId = useRef(conversationId);
+  currentConversationId.current = conversationId;
   const isCurrent = useCallback(
     () =>
       active.current &&
       useAuthStore.getState().sessionRevision === sessionRevision,
     [sessionRevision],
   );
+
+  const resetConversation = (projectId?: string) => {
+    if (busy.current) return false;
+    loadVersion.current++;
+    blank.current = true;
+    setConversationId(undefined);
+    setMessages([]);
+    setMode("auto");
+    setInteraction(undefined);
+    setContext(projectId ? { projectId, available: true } : undefined);
+    setActivities([]);
+    setBefore(null);
+    setPending(null);
+    setActiveRun(null);
+    setError(null);
+    return true;
+  };
 
   const load = useCallback(
     async (id?: string) => {
@@ -65,6 +88,7 @@ export function useConversationSession(options?: ConversationSessionOptions) {
           .catch(() => ({ taskProposals: false })),
       ]);
       if (!isCurrent() || version !== loadVersion.current) return;
+      blank.current = !result;
       if (caps) setCapabilities(caps);
       setConversationId(result?.conversationId);
       setMessages(result?.messages ?? []);
@@ -113,6 +137,12 @@ export function useConversationSession(options?: ConversationSessionOptions) {
     active.current = true;
     if (options?.skipInitialLoad) {
       setLoading(false);
+      void aiService
+        .getConversationCapabilities()
+        .then((caps) => {
+          if (isCurrent()) setCapabilities(caps);
+        })
+        .catch(() => {});
       return () => {
         active.current = false;
       };
@@ -146,6 +176,8 @@ export function useConversationSession(options?: ConversationSessionOptions) {
 
   const openConversation = async (id?: string) => {
     if (busy.current) return;
+    if (id && id !== conversationId) resetConversation();
+    blank.current = false;
     busy.current = true;
     setLoading(true);
     try {
@@ -169,7 +201,10 @@ export function useConversationSession(options?: ConversationSessionOptions) {
     }
   };
 
-  const reload = () => openConversation(conversationId);
+  const reload = () => {
+    if (!conversationId && blank.current) setError(null);
+    else return openConversation(conversationId);
+  };
 
   const newConversation = async () => {
     if (busy.current) return false;
@@ -279,10 +314,18 @@ export function useConversationSession(options?: ConversationSessionOptions) {
     openConversation,
     context,
     setContext,
+    setContextForConversation: (
+      id: string,
+      value: ConversationProjectContext,
+    ) => {
+      if (isCurrent() && currentConversationId.current === id)
+        setContext(value);
+    },
     activities,
     setActivities,
     loadEarlier,
     newConversation,
+    resetConversation,
     activeRun,
     setActiveRun,
   };

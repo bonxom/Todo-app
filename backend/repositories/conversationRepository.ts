@@ -6,12 +6,16 @@ import { AI_ERROR } from "../error/definitions/aiErrors.js";
 export const conversationRepository = {
   list: (userId: string) =>
     Conversation.find({ userId, sequence: { $gt: 0 } })
-      .select("_id title updatedAt")
+      .select("_id title updatedAt contextProjectId")
       .sort({ updatedAt: -1, _id: -1 })
       .lean(),
-  async create(userId: string, conversationId: string) {
+  async create(userId: string, conversationId: string, projectId?: string) {
     try {
-      return await Conversation.create({ _id: conversationId, userId });
+      return await Conversation.create({
+        _id: conversationId,
+        userId,
+        contextProjectId: projectId,
+      });
     } catch (error) {
       if ((error as { code?: number }).code !== 11000) throw error;
       return this.get(userId, conversationId);

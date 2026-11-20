@@ -12,6 +12,13 @@ import type {
   ProposalEnvelope,
 } from "../types/A2UI/taskProposal";
 
+export type ConversationSummary = {
+  id: string;
+  title: string;
+  updatedAt: string;
+  projectId?: string | null;
+};
+
 export const aiService = {
   getConversationCapabilities: async (): Promise<{
     taskProposals: boolean;
@@ -37,11 +44,9 @@ export const aiService = {
     );
     return response.data.data;
   },
-  listConversations: async (): Promise<
-    Array<{ id: string; title: string; updatedAt: string }>
-  > => {
+  listConversations: async (): Promise<ConversationSummary[]> => {
     const response = await axiosInstance.get<{
-      data: Array<{ id: string; title: string; updatedAt: string }>;
+      data: ConversationSummary[];
     }>("/api/ai/conversations");
     return response.data.data;
   },
@@ -56,10 +61,13 @@ export const aiService = {
     });
     return response.data.data;
   },
-  createConversation: async (conversationId: string): Promise<string> => {
+  createConversation: async (
+    conversationId: string,
+    projectId?: string,
+  ): Promise<string> => {
     const response = await axiosInstance.post<{ conversationId: string }>(
       "/api/ai/conversations",
-      { conversationId },
+      { conversationId, ...(projectId ? { projectId } : {}) },
     );
     return response.data.conversationId;
   },

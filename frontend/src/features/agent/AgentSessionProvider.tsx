@@ -35,14 +35,16 @@ export interface AgentSessionProviderProps extends AgentSessionOptions {
 
 function RoutedSession(props: AgentSessionProviderProps) {
   const location = useLocation();
-  const fromUrl =
-    location.pathname === "/agent"
-      ? new URLSearchParams(location.search).get("conversation") || undefined
-      : undefined;
+  const isWorkspace =
+    location.pathname === "/agent" || location.pathname === "/v2/agents";
+  const fromUrl = isWorkspace
+    ? new URLSearchParams(location.search).get("conversation") || undefined
+    : undefined;
   return (
     <SessionState
       {...props}
       initialConversationId={props.initialConversationId ?? fromUrl}
+      skipInitialLoad={props.skipInitialLoad ?? (isWorkspace && !fromUrl)}
     />
   );
 }

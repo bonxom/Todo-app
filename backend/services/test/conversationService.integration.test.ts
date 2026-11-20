@@ -125,6 +125,48 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     vi.unstubAllEnvs();
   });
 
+  it("scopes the first turn and history summary to a project owned by the caller", async () => {
+    const project = await Project.create({
+      userId: users[0],
+      name: "Website launch",
+      color: "#14675f",
+      status: "active",
+    });
+    const projectId = String(project._id);
+    const conversationId = randomUUID();
+    const payload = { conversationId, projectId };
+
+    expect((await post("conversations", payload, 1)).status).toBe(404);
+    expect(await Conversation.findById(conversationId)).toBeNull();
+    expect((await post("conversations", payload)).status).toBe(201);
+    expect((await post("conversations", payload)).body).toEqual({
+      conversationId,
+    });
+    expect((await get("conversations")).body.data).not.toContainEqual(
+      expect.objectContaining({ id: conversationId }),
+    );
+
+    const requestId = randomUUID();
+    completion.mockResolvedValueOnce(answer("Let's plan the launch."));
+    expect(
+      (
+        await post("chat-mcp", {
+          conversationId,
+          requestId,
+          userInput: "Plan the launch",
+        })
+      ).status,
+    ).toBe(200);
+    const turn = await ChatTurn.findOne({ requestId });
+    expect(String(turn?.contextProjectId)).toBe(projectId);
+    expect((await get("conversations")).body.data).toContainEqual(
+      expect.objectContaining({ id: conversationId, projectId }),
+    );
+    expect((await get("conversations", 1)).body.data).not.toContainEqual(
+      expect.objectContaining({ id: conversationId }),
+    );
+  });
+
   it.each(["answer", "question", "failure"])(
     "persists successful skill reads through %s and exposes metadata only",
     async (ending) => {

@@ -47,6 +47,13 @@ export default function V2AgentChatBubble({
   const panelRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const wasOpen = useRef(false);
+  const isFullChatPage =
+    Boolean(triggerContainer) && location.pathname === "/v2/agents";
+  if (isFullChatPage && (isOpen || historyOpen || mode !== "compact")) {
+    setIsOpen(false);
+    setHistoryOpen(false);
+    setMode("compact");
+  }
 
   const focusComposer = () => {
     panelRef.current?.querySelector<HTMLTextAreaElement>("textarea")?.focus();
@@ -115,8 +122,8 @@ export default function V2AgentChatBubble({
   };
 
   useEffect(() => {
-    onDockChange?.(mode === "docked" && isOpen, dockWidth);
-  }, [onDockChange, mode, isOpen, dockWidth]);
+    onDockChange?.(mode === "docked" && isOpen && !isFullChatPage, dockWidth);
+  }, [onDockChange, mode, isOpen, isFullChatPage, dockWidth]);
 
   const modeLabel = {
     compact: t("dockChat"),
@@ -125,8 +132,6 @@ export default function V2AgentChatBubble({
   const ModeIcon = modeIcon[mode];
   const busy = chat.loading || chat.sending || Boolean(chat.pending);
 
-  const isFullChatPage =
-    Boolean(triggerContainer) && location.pathname === "/v2/agents";
   const trigger = (
     <button
       ref={triggerRef}
@@ -172,7 +177,7 @@ export default function V2AgentChatBubble({
         ref={panelRef}
         id="v2-assistant-panel"
         className="v2-assistant-panel"
-        hidden={!isOpen}
+        hidden={!isOpen || isFullChatPage}
         role="dialog"
         aria-modal="false"
         aria-label={t("agents")}
@@ -288,7 +293,10 @@ export default function V2AgentChatBubble({
                   navigate(
                     chat.conversationId
                       ? `/v2/agents?conversation=${chat.conversationId}`
-                      : "/v2/agents",
+                      : chat.context?.projectId
+                        ? `/v2/agents?project=${encodeURIComponent(chat.context.projectId)}`
+                        : "/v2/agents",
+                    { state: { assistantHandoff: true } },
                   );
                 }}
                 aria-label={t("openInAgents")}
@@ -326,13 +334,15 @@ export default function V2AgentChatBubble({
         )}
 
         <div className="v2-assistant-body flex-1 min-h-[0] flex flex-col overflow-hidden [&_>_*]:flex-1 [&_>_*]:min-h-[0]">
-          <ChatField
-            chat={chat}
-            messages={chat.messages}
-            onSendMessage={chat.send}
-            isTyping={chat.sending}
-            disabled={chat.locked}
-          />
+          {!isFullChatPage && (
+            <ChatField
+              chat={chat}
+              messages={chat.messages}
+              onSendMessage={chat.send}
+              isTyping={chat.sending}
+              disabled={chat.locked}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -19,7 +19,7 @@ vi.mock("@/features/tasks/components/chat/ChatField", () => ({
 
 vi.mock("@/features/agent/useAgentNavigation", () => ({
   useAgentNavigation: () => ({
-    activeConversationId: undefined,
+    activeConversationId: "conversation-1",
     selectConversation: vi.fn(),
     startNewChat: vi.fn(),
     discardPromptOpen: false,
@@ -28,16 +28,12 @@ vi.mock("@/features/agent/useAgentNavigation", () => ({
   }),
 }));
 
-vi.mock("@/features/agent/AgentHistoryList", () => ({
-  AgentHistoryList: () => <div data-testid="agent-history" />,
+vi.mock("@/features/tasks/api/projectQueries", () => ({
+  useProjectsQuery: () => ({ data: [], status: "success" }),
 }));
 
-vi.mock("@/features/agent/AgentContextPanel", () => ({
-  AgentContextPanel: () => <div data-testid="agent-context" />,
-}));
-
-vi.mock("@/features/agent/AgentActivityList", () => ({
-  AgentActivityList: () => <div data-testid="agent-activity" />,
+vi.mock("@/shared/services/aiService", () => ({
+  aiService: { listConversations: vi.fn().mockResolvedValue([]) },
 }));
 
 vi.mock("@/features/agent/AgentDiscardDialog", () => ({
@@ -85,15 +81,19 @@ describe("V2 Agents page", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the workspace regions with one heading", () => {
+  it("renders the workspace with history and no context panel", () => {
     renderWithSession(<AgentsPage />);
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Agents" }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("agent-history")).toBeInTheDocument();
-    expect(screen.getByTestId("agent-context")).toBeInTheDocument();
-    expect(screen.getByTestId("agent-activity")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Recent" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Projects" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Context and activity" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId("chat-field")).toBeInTheDocument();
   });
 

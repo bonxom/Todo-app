@@ -36,6 +36,7 @@ export default function AgentPage() {
   const { chat, setDraft } = useAgentSession();
   const {
     activeConversationId,
+    resolving,
     selectConversation,
     startNewChat,
     discardPromptOpen,
@@ -140,7 +141,7 @@ export default function AgentPage() {
             <AgentHistoryList
               activeConversationId={chat.conversationId || activeConversationId}
               onSelectConversation={selectConversation}
-              onNewChat={startNewChat}
+              onNewChat={() => startNewChat(null)}
               disabled={chat.loading || chat.sending || Boolean(chat.pending)}
             />
           </div>
@@ -183,7 +184,7 @@ export default function AgentPage() {
                   setHistoryDrawerOpen(false);
                 }}
                 onNewChat={() => {
-                  startNewChat();
+                  startNewChat(null);
                   setHistoryDrawerOpen(false);
                 }}
                 disabled={chat.loading || chat.sending || Boolean(chat.pending)}
@@ -277,7 +278,7 @@ export default function AgentPage() {
 
         {/* Content Area */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          {chat.loading && !chat.conversationId ? (
+          {resolving || (chat.loading && !chat.conversationId) ? (
             <div className="flex flex-1 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-[var(--color-accent)]" />
             </div>
@@ -296,7 +297,7 @@ export default function AgentPage() {
               </p>
               <button
                 type="button"
-                onClick={startNewChat}
+                onClick={() => startNewChat(null)}
                 className="ui-btn-primary mt-4"
               >
                 <Plus className="h-4 w-4" />
@@ -343,6 +344,7 @@ export default function AgentPage() {
               {/* ChatField handles messages, attachments, proposals, and composer */}
               <div className="flex-1 overflow-hidden">
                 <ChatField
+                  showWelcome={false}
                   chat={chat}
                   messages={chat.messages}
                   onSendMessage={chat.send}
@@ -367,7 +369,10 @@ export default function AgentPage() {
             </h2>
           </div>
           <div className="space-y-6">
-            <AgentContextPanel chat={chat} />
+            <AgentContextPanel
+              chat={chat}
+              allowDraftProject={!resolving && !isUnavailable}
+            />
             <div>
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                 {t("verifiedActivities")}
@@ -415,7 +420,10 @@ export default function AgentPage() {
               </button>
             </div>
             <div className="flex-1 space-y-6 overflow-y-auto pt-4">
-              <AgentContextPanel chat={chat} />
+              <AgentContextPanel
+                chat={chat}
+                allowDraftProject={!resolving && !isUnavailable}
+              />
               <div>
                 <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                   {t("verifiedActivities")}

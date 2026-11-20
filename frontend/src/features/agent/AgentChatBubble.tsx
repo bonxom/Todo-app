@@ -10,7 +10,10 @@ export function AgentChatBubble() {
         navigate(
           chat.conversationId
             ? `/agent?conversation=${chat.conversationId}`
-            : "/agent",
+            : chat.context?.projectId
+              ? `/agent?project=${encodeURIComponent(chat.context.projectId)}`
+              : "/agent",
+          { state: { assistantHandoff: true } },
         )
       }
     />

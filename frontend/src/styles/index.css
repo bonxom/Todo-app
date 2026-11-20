@@ -5698,24 +5698,8 @@ body:has(.calendar-timeline-event[data-resizing="true"])
   }
 }
 
-/* ---------- Agents workspace (liquid glass) ---------- */
-
-.v2-agents {
-  @apply flex flex-col gap-[20px];
-}
-
-.v2-agent-toggle {
-  @apply [display:none] gap-[7px] text-[12px];
-}
-
-.v2-agents-workspace {
-  @apply grid-cols-[240px_minmax(0,1fr)_300px];
-}
-
-/* Agent and calendar panels share the Dashboard workspace material above.
-   Keep only their layout here so theme/fallback rules stay consistent. */
-
-.v2-agent-panel {
+/* Agent panels share the dashboard material. */
+.v2-agent-panel:not(.v2-agent-history) {
   @apply relative flex p-[16px];
 }
 
@@ -5725,22 +5709,6 @@ body:has(.calendar-timeline-event[data-resizing="true"])
 
 .v2-agent-panel-close {
   @apply [display:none] min-h-[0] p-[4px];
-}
-
-.v2-agent-center {
-  @apply pb-[0];
-}
-
-.v2-agent-starter {
-  @apply text-[var(--v2-ink)] text-[12px];
-}
-
-.v2-agent-starter:hover {
-  @apply text-[var(--v2-accent)];
-}
-
-.v2-agent-context-body {
-  @apply gap-[18px] overflow-y-auto;
 }
 
 /* ---------- Assistant bubble ---------- */
@@ -5820,42 +5788,7 @@ body:has(.calendar-timeline-event[data-resizing="true"])
   }
 }
 
-@media (max-width: 1199px) {
-  .v2-agents-workspace {
-    @apply grid-cols-[220px_minmax(0,1fr)];
-  }
-
-  .v2-agent-context {
-    @apply [display:none];
-  }
-
-  .v2-agents-workspace[data-context="true"] .v2-agent-context {
-    @apply fixed right-[24px] bottom-[96px] z-55 flex w-[min(340px,calc(100vw_-_48px))] max-h-[62dvh];
-  }
-
-  .v2-agent-toggle,
-  .v2-agent-context .v2-agent-panel-close {
-    @apply inline-flex;
-  }
-}
-
 @media (max-width: 899px) {
-  .v2-agents-workspace {
-    @apply grid-cols-[minmax(0,1fr)];
-  }
-
-  .v2-agent-history {
-    @apply [display:none];
-  }
-
-  .v2-agents-workspace[data-history="true"] .v2-agent-history {
-    @apply fixed top-[96px] left-[16px] z-55 flex w-[min(320px,calc(100vw_-_32px))] max-h-[62dvh];
-  }
-
-  .v2-agent-history .v2-agent-panel-close {
-    @apply inline-flex;
-  }
-
   .v2-assistant {
     @apply right-[16px] bottom-[16px];
   }
@@ -6242,16 +6175,6 @@ body:has(.calendar-timeline-event[data-resizing="true"])
   @apply grid gap-[6px];
 }
 
-.v2-agent-mobile-tools {
-  @apply [display:none];
-}
-
-@media (max-width: 1199px) {
-  .v2-agent-mobile-tools {
-    @apply flex;
-  }
-}
-
 @media (max-width: 767px) {
   .v2-task-main {
     @apply contents;
@@ -6502,47 +6425,6 @@ body:has(.calendar-timeline-event[data-resizing="true"])
   }
 }
 
-@container workspace (max-width: 1050px) {
-  .v2-agents-workspace {
-    @apply grid-cols-[220px_minmax(0,1fr)];
-  }
-
-  .v2-agent-mobile-tools {
-    @apply flex;
-  }
-
-  .v2-agent-toggle,
-  .v2-agent-context .v2-agent-panel-close {
-    @apply inline-flex;
-  }
-
-  .v2-agent-context {
-    @apply [display:none];
-  }
-
-  .v2-agents-workspace[data-context="true"] .v2-agent-context {
-    @apply fixed right-[24px] bottom-[96px] z-55 flex w-[min(340px,calc(100vw_-_48px))] max-h-[62dvh];
-  }
-}
-
-@container workspace (max-width: 700px) {
-  .v2-agents-workspace {
-    @apply grid-cols-[minmax(0,1fr)];
-  }
-
-  .v2-agent-history {
-    @apply [display:none];
-  }
-
-  .v2-agents-workspace[data-history="true"] .v2-agent-history {
-    @apply fixed top-[96px] left-[16px] z-55 flex w-[min(320px,calc(100vw_-_32px))] max-h-[62dvh];
-  }
-
-  .v2-agent-history .v2-agent-panel-close {
-    @apply inline-flex;
-  }
-}
-
 @media (max-width: 359px) {
   .v2-pagination {
     @apply grid gap-[6px];
@@ -6576,13 +6458,19 @@ body:has(.calendar-timeline-event[data-resizing="true"])
 }
 
 .v2-app .v2-topbar .v2-btn,
-.v2-app .v2-topbar .v2-assistant-trigger {
+.v2-app .v2-topbar .v2-assistant-trigger,
+.v2-app .v2-glass-pill {
   @apply relative inline-flex items-center justify-center gap-[8px] min-w-[44px] min-h-[44px] w-auto h-[44px] p-[10px_16px] rounded-[9999px] [border:1px_solid_var(--v2-glass-border)] text-[var(--v2-ink)] [background:linear-gradient(_150deg,rgb(255_255_255_/_66%),rgb(255_255_255_/_22%)_62%,rgb(230_246_243_/_38%)_)] [box-shadow:inset_0_1px_0_rgb(255_255_255_/_95%),inset_0_-1px_0_rgb(60_100_105_/_8%),0_3px_5px_rgb(37_77_82_/_5%),0_9px_18px_-12px_rgb(37_77_82_/_38%)] [backdrop-filter:blur(18px)_saturate(150%)] [-webkit-backdrop-filter:blur(18px)_saturate(150%)] text-[13px] [font-weight:550] cursor-pointer [transition:background_160ms_ease,box-shadow_160ms_ease];
 }
 
 [data-theme="dark"] .v2-topbar .v2-btn,
-[data-theme="dark"] .v2-topbar .v2-assistant-trigger {
+[data-theme="dark"] .v2-topbar .v2-assistant-trigger,
+[data-theme="dark"] .v2-glass-pill {
   @apply [background:linear-gradient(_150deg,rgb(99_141_141_/_36%),rgb(40_66_72_/_28%)_62%,rgb(66_109_99_/_28%)_)] [box-shadow:inset_0_1px_0_rgb(224_255_249_/_26%),inset_0_-1px_0_rgb(0_0_0_/_22%),0_4px_7px_rgb(0_0_0_/_10%),0_12px_22px_-14px_rgb(0_0_0_/_50%)];
+}
+
+.v2-app .v2-glass-pill.v2-glass-pill-icon {
+  @apply w-11 shrink-0 p-0;
 }
 
 .v2-app .v2-topbar .v2-assistant-trigger-label {
@@ -6603,7 +6491,8 @@ body:has(.calendar-timeline-event[data-resizing="true"])
 
 @media (hover: hover) {
   .v2-app .v2-topbar .v2-btn:hover,
-  .v2-app .v2-topbar .v2-assistant-trigger:hover {
+  .v2-app .v2-topbar .v2-assistant-trigger:hover,
+  .v2-app .v2-glass-pill:hover {
     @apply [box-shadow:inset_0_1px_0_var(--v2-glass-border),0_4px_10px_rgb(37_77_82_/_10%),0_12px_22px_-12px_rgb(37_77_82_/_24%)] bg-[var(--v2-shell-fill)];
   }
 }
@@ -6721,6 +6610,7 @@ body:has(.calendar-timeline-event[data-resizing="true"])
 @media (prefers-reduced-transparency: reduce) {
   .v2-app .v2-topbar .v2-btn,
   .v2-app .v2-topbar .v2-assistant-trigger,
+  .v2-app .v2-glass-pill,
   .v2-notification-overlay .notification-panel {
     @apply [background:var(--v2-surface-solid)] [backdrop-filter:none] [-webkit-backdrop-filter:none];
   }
@@ -6737,6 +6627,7 @@ body:has(.calendar-timeline-event[data-resizing="true"])
 @media (forced-colors: active) {
   .v2-app .v2-topbar .v2-btn,
   .v2-app .v2-topbar .v2-assistant-trigger,
+  .v2-app .v2-glass-pill,
   .v2-notification-overlay .notification-panel {
     @apply [background:Canvas] text-[CanvasText] [border:1px_solid_ButtonText] [box-shadow:none] [backdrop-filter:none];
   }
@@ -7026,79 +6917,32 @@ body:has(.calendar-timeline-event[data-resizing="true"])
   --shadow-lg: var(--v2-shadow-lg);
 }
 
-.v2-agents .agent-new-chat-button {
-  @apply w-full px-[10px] gap-[8px] text-[13px] whitespace-nowrap rounded-[var(--v2-radius-control)];
+.v2-agents .agent-workspace-composer {
+  @apply [background:var(--v2-surface-solid)] [border:1px_solid_var(--v2-border)] rounded-[20px] [box-shadow:var(--v2-shadow-sm)] p-[9px_12px];
 }
 
-.v2-agents .agent-new-chat-button svg {
-  @apply shrink-0;
+.v2-agents .agent-workspace-composer:focus-within {
+  @apply border-[var(--v2-accent)];
 }
 
-.v2-agents .agent-history-list > :first-child {
-  @apply p-[12px_0];
+.v2-agents .agent-workspace-composer .chat-input {
+  @apply border-transparent bg-transparent px-2 text-[14px] shadow-none outline-none;
 }
 
-.v2-agents .agent-history-list input {
-  @apply min-h-[40px] text-[13px];
+.v2-agents .agent-workspace-composer .agent-start-input {
+  @apply min-h-[76px];
 }
 
-.v2-agents .agent-history-item {
-  @apply min-h-[44px] min-w-[0] text-[13px];
-}
-
-.v2-agents .agent-history-item > span {
-  @apply min-w-[0];
-}
-
-.v2-agents .agent-history-item[aria-current="true"] {
-  @apply [box-shadow:inset_0_0_0_1px_var(--v2-border)];
-}
-
-.v2-agents .chat-messages {
-  @apply p-[20px_4px];
-}
-
-.v2-agents .chat-composer {
-  @apply m-[8px_0_12px] p-[10px] [background:var(--v2-shell-fill)] [border:1px_solid_var(--v2-border)] rounded-[20px] [box-shadow:var(--v2-shadow-sm)];
-}
-
-.v2-agents .chat-input {
-  @apply [background:var(--v2-input-fill)] text-[14px];
+.v2-agents .agent-workspace-composer .agent-active-input {
+  @apply text-base;
 }
 
 .v2-agents .chat-avatar--fallback {
   @apply [border:1px_solid_var(--v2-border)] text-[var(--v2-accent)] [background:var(--v2-shell-fill)] shrink-0;
 }
 
-.v2-agents .agent-activity-card {
-  @apply rounded-[var(--v2-radius-control)] [box-shadow:var(--v2-shadow-sm)];
-}
-
-.v2-agents .v2-agent-panel-close {
-  @apply min-w-[36px] min-h-[36px];
-}
-
-@container workspace (max-width: 700px) {
-  .v2-agents-workspace[data-history="true"] .v2-agent-history {
-    @apply top-auto bottom-[16px] max-h-[62dvh];
-  }
-}
-
 @media (max-width: 767px) {
-  .v2-agents .chat-input {
+  .v2-agents .agent-workspace-composer .chat-input {
     @apply text-[16px];
-  }
-}
-
-/* At tablet widths only Context is collapsed; do not offer a redundant
-   Conversations toggle while that column is already visible. */
-
-.v2-agents .v2-agent-toggle[aria-controls="v2-agents-history"] {
-  @apply [display:none];
-}
-
-@container workspace (max-width: 700px) {
-  .v2-agents .v2-agent-toggle[aria-controls="v2-agents-history"] {
-    @apply inline-flex;
   }
 }
