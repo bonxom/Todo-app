@@ -112,18 +112,18 @@ const TaskListPanel = ({
         )}
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
-          <span className="ui-chip ui-tabular">
+          <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
             {t("total")}
             {tasks.length}
           </span>
           {tasks.filter((task) => task.status === "in-progress").length > 0 && (
-            <span className="ui-chip ui-chip--accent ui-tabular">
+            <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-chip--accent ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
               {t("inProgress")}{" "}
               {tasks.filter((task) => task.status === "in-progress").length}
             </span>
           )}
           {tasks.filter((task) => task.status === "pending").length > 0 && (
-            <span className="ui-chip ui-tabular">
+            <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
               {t("pending")}{" "}
               {tasks.filter((task) => task.status === "pending").length}
             </span>
@@ -154,7 +154,10 @@ const TaskListPanel = ({
               <button
                 type="button"
                 onClick={() => setIsDetailModalOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-line)] p-3 text-sm font-medium text-[var(--color-accent)] transition-[background-color,border-color,color] duration-150 hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]"
+                className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-lg)] border border-dashed
+                  border-[var(--color-line)] p-3 text-sm font-medium text-[var(--color-accent)]
+                  transition-[background-color,border-color,color] duration-150 hover:border-[var(--color-accent)]
+                  hover:bg-[var(--color-accent-soft)]"
               >
                 <ChevronDown className="h-4 w-4" aria-hidden="true" />
                 <span>{t("viewAllTasks")}</span>

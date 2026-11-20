@@ -57,7 +57,8 @@ const AvatarUpload = ({ onUploadSuccess }) => {
       <button
         type="button"
         onClick={handleButtonClick}
-        className="ui-focus-ring absolute bottom-0 right-0 inline-flex h-10 w-10 items-center justify-center rounded-full border text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
+        className="ui-focus-ring absolute bottom-0 right-0 inline-flex h-10 w-10 items-center justify-center rounded-full border
+          text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
         style={{
           borderColor: "var(--color-line)",
           backgroundColor: "var(--color-surface)",
@@ -70,14 +71,14 @@ const AvatarUpload = ({ onUploadSuccess }) => {
       </button>
 
       {isOpen && (
-        <div className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 overscroll-contain">
+        <div className="ui-modal-overlay [background:var(--color-overlay)] fixed inset-0 z-50 flex items-center justify-center p-4 overscroll-contain">
           <div
-            className="ui-modal-shell animate-fadeIn"
+            className="ui-modal-shell overflow-hidden [border:1px_solid_rgba(31,35,40,0.06)] rounded-[var(--radius-2xl)] [background:var(--color-surface)] [box-shadow:var(--shadow-lg)] animate-fadeIn"
             role="dialog"
             aria-modal="true"
             aria-labelledby="avatar-upload-title"
           >
-            <div className="ui-modal-header flex items-center justify-between gap-4">
+            <div className="ui-modal-header p-[1rem_1.25rem] [border-bottom:1px_solid_var(--color-line)] [background:var(--color-surface)] flex items-center justify-between gap-4">
               <div>
                 <h3
                   id="avatar-upload-title"
@@ -92,7 +93,11 @@ const AvatarUpload = ({ onUploadSuccess }) => {
               <button
                 type="button"
                 onClick={handleClose}
-                className="ui-modal-close-button ui-focus-ring"
+                className="ui-modal-close-button inline-flex w-[2.5rem] h-[2.5rem] items-center justify-center
+                  [border:1px_solid_var(--color-line)] rounded-[var(--radius-md)] [background:var(--color-surface)]
+                  [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+                  [&:hover]:border-[color-mix(_in_srgb,var(--color-line)_72%,var(--color-text-muted)_)]
+                  [&:hover]:[background:var(--color-surface-muted)] [&:hover]:[transform:translateY(-1px)] ui-focus-ring"
                 aria-label={t("closeAvatarDialog")}
               >
                 <X className="h-6 w-6" />
@@ -100,7 +105,7 @@ const AvatarUpload = ({ onUploadSuccess }) => {
             </div>
 
             <form onSubmit={handleSubmit}>
-              <div className="ui-modal-body">
+              <div className="ui-modal-body p-[1.25rem]">
                 <label
                   htmlFor="avatar-url"
                   className="mb-2 block text-sm font-medium text-[var(--color-text)]"
@@ -121,7 +126,7 @@ const AvatarUpload = ({ onUploadSuccess }) => {
                 />
               </div>
 
-              <div className="ui-modal-footer">
+              <div className="ui-modal-footer flex flex-wrap gap-[0.75rem] p-[0_1.25rem_1.25rem]">
                 <button
                   type="button"
                   onClick={handleClose}

@@ -48,16 +48,31 @@ export default function SkillEditorPage() {
 
   if (isNew) {
     return (
-      <SkillEditorShell isNew initialSkill={null} heading={tAgent("createNewSkill")} />
+      <SkillEditorShell
+        isNew
+        initialSkill={null}
+        heading={tAgent("createNewSkill")}
+      />
     );
   }
 
   if (isLoading) {
     return (
-      <div className="v2-skills">
+      <div
+        className="v2-skills flex flex-col gap-[18px] [&_h1_>_span]:block [&_h1_>_span]:mt-[8px]
+        [&_h1_>_span]:[font-family:var(--v2-font-body)] [&_h1_>_span]:text-[13px] [&_h1_>_span]:[font-weight:400]
+        [&_h1_>_span]:[letter-spacing:0] [&_h1_>_span]:text-[var(--v2-muted)]"
+      >
         <V2AgentTabs />
-        <p className="v2-skills-status" role="status">
-          <Loader2 size={18} className="v2-spin" aria-hidden="true" />
+        <p
+          className="v2-skills-status flex flex-col items-center gap-[12px] p-[36px_16px] text-[var(--v2-muted)] text-[13px] text-center [&_>_svg]:flex-[0_0_auto]"
+          role="status"
+        >
+          <Loader2
+            size={18}
+            className="v2-spin animate-[v2-spin_900ms_linear_infinite] [@media(prefers-reduced-motion:reduce)]:animate-none"
+            aria-hidden="true"
+          />
           {tAgent("loadingSkills")}
         </p>
       </div>
@@ -66,15 +81,26 @@ export default function SkillEditorPage() {
 
   if (error || !data) {
     return (
-      <div className="v2-skills">
+      <div
+        className="v2-skills flex flex-col gap-[18px] [&_h1_>_span]:block [&_h1_>_span]:mt-[8px]
+        [&_h1_>_span]:[font-family:var(--v2-font-body)] [&_h1_>_span]:text-[13px] [&_h1_>_span]:[font-weight:400]
+        [&_h1_>_span]:[letter-spacing:0] [&_h1_>_span]:text-[var(--v2-muted)]"
+      >
         <V2AgentTabs />
-        <div className="v2-skills-status" role="alert">
+        <div
+          className="v2-skills-status flex flex-col items-center gap-[12px] p-[36px_16px] text-[var(--v2-muted)] text-[13px] text-center [&_>_svg]:flex-[0_0_auto]"
+          role="alert"
+        >
           <p>
             {error instanceof Error
               ? error.message
               : tAgent("anErrorOccurredWhileSavingTheSkill")}
           </p>
-          <button type="button" className="v2-btn" onClick={() => void refetch()}>
+          <button
+            type="button"
+            className="v2-btn"
+            onClick={() => void refetch()}
+          >
             {t("retry")}
           </button>
         </div>
@@ -98,7 +124,11 @@ interface SkillEditorShellProps {
   heading: string;
 }
 
-function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProps) {
+function SkillEditorShell({
+  isNew,
+  initialSkill,
+  heading,
+}: SkillEditorShellProps) {
   const { t } = useTranslation("v2");
   const { t: tAgent } = useTranslation("agent");
   const navigate = useNavigate();
@@ -128,10 +158,10 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
       )
     : Boolean(
         baseline &&
-          (form.name !== baseline.name ||
-            form.description !== baseline.description ||
-            form.instructions !== baseline.instructions ||
-            form.enabled !== baseline.enabled),
+        (form.name !== baseline.name ||
+          form.description !== baseline.description ||
+          form.instructions !== baseline.instructions ||
+          form.enabled !== baseline.enabled),
       );
 
   const blocker = useBlocker(() => isCurrent() && isDirty && !bypass.current);
@@ -232,8 +262,18 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
   };
 
   return (
-    <div className="v2-skills v2-skill-editor" data-testid="v2-skill-editor">
-      <header className="v2-agents-heading">
+    <div
+      className="v2-skills flex flex-col gap-[18px] [&_h1_>_span]:block [&_h1_>_span]:mt-[8px]
+      [&_h1_>_span]:[font-family:var(--v2-font-body)] [&_h1_>_span]:text-[13px] [&_h1_>_span]:[font-weight:400]
+      [&_h1_>_span]:[letter-spacing:0] [&_h1_>_span]:text-[var(--v2-muted)] v2-skill-editor"
+      data-testid="v2-skill-editor"
+    >
+      <header
+        className="v2-agents-heading flex items-end justify-between gap-[18px] flex-wrap
+        [&_h1]:[font-family:var(--v2-font-heading)] [&_h1]:text-[clamp(30px,3vw,44px)] [&_h1]:[font-weight:500]
+        [&_h1]:[line-height:1.05] [&_h1]:[letter-spacing:-0.02em] [&_h1_>_span]:block
+        [&_h1_>_span]:text-[var(--v2-accent)]"
+      >
         <div>
           <button
             type="button"
@@ -245,7 +285,7 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
           </button>
           <h1>{heading}</h1>
         </div>
-        <div className="v2-agents-heading-actions">
+        <div className="v2-agents-heading-actions flex gap-[10px] flex-wrap">
           {!isNew && baseline && (
             <button
               type="button"
@@ -259,12 +299,16 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
           )}
           <button
             type="button"
-            className="v2-btn v2-btn-primary"
+            className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)]"
             onClick={() => void handleSave()}
             disabled={!isValid || isSaving || deleteMutation.isPending}
           >
             {isSaving && (
-              <Loader2 size={15} className="v2-spin" aria-hidden="true" />
+              <Loader2
+                size={15}
+                className="v2-spin animate-[v2-spin_900ms_linear_infinite] [@media(prefers-reduced-motion:reduce)]:animate-none"
+                aria-hidden="true"
+              />
             )}
             <span>{isSaving ? t("savingSkill") : t("saveSkill")}</span>
           </button>
@@ -274,23 +318,23 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
       <V2AgentTabs />
 
       {conflictError && (
-        <p className="v2-form-error" role="alert">
+        <p className="v2-form-error text-[13px]" role="alert">
           {conflictError}
         </p>
       )}
       {generalError && (
-        <p className="v2-form-error" role="alert">
+        <p className="v2-form-error text-[13px]" role="alert">
           {generalError}
         </p>
       )}
 
-      <div className="v2-agent-panel v2-skill-form">
-        <div className="v2-form-fields">
+      <div className="v2-agent-panel [border:1px_solid_var(--v2-glass-border)] rounded-[var(--v2-radius-card)] flex-col min-w-[0] min-h-[0] v2-skill-form gap-[16px]">
+        <div className="v2-form-fields grid gap-[8px] min-w-[0] [&_>_label:not(:first-child)]:mt-[10px]">
           <label htmlFor="v2-skill-name">
             <span>{t("skillName")}</span>
             <input
               id="v2-skill-name"
-              className="v2-input"
+              className="v2-input [&:focus]:[outline:2px_solid_var(--v2-accent)] [&:focus]:outline-offset-[2px]"
               aria-label={t("skillName")}
               value={form.name}
               maxLength={LIMITS.name}
@@ -305,7 +349,8 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
             <span>{t("skillDescription")}</span>
             <textarea
               id="v2-skill-description"
-              className="v2-textarea"
+              className="v2-textarea p-[10px_13px] rounded-[12px] [border:1px_solid_var(--v2-border)] [background:var(--v2-input-fill)]
+                w-full [&:focus]:[outline:2px_solid_var(--v2-accent)] [&:focus]:outline-offset-[2px]"
               aria-label={t("skillDescription")}
               value={form.description}
               maxLength={LIMITS.description}
@@ -319,7 +364,7 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
           </label>
 
           <div className="v2-skill-instructions">
-            <div className="v2-skill-instructions-head">
+            <div className="v2-skill-instructions-head flex items-center justify-between gap-[10px] text-[12px] [font-weight:600] [letter-spacing:0.04em] uppercase text-[var(--v2-muted)]">
               <span>{t("skillInstructions")}</span>
               <button
                 type="button"
@@ -332,18 +377,20 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
             </div>
             {preview ? (
               form.instructions.trim() ? (
-                <div className="v2-skill-preview">
+                <div className="v2-skill-preview min-h-[220px] p-[14px] [border:1px_solid_var(--v2-border)] rounded-[14px] [background:var(--v2-input-fill)] overflow-auto">
                   <MarkdownText text={form.instructions} />
                 </div>
               ) : (
-                <p className="v2-skill-preview-empty">
+                <p className="v2-skill-preview-empty text-[12px] text-[var(--v2-muted)]">
                   {tAgent("previewContentWillAppearOnceYouAddInstructions")}
                 </p>
               )
             ) : (
               <textarea
                 id="v2-skill-instructions"
-                className="v2-textarea v2-skill-instructions-input"
+                className="v2-textarea p-[10px_13px] rounded-[12px] [border:1px_solid_var(--v2-border)] [background:var(--v2-input-fill)]
+                  w-full [&:focus]:[outline:2px_solid_var(--v2-accent)] [&:focus]:outline-offset-[2px]
+                  v2-skill-instructions-input"
                 aria-label={t("skillInstructions")}
                 value={form.instructions}
                 maxLength={LIMITS.instructions}
@@ -387,7 +434,7 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
         onClose={() => blocker.reset?.()}
       >
         <p>{tAgent("discardUnsavedChanges")}</p>
-        <div className="v2-form-actions">
+        <div className="v2-form-actions flex justify-end flex-wrap gap-[10px] [border-top:1px_solid_var(--v2-border)] pt-[18px]">
           <button
             type="button"
             className="v2-btn"
@@ -397,7 +444,7 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
           </button>
           <button
             type="button"
-            className="v2-btn v2-btn-primary"
+            className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)]"
             onClick={() => blocker.proceed?.()}
           >
             {tAgent("discardChanges")}
@@ -411,7 +458,7 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
         onClose={() => setDeleteOpen(false)}
       >
         <p>{tAgent("confirmSkillDeletion")}</p>
-        <div className="v2-form-actions">
+        <div className="v2-form-actions flex justify-end flex-wrap gap-[10px] [border-top:1px_solid_var(--v2-border)] pt-[18px]">
           <button
             type="button"
             className="v2-btn"
@@ -421,7 +468,7 @@ function SkillEditorShell({ isNew, initialSkill, heading }: SkillEditorShellProp
           </button>
           <button
             type="button"
-            className="v2-btn v2-btn-primary"
+            className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)]"
             onClick={() => void handleDelete()}
             disabled={deleteMutation.isPending}
           >

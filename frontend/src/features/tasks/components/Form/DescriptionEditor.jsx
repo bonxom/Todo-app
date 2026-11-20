@@ -51,7 +51,9 @@ export default function DescriptionEditor({
       {expanded &&
         createPortal(
           <div
-            className="description-editor-overlay"
+            className="description-editor-overlay fixed inset-[0] z-200 grid place-items-center p-[clamp(12px,3vw,40px)]
+              [background:var(--color-overlay)] [backdrop-filter:blur(8px)]
+              [&[data-closing=true]_.description-editor-dialog]:pointer-events-none"
             data-closing={closing}
             onAnimationEnd={(event) => {
               if (event.target === event.currentTarget && closing) {
@@ -69,7 +71,9 @@ export default function DescriptionEditor({
               role="dialog"
               aria-modal="true"
               aria-label={t("editDescription")}
-              className="description-editor-dialog"
+              className="description-editor-dialog w-[min(100%,960px)] h-[min(80dvh,760px)] flex flex-col gap-[16px]
+                p-[clamp(16px,3vw,28px)] [border:1px_solid_var(--color-line)] rounded-[20px] [background:var(--color-surface)]
+                [box-shadow:var(--shadow-lg)] [transform-origin:center]"
             >
               <label
                 htmlFor="expanded-description"
@@ -83,10 +87,13 @@ export default function DescriptionEditor({
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 placeholder={t("enterTaskDescription")}
-                className="ui-input description-editor-textarea"
+                className="ui-input description-editor-textarea flex-1 resize-none"
               />
               {error && (
-                <p role="alert" className="workspace-form-error">
+                <p
+                  role="alert"
+                  className="workspace-form-error text-[var(--color-danger)] [background:var(--color-danger-soft)] rounded-[9px] p-[11px_13px] text-[12px] [line-height:1.6]"
+                >
                   {error}
                 </p>
               )}

@@ -29,10 +29,16 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
     };
   }, [open]);
   return (
-    <div className="chat-inline-tools">
-      <div className="chat-toolbar">
+    <div
+      className="chat-inline-tools self-center [&_.chat-mode-toggle]:relative
+      [&_.chat-mode-toggle]:[transition:background-color_160ms,border-color_160ms,color_160ms]
+      [&_.chat-mode-toggle--ask]:text-[var(--color-accent-strong)]
+      [&_.chat-mode-toggle--ask]:[background:var(--color-accent-soft)]
+      [&_.chat-mode-toggle--ask]:border-[var(--color-accent)]"
+    >
+      <div className="chat-toolbar flex items-center gap-[4px] justify-between">
         <div
-          className="chat-toolbar-actions"
+          className="chat-toolbar-actions flex items-center gap-[4px] static"
           ref={root}
           onKeyDown={(event) => {
             if (event.key === "Escape" && open) {
@@ -45,7 +51,7 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
           <button
             ref={toggle}
             type="button"
-            className="chat-tool ui-focus-ring"
+            className="chat-tool inline-flex items-center justify-center gap-[5px] min-h-[36px] cursor-pointer [&:disabled]:opacity-[0.5] ui-focus-ring"
             aria-label={open ? t("collapseOptions") : t("expandOptions")}
             aria-expanded={open}
             aria-controls={open ? optionsId : undefined}
@@ -62,13 +68,13 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
           {open && (
             <div
               id={optionsId}
-              className="chat-expanded-icons"
+              className="chat-expanded-icons flex items-center gap-[4px]"
               role="group"
               aria-label={t("chatTools")}
             >
               <button
                 type="button"
-                className="chat-tool ui-focus-ring"
+                className="chat-tool inline-flex items-center justify-center gap-[5px] min-h-[36px] cursor-pointer [&:disabled]:opacity-[0.5] ui-focus-ring"
                 title={t("attachImage")}
                 aria-label={t("attachImage")}
                 onClick={() => {
@@ -81,7 +87,7 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
               </button>
               <button
                 type="button"
-                className="chat-tool ui-focus-ring"
+                className="chat-tool inline-flex items-center justify-center gap-[5px] min-h-[36px] cursor-pointer [&:disabled]:opacity-[0.5] ui-focus-ring"
                 title={t("attachFile")}
                 aria-label={t("attachFile")}
                 onClick={() => {
@@ -95,7 +101,7 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
               {chat && (
                 <button
                   type="button"
-                  className={`chat-tool chat-mode-toggle ui-focus-ring chat-mode-toggle--${chat.mode}`}
+                  className={`chat-tool inline-flex items-center justify-center gap-[5px] min-h-[36px] cursor-pointer [&:disabled]:opacity-[0.5] chat-mode-toggle ui-focus-ring chat-mode-toggle--${chat.mode}`}
                   aria-pressed={chat.mode === "ask"}
                   aria-label={t("agentMode", {
                     mode: t(
@@ -111,7 +117,10 @@ export default function ChatToolbar({ chat, disabled, onFiles, onImages }) {
                   }
                 >
                   <Bot size={17} />
-                  <span className="chat-mode-indicator" aria-hidden="true">
+                  <span
+                    className="chat-mode-indicator absolute right-[-3px] bottom-[-3px] grid place-items-center w-[15px] h-[15px] rounded-[50%] [background:inherit] [border:1px_solid_currentColor]"
+                    aria-hidden="true"
+                  >
                     {chat.mode === "ask" ? (
                       <MessageCircleQuestion size={10} />
                     ) : (

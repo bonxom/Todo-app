@@ -5,7 +5,14 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import AttachmentComposer from "./AttachmentComposer";
 import { FILE_ACCEPT, checkFiles } from "./attachmentFiles";
 import AttachmentList from "./AttachmentList";
-import { useState, useRef, useEffect, useContext, useCallback, memo } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useContext,
+  useCallback,
+  memo,
+} from "react";
 import { Send, ArrowUpRight, Sparkles } from "lucide-react";
 import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import ChatToolbar from "./ChatToolbar";
@@ -47,7 +54,7 @@ const ChatMessageItem = memo(function ChatMessageItem({
 
   return (
     <div
-      className={`chat-message-row ${isUser ? "chat-message-row--user" : "chat-message-row--agent"}`}
+      className={`chat-message-row flex items-start gap-[8px] ${isUser ? "chat-message-row--user flex-row-reverse" : "chat-message-row--agent"}`}
     >
       <ChatAvatar
         key={isUser ? userAvatar || "default" : "agent"}
@@ -56,7 +63,7 @@ const ChatMessageItem = memo(function ChatMessageItem({
         src={isUser ? userAvatar : undefined}
       />
       <div
-        className={`chat-message ${isUser ? "chat-message--user" : "chat-message--bot"} rounded-2xl px-4 py-3 ${
+        className={`chat-message min-w-[0] max-w-full ${isUser ? "chat-message--user max-w-[88%] [@media(max-width:640px)]:max-w-[92%]" : "chat-message--bot w-[fit-content]"} rounded-2xl px-4 py-3 ${
           isUser ? "rounded-br-sm border" : "rounded-bl-sm border"
         }`}
         style={isUser ? USER_MESSAGE_STYLE : BOT_MESSAGE_STYLE}
@@ -91,7 +98,11 @@ const ChatMessageItem = memo(function ChatMessageItem({
               disabled={disabled}
             />
           ) : message.interaction ? (
-            <InteractionCard interaction={message.interaction} disabled embedded />
+            <InteractionCard
+              interaction={message.interaction}
+              disabled
+              embedded
+            />
           ) : (
             <>
               {(() => {
@@ -106,7 +117,9 @@ const ChatMessageItem = memo(function ChatMessageItem({
                           tool={match[1]}
                           size="sm"
                           className={
-                            isUser ? "bg-white/20 border-white/40 text-inherit" : ""
+                            isUser
+                              ? "bg-white/20 border-white/40 text-inherit"
+                              : ""
                           }
                         />
                       </div>
@@ -122,16 +135,22 @@ const ChatMessageItem = memo(function ChatMessageItem({
         {!isUser && message.skillsRead && message.skillsRead.length > 0 && (
           <div className="mt-2 mb-1 flex flex-wrap gap-1.5">
             {message.skillsRead.map((skill) => (
-              <SkillReadBadge key={`${skill.id}:${skill.version}`} skill={skill} />
+              <SkillReadBadge
+                key={`${skill.id}:${skill.version}`}
+                skill={skill}
+              />
             ))}
           </div>
         )}
         {message.turnStatus && (
           <ChatRunStatus run={null} status={message.turnStatus} />
         )}
-        <AttachmentList conversationId={conversationId} files={message.attachments} />
+        <AttachmentList
+          conversationId={conversationId}
+          files={message.attachments}
+        />
         <time
-          className="chat-message-time"
+          className="chat-message-time block opacity-[0.75]"
           dateTime={message.timestamp}
           title={formatDateTime(message.timestamp)}
         >
@@ -438,7 +457,7 @@ const ChatField = ({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="chat-messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4"
+        className="chat-messages overscroll-contain [scrollbar-width:thin] [scroll-padding-block:16px] [&_>_*]:w-full [&_>_*]:max-w-[760px] min-h-0 flex-1 space-y-4 overflow-y-auto p-4"
       >
         {chat?.before && (
           <button
@@ -452,13 +471,21 @@ const ChatField = ({
         )}
         {messages.length === 0 ? (
           !showWelcome ? null : chat && !chat.loading && !chat.interaction ? (
-            <div className="chat-welcome">
-              <div className="chat-welcome-icon">
+            <div
+              className="chat-welcome [&_>_h2]:text-[23px] [&_>_h2]:[line-height:1.3] [&_>_h2]:[font-weight:650]
+              [&_>_h2]:[letter-spacing:-0.5px] [&_>_h2]:max-w-[320px] [&_>_p]:text-[14px] [&_>_p]:[line-height:1.65]
+              [&_>_p]:text-[var(--color-text-muted)] [&_>_p]:mt-[12px] [&_>_p]:max-w-[340px]"
+            >
+              <div className="chat-welcome-icon grid place-items-center rounded-[16px] text-[var(--color-accent)] [background:var(--color-accent-soft)]">
                 <Sparkles size={24} />
               </div>
               <h2>{t("letSMakeYourDayMoreManageable")}</h2>
               <p>{t("planYourDayReviewYourTasksOrBreakDownAGoal")}</p>
-              <div className="chat-starters">
+              <div
+                className="chat-starters grid gap-[8px] [&_button]:flex [&_button]:items-center [&_button]:justify-between
+                [&_button]:gap-[12px] [&_button]:rounded-[12px] [&_button]:p-[13px_14px]
+                [&_button]:[background:var(--color-surface)] [&_button]:text-left [&_button]:cursor-pointer"
+              >
                 {[
                   [t("planMyDay"), "Help me plan my tasks for today."],
                   [t("reviewUpcomingTasks"), "Show me my upcoming tasks."],
@@ -513,7 +540,7 @@ const ChatField = ({
         )}
 
         {isTyping && !chat?.runStream?.streamingMessage && (
-          <div className="chat-message-row chat-message-row--agent">
+          <div className="chat-message-row flex items-start gap-[8px] chat-message-row--agent">
             <ChatAvatar appearance={avatarAppearance} />
             <div
               className="rounded-2xl rounded-bl-sm border px-4 py-3"
@@ -618,10 +645,14 @@ const ChatField = ({
       )}
 
       <div
-        className={`chat-composer ${chat?.interaction && !showChatInput ? "chat-composer--answer" : ""}`}
+        className={`chat-composer relative shrink-0 [&_>_.chat-error]:shrink-0 [&_>_.chat-error]:mb-[10px] ${chat?.interaction && !showChatInput ? "chat-composer--answer flex flex-col min-h-[0] [&_>_form]:min-h-[0]" : ""}`}
       >
         {chat?.error && (
-          <div className="chat-error">
+          <div
+            className="chat-error [border:1px_solid_var(--color-danger)] [background:var(--color-danger-soft)]
+            text-[var(--color-text)] p-[12px] [line-height:1.5] [&_[role=alert]]:mb-[4px] [&_[role=alert]]:max-h-[60px]
+            [&_[role=alert]]:overflow-y-auto [@media(max-height:550px)]:[&_>_.text-xs]:[display:none]"
+          >
             <p role="alert">{chat.error}</p>
             <p className="text-xs">
               {t("yourRequestIsNotCompleteTryAgainOrReloadTheConversation")}
@@ -630,7 +661,7 @@ const ChatField = ({
               {chat.pending && (
                 <button
                   type="button"
-                  className="chat-recovery ui-focus-ring"
+                  className="chat-recovery [border:1px_solid_var(--color-line)] p-[7px_10px] rounded-[8px] [background:var(--color-surface)] cursor-pointer ui-focus-ring"
                   aria-label={t("retryMessage")}
                   disabled={chat.loading || chat.sending}
                   onClick={() => chat.send()}
@@ -640,7 +671,7 @@ const ChatField = ({
               )}
               <button
                 type="button"
-                className="chat-recovery ui-focus-ring"
+                className="chat-recovery [border:1px_solid_var(--color-line)] p-[7px_10px] rounded-[8px] [background:var(--color-surface)] cursor-pointer ui-focus-ring"
                 aria-label={t("reloadConversation")}
                 disabled={chat.loading || chat.sending}
                 onClick={chat.reload}
@@ -651,7 +682,10 @@ const ChatField = ({
           </div>
         )}
         {chat?.pending && !chat.error && !chat.sending && (
-          <div className="chat-pending" role="status">
+          <div
+            className="chat-pending flex flex-wrap items-center gap-[8px] text-[12px] mb-[10px] text-[var(--color-text-muted)]"
+            role="status"
+          >
             <span>
               {t(
                 "yourRequestIsProcessingCheckTheResultBeforeSendingAnotherMessage",
@@ -660,7 +694,7 @@ const ChatField = ({
             <button
               type="button"
               aria-label={t("reloadConversation")}
-              className="chat-recovery ui-focus-ring"
+              className="chat-recovery [border:1px_solid_var(--color-line)] p-[7px_10px] rounded-[8px] [background:var(--color-surface)] cursor-pointer ui-focus-ring"
               disabled={chat.loading}
               onClick={chat.reload}
             >
@@ -669,7 +703,7 @@ const ChatField = ({
           </div>
         )}
         {chat?.interaction && showChatInput && (
-          <div className="chat-answer-back">
+          <div className="chat-answer-back flex flex-col gap-[5px] mb-[10px] text-[12px] [&_button]:self-start [&_button]:cursor-pointer [&_span]:text-[11px] [&_span]:text-[var(--color-text-muted)]">
             <button
               type="button"
               aria-label={t("backToQuestion")}
@@ -715,7 +749,7 @@ const ChatField = ({
         <form
           onSubmit={handleSubmit}
           hidden={Boolean(chat?.interaction && !showChatInput)}
-          className="chat-input-form"
+          className="chat-input-form [&[hidden]]:[display:none] flex items-end max-w-[760px] mx-auto"
         >
           <ChatToolbar
             chat={chat}
@@ -744,7 +778,8 @@ const ChatField = ({
               placeholder={
                 chat?.interaction ? t("newRequest") : t("messageOrbit")
               }
-              className="chat-input ui-focus-ring"
+              className="chat-input block w-full resize-none [field-sizing:content] [&:placeholder-shown]:whitespace-nowrap
+                [&:placeholder-shown]:overflow-hidden [&:placeholder-shown]:text-ellipsis ui-focus-ring"
             />
           </div>
           <button
@@ -756,7 +791,8 @@ const ChatField = ({
               submitting ||
               (!inputValue.trim() && (files.length > 0 || !selectedTool))
             }
-            className="chat-send ui-focus-ring"
+            className="chat-send grid place-items-center shrink-0 w-[44px] h-[44px] [border:1px_solid_transparent]
+              [background:var(--color-accent)] cursor-pointer [&:disabled]:border-[var(--color-line)] ui-focus-ring"
           >
             <Send size={18} />
           </button>

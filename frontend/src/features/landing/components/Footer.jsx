@@ -7,7 +7,7 @@ const Footer = () => {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="landing-footer">
+    <footer className="landing-footer [border-top:1px_solid_var(--color-line)] py-[30px_25px]">
       <div className="landing-footer__inner">
         <div className="landing-footer__brand">
           <div>

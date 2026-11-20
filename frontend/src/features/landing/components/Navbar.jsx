@@ -8,7 +8,7 @@ const Navbar = ({ heroPassed = false }) => {
   const { t } = useTranslation("account");
   return (
     <nav
-      className="landing-navbar"
+      className="landing-navbar sticky top-[0] z-30 [border-bottom:1px_solid_var(--color-line)] [background:color-mix(in_srgb,var(--color-canvas)_90%,transparent)] [backdrop-filter:blur(20px)]"
       aria-label={t("landingNavigation")}
       data-scrolled={heroPassed}
     >

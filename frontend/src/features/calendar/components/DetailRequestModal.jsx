@@ -68,8 +68,18 @@ const DetailRequestModal = ({
       busy={isLoading}
       closeLabel="Close task generation modal"
     >
-      <form className="workspace-form" onSubmit={handleSubmit}>
-        <div className="workspace-generate-date">
+      <form
+        className="workspace-form flex flex-col gap-[20px] [&_label]:[font-weight:600] [&_label]:mb-[8px]
+        [&_legend]:[font-weight:600] [&_legend]:mb-[8px] [&_.ui-input::placeholder]:opacity-[0.7]
+        [@media(max-width:600px)]:gap-[17px]"
+        onSubmit={handleSubmit}
+      >
+        <div
+          className="workspace-generate-date flex items-center gap-[12px] p-[13px_15px] [background:var(--color-accent-soft)]
+          [border:1px_solid_var(--color-line)] rounded-[10px] text-[var(--color-accent)] [&_span]:text-[10px]
+          [&_span]:block [&_span]:text-[var(--color-text-muted)] [&_span]:mb-[3px] [&_strong]:text-[13px]
+          [&_strong]:[font-weight:600]"
+        >
           <CalendarDays size={20} aria-hidden="true" />
           <div>
             <span>{t("planningFor")}</span>
@@ -97,16 +107,18 @@ const DetailRequestModal = ({
             rows={4}
             disabled={isLoading}
           />
-          <p className="workspace-form-hint mt-2">
+          <p className="workspace-form-hint text-[var(--color-text-muted)] text-[11px] [line-height:1.6] mt-2">
             {t("aLittleContextHelpsYourGoalAvailableTimeOrWhereToStart")}
           </p>
         </div>
         <fieldset disabled={isLoading}>
           <legend>
             {t("needAStartingPoint")}{" "}
-            <span className="workspace-form-hint">{t("pickATopic")}</span>
+            <span className="workspace-form-hint text-[var(--color-text-muted)] text-[11px] [line-height:1.6]">
+              {t("pickATopic")}
+            </span>
           </legend>
-          <div className="workspace-topic-list">
+          <div className="workspace-topic-list flex flex-wrap gap-[7px] [&_button]:rounded-[7px] [&_button]:p-[7px_12px] [&_button]:cursor-pointer">
             {topics.map((topic) => (
               <button
                 type="button"
@@ -126,17 +138,28 @@ const DetailRequestModal = ({
           </div>
         </fieldset>
         {error && (
-          <p className="workspace-form-error" role="alert">
+          <p
+            className="workspace-form-error text-[var(--color-danger)] [background:var(--color-danger-soft)] rounded-[9px] p-[11px_13px] text-[12px] [line-height:1.6]"
+            role="alert"
+          >
             {error}
           </p>
         )}
         {isLoading && (
-          <p className="workspace-generating" role="status">
+          <p
+            className="workspace-generating flex items-center gap-[10px] text-[12px] text-[var(--color-accent)]"
+            role="status"
+          >
             <LoaderCircle size={16} className="animate-spin" />{" "}
             {t("puttingYourPlanTogether")}
           </p>
         )}
-        <div className="workspace-form-actions">
+        <div
+          className="workspace-form-actions flex justify-end items-center gap-[10px] m-[4px_-28px_0]
+          [background:var(--color-surface)] [border-top:1px_solid_var(--color-line)] sticky bottom-[0] z-1
+          [&_button]:flex-[initial] [&_button]:rounded-[9px] [&_button]:min-h-[40px]
+          [&_button[type=submit]]:min-w-[120px] [@media(max-width:600px)]:mx-[-20px]"
+        >
           <button
             type="button"
             onClick={onClose}

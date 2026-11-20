@@ -16,7 +16,6 @@ import {
 import type { NotificationDto } from "@/shared/types/notification";
 import NotificationList from "./NotificationList";
 import NotificationBulkActions from "./NotificationBulkActions";
-import "../notifications.css";
 function NotificationPanel({
   onClose,
   version,
@@ -55,8 +54,8 @@ function NotificationPanel({
     <div
       className={
         version === "v2"
-          ? "notification-overlay v2-app v2-notification-overlay"
-          : "notification-overlay"
+          ? "notification-overlay fixed v2-app v2-notification-overlay [--color-text:var(--v2-ink)] [--color-text-muted:var(--v2-muted)] [--color-accent:var(--v2-accent)] [--color-accent-soft:color-mix(_in_srgb,var(--v2-accent)_10%,var(--v2-surface-solid)_)] [--color-surface:var(--v2-surface-solid)] [--color-surface-muted:var(--v2-shell-fill)] [--color-line:var(--v2-border)] [--color-danger-soft:rgb(171_60_53_/_9%)] [&_.notification-panel]:overscroll-contain [&_.notification-panel]:flex-col [&_.notification-panel_>_header]:shrink-0 [&_.notification-panel_>_footer]:shrink-0 [&_.notification-bulk-actions]:shrink-0 [&_.notification-list]:overflow-y-auto [&_.notification-list]:overscroll-contain"
+          : "notification-overlay fixed"
       }
       style={
         version === "v2"
@@ -69,7 +68,12 @@ function NotificationPanel({
     >
       <section
         ref={panel}
-        className="notification-panel"
+        className="notification-panel absolute w-[min(420px,calc(100vw_-_24px))] [&_header]:flex [&_header]:justify-between
+          [&_header]:gap-[16px] [&_header]:p-[20px] [&_header]:[border-bottom:1px_solid_var(--color-line)]
+          [&_h2]:text-[20px] [&_h2]:[font-weight:600] [&_header_p]:text-[13px]
+          [&_header_p]:text-[var(--color-text-muted)] [&_header_p]:mt-[6px] [&_footer]:p-[16px_20px]
+          [&_footer]:[border-top:1px_solid_var(--color-line)] [&_footer]:text-center
+          [&_footer]:text-[var(--color-accent)] [&_footer]:[font-weight:600]"
         role="dialog"
         aria-modal="true"
         aria-label={t("notifications.title")}
@@ -81,7 +85,9 @@ function NotificationPanel({
           </div>
           <button
             type="button"
-            className="ui-icon-button ui-focus-ring"
+            className="ui-icon-button items-center justify-center
+              [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+              [&:hover]:[transform:translateY(-1px)] ui-focus-ring"
             aria-label={t("notifications.close")}
             onClick={onClose}
           >
@@ -96,12 +102,18 @@ function NotificationPanel({
           onDeleteAll={() => remove.mutateAsync()}
         />
         {list.isPending && (
-          <p className="notification-state" role="status">
+          <p
+            className="notification-state p-[20px] text-[14px] [&_button]:mt-[10px] [&_button]:block"
+            role="status"
+          >
             {t("notifications.loading")}
           </p>
         )}
         {list.isError && (
-          <div className="notification-state" role="alert">
+          <div
+            className="notification-state p-[20px] text-[14px] [&_button]:mt-[10px] [&_button]:block"
+            role="alert"
+          >
             {t("notifications.loadError")}{" "}
             <button
               className="ui-btn-secondary"
@@ -112,7 +124,10 @@ function NotificationPanel({
           </div>
         )}
         {(read.isError || all.isError || remove.isError) && (
-          <p className="notification-state" role="alert">
+          <p
+            className="notification-state p-[20px] text-[14px] [&_button]:mt-[10px] [&_button]:block"
+            role="alert"
+          >
             {t("notifications.updateError")}
           </p>
         )}
@@ -125,7 +140,9 @@ function NotificationPanel({
               pendingId={busy ? "busy" : undefined}
             />
           ) : (
-            <p className="notification-state">{t("notifications.empty")}</p>
+            <p className="notification-state p-[20px] text-[14px] [&_button]:mt-[10px] [&_button]:block">
+              {t("notifications.empty")}
+            </p>
           ))}
         <footer>
           <Link
@@ -153,7 +170,7 @@ export default function NotificationBell({
     <>
       <button
         type="button"
-        className={`ui-icon-button ui-focus-ring notification-trigger${version === "v2" ? " v2-btn v2-notification-trigger" : ""}`}
+        className={`ui-icon-button items-center justify-center [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease] [&:hover]:[transform:translateY(-1px)] ui-focus-ring notification-trigger relative${version === "v2" ? " v2-btn v2-notification-trigger [@media(forced-colors:active)]:[&_.notification-badge]:[forced-color-adjust:none]" : ""}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={
@@ -184,7 +201,7 @@ export default function NotificationBell({
         )}
         {count.isError && (
           <span
-            className="notification-count-error"
+            className="notification-count-error absolute top-[-5px] right-[-3px] text-[var(--color-danger)] [font-weight:700]"
             aria-label={t("notifications.loadError")}
           >
             !

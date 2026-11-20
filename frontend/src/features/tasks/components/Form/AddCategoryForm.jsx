@@ -44,7 +44,12 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="workspace-form">
+    <form
+      onSubmit={handleSubmit}
+      className="workspace-form flex flex-col gap-[20px] [&_label]:[font-weight:600] [&_label]:mb-[8px]
+      [&_legend]:[font-weight:600] [&_legend]:mb-[8px] [&_.ui-input::placeholder]:opacity-[0.7]
+      [@media(max-width:600px)]:gap-[17px]"
+    >
       <div>
         <label
           htmlFor="category-name"
@@ -88,11 +93,19 @@ const AddCategoryForm = ({ onClose, onCategoryCreated }) => {
       </div>
 
       {submitError && (
-        <p className="workspace-form-error" role="alert">
+        <p
+          className="workspace-form-error text-[var(--color-danger)] [background:var(--color-danger-soft)] rounded-[9px] p-[11px_13px] text-[12px] [line-height:1.6]"
+          role="alert"
+        >
           {submitError}
         </p>
       )}
-      <div className="workspace-form-actions">
+      <div
+        className="workspace-form-actions flex justify-end items-center gap-[10px] m-[4px_-28px_0]
+        [background:var(--color-surface)] [border-top:1px_solid_var(--color-line)] sticky bottom-[0] z-1
+        [&_button]:flex-[initial] [&_button]:rounded-[9px] [&_button]:min-h-[40px]
+        [&_button[type=submit]]:min-w-[120px] [@media(max-width:600px)]:mx-[-20px]"
+      >
         <button
           type="button"
           onClick={() => {

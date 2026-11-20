@@ -87,8 +87,11 @@ const ProfilePage = () => {
 
   if (isLoading) {
     return (
-      <div className="ui-page-shell">
-        <section className="ui-section-card ui-card-padding" aria-live="polite">
+      <div className="ui-page-shell mx-auto">
+        <section
+          className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)]"
+          aria-live="polite"
+        >
           <p className="m-0 text-sm text-[var(--color-text-muted)]">
             {t("loadingProfile")}
           </p>
@@ -99,8 +102,8 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <div className="ui-page-shell">
-        <section className="ui-section-card ui-card-padding">
+      <div className="ui-page-shell mx-auto">
+        <section className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)]">
           <p className="m-0 text-sm font-medium text-[var(--color-danger)]">
             {t("failedToLoadProfileDetails")}
           </p>
@@ -126,11 +129,15 @@ const ProfilePage = () => {
         onSave={handleSavePassword}
       />
 
-      <div className="ui-page-shell">
-        <header className="ui-page-header">
-          <p className="ui-page-kicker">{t("account")}</p>
-          <h1 className="ui-page-title">{t("accountSettings")}</h1>
-          <p className="ui-page-description">
+      <div className="ui-page-shell mx-auto">
+        <header className="ui-page-header flex flex-col gap-[var(--space-3)]">
+          <p className="ui-page-kicker m-[0] text-[var(--color-accent)] [font-weight:600] [line-height:1.2] uppercase">
+            {t("account")}
+          </p>
+          <h1 className="ui-page-title m-[0] text-[var(--color-text)] [font-weight:650] text-balance">
+            {t("accountSettings")}
+          </h1>
+          <p className="ui-page-description max-w-[68ch] text-[var(--color-text-muted)] [line-height:1.6] text-pretty">
             {t(
               "reviewYourProfileDetailsKeepAccountInformationCurrentAndManageTheCredentialsYouUseToSignIn",
             )}

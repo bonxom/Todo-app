@@ -7,7 +7,6 @@ import StatisticsOverview from "../components/statistics/StatisticsOverview";
 import StatisticsTrend from "../components/statistics/StatisticsTrend";
 import StatisticsActivity from "../components/statistics/StatisticsActivity";
 import StatisticsBreakdowns from "../components/statistics/StatisticsBreakdowns";
-import "../styles/statistics.css";
 
 export default function StatisticsPage() {
   const { t } = useTranslation("v2");
@@ -25,27 +24,21 @@ export default function StatisticsPage() {
   // Initial loading state (no cached data yet)
   if (isLoading && !stats) {
     return (
-      <div className="v2-statistics" data-testid="v2-statistics-page">
+      <div
+        className="v2-statistics flex flex-col gap-[1.5rem] w-full max-w-[1200px] m-[0_auto] min-w-[0]"
+        data-testid="v2-statistics-page"
+      >
         <h1 className="sr-only">{t("statisticsPage.title")}</h1>
 
         <div
           data-testid="statistics-loading-skeleton"
-          className="v2-statistics-skeleton"
+          className="v2-statistics-skeleton flex flex-col gap-[1.5rem] w-full"
           aria-busy="true"
           aria-label={t("statisticsPage.loading")}
         >
-          <div
-            className="v2-statistics-skeleton-box"
-            style={{ height: "120px" }}
-          />
-          <div
-            className="v2-statistics-skeleton-box"
-            style={{ height: "80px" }}
-          />
-          <div
-            className="v2-statistics-skeleton-box"
-            style={{ height: "280px" }}
-          />
+          <div className="v2-statistics-skeleton-box h-[120px] rounded-[1rem]" />
+          <div className="v2-statistics-skeleton-box h-[80px] rounded-[1rem]" />
+          <div className="v2-statistics-skeleton-box h-[280px] rounded-[1rem]" />
         </div>
       </div>
     );
@@ -59,10 +52,16 @@ export default function StatisticsPage() {
     );
 
     return (
-      <div className="v2-statistics" data-testid="v2-statistics-page">
+      <div
+        className="v2-statistics flex flex-col gap-[1.5rem] w-full max-w-[1200px] m-[0_auto] min-w-[0]"
+        data-testid="v2-statistics-page"
+      >
         <h1 className="sr-only">{t("statisticsPage.title")}</h1>
 
-        <GlassPanel className="v2-statistics-alert" role="alert">
+        <GlassPanel
+          className="v2-statistics-alert rounded-[0.75rem] flex items-center justify-between gap-[1rem] text-[0.875rem]"
+          role="alert"
+        >
           <div className="flex items-center gap-3">
             <AlertCircle size={20} className="shrink-0" aria-hidden="true" />
             <span>{errorMsg}</span>
@@ -71,7 +70,11 @@ export default function StatisticsPage() {
             type="button"
             onClick={() => void refetch()}
             disabled={isFetching}
-            className="v2-statistics-link cursor-pointer"
+            className="v2-statistics-link inline-flex items-center gap-[0.5rem] p-[0.5rem_1.125rem] [background:var(--v2-input-fill)]
+              [border:1px_solid_var(--v2-border)] rounded-[9999px] [backdrop-filter:blur(12px)]
+              [-webkit-backdrop-filter:blur(12px)] [text-decoration:none] [&:hover]:[background:var(--v2-accent,#14675f)]
+              [&:hover]:border-[var(--v2-accent,#14675f)] [&:focus-visible]:[outline:2px_solid_var(--v2-accent)]
+              [&:focus-visible]:outline-offset-[2px] cursor-pointer"
           >
             <RefreshCw
               size={14}
@@ -101,12 +104,18 @@ export default function StatisticsPage() {
       : null;
 
   return (
-    <div className="v2-statistics" data-testid="v2-statistics-page">
+    <div
+      className="v2-statistics flex flex-col gap-[1.5rem] w-full max-w-[1200px] m-[0_auto] min-w-[0]"
+      data-testid="v2-statistics-page"
+    >
       <h1 className="sr-only">{t("statisticsPage.title")}</h1>
 
       {/* Nonblocking alert on background refetch failure with cached data */}
       {backgroundErrorMsg && (
-        <div className="v2-statistics-alert" role="alert">
+        <div
+          className="v2-statistics-alert rounded-[0.75rem] flex items-center justify-between gap-[1rem] text-[0.875rem]"
+          role="alert"
+        >
           <div className="flex items-center gap-3">
             <AlertCircle size={18} className="shrink-0" aria-hidden="true" />
             <span>{backgroundErrorMsg}</span>
@@ -115,7 +124,11 @@ export default function StatisticsPage() {
             type="button"
             onClick={() => void refetch()}
             disabled={isFetching}
-            className="v2-statistics-link cursor-pointer"
+            className="v2-statistics-link inline-flex items-center gap-[0.5rem] p-[0.5rem_1.125rem] [background:var(--v2-input-fill)]
+              [border:1px_solid_var(--v2-border)] rounded-[9999px] [backdrop-filter:blur(12px)]
+              [-webkit-backdrop-filter:blur(12px)] [text-decoration:none] [&:hover]:[background:var(--v2-accent,#14675f)]
+              [&:hover]:border-[var(--v2-accent,#14675f)] [&:focus-visible]:[outline:2px_solid_var(--v2-accent)]
+              [&:focus-visible]:outline-offset-[2px] cursor-pointer"
           >
             <RefreshCw
               size={14}

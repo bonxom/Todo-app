@@ -118,52 +118,57 @@ export default function StatisticsBreakdowns({
   return (
     <section
       aria-label={t("statisticsPage.breakdowns")}
-      className="v2-statistics-breakdowns"
+      className="v2-statistics-breakdowns grid grid-cols-[1fr_1fr] gap-[1.5rem] min-w-[0] [@media(max-width:900px)]:grid-cols-[1fr]"
     >
       {/* Current Task Status Breakdown */}
-      <GlassPanel className="v2-workspace-panel v2-statistics-breakdown-card">
-        <div className="v2-statistics-card-header">
-          <h2 className="v2-statistics-card-title">
+      <GlassPanel className="v2-workspace-panel overflow-hidden v2-statistics-breakdown-card flex flex-col gap-[1.25rem] min-w-[0]">
+        <div className="v2-statistics-card-header flex flex-col gap-[0.25rem]">
+          <h2 className="v2-statistics-card-title [font-family:var(--v2-font-heading,inherit)] text-[1.1875rem] [font-weight:700] text-[var(--v2-ink)] [letter-spacing:-0.015em]">
             {t("statisticsPage.statusDistribution")}
           </h2>
-          <span className="v2-statistics-card-subtitle">
+          <span className="v2-statistics-card-subtitle text-[0.8125rem] text-[var(--v2-muted)]">
             {t("statisticsPage.allTimeScope")}
           </span>
         </div>
 
         {totalStatusTasks === 0 ? (
-          <div className="v2-statistics-empty-text">
+          <div className="v2-statistics-empty-text text-[0.875rem] text-[var(--v2-muted)] text-center p-[2.5rem_1rem]">
             {t("statisticsPage.noData")}
           </div>
         ) : (
-          <div className="v2-statistics-donut-container">
+          <div className="v2-statistics-donut-container flex items-center justify-center gap-[1.5rem] flex-wrap min-w-[0]">
             <div
-              className="v2-statistics-donut"
+              className="v2-statistics-donut w-[140px] h-[140px] rounded-[50%] relative flex items-center justify-center shrink-0"
               style={{
                 background: `conic-gradient(${buildConicGradient(statusItems)})`,
               }}
               role="img"
               aria-label={t("statisticsPage.statusDistribution")}
             >
-              <div className="v2-statistics-donut-hole">
-                <span className="v2-statistics-donut-total">
+              <div className="v2-statistics-donut-hole w-[90px] h-[90px] rounded-[50%] flex items-center justify-center flex-col">
+                <span className="v2-statistics-donut-total text-[1.25rem] [font-weight:700] text-[var(--v2-ink)] [font-variant-numeric:tabular-nums] [line-height:1.1]">
                   {totalStatusTasks.toLocaleString(locale)}
                 </span>
-                <span className="v2-statistics-donut-label">{t("total")}</span>
+                <span className="v2-statistics-donut-label text-[0.6875rem] text-[var(--v2-muted)] uppercase [letter-spacing:0.03em]">
+                  {t("total")}
+                </span>
               </div>
             </div>
 
-            <div className="v2-statistics-legend">
+            <div className="v2-statistics-legend flex flex-col gap-[0.5rem] flex-1 min-w-[160px] max-h-[12rem] overflow-y-auto pr-[0.25rem] [scrollbar-width:thin]">
               {statusItems.map((item) => (
-                <div key={item.key} className="v2-statistics-legend-item">
-                  <span className="v2-statistics-legend-name">
+                <div
+                  key={item.key}
+                  className="v2-statistics-legend-item flex items-center justify-between gap-[0.75rem] text-[0.8125rem]"
+                >
+                  <span className="v2-statistics-legend-name flex items-center gap-[0.5rem] text-[var(--v2-ink)] min-w-[0] [word-break:break-word]">
                     <span
-                      className="v2-statistics-legend-dot"
+                      className="v2-statistics-legend-dot w-[9px] h-[9px] rounded-[50%] shrink-0"
                       style={{ background: item.color }}
                     />
                     <span>{item.label}</span>
                   </span>
-                  <span className="v2-statistics-legend-value">
+                  <span className="v2-statistics-legend-value [font-weight:600] text-[var(--v2-muted)] [font-variant-numeric:tabular-nums] whitespace-nowrap">
                     {item.value.toLocaleString(locale)} (
                     {item.percentage.toLocaleString(locale, {
                       maximumFractionDigits: 1,
@@ -178,51 +183,54 @@ export default function StatisticsBreakdowns({
       </GlassPanel>
 
       {/* Completed by Category Breakdown */}
-      <GlassPanel className="v2-workspace-panel v2-statistics-breakdown-card">
-        <div className="v2-statistics-card-header">
-          <h2 className="v2-statistics-card-title">
+      <GlassPanel className="v2-workspace-panel overflow-hidden v2-statistics-breakdown-card flex flex-col gap-[1.25rem] min-w-[0]">
+        <div className="v2-statistics-card-header flex flex-col gap-[0.25rem]">
+          <h2 className="v2-statistics-card-title [font-family:var(--v2-font-heading,inherit)] text-[1.1875rem] [font-weight:700] text-[var(--v2-ink)] [letter-spacing:-0.015em]">
             {t("statisticsPage.categoryDistribution")}
           </h2>
-          <span className="v2-statistics-card-subtitle">
+          <span className="v2-statistics-card-subtitle text-[0.8125rem] text-[var(--v2-muted)]">
             {t("statisticsPage.categoryHistoryScope")}
           </span>
         </div>
 
         {totalCategoryCompleted === 0 || categoryItems.length === 0 ? (
-          <div className="v2-statistics-empty-text">
+          <div className="v2-statistics-empty-text text-[0.875rem] text-[var(--v2-muted)] text-center p-[2.5rem_1rem]">
             {t("statisticsPage.noCategoryHistory")}
           </div>
         ) : (
-          <div className="v2-statistics-donut-container">
+          <div className="v2-statistics-donut-container flex items-center justify-center gap-[1.5rem] flex-wrap min-w-[0]">
             <div
-              className="v2-statistics-donut"
+              className="v2-statistics-donut w-[140px] h-[140px] rounded-[50%] relative flex items-center justify-center shrink-0"
               style={{
                 background: `conic-gradient(${buildConicGradient(categoryItems)})`,
               }}
               role="img"
               aria-label={t("statisticsPage.categoryDistribution")}
             >
-              <div className="v2-statistics-donut-hole">
-                <span className="v2-statistics-donut-total">
+              <div className="v2-statistics-donut-hole w-[90px] h-[90px] rounded-[50%] flex items-center justify-center flex-col">
+                <span className="v2-statistics-donut-total text-[1.25rem] [font-weight:700] text-[var(--v2-ink)] [font-variant-numeric:tabular-nums] [line-height:1.1]">
                   {totalCategoryCompleted.toLocaleString(locale)}
                 </span>
-                <span className="v2-statistics-donut-label">
+                <span className="v2-statistics-donut-label text-[0.6875rem] text-[var(--v2-muted)] uppercase [letter-spacing:0.03em]">
                   {t("completed")}
                 </span>
               </div>
             </div>
 
-            <div className="v2-statistics-legend">
+            <div className="v2-statistics-legend flex flex-col gap-[0.5rem] flex-1 min-w-[160px] max-h-[12rem] overflow-y-auto pr-[0.25rem] [scrollbar-width:thin]">
               {categoryItems.map((item) => (
-                <div key={item.key} className="v2-statistics-legend-item">
-                  <span className="v2-statistics-legend-name">
+                <div
+                  key={item.key}
+                  className="v2-statistics-legend-item flex items-center justify-between gap-[0.75rem] text-[0.8125rem]"
+                >
+                  <span className="v2-statistics-legend-name flex items-center gap-[0.5rem] text-[var(--v2-ink)] min-w-[0] [word-break:break-word]">
                     <span
-                      className="v2-statistics-legend-dot"
+                      className="v2-statistics-legend-dot w-[9px] h-[9px] rounded-[50%] shrink-0"
                       style={{ background: item.color }}
                     />
                     <span>{item.label}</span>
                   </span>
-                  <span className="v2-statistics-legend-value">
+                  <span className="v2-statistics-legend-value [font-weight:600] text-[var(--v2-muted)] [font-variant-numeric:tabular-nums] whitespace-nowrap">
                     {item.value.toLocaleString(locale)} (
                     {item.percentage.toLocaleString(locale, {
                       maximumFractionDigits: 1,

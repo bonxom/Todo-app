@@ -76,8 +76,8 @@ const LoginForm = ({ onSubmit, isLoading }) => {
         error={errors.password?.key ? t(errors.password.key) : errors.password}
       />
 
-      <div className="auth-form-row">
-        <label className="auth-checkbox-label">
+      <div className="auth-form-row flex flex-wrap items-center justify-between gap-[0.75rem]">
+        <label className="auth-checkbox-label inline-flex items-center gap-[0.5rem] text-[var(--color-text-muted)] text-[0.875rem] [font-weight:600] [&_input]:w-[1rem] [&_input]:h-[1rem]">
           <input type="checkbox" name="remember" />
           {t("rememberMe")}
         </label>

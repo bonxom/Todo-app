@@ -65,7 +65,13 @@ const ProjectFocusWeekAgenda = ({
   const transitionTasks = useTransitionTasks(displayTasks);
 
   return (
-    <section className="ui-section-card calendar-agenda">
+    <section
+      className="ui-section-card calendar-agenda [&_h3]:text-[19px] [&_h3]:[letter-spacing:-0.025em]
+      [&_.todo-task[draggable=true]]:cursor-grab [&_.todo-task:active]:cursor-grabbing
+      [&_.todo-task-meta_>_span]:wrap-anywhere [&_.todo-task-project_i]:shrink-0
+      [&_.todo-task_button:focus-visible]:[outline:2px_solid_var(--color-accent)]
+      [&_.todo-task_button:focus-visible]:outline-offset-[3px]"
+    >
       <TaskDetailButton
         isOpen={isEditModalOpen}
         task={selectedTask}
@@ -106,7 +112,7 @@ const ProjectFocusWeekAgenda = ({
           <div
             className={`flex flex-wrap gap-2 ${compact ? "" : "lg:justify-end"}`}
           >
-            <span className="ui-chip ui-tabular">
+            <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
               {summary.completed}/{summary.total} {t("complete")}{" "}
             </span>
             {onAddTask && (
@@ -119,7 +125,7 @@ const ProjectFocusWeekAgenda = ({
               </button>
             )}
             {selectedProjectCount > 0 ? (
-              <span className="ui-chip ui-tabular">
+              <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
                 {t("filteredProjects", { count: selectedProjectCount })}
               </span>
             ) : null}
@@ -164,7 +170,11 @@ const ProjectFocusWeekAgenda = ({
             )}
           </>
         ) : (
-          <div className="calendar-agenda-empty">
+          <div
+            className="calendar-agenda-empty p-[32px_16px] text-center [&_>_svg]:text-[var(--color-accent)] [&_>_svg]:w-[32px]
+            [&_>_svg]:h-[32px] [&_>_svg]:p-[7px] [&_>_svg]:box-content [&_>_svg]:rounded-[50%]
+            [&_>_svg]:[background:var(--color-accent-soft)] [&_>_p:first-of-type]:[font-weight:550]"
+          >
             <CheckCircle2
               className="mx-auto h-10 w-10 text-[var(--color-text-muted)]"
               aria-hidden="true"

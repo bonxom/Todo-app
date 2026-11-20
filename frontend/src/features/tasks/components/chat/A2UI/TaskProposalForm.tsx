@@ -7,7 +7,6 @@ import {
 import { TaskList } from "./TaskList";
 import { TaskProposalActions } from "./TaskProposalActions";
 import { TaskProposalEditorContext } from "./taskProposalEditorContext";
-import "./taskProposal.css";
 
 export type { TaskProposalEditorProps };
 
@@ -23,7 +22,11 @@ export function TaskProposalForm(props: TaskProposalEditorProps) {
   return (
     <TaskProposalEditorContext.Provider value={editor}>
       <section className="task-proposal" aria-label={t("taskProposal")}>
-        <header className="task-proposal-header">
+        <header
+          className="task-proposal-header flex flex-wrap items-center gap-[0.5rem] justify-between pb-[0.65rem]
+          [border-bottom:1px_solid_var(--color-line,#d9dee5)] [&_strong]:text-[0.9rem] [&_strong]:[font-weight:650]
+          [&_strong]:[letter-spacing:-0.01em]"
+        >
           <strong>
             {proposal.status === "created"
               ? t("tasksCreated")

@@ -48,18 +48,24 @@ export default function V2Sidebar({
     }
   };
   return (
-    <aside className={`v2-navigation ${className}`} aria-label="Orbit">
+    <aside
+      className={`v2-navigation [border:1px_solid_var(--v2-glass-border)] rounded-[var(--v2-radius-card)] flex flex-col relative isolate [@media(forced-colors:active)]:[border:1px_solid_ButtonBorder] [@media(forced-colors:active)]:text-[CanvasText] [&::before]:absolute [&::before]:inset-[3px] [&::before]:rounded-[21px] [&::before]:pointer-events-none [&::before]:z-[-1] [&_nav]:gap-[6px] ${className}`}
+      aria-label="Orbit"
+    >
       <Link
         to="/v2/dashboard"
-        className="v2-brand"
+        className="v2-brand flex items-center [letter-spacing:-1px] [text-decoration:none] justify-start p-[0_10px]"
         onClick={onNavigate}
         aria-label="Orbit"
       >
-        <span className="v2-brand-symbol">
+        <span
+          className="v2-brand-symbol grid place-items-center text-[var(--v2-accent)] [background:var(--v2-shell-fill)]
+          [box-shadow:var(--v2-shadow-md)] [border:1px_solid_var(--v2-glass-border)] [&_svg]:w-[24px]"
+        >
           <Orbit size={28} strokeWidth={1.5} />
         </span>
         <span>
-          orbit<span className="v2-brand-dot">.</span>
+          orbit<span className="v2-brand-dot text-[var(--v2-accent)]">.</span>
         </span>
       </Link>
       <nav aria-label={t("dashboard")}>
@@ -70,7 +76,7 @@ export default function V2Sidebar({
               key={to}
               to={to}
               onClick={onNavigate}
-              className="v2-nav-item"
+              className="v2-nav-item flex items-center [text-decoration:none] [transition:background_160ms,box-shadow_160ms] justify-start [&_svg]:flex-[0_0_auto]"
               data-active={isActive}
               aria-current={isActive ? "page" : undefined}
             >
@@ -82,7 +88,7 @@ export default function V2Sidebar({
       </nav>
       <button
         type="button"
-        className="v2-nav-item v2-signout"
+        className="v2-nav-item flex items-center [text-decoration:none] [transition:background_160ms,box-shadow_160ms] justify-start [&_svg]:flex-[0_0_auto] v2-signout w-full mt-auto"
         onClick={() => void signOut()}
         disabled={logout.isPending}
       >

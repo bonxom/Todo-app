@@ -98,7 +98,10 @@ export default function V2Dialog({
 
   return (
     <div
-      className="v2-dialog-backdrop"
+      className="v2-dialog-backdrop fixed inset-[0] [background:rgb(14_34_39_/_38%)] [backdrop-filter:blur(8px)]
+        [-webkit-backdrop-filter:blur(8px)] z-2000 flex items-center justify-center p-[20px]
+        [@media(max-width:767px)]:p-[12px] [@media(prefers-reduced-transparency:reduce)]:[backdrop-filter:none]
+        [@media(prefers-reduced-transparency:reduce)]:[-webkit-backdrop-filter:none]"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           closeRef.current();

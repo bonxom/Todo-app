@@ -265,7 +265,10 @@ function InteractionCardContent({
         )}
       </div>
 
-      <h3 id={questionId} className="chat-ask-question">
+      <h3
+        id={questionId}
+        className="chat-ask-question shrink-0 max-h-[88px] overflow-y-auto text-[14px] [font-weight:650] [line-height:1.5] mb-[12px]"
+      >
         {interaction.question}
       </h3>
 

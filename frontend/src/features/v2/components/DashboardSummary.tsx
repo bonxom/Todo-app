@@ -41,11 +41,17 @@ export default function DashboardSummary({
   ];
 
   return (
-    <section aria-label={t("summary")} className="v2-summary">
+    <section
+      aria-label={t("summary")}
+      className="v2-summary grid grid-cols-[repeat(3,minmax(0,1fr))] gap-[16px] [@media(max-width:767px)]:gap-[8px]"
+    >
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <GlassPanel key={card.id} className="v2-summary-item">
+          <GlassPanel
+            key={card.id}
+            className="v2-summary-item items-center relative [@media(max-width:767px)]:[&_p]:[letter-spacing:0.2px]"
+          >
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-[var(--v2-muted)]">
                 {card.label}
@@ -67,7 +73,11 @@ export default function DashboardSummary({
                 )}
               </div>
             </div>
-            <div className="v2-summary-icon" style={{ color: card.color }}>
+            <div
+              className="v2-summary-icon w-[44px] h-[44px] [border:1px_solid_var(--v2-border)] rounded-[50%] grid place-items-center
+              [background:var(--v2-shell-fill)] [@media(max-width:767px)]:[display:none]"
+              style={{ color: card.color }}
+            >
               <Icon size={22} aria-hidden="true" />
             </div>
           </GlassPanel>

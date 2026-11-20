@@ -33,7 +33,6 @@ import {
   X,
 } from "lucide-react";
 import { useStatsQuery } from "@/features/statistics/api/statQueries";
-import "./todos.css";
 
 const ALL_PROJECT_FILTER = "all-projects";
 const STANDALONE_PROJECT_FILTER = "standalone-projects";
@@ -295,28 +294,50 @@ const TodoPage = () => {
         }}
       />
 
-      <div className="ui-page-shell todo-page">
-        <header className="ui-workspace-heading">
-          <h1 className="ui-page-title">{t("todos")}</h1>
+      <div className="ui-page-shell mx-auto todo-page [&_button]:cursor-pointer [&_button:disabled]:cursor-wait [&_button:disabled]:opacity-[0.6]">
+        <header className="ui-workspace-heading flex items-center justify-between">
+          <h1 className="ui-page-title m-[0] text-[var(--color-text)] [font-weight:650] text-balance">
+            {t("todos")}
+          </h1>
           <button
             type="button"
             onClick={() => openAddTask(selectedProject?._id)}
-            className="ui-btn-primary ui-page-add-button"
+            className="ui-btn-primary ui-page-add-button shrink-0"
           >
             <Plus size={17} /> {t("addTask")}
           </button>
         </header>
 
-        <section className="todo-overview" aria-label={t("workspaceOverview")}>
-          <div className="todo-overview-intro">
-            <div className="todo-orbit-art" aria-hidden="true">
+        <section
+          className="todo-overview grid grid-cols-[1.35fr_1fr_1fr_1fr] [background:var(--color-surface-muted)]
+          [border:1px_solid_var(--color-line)] rounded-[var(--radius-lg)] p-[var(--space-6)_0]
+          [@media(max-width:800px)]:grid-cols-[repeat(3,1fr)] [@media(max-width:520px)]:py-[1.125rem]"
+          aria-label={t("workspaceOverview")}
+        >
+          <div
+            className="todo-overview-intro flex items-center gap-[1rem] p-[0_var(--space-5)] overflow-hidden
+            [&_.todo-eyebrow]:text-[var(--color-accent)] [&_.todo-eyebrow]:whitespace-nowrap [&_h2]:text-[1.25rem]
+            [&_h2]:[font-weight:650] [&_h2]:[line-height:1.22] [&_h2]:m-[0.5rem_0_0] [&_h2]:[letter-spacing:-0.01em]
+            [&_h2_em]:[font-style:normal] [&_h2_em]:text-[var(--color-accent)]
+            [@media(max-width:1279px)]:p-[0_15px] [@media(max-width:800px)]:[display:none]"
+          >
+            <div
+              className="todo-orbit-art relative w-[62px] h-[80px] shrink-0 grid place-items-center [&_i]:absolute [&_i]:w-[53px]
+              [&_i]:h-[78px] [&_i]:[border:1px_solid_var(--color-line)] [&_i]:rounded-[50%] [&_i]:[transform:rotate(35deg)]
+              [&_i:nth-child(2)]:[transform:rotate(95deg)] [&_i:nth-child(3)]:[transform:rotate(155deg)]
+              [&_span]:text-[var(--color-accent)] [&_span]:text-[31px]
+              [@media(max-width:1279px)]:[display:none]"
+              aria-hidden="true"
+            >
               <i />
               <i />
               <i />
               <span>✦</span>
             </div>
             <div>
-              <p className="todo-eyebrow">{t("oneThingAtATime")}</p>
+              <p className="todo-eyebrow flex items-center gap-[7px] [font-weight:600] uppercase">
+                {t("oneThingAtATime")}
+              </p>
               <h2>
                 {t("smallSteps")}
                 <br />
@@ -348,25 +369,35 @@ const TodoPage = () => {
             },
           ].map(({ label, value, icon, status, note }) => (
             <button
-              className="todo-stat"
+              className="todo-stat text-left [border-left:1px_solid_var(--color-line)] [transition:background_0.2s]
+                [&:hover]:[background:var(--color-accent-soft)] [&_strong]:block [&_strong]:[font-weight:650]
+                [&_strong]:[letter-spacing:-0.02em] [&_strong]:[font-variant-numeric:tabular-nums]
+                [@media(max-width:800px)]:[&:first-of-type]:[border-left:0]"
               key={label}
               onClick={() => setSelectedStatuses(status ? [status] : [])}
               aria-label={t("messages.showV0", { v0: label.toLowerCase() })}
             >
-              <span className="todo-stat-label">
+              <span
+                className="todo-stat-label flex items-center gap-[7px] text-[0.6875rem] text-[var(--color-text-muted)]
+                [&_svg:last-child]:ml-auto [&_svg:last-child]:opacity-[0.45]
+                [@media(max-width:520px)]:text-[0.625rem] [@media(max-width:520px)]:gap-[5px]
+                [@media(max-width:520px)]:[&_svg]:w-[12px] [@media(max-width:520px)]:[&_svg:last-child]:[display:none]"
+              >
                 {createElement(icon, { size: 15 })}
                 {label}
                 <ArrowUpRight size={14} />
               </span>
               <strong>{value ?? "—"}</strong>
-              <span className="todo-stat-note">{note}</span>
+              <span className="todo-stat-note text-[var(--color-text-muted)] text-[0.625rem] [@media(max-width:1279px)]:text-[0.5625rem] [@media(max-width:520px)]:[display:none]">
+                {note}
+              </span>
             </button>
           ))}
         </section>
 
         {/* Error Banner */}
         {errorMessage && (
-          <section className="ui-section-card ui-card-padding">
+          <section className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-[var(--color-warning)]">
@@ -391,10 +422,19 @@ const TodoPage = () => {
         )}
 
         {/* 2-Column Responsive Layout: Task Workspace (65-70%) vs Project Rail (30-35%, min 320px) */}
-        <div className="todo-workspace">
+        <div className="todo-workspace grid [align-items:start] gap-[var(--space-6)] [@media(max-width:1279px)]:gap-[1.125rem]">
           {/* Left Column: Main Task Workspace (~65–70%) */}
-          <section className="todo-task-panel" aria-label={t("yourTasks")}>
-            <div className="todo-panel-heading">
+          <section
+            className="todo-task-panel min-w-[0] [background:var(--color-surface)] [border:1px_solid_var(--color-line)]
+            rounded-[var(--radius-lg)] [box-shadow:var(--shadow-xs)] [&_>_.mt-4]:m-[0]
+            [&_>_.mt-4]:[border-top:1px_solid_var(--color-line)]"
+            aria-label={t("yourTasks")}
+          >
+            <div
+              className="todo-panel-heading flex items-center justify-between gap-[var(--space-3)] [&_h2]:text-[1rem]
+              [&_h2]:[font-weight:650] [&_h2]:[letter-spacing:-0.01em] [&_h2]:m-[0] [&_>_div_>_span]:block
+              [&_>_div_>_span]:text-[0.6875rem] [&_>_div_>_span]:text-[var(--color-text-muted)] [&_>_div_>_span]:mt-[5px]"
+            >
               <div>
                 <h2>
                   {selectedProject?.name ||
@@ -404,7 +444,11 @@ const TodoPage = () => {
                 </h2>
                 <span>{t("yourNextStepsAllInOnePlace")}</span>
               </div>
-              <span className="todo-result-count" aria-live="polite">
+              <span
+                className="todo-result-count text-[var(--color-text-muted)] text-[0.625rem] [background:var(--color-surface-muted)]
+                [border:1px_solid_var(--color-line)] p-[2px_6px] rounded-[5px] whitespace-nowrap [font-weight:600]"
+                aria-live="polite"
+              >
                 {isLoading
                   ? t("loading")
                   : `${totalCount} ${totalCount === 1 ? "task" : "tasks"}`}
@@ -427,7 +471,7 @@ const TodoPage = () => {
             />
 
             <div
-              className="todo-task-list-wrap"
+              className="todo-task-list-wrap min-h-[150px]"
               aria-busy={tasksQuery.isFetching}
             >
               <TaskList
@@ -491,7 +535,7 @@ const TodoPage = () => {
       {/* Give Up Dialog */}
       {isGiveUpModalOpen && (
         <div
-          className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
+          className="ui-modal-overlay [background:var(--color-overlay)] fixed inset-0 z-[70] flex items-center justify-center p-4"
           onClick={() => {
             setIsGiveUpModalOpen(false);
             setTaskToGiveUp(null);
@@ -499,13 +543,14 @@ const TodoPage = () => {
           role="presentation"
         >
           <div
-            className="ui-modal-shell w-full max-w-md animate-fadeIn"
+            className="ui-modal-shell overflow-hidden [border:1px_solid_rgba(31,35,40,0.06)] rounded-[var(--radius-2xl)]
+              [background:var(--color-surface)] [box-shadow:var(--shadow-lg)] w-full max-w-md animate-fadeIn"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="giveup-dialog-title"
           >
-            <div className="ui-modal-header">
+            <div className="ui-modal-header p-[1rem_1.25rem] [border-bottom:1px_solid_var(--color-line)] [background:var(--color-surface)]">
               <h2
                 id="giveup-dialog-title"
                 className="text-xl font-semibold text-[var(--color-text)]"
@@ -513,7 +558,7 @@ const TodoPage = () => {
                 {t("giveUpTask")}
               </h2>
             </div>
-            <div className="ui-modal-body">
+            <div className="ui-modal-body p-[1.25rem]">
               <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
                 {t(
                   "areYouSureYouWantToGiveUpThisTaskYouCanRestoreItToInProgressAtAnyTime",
@@ -533,7 +578,9 @@ const TodoPage = () => {
                 <button
                   type="button"
                   onClick={confirmGiveUp}
-                  className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] hover:opacity-90 cursor-pointer"
+                  className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border
+                    border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold
+                    text-[var(--color-on-status,#fff)] hover:opacity-90 cursor-pointer"
                 >
                   {t("giveUp")}
                 </button>
@@ -546,7 +593,7 @@ const TodoPage = () => {
       {/* Delete Dialog */}
       {isDeleteModalOpen && (
         <div
-          className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
+          className="ui-modal-overlay [background:var(--color-overlay)] fixed inset-0 z-[70] flex items-center justify-center p-4"
           onClick={() => {
             setIsDeleteModalOpen(false);
             setTaskToDelete(null);
@@ -554,13 +601,14 @@ const TodoPage = () => {
           role="presentation"
         >
           <div
-            className="ui-modal-shell w-full max-w-md animate-fadeIn"
+            className="ui-modal-shell overflow-hidden [border:1px_solid_rgba(31,35,40,0.06)] rounded-[var(--radius-2xl)]
+              [background:var(--color-surface)] [box-shadow:var(--shadow-lg)] w-full max-w-md animate-fadeIn"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-dialog-title"
           >
-            <div className="ui-modal-header">
+            <div className="ui-modal-header p-[1rem_1.25rem] [border-bottom:1px_solid_var(--color-line)] [background:var(--color-surface)]">
               <h2
                 id="delete-dialog-title"
                 className="text-xl font-semibold text-[var(--color-text)]"
@@ -568,7 +616,7 @@ const TodoPage = () => {
                 {t("deleteTask")}
               </h2>
             </div>
-            <div className="ui-modal-body">
+            <div className="ui-modal-body p-[1.25rem]">
               <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
                 {t("areYouSureYouWantToDeleteThisTaskThisActionCannotBeUndone")}
               </p>
@@ -586,7 +634,9 @@ const TodoPage = () => {
                 <button
                   type="button"
                   onClick={confirmDelete}
-                  className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] hover:opacity-90 cursor-pointer"
+                  className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border
+                    border-[var(--color-danger)] bg-[var(--color-danger)] px-4 text-sm font-semibold
+                    text-[var(--color-on-status,#fff)] hover:opacity-90 cursor-pointer"
                 >
                   {t("delete")}
                 </button>

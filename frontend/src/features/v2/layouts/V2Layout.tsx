@@ -7,11 +7,6 @@ import V2Sidebar from "../components/V2Sidebar";
 import V2Topbar from "../components/V2Topbar";
 import V2Dialog from "../components/V2Dialog";
 import V2AgentChatBubble from "../components/V2AgentChatBubble";
-import "../styles/tokens.css";
-import "../styles/v2.css";
-import "../styles/workspace.css";
-import "../styles/topbar.css";
-import "../styles/assistant.css";
 
 export default function V2Layout() {
   const { t } = useTranslation("v2");
@@ -36,14 +31,17 @@ export default function V2Layout() {
         data-testid="v2-layout"
         style={{ "--v2-dock-width": `${dock.width}px` } as CSSProperties}
       >
-        <a href="#v2-main-content" className="v2-skip-link">
+        <a
+          href="#v2-main-content"
+          className="v2-skip-link fixed left-[24px] top-[-100px] z-2200 p-[12px_20px] [background:var(--v2-surface-solid)] rounded-[12px] [&:focus]:top-[12px]"
+        >
           {t("skipToMain")}
         </a>
         <RoutePendingIndicator />
 
-        <div className="v2-shell-container">
+        <div className="v2-shell-container flex items-start mx-auto">
           {/* Desktop Sidebar */}
-          <div className="v2-sidebar-desktop">
+          <div className="v2-sidebar-desktop [display:none] sticky [@media(min-width:1024px)]:block">
             <V2Sidebar />
           </div>
 
@@ -58,14 +56,14 @@ export default function V2Layout() {
           </V2Dialog>
 
           {/* Main Content Area */}
-          <div className="v2-main-area">
+          <div className="v2-main-area flex-1 min-w-[0] [transition:margin-right_160ms_ease] [@media(prefers-reduced-motion:reduce)]:[transition:none]">
             <V2Topbar
               onOpenNavigation={() => setIsDrawerOpen(true)}
               assistantSlotRef={setAssistantTarget}
             />
             <main
               id="v2-main-content"
-              className="v2-content-wrapper"
+              className="v2-content-wrapper m-auto min-w-[0] [container-type:inline-size] [container-name:workspace]"
               tabIndex={-1}
             >
               <Outlet />

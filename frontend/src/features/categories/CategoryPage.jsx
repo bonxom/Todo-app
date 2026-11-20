@@ -11,7 +11,6 @@ import {
   Layers,
   X,
 } from "lucide-react";
-import "./categories.css";
 import CategoryGrid from "./components/CategoryGrid";
 import CategoryStats from "./components/CategoryStats";
 import ProjectGrid from "@/features/tasks/components/project/ProjectGrid";
@@ -215,8 +214,8 @@ const CategoryPage = () => {
 
   if (isLoading) {
     return (
-      <div className="ui-page-shell">
-        <section className="ui-section-card ui-card-padding flex min-h-[18rem] items-center justify-center">
+      <div className="ui-page-shell mx-auto">
+        <section className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)] flex min-h-[18rem] items-center justify-center">
           <p className="text-sm text-[color:var(--color-text-muted)]">
             {activeConfig.loadingLabel}
           </p>
@@ -227,13 +226,15 @@ const CategoryPage = () => {
 
   return (
     <>
-      <div className="ui-page-shell category-workspace">
-        <header className="ui-workspace-heading">
-          <h1 className="ui-page-title">{activeConfig.title}</h1>
+      <div className="ui-page-shell mx-auto category-workspace">
+        <header className="ui-workspace-heading flex items-center justify-between">
+          <h1 className="ui-page-title m-[0] text-[var(--color-text)] [font-weight:650] text-balance">
+            {activeConfig.title}
+          </h1>
           <button
             type="button"
             onClick={openCreate}
-            className="ui-btn-primary ui-page-add-button"
+            className="ui-btn-primary ui-page-add-button shrink-0"
           >
             <Plus size={17} />
             {activeConfig.addLabel}
@@ -246,8 +247,15 @@ const CategoryPage = () => {
           className="category-collection"
           aria-label={t("workspaceCollection")}
         >
-          <div className="category-collection-top">
-            <div className="category-tabs" aria-label={t("workspaceViews")}>
+          <div className="category-collection-top flex items-center justify-between [border-bottom:1px_solid_var(--color-line)]">
+            <div
+              className="category-tabs flex [&_button]:flex [&_button]:items-center [&_button]:p-[0_0_16px]
+              [&_button]:[border-bottom:2px_solid_transparent] [&_button]:mb-[-1px] [&_button]:cursor-pointer
+              [&_button[aria-pressed=true]]:border-[var(--color-accent)] [&_button_span]:rounded-[6px]
+              [&_button_span]:p-[1px_7px] [&_button_span]:text-[10px]
+              [&_button_span]:[background:var(--color-surface-muted)]"
+              aria-label={t("workspaceViews")}
+            >
               {Object.entries(VIEW_CONFIG).map(([id, config]) => {
                 const { Icon, label } = config;
                 return (
@@ -272,12 +280,18 @@ const CategoryPage = () => {
                 );
               })}
             </div>
-            <span className="category-collection-note">
+            <span className="category-collection-note flex items-center gap-[7px] text-[11px] text-[var(--color-text-muted)] pb-[15px] [@media(max-width:600px)]:[display:none]">
               <Layers size={14} /> {t("everythingInItsPlace")}
             </span>
           </div>
-          <div className="category-toolbar">
-            <div className="category-search">
+          <div className="category-toolbar flex items-center gap-[16px] mt-[22px] [@media(max-width:1100px)]:flex-wrap [@media(max-width:600px)]:gap-[12px]">
+            <div
+              className="category-search flex items-center gap-[9px] [border:1px_solid_var(--color-line)] rounded-[9px] p-[0_12px]
+              flex-1 text-[var(--color-text-muted)] [&_input]:w-full [&_input]:min-w-[0] [&_input]:[border:0]
+              [&_input]:[background:transparent] [&_input]:[outline:none]
+              [&:focus-within]:[outline:2px_solid_var(--ring-focus-outline)] [&:focus-within]:outline-offset-[2px]
+              [&_button]:cursor-pointer [@media(max-width:1100px)]:basis-[100%]"
+            >
               <Search size={17} aria-hidden="true" />
               <input
                 aria-label={t("messages.searchV0", {
@@ -302,7 +316,10 @@ const CategoryPage = () => {
                 </button>
               )}
             </div>
-            <div className="category-filters" aria-label={t("filterGroups")}>
+            <div
+              className="category-filters flex gap-[4px] [&_button]:rounded-[7px] [&_button]:cursor-pointer [&_button]:whitespace-nowrap [&_button[aria-pressed=true]]:[background:var(--color-accent-soft)]"
+              aria-label={t("filterGroups")}
+            >
               {[
                 ["all", t("all")],
                 ["active", t("withActiveTasks")],
@@ -318,7 +335,11 @@ const CategoryPage = () => {
                 </button>
               ))}
             </div>
-            <label className="category-sort">
+            <label
+              className="category-sort flex items-center gap-[7px] text-[11px] text-[var(--color-text-muted)]
+              [&_select]:[background:var(--color-canvas)] [&_select]:p-[8px_0] [&_select]:cursor-pointer
+              [@media(max-width:1100px)]:ml-auto [@media(max-width:600px)]:text-[10px] [@media(max-width:600px)]:gap-[3px]"
+            >
               <ArrowUpDown size={15} />
               <span className="sr-only">{t("sortGroups")}</span>
               <CustomSelect
@@ -333,7 +354,7 @@ const CategoryPage = () => {
               </CustomSelect>
             </label>
           </div>
-          <div className="category-results-meta">
+          <div className="category-results-meta flex justify-between gap-[12px] mt-[18px] text-[var(--color-text-muted)] text-[11px] [&_label]:items-center [&_label]:gap-[7px]">
             <p role="status">
               {visibleItems.length} {activeConfig.label.toLowerCase()}
               {search || filter !== "all"
@@ -358,7 +379,7 @@ const CategoryPage = () => {
         </section>
 
         {errorMessage ? (
-          <section className="ui-section-card ui-card-padding text-center">
+          <section className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)] text-center">
             <p className="text-lg font-semibold text-[color:var(--color-danger)]">
               {t("unableToLoadThisWorkspace")}
             </p>
@@ -374,7 +395,10 @@ const CategoryPage = () => {
             </button>
           </section>
         ) : visibleItems.length === 0 && (search || filter !== "all") ? (
-          <section className="category-no-results">
+          <section
+            className="category-no-results p-[60px_20px] flex flex-col items-center gap-[14px] text-center
+            text-[var(--color-text-muted)] [&_h2]:text-[20px] [&_h2]:text-[var(--color-text)] [&_p]:text-[13px]"
+          >
             <Search size={28} />
             <h2>
               {t("noGroupsFound", { groups: activeConfig.label.toLowerCase() })}

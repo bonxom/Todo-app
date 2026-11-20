@@ -6,18 +6,19 @@ const GiveUpDialog = ({ isOpen, onClose, onConfirm }) => {
 
   return (
     <div
-      className="ui-modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4"
+      className="ui-modal-overlay [background:var(--color-overlay)] fixed inset-0 z-[70] flex items-center justify-center p-4"
       onClick={onClose}
       role="presentation"
     >
       <div
-        className="ui-modal-shell w-full max-w-md animate-fadeIn"
+        className="ui-modal-shell overflow-hidden [border:1px_solid_rgba(31,35,40,0.06)] rounded-[var(--radius-2xl)]
+          [background:var(--color-surface)] [box-shadow:var(--shadow-lg)] w-full max-w-md animate-fadeIn"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="giveup-task-title"
       >
-        <div className="ui-modal-header">
+        <div className="ui-modal-header p-[1rem_1.25rem] [border-bottom:1px_solid_var(--color-line)] [background:var(--color-surface)]">
           <h2
             id="giveup-task-title"
             className="text-xl font-semibold text-[var(--color-text)]"
@@ -25,7 +26,7 @@ const GiveUpDialog = ({ isOpen, onClose, onConfirm }) => {
             {t("giveUpTask")}
           </h2>
         </div>
-        <div className="ui-modal-body">
+        <div className="ui-modal-body p-[1.25rem]">
           <p className="mb-6 text-sm leading-6 text-[var(--color-text-muted)]">
             {t(
               "areYouSureYouWantToGiveUpThisTaskYouAreChoosingNotToContinueWorkingOnIt",
@@ -42,7 +43,9 @@ const GiveUpDialog = ({ isOpen, onClose, onConfirm }) => {
             <button
               type="button"
               onClick={onConfirm}
-              className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold text-[var(--color-on-status,#fff)] transition-[background-color,border-color] duration-150 hover:opacity-90"
+              className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center rounded-[var(--radius-md)] border
+                border-[var(--color-warning)] bg-[var(--color-warning)] px-4 text-sm font-semibold
+                text-[var(--color-on-status,#fff)] transition-[background-color,border-color] duration-150 hover:opacity-90"
             >
               {t("giveUp")}
             </button>

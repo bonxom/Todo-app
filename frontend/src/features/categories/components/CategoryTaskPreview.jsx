@@ -26,10 +26,12 @@ const CategoryTaskPreview = ({ task, onOpen, onTaskUpdated }) => {
   };
 
   return (
-    <div className="category-task-preview-row">
+    <div className="category-task-preview-row flex items-center gap-[6px] [&_.category-task-row]:min-w-[0] [&_.category-task-row]:flex-1">
       <button
         type="button"
-        className="category-task-row"
+        className="category-task-row flex items-center w-full gap-[9px] p-[8px_0] text-left cursor-pointer
+          [&_>_span:last-child]:overflow-hidden [&_>_span:last-child]:whitespace-nowrap
+          [&_>_span:last-child]:text-ellipsis [&_>_span:first-child]:shrink-0"
         onClick={() => onOpen(task)}
         draggable
         onDragStart={(event) => setTaskDragData(event, task)}
@@ -43,7 +45,8 @@ const CategoryTaskPreview = ({ task, onOpen, onTaskUpdated }) => {
       {actionable && (
         <button
           type="button"
-          className="category-task-action"
+          className="category-task-action w-[30px] h-[30px] shrink-0 grid place-items-center rounded-[6px] cursor-pointer
+            [&:hover]:[background:var(--color-accent-soft)] [&:disabled]:opacity-[0.5] [&:disabled]:cursor-wait"
           onClick={update}
           disabled={busy}
           aria-label={t("messages.v0TaskV1", {

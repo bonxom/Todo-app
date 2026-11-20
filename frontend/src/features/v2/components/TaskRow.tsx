@@ -96,7 +96,7 @@ export default function TaskRow({ task, onOpen, actions }: TaskRowProps) {
           onClick={handleAction}
           disabled={isPending}
           aria-busy={isPending}
-          className="v2-btn v2-btn-primary text-xs py-1.5 px-3 min-h-0"
+          className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)] text-xs py-1.5 px-3 min-h-0"
         >
           {isPending ? (
             <Loader2 size={13} className="animate-spin" aria-hidden="true" />
@@ -131,17 +131,28 @@ export default function TaskRow({ task, onOpen, actions }: TaskRowProps) {
   };
 
   return (
-    <div className="v2-task-row" role="listitem">
-      <div className="v2-task-identity">
+    <div
+      className="v2-task-row justify-between [border-bottom:1px_solid_var(--v2-border)] [transition:background-color_160ms]
+      [&:last-child]:[border-bottom:0] [@media(max-width:767px)]:flex-col [&_.v2-status]:[justify-self:start]
+      [&_.v2-status]:rounded-[var(--v2-radius-pill)] [&_.v2-status]:text-[11px] [&_.v2-status]:[font-weight:550]
+      [&_.v2-status]:whitespace-nowrap [@container_workspace_(max-width:850px)]:[&_.v2-status]:col-1
+      [@container_workspace_(max-width:850px)]:[&_.v2-status]:row-2"
+      role="listitem"
+    >
+      <div className="v2-task-identity min-w-[0] [@container_workspace_(max-width:850px)]:col-[1_/_-1] [@container_workspace_(max-width:850px)]:row-1">
         <button
           type="button"
           onClick={() => onOpen(taskId)}
-          className="v2-task-title"
+          className="v2-task-title text-left block w-full wrap-anywhere [@media(max-width:767px)]:col-[1_/_-1]"
         >
           {task.title}
         </button>
         {(projectName || categoryName) && (
-          <div className="v2-task-context">
+          <div
+            className="v2-task-context flex flex-wrap gap-[4px_12px] mt-[5px] text-[var(--v2-muted)] text-[11px]
+            [&_>_span]:inline-flex [&_>_span]:items-center [&_>_span]:gap-[5px] [&_>_span]:min-w-[0]
+            [&_>_span]:wrap-anywhere [&_svg]:flex-[0_0_auto]"
+          >
             {projectName && (
               <span>
                 <FolderKanban size={12} aria-hidden="true" />
@@ -167,19 +178,34 @@ export default function TaskRow({ task, onOpen, actions }: TaskRowProps) {
               : task.status,
         )}
       </span>
-      <span className="v2-task-priority" data-priority={task.priority}>
+      <span
+        className="v2-task-priority inline-flex items-center gap-[6px] text-[var(--v2-muted)] text-[12px] [&_>_span]:w-[5px]
+        [&_>_span]:h-[5px] [&_>_span]:flex-[0_0_auto] [&_>_span]:rounded-[50%] [&_>_span]:[background:var(--v2-muted)]
+        [&[data-priority=High]_>_span]:[background:var(--v2-warning)]
+        [&[data-priority=Urgent]_>_span]:[background:var(--v2-warning)]
+        [@container_workspace_(max-width:850px)]:col-2 [@container_workspace_(max-width:850px)]:row-2
+        [@container_workspace_(max-width:850px)]:[justify-self:end]"
+        data-priority={task.priority}
+      >
         <span aria-hidden="true" />
         {t(`priority${task.priority}`)}
       </span>
-      <div className="v2-task-due">
+      <div
+        className="v2-task-due [@media(max-width:767px)]:self-center [@media(max-width:767px)]:min-h-[28px] inline-flex
+        items-center gap-[6px] text-[var(--v2-muted)] text-[12px]
+        [@container_workspace_(max-width:850px)]:row-3"
+      >
         <CalendarIcon size={13} aria-hidden="true" />
         <span>{formattedDueDate}</span>
       </div>
-      <div className="v2-task-row-actions">
+      <div className="v2-task-row-actions flex justify-end self-center">
         {actions !== undefined ? actions : renderDefaultAction()}
       </div>
       {actionError && (
-        <p className="v2-task-action-error" role="alert">
+        <p
+          className="v2-task-action-error col-[1_/_-1] text-[var(--v2-warning)] text-[12px]"
+          role="alert"
+        >
           {actionError}
         </p>
       )}

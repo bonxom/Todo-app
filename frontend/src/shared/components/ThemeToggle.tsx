@@ -11,7 +11,9 @@ export default function ThemeToggle() {
   return (
     <button
       type="button"
-      className="ui-icon-button ui-focus-ring ui-theme-toggle"
+      className="ui-icon-button items-center justify-center
+        [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+        [&:hover]:[transform:translateY(-1px)] ui-focus-ring ui-theme-toggle"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={label}
       title={label}

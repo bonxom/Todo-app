@@ -22,7 +22,6 @@ import {
   tableColumnSchema,
   uiToneSchema,
 } from "./compositionSchema";
-import "./composition.css";
 
 const CHART_PALETTE = [
   "var(--color-accent, #456b8c)",
@@ -152,7 +151,9 @@ export const columnComponent = createBinderlessComponentImplementation(
   ({ context, buildChild }) => {
     const props = columnApi.schema.parse(context.componentModel.properties);
     return (
-      <div className={`a2ui-column a2ui-gap-${props.gap}`}>
+      <div
+        className={`a2ui-column flex flex-col w-full min-w-[0] a2ui-gap-${props.gap}`}
+      >
         {props.children.map((childId) => (
           <Fragment key={childId}>{buildChild(childId)}</Fragment>
         ))}
@@ -166,7 +167,9 @@ export const rowComponent = createBinderlessComponentImplementation(
   ({ context, buildChild }) => {
     const props = rowApi.schema.parse(context.componentModel.properties);
     return (
-      <div className={`a2ui-row a2ui-gap-${props.gap}`}>
+      <div
+        className={`a2ui-row flex flex-row flex-wrap items-stretch w-full min-w-[0] [&_>_*]:flex-[1_1_200px] [&_>_*]:min-w-[0] a2ui-gap-${props.gap}`}
+      >
         {props.children.map((childId) => (
           <Fragment key={childId}>{buildChild(childId)}</Fragment>
         ))}
@@ -181,16 +184,24 @@ export const cardComponent = createBinderlessComponentImplementation(
     const props = cardApi.schema.parse(context.componentModel.properties);
     const tone = props.tone ?? "default";
     return (
-      <section className={`a2ui-card a2ui-card--${tone}`}>
+      <section
+        className={`a2ui-card flex flex-col gap-[0.75rem] w-full min-w-[0] box-border p-[1rem_1.1rem] [border:1px_solid_var(--color-line,#d9dee5)] rounded-[var(--radius-xl,12px)] [background:color-mix(_in_srgb,var(--color-surface,#ffffff)_82%,var(--color-surface-muted,#f1f3f5)_)] [box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))] a2ui-card--${tone}`}
+      >
         {(props.title || props.subtitle) && (
-          <header className="a2ui-card-header">
-            {props.title && <h3 className="a2ui-card-title">{props.title}</h3>}
+          <header className="a2ui-card-header flex flex-col gap-[0.2rem] pb-[0.55rem] [border-bottom:1px_solid_color-mix(in_srgb,var(--color-line,#d9dee5)_75%,transparent)]">
+            {props.title && (
+              <h3 className="a2ui-card-title m-[0] text-[0.925rem] [font-weight:650] [letter-spacing:-0.015em] [line-height:1.3] text-[var(--color-text,#1f2328)]">
+                {props.title}
+              </h3>
+            )}
             {props.subtitle && (
-              <p className="a2ui-card-subtitle">{props.subtitle}</p>
+              <p className="a2ui-card-subtitle m-[0] text-[0.775rem] [line-height:1.4] text-[var(--color-text-muted,#667085)]">
+                {props.subtitle}
+              </p>
             )}
           </header>
         )}
-        <div className="a2ui-card-body">
+        <div className="a2ui-card-body flex flex-col gap-[0.65rem] w-full min-w-[0]">
           {props.children.map((childId) => (
             <Fragment key={childId}>{buildChild(childId)}</Fragment>
           ))}
@@ -220,10 +231,21 @@ export const textComponent = createBinderlessComponentImplementation(
     const textContent = formatDisplayScalar(resolvedValue);
 
     if (props.emphasis === "heading") {
-      return <h3 className="a2ui-text a2ui-text-heading">{textContent}</h3>;
+      return (
+        <h3
+          className="a2ui-text m-[0] min-w-[0] wrap-anywhere whitespace-pre-wrap a2ui-text-heading text-[1.025rem]
+        [font-weight:650] [letter-spacing:-0.02em] [line-height:1.35] text-[var(--color-text,inherit)]"
+        >
+          {textContent}
+        </h3>
+      );
     }
     return (
-      <p className={`a2ui-text a2ui-text-${props.emphasis}`}>{textContent}</p>
+      <p
+        className={`a2ui-text m-[0] min-w-[0] wrap-anywhere whitespace-pre-wrap a2ui-text-${props.emphasis}`}
+      >
+        {textContent}
+      </p>
     );
   },
 );
@@ -252,17 +274,24 @@ export const statComponent = createBinderlessComponentImplementation(
         : undefined;
 
     return (
-      <div className={`a2ui-stat a2ui-stat--${tone}`}>
-        <div className="a2ui-stat-header">
-          <span className="a2ui-stat-dot" aria-hidden="true" />
-          <span className="a2ui-stat-label">{props.label}</span>
+      <div
+        className={`a2ui-stat [--stat-accent:var(--color-accent,#456b8c)] flex flex-col gap-[0.4rem] p-[0.875rem_1rem] [border:1px_solid_var(--color-line,#d9dee5)] rounded-[var(--radius-xl,12px)] [background:var(--color-surface,#ffffff)] [box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))] min-w-[0] a2ui-stat--${tone}`}
+      >
+        <div className="a2ui-stat-header flex items-center gap-[0.45rem]">
+          <span
+            className="a2ui-stat-dot w-[7px] h-[7px] rounded-[999px] [background:var(--stat-accent)] shrink-0"
+            aria-hidden="true"
+          />
+          <span className="a2ui-stat-label text-[0.74rem] [font-weight:600] text-[var(--color-text-muted,#667085)] [letter-spacing:0.01em]">
+            {props.label}
+          </span>
         </div>
-        <strong className="a2ui-stat-value">
+        <strong className="a2ui-stat-value block text-[1.55rem] [font-weight:650] [letter-spacing:-0.035em] [line-height:1.15] text-[var(--color-text,#1f2328)] [font-variant-numeric:tabular-nums]">
           {formatDisplayScalar(resolvedValue)}
         </strong>
         {progress !== undefined && (
           <div
-            className="a2ui-stat-progress"
+            className="a2ui-stat-progress w-full h-[6px] rounded-[999px] [background:var(--color-surface-muted,#f1f3f5)] overflow-hidden mt-[0.15rem]"
             role="progressbar"
             aria-label={props.label}
             aria-valuemin={0}
@@ -270,13 +299,15 @@ export const statComponent = createBinderlessComponentImplementation(
             aria-valuenow={progress}
           >
             <div
-              className="a2ui-stat-progress-fill"
+              className="a2ui-stat-progress-fill h-full rounded-[999px] [background:var(--stat-accent)] [transition:width_220ms_ease]"
               style={{ width: `${progress}%` }}
             />
           </div>
         )}
         {props.caption && (
-          <small className="a2ui-stat-caption">{props.caption}</small>
+          <small className="a2ui-stat-caption text-[0.725rem] [line-height:1.35] text-[var(--color-text-muted,#667085)]">
+            {props.caption}
+          </small>
         )}
       </div>
     );
@@ -297,8 +328,19 @@ export const tableComponent = createBinderlessComponentImplementation(
     }
 
     return (
-      <div className="a2ui-table-wrap">
-        <table className="a2ui-table">
+      <div
+        className="a2ui-table-wrap w-full max-w-full min-w-[0] overflow-x-auto [border:1px_solid_var(--color-line,#d9dee5)]
+        rounded-[var(--radius-lg,10px)] [background:var(--color-surface,#ffffff)]
+        [box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))]"
+      >
+        <table
+          className="a2ui-table w-full [border-collapse:collapse] text-[0.825rem] text-left [&_th]:p-[0.55rem_0.75rem]
+          [&_th]:[border-bottom:1px_solid_var(--color-line,#d9dee5)] [&_th]:align-middle [&_th]:wrap-anywhere
+          [&_th]:text-[0.7rem] [&_th]:[font-weight:650] [&_th]:uppercase [&_th]:[letter-spacing:0.045em]
+          [&_th]:text-[var(--color-text-muted,#667085)] [&_th]:whitespace-nowrap [&_td]:p-[0.55rem_0.75rem]
+          [&_td]:[border-bottom:1px_solid_var(--color-line,#d9dee5)] [&_td]:align-middle [&_td]:wrap-anywhere
+          [&_tbody_tr:last-child_td]:[border-bottom:none]"
+        >
           <thead>
             <tr>
               {props.columns.map((column) => (
@@ -318,7 +360,7 @@ export const tableComponent = createBinderlessComponentImplementation(
                       key={column.key}
                       className={
                         typeof cellVal === "number"
-                          ? "a2ui-table-num"
+                          ? "a2ui-table-num [font-variant-numeric:tabular-nums] [font-weight:550]"
                           : undefined
                       }
                     >
@@ -352,9 +394,17 @@ export const chartComponent = createBinderlessComponentImplementation(
 
     if (rows.length === 0) {
       return (
-        <div className="a2ui-chart">
-          {props.title && <h4 className="a2ui-chart-title">{props.title}</h4>}
-          <p className="a2ui-chart-empty">
+        <div
+          className="a2ui-chart flex flex-col gap-[0.75rem] w-full min-w-[0] p-[0.9rem_1rem]
+          [border:1px_solid_var(--color-line,#d9dee5)] rounded-[var(--radius-xl,12px)]
+          [background:var(--color-surface,#ffffff)] [box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))]"
+        >
+          {props.title && (
+            <h4 className="a2ui-chart-title m-[0] text-[0.86rem] [font-weight:650] text-[var(--color-text,#1f2328)]">
+              {props.title}
+            </h4>
+          )}
+          <p className="a2ui-chart-empty m-[0] p-[1rem] text-center text-[0.8rem] text-[var(--color-text-muted,#667085)] [background:var(--color-surface-muted,#f1f3f5)] rounded-[var(--radius-sm,8px)]">
             {i18n.t("agent:noChartDataAvailable")}
           </p>
         </div>
@@ -380,11 +430,21 @@ export const chartComponent = createBinderlessComponentImplementation(
       });
 
       return (
-        <div className="a2ui-chart" role="region" aria-label={ariaTitle}>
-          {props.title && <h4 className="a2ui-chart-title">{props.title}</h4>}
-          <div className="a2ui-donut-layout">
+        <div
+          className="a2ui-chart flex flex-col gap-[0.75rem] w-full min-w-[0] p-[0.9rem_1rem]
+          [border:1px_solid_var(--color-line,#d9dee5)] rounded-[var(--radius-xl,12px)]
+          [background:var(--color-surface,#ffffff)] [box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))]"
+          role="region"
+          aria-label={ariaTitle}
+        >
+          {props.title && (
+            <h4 className="a2ui-chart-title m-[0] text-[0.86rem] [font-weight:650] text-[var(--color-text,#1f2328)]">
+              {props.title}
+            </h4>
+          )}
+          <div className="a2ui-donut-layout grid grid-cols-[auto_1fr] items-center gap-[1.15rem] [@media(max-width:480px)]:grid-cols-[1fr] [@media(max-width:480px)]:justify-items-center">
             <div
-              className="a2ui-donut-ring"
+              className="a2ui-donut-ring w-[112px] h-[112px] rounded-[50%] grid place-items-center shrink-0"
               style={{
                 background:
                   total > 0
@@ -393,21 +453,37 @@ export const chartComponent = createBinderlessComponentImplementation(
               }}
               aria-hidden="true"
             >
-              <div className="a2ui-donut-center">
+              <div
+                className="a2ui-donut-center w-[74px] h-[74px] rounded-[50%] [background:var(--color-surface,#ffffff)] flex flex-col
+                items-center justify-center text-center p-[0.25rem] [&_strong]:text-[1.05rem] [&_strong]:[font-weight:650]
+                [&_strong]:[line-height:1.1] [&_strong]:[font-variant-numeric:tabular-nums]
+                [&_strong]:text-[var(--color-text,#1f2328)] [&_span]:text-[0.65rem]
+                [&_span]:text-[var(--color-text-muted,#667085)] [&_span]:max-w-[64px] [&_span]:overflow-hidden
+                [&_span]:text-ellipsis [&_span]:whitespace-nowrap"
+              >
                 <strong>
                   {Number(total.toFixed(1)).toLocaleString(getLocale())}
                 </strong>
                 <span>{props.series[0].label}</span>
               </div>
             </div>
-            <div className="a2ui-chart-legendList">
+            <div className="a2ui-chart-legendList flex flex-col gap-[0.45rem] min-w-[0] [@media(max-width:480px)]:w-full">
               {items.map((item, idx) => {
                 const pct =
                   total > 0 ? Math.round((item.value / total) * 100) : 0;
                 return (
-                  <div className="a2ui-chart-legendRow" key={idx}>
+                  <div
+                    className="a2ui-chart-legendRow grid grid-cols-[8px_1fr_auto_auto] items-center gap-[0.5rem] text-[0.78rem] [&_i]:w-[8px]
+                    [&_i]:h-[8px] [&_i]:rounded-[999px] [&_strong]:[font-weight:600]
+                    [&_strong]:[font-variant-numeric:tabular-nums] [&_strong]:text-[var(--color-text,#1f2328)]
+                    [&_small]:text-[0.72rem] [&_small]:[font-variant-numeric:tabular-nums]
+                    [&_small]:text-[var(--color-text-muted,#667085)] [&_small]:min-w-[2.1rem] [&_small]:text-right"
+                    key={idx}
+                  >
                     <i style={{ background: item.color }} aria-hidden="true" />
-                    <span className="a2ui-chart-legendLabel">{item.label}</span>
+                    <span className="a2ui-chart-legendLabel text-[var(--color-text,#1f2328)] overflow-hidden text-ellipsis whitespace-nowrap">
+                      {item.label}
+                    </span>
                     <strong>{item.value.toLocaleString(getLocale())}</strong>
                     <small>{pct}%</small>
                   </div>
@@ -442,12 +518,24 @@ export const chartComponent = createBinderlessComponentImplementation(
         padTop + plotH - (Math.max(0, val) / maxVal) * plotH;
 
       return (
-        <div className="a2ui-chart">
-          <div className="a2ui-chart-header">
-            {props.title && <h4 className="a2ui-chart-title">{props.title}</h4>}
-            <div className="a2ui-chart-pills">
+        <div
+          className="a2ui-chart flex flex-col gap-[0.75rem] w-full min-w-[0] p-[0.9rem_1rem]
+          [border:1px_solid_var(--color-line,#d9dee5)] rounded-[var(--radius-xl,12px)]
+          [background:var(--color-surface,#ffffff)] [box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))]"
+        >
+          <div className="a2ui-chart-header flex flex-wrap items-center justify-between gap-[0.5rem]">
+            {props.title && (
+              <h4 className="a2ui-chart-title m-[0] text-[0.86rem] [font-weight:650] text-[var(--color-text,#1f2328)]">
+                {props.title}
+              </h4>
+            )}
+            <div className="a2ui-chart-pills flex flex-wrap items-center gap-[0.65rem]">
               {props.series.map((s, sIdx) => (
-                <span key={s.key} className="a2ui-chart-pill">
+                <span
+                  key={s.key}
+                  className="a2ui-chart-pill inline-flex items-center gap-[0.35rem] text-[0.725rem] [font-weight:550]
+                  text-[var(--color-text-muted,#667085)] [&_i]:w-[8px] [&_i]:h-[8px] [&_i]:rounded-[999px] [&_i]:inline-block"
+                >
                   <i
                     style={{
                       background: CHART_PALETTE[sIdx % CHART_PALETTE.length],
@@ -460,7 +548,7 @@ export const chartComponent = createBinderlessComponentImplementation(
             </div>
           </div>
           <svg
-            className="a2ui-chart-svg"
+            className="a2ui-chart-svg w-full h-auto max-h-[180px] block overflow-visible"
             viewBox={`0 0 ${width} ${height}`}
             role="img"
             aria-label={ariaTitle}
@@ -475,13 +563,13 @@ export const chartComponent = createBinderlessComponentImplementation(
                     y1={y}
                     x2={width - padRight}
                     y2={y}
-                    className="a2ui-chart-grid"
+                    className="a2ui-chart-grid stroke-[var(--color-line,#d9dee5)] [stroke-dasharray:3_3] [stroke-width:1]"
                   />
                   <text
                     x={padLeft - 6}
                     y={y + 3}
                     textAnchor="end"
-                    className="a2ui-chart-axisText"
+                    className="a2ui-chart-axisText fill-[var(--color-text-muted,#667085)] text-[10px] [font-family:var(--font-sans,inherit)]"
                   >
                     {tickVal}
                   </text>
@@ -527,7 +615,7 @@ export const chartComponent = createBinderlessComponentImplementation(
                 x={xForIndex(rIdx)}
                 y={height - 8}
                 textAnchor="middle"
-                className="a2ui-chart-axisText"
+                className="a2ui-chart-axisText fill-[var(--color-text-muted,#667085)] text-[10px] [font-family:var(--font-sans,inherit)]"
               >
                 {formatDisplayScalar(row[props.labelKey]).slice(0, 14)}
               </text>
@@ -539,12 +627,26 @@ export const chartComponent = createBinderlessComponentImplementation(
 
     // Default: "bar" chart
     return (
-      <div className="a2ui-chart" role="img" aria-label={ariaTitle}>
-        <div className="a2ui-chart-header">
-          {props.title && <h4 className="a2ui-chart-title">{props.title}</h4>}
-          <div className="a2ui-chart-pills">
+      <div
+        className="a2ui-chart flex flex-col gap-[0.75rem] w-full min-w-[0] p-[0.9rem_1rem]
+        [border:1px_solid_var(--color-line,#d9dee5)] rounded-[var(--radius-xl,12px)]
+        [background:var(--color-surface,#ffffff)] [box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))]"
+        role="img"
+        aria-label={ariaTitle}
+      >
+        <div className="a2ui-chart-header flex flex-wrap items-center justify-between gap-[0.5rem]">
+          {props.title && (
+            <h4 className="a2ui-chart-title m-[0] text-[0.86rem] [font-weight:650] text-[var(--color-text,#1f2328)]">
+              {props.title}
+            </h4>
+          )}
+          <div className="a2ui-chart-pills flex flex-wrap items-center gap-[0.65rem]">
             {props.series.map((s, sIdx) => (
-              <span key={s.key} className="a2ui-chart-pill">
+              <span
+                key={s.key}
+                className="a2ui-chart-pill inline-flex items-center gap-[0.35rem] text-[0.725rem] [font-weight:550]
+                text-[var(--color-text-muted,#667085)] [&_i]:w-[8px] [&_i]:h-[8px] [&_i]:rounded-[999px] [&_i]:inline-block"
+              >
                 <i
                   style={{
                     background: CHART_PALETTE[sIdx % CHART_PALETTE.length],
@@ -556,13 +658,16 @@ export const chartComponent = createBinderlessComponentImplementation(
             ))}
           </div>
         </div>
-        <div className="a2ui-bar-list">
+        <div className="a2ui-bar-list flex flex-col gap-[0.65rem]">
           {rows.map((row, rIdx) => (
-            <div key={rIdx} className="a2ui-bar-group">
-              <div className="a2ui-bar-label">
+            <div
+              key={rIdx}
+              className="a2ui-bar-group grid grid-cols-[minmax(72px,110px)_1fr] items-center gap-[0.75rem]"
+            >
+              <div className="a2ui-bar-label text-[0.78rem] [font-weight:550] text-[var(--color-text,#1f2328)] overflow-hidden text-ellipsis whitespace-nowrap">
                 {formatDisplayScalar(row[props.labelKey])}
               </div>
-              <div className="a2ui-bar-tracks">
+              <div className="a2ui-bar-tracks flex flex-col gap-[0.3rem]">
                 {props.series.map((s, sIdx) => {
                   const val = Number(row[s.key] ?? 0);
                   const pct = Math.min(
@@ -571,14 +676,17 @@ export const chartComponent = createBinderlessComponentImplementation(
                   );
                   const color = CHART_PALETTE[sIdx % CHART_PALETTE.length];
                   return (
-                    <div key={s.key} className="a2ui-bar-row">
-                      <div className="a2ui-bar-track">
+                    <div
+                      key={s.key}
+                      className="a2ui-bar-row grid grid-cols-[1fr_auto] items-center gap-[0.55rem]"
+                    >
+                      <div className="a2ui-bar-track h-[8px] rounded-[999px] [background:var(--color-surface-muted,#f1f3f5)] overflow-hidden">
                         <div
-                          className="a2ui-bar-fill"
+                          className="a2ui-bar-fill h-full rounded-[999px] min-w-[4px] [transition:width_220ms_ease]"
                           style={{ width: `${pct}%`, background: color }}
                         />
                       </div>
-                      <span className="a2ui-bar-val">
+                      <span className="a2ui-bar-val text-[0.74rem] [font-weight:600] [font-variant-numeric:tabular-nums] text-[var(--color-text-muted,#667085)] min-w-[2rem] text-right">
                         {val.toLocaleString(getLocale())}
                       </span>
                     </div>
@@ -613,8 +721,12 @@ export const diagramComponent = createBinderlessComponentImplementation(
     const code = typeof resolvedValue === "string" ? resolvedValue : "";
 
     return (
-      <div className="a2ui-diagram">
-        {props.title && <h4 className="a2ui-diagram-title">{props.title}</h4>}
+      <div className="a2ui-diagram flex flex-col gap-[0.35rem] w-full min-w-[0] [&_.chat-diagram]:my-[0]">
+        {props.title && (
+          <h4 className="a2ui-diagram-title m-[0] text-[0.85rem] [font-weight:650] text-[var(--color-text,#1f2328)]">
+            {props.title}
+          </h4>
+        )}
         <MermaidDiagram code={code} />
       </div>
     );

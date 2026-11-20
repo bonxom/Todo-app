@@ -185,10 +185,12 @@ const CalendarView = ({
   const openAddProject = () => setIsAddProjectModalOpen(true);
 
   return (
-    <section className="calendar-workspace">
-      <header className="ui-workspace-heading">
-        <h1 className="ui-page-title">{t("calendar")}</h1>
-        <div className="calendar-heading-actions">
+    <section className="calendar-workspace flex flex-col">
+      <header className="ui-workspace-heading flex items-center justify-between">
+        <h1 className="ui-page-title m-[0] text-[var(--color-text)] [font-weight:650] text-balance">
+          {t("calendar")}
+        </h1>
+        <div className="calendar-heading-actions flex gap-[10px] [@media(max-width:650px)]:gap-[6px] [@media(max-width:360px)]:w-full [@media(max-width:360px)]:justify-end">
           <button
             type="button"
             onClick={openGenerateTasks}
@@ -199,16 +201,24 @@ const CalendarView = ({
           <button
             type="button"
             onClick={openAddTask}
-            className="ui-btn-primary ui-page-add-button ui-focus-ring"
+            className="ui-btn-primary ui-page-add-button shrink-0 ui-focus-ring"
           >
             <Plus size={17} aria-hidden="true" /> {t("addTaskCasedAddTask")}
           </button>
         </div>
       </header>
 
-      <section className="calendar-overview" aria-label={t("scheduleOverview")}>
-        <div className="calendar-overview-intro">
-          <span className="calendar-eyebrow">
+      <section
+        className="calendar-overview grid [border:1px_solid_var(--color-line)] rounded-[18px] [background:var(--color-surface)] overflow-hidden"
+        aria-label={t("scheduleOverview")}
+      >
+        <div
+          className="calendar-overview-intro relative isolate overflow-hidden p-[25px_28px] [background:var(--color-accent-soft)]
+          [&_h2]:[font-weight:550] [&_h2]:[letter-spacing:-0.035em] [&_h2]:[line-height:1.25] [&_h2]:m-[10px_0]
+          [&_h2_em]:font-[Georgia,serif] [&_h2_em]:[font-weight:400] [&_h2_em]:text-[var(--color-accent)]
+          [&_p]:text-[var(--color-text-muted)] [@media(max-width:650px)]:p-[20px]"
+        >
+          <span className="calendar-eyebrow text-[10px] [letter-spacing:0.13em] [font-weight:700] text-[var(--color-accent)]">
             {t("makeRoomForWhatMatters")}
           </span>
           <h2>
@@ -217,9 +227,12 @@ const CalendarView = ({
             <em>{t("aClearerMind")}</em>
           </h2>
           <p>{t("yourPlansAtAComfortablePace")}</p>
-          <CalendarDays className="calendar-overview-art" aria-hidden="true" />
+          <CalendarDays
+            className="calendar-overview-art absolute w-[120px] h-[120px] right-[-22px] bottom-[-22px] [transform:rotate(-15deg)] text-[var(--color-accent)] opacity-[0.08] z-[-1] [stroke-width:1]"
+            aria-hidden="true"
+          />
         </div>
-        <div className="calendar-metrics">
+        <div className="calendar-metrics grid grid-cols-[repeat(3,minmax(0,1fr))] items-center p-[25px_0] [@media(max-width:650px)]:py-[20px]">
           {[
             [
               CalendarDays,
@@ -243,7 +256,13 @@ const CalendarView = ({
               t("progressToBeProudOf"),
             ],
           ].map(([Icon, count, label, note]) => (
-            <div className="calendar-metric" key={label}>
+            <div
+              className="calendar-metric flex flex-col [border-right:1px_solid_var(--color-line)] [&:last-child]:[border:0]
+              [&_>_span]:flex [&_>_span]:items-center [&_>_span]:text-[var(--color-text-muted)]
+              [&_svg]:text-[var(--color-accent)] [&_strong]:[font-weight:550] [&_strong]:[letter-spacing:-0.045em]
+              [&_strong]:[font-variant-numeric:tabular-nums] [&_small]:text-[var(--color-text-muted)]"
+              key={label}
+            >
               <span>
                 {createElement(Icon, { size: 15, "aria-hidden": true })}
                 {label}
@@ -255,10 +274,12 @@ const CalendarView = ({
         </div>
       </section>
 
-      <div className="calendar-filter-bar">
+      <div className="calendar-filter-bar flex justify-between items-center gap-[12px] mb-[-10px] [&_>_div]:flex [@media(max-width:650px)]:[&_>_div]:flex-col">
         <div>
-          <span className="calendar-eyebrow">{t("yourSchedule")}</span>
-          <span className="calendar-filter-caption">
+          <span className="calendar-eyebrow text-[10px] [letter-spacing:0.13em] [font-weight:700] text-[var(--color-accent)]">
+            {t("yourSchedule")}
+          </span>
+          <span className="calendar-filter-caption text-[11px] text-[var(--color-text-muted)]">
             {validSelectedProjectIds.length
               ? t("selectedProjects", { count: validSelectedProjectIds.length })
               : t("allProjectsPersonalTasks")}
@@ -278,14 +299,17 @@ const CalendarView = ({
         >
           <SlidersHorizontal size={15} aria-hidden="true" /> {t("projects")}
           {validSelectedProjectIds.length > 0 && (
-            <span className="calendar-filter-count">
+            <span className="calendar-filter-count [background:var(--color-accent-soft)] text-[var(--color-accent)] p-[1px_6px] rounded-[4px]">
               {validSelectedProjectIds.length}
             </span>
           )}
         </button>
       </div>
-      <div className="calendar-layout" data-filters-open={isProjectFiltersOpen}>
-        <div className="calendar-main">
+      <div
+        className="calendar-layout grid grid-cols-[minmax(0,1fr)] gap-[20px] [align-items:start]"
+        data-filters-open={isProjectFiltersOpen}
+      >
+        <div className="calendar-main min-w-[0] flex flex-col gap-[24px]">
           <CalendarGrid
             currentDate={currentDate}
             selectedDate={selectedDate}
@@ -313,7 +337,7 @@ const CalendarView = ({
           />
         </div>
         {isProjectFiltersOpen && (
-          <div className="calendar-filters">
+          <div className="calendar-filters min-w-[0] max-h-[800px] overflow-auto rounded-[var(--radius-lg)] [&_aside]:h-auto [@media(max-width:1200px)]:row-1 [@media(max-width:1200px)]:max-h-[440px]">
             <ProjectFocusPanel
               projects={projectSidebarItems}
               selectedProjectIds={validSelectedProjectIds}

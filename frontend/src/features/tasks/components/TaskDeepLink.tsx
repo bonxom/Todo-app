@@ -23,7 +23,10 @@ export default function TaskDeepLink() {
   const unavailable = !valid || status === 403 || status === 404;
   if (unavailable || (task.isError && !task.data))
     return (
-      <div role="alert" className="notification-state">
+      <div
+        role="alert"
+        className="notification-state p-[20px] text-[14px] [&_button]:mt-[10px] [&_button]:block"
+      >
         {t(
           unavailable ? "notifications.unavailable" : "notifications.taskError",
         )}

@@ -295,7 +295,7 @@ export default function CustomSelect({
         disabled={disabled}
         onChange={handleNativeChange}
         onKeyDown={handleNativeKeyDown}
-        className="ui-custom-select-native"
+        className="ui-custom-select-native absolute inset-[0] w-full h-full m-[0] opacity-[0] pointer-events-none"
         {...rest}
       >
         {children}
@@ -313,10 +313,12 @@ export default function CustomSelect({
         onClick={handleTriggerClick}
         className={`ui-custom-select-trigger ${className}`.trim()}
       >
-        <span className="ui-custom-select-value">{selectedOption.label}</span>
+        <span className="ui-custom-select-value min-w-[0] flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+          {selectedOption.label}
+        </span>
         <ChevronDown
           size={15}
-          className="ui-custom-select-chevron"
+          className="ui-custom-select-chevron shrink-0 [transition:transform_180ms_cubic-bezier(0.22,1,0.36,1),color_160ms_ease]"
           aria-hidden="true"
         />
       </button>
@@ -330,7 +332,9 @@ export default function CustomSelect({
             aria-label={
               rest["aria-label"] || selectedOption.label || t("options")
             }
-            className="ui-custom-select-menu"
+            className="ui-custom-select-menu fixed z-10000 flex flex-col gap-[2px] p-[6px] overflow-y-auto overscroll-contain
+              [border:1px_solid_var(--color-line)] rounded-[12px] bg-[var(--color-surface)] [box-shadow:var(--shadow-lg)]
+              animate-[fadeIn_140ms_cubic-bezier(0.22,1,0.36,1)]"
             style={{
               ...menuTheme,
               top: menuPos.top !== undefined ? `${menuPos.top}px` : undefined,
@@ -360,14 +364,18 @@ export default function CustomSelect({
                   data-selected={isSelected ? "true" : "false"}
                   data-action={opt.isAction ? "true" : "false"}
                   data-cursor-target="control"
-                  className="ui-custom-select-option"
+                  className="ui-custom-select-option flex items-center justify-between gap-[0.625rem] w-full p-[0.5rem_0.625rem] [border:0]
+                    rounded-[8px] bg-transparent text-left cursor-pointer
+                    [transition:background-color_140ms_ease,color_140ms_ease] [&[data-action=true]]:mt-[3px]
+                    [&[data-action=true]]:[border-top:1px_solid_var(--color-line)] [&[data-action=true]]:pt-[0.5625rem]
+                    [&:disabled]:opacity-[0.45] [&:disabled]:cursor-not-allowed"
                   onClick={(e) => handleOptionClick(e, opt)}
                 >
-                  <span className="ui-custom-select-option-label">
+                  <span className="ui-custom-select-option-label inline-flex items-center gap-[0.375rem] min-w-[0] overflow-hidden text-ellipsis whitespace-nowrap">
                     {opt.isAction && (
                       <Plus
                         size={14}
-                        className="ui-custom-select-option-plus"
+                        className="ui-custom-select-option-plus shrink-0 text-[var(--color-accent)]"
                         aria-hidden="true"
                       />
                     )}
@@ -376,7 +384,7 @@ export default function CustomSelect({
                   {isSelected && (
                     <Check
                       size={14}
-                      className="ui-custom-select-option-check"
+                      className="ui-custom-select-option-check shrink-0 text-[var(--color-accent)]"
                       aria-hidden="true"
                     />
                   )}

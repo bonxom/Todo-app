@@ -32,7 +32,7 @@ const AddTaskForm = ({ onAddTask }) => {
   };
 
   return (
-    <div className="ui-section-card ui-card-padding">
+    <div className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)]">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex gap-3">
           <input

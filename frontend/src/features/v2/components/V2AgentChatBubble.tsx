@@ -14,7 +14,6 @@ import {
 import { useAgentSession } from "@/features/agent/agentSessionContext";
 import ChatField from "@/features/tasks/components/chat/ChatField";
 import RecentConversations from "@/features/tasks/components/chat/RecentConversations";
-import "@/styles/chat.css";
 
 type DisplayMode = "compact" | "docked";
 
@@ -151,13 +150,15 @@ export default function V2AgentChatBubble({
     >
       <Sparkles size={18} strokeWidth={1.7} aria-hidden="true" />
       <span className="v2-assistant-trigger-label">{t("assistant")}</span>
-      {chat.sending && <span className="v2-assistant-pulse" />}
+      {chat.sending && (
+        <span className="v2-assistant-pulse absolute w-[8px] h-[8px] rounded-[100%] animate-[v2-assistant-pulse_1600ms_ease-in-out_infinite] [@media(prefers-reduced-motion:reduce)]:animate-none" />
+      )}
     </button>
   );
 
   return (
     <div
-      className="v2-assistant"
+      className="v2-assistant fixed z-60 flex flex-col [@media(max-width:899px)]:[&[data-mode=docked]_.v2-assistant-panel]:max-w-[100vw]"
       data-mode={mode}
       data-open={isOpen}
       onClick={(event) => {
@@ -184,7 +185,7 @@ export default function V2AgentChatBubble({
       >
         {mode === "docked" && (
           <div
-            className="v2-assistant-resize"
+            className="v2-assistant-resize absolute top-[0] bottom-[0] left-[0] [border-left:2px_solid_transparent] cursor-col-resize z-2 rounded-[26px_0_0_26px] [@media(max-width:899px)]:[display:none]"
             role="separator"
             aria-orientation="vertical"
             aria-label={t("resizeChat")}
@@ -228,15 +229,21 @@ export default function V2AgentChatBubble({
           />
         )}
 
-        <header className="v2-assistant-header">
-          <div className="v2-assistant-heading">
-            <div className="v2-assistant-identity">
-              <span className="v2-assistant-brand">
+        <header className="v2-assistant-header justify-between [border-bottom:1px_solid_var(--v2-border)] flex-col flex-[0_0_auto] [background:linear-gradient(135deg,var(--v2-shell-fill),transparent)]">
+          <div className="v2-assistant-heading flex items-center justify-between gap-[8px] min-w-[0]">
+            <div className="v2-assistant-identity flex items-center gap-[10px] min-w-[0]">
+              <span
+                className="v2-assistant-brand grid place-items-center w-[40px] h-[40px] flex-[0_0_auto]
+                [border:1px_solid_var(--v2-glass-border)] rounded-[14px] [background:var(--v2-shell-fill)]
+                text-[var(--v2-accent)] [box-shadow:var(--v2-shadow-sm)]"
+              >
                 <Sparkles size={20} aria-hidden="true" />
               </span>
               <div>
-                <p className="v2-assistant-title">{t("assistant")}</p>
-                <p className="v2-assistant-subtitle">
+                <p className="v2-assistant-title [font-family:var(--v2-font-heading)] [font-weight:600] [line-height:1.4]">
+                  {t("assistant")}
+                </p>
+                <p className="v2-assistant-subtitle text-[var(--v2-muted)] mt-[2px]">
                   {t("assistantSubtitle")}
                 </p>
               </div>
@@ -250,7 +257,7 @@ export default function V2AgentChatBubble({
               <X size={18} aria-hidden="true" />
             </button>
           </div>
-          <div className="v2-assistant-toolbar">
+          <div className="v2-assistant-toolbar flex items-center justify-between gap-[8px] min-w-[0]">
             <button
               type="button"
               className="v2-btn v2-assistant-new"
@@ -261,7 +268,7 @@ export default function V2AgentChatBubble({
               <Plus size={16} aria-hidden="true" />
               <span>{t("newChat")}</span>
             </button>
-            <div className="v2-assistant-actions">
+            <div className="v2-assistant-actions flex items-center">
               <button
                 type="button"
                 className="v2-btn v2-assistant-action"
@@ -318,7 +325,7 @@ export default function V2AgentChatBubble({
           </div>
         )}
 
-        <div className="v2-assistant-body">
+        <div className="v2-assistant-body flex-1 min-h-[0] flex flex-col overflow-hidden [&_>_*]:flex-1 [&_>_*]:min-h-[0]">
           <ChatField
             chat={chat}
             messages={chat.messages}

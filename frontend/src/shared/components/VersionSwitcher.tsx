@@ -30,7 +30,7 @@ export default function VersionSwitcher({
     <button
       type="button"
       onClick={switchVersion}
-      className={`ui-version-switcher ${className}`}
+      className={`ui-version-switcher inline-flex items-center justify-center gap-[0.375rem] touch-manipulation whitespace-nowrap cursor-pointer [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease] [&:focus-visible]:[outline:2px_solid_var(--ring-focus-outline)] [&:focus-visible]:outline-offset-[2px] ${className}`}
       aria-label={label}
     >
       <Sparkles size={14} aria-hidden="true" />

@@ -58,7 +58,7 @@ export default function DashboardPage() {
   }, [pageInfo, pageNo, setPageNo]);
 
   return (
-    <div data-testid="v2-dashboard-page" className="v2-dashboard">
+    <div data-testid="v2-dashboard-page" className="v2-dashboard flex flex-col">
       <h1 className="sr-only">{t("dashboard")}</h1>
       {/* Summary Statistics */}
       <DashboardSummary
@@ -67,7 +67,7 @@ export default function DashboardPage() {
         isError={statsQuery.isError}
       />
 
-      <section className="v2-workspace-panel">
+      <section className="v2-workspace-panel overflow-hidden">
         {/* Toolbar */}
         <TaskToolbar
           searchDraft={searchDraft}

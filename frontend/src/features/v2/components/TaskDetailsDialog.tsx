@@ -130,7 +130,7 @@ export default function TaskDetailsDialog({
           <button
             type="button"
             onClick={() => void refetch()}
-            className="v2-btn v2-btn-primary inline-flex items-center gap-1.5"
+            className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)] inline-flex items-center gap-1.5"
           >
             <RefreshCw size={14} aria-hidden="true" />
             <span>{t("retry")}</span>

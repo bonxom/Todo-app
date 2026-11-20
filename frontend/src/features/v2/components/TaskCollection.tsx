@@ -68,7 +68,7 @@ export default function TaskCollection({
         <button
           type="button"
           onClick={onRetry}
-          className="v2-btn v2-btn-primary inline-flex items-center gap-2"
+          className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)] inline-flex items-center gap-2"
         >
           <RefreshCw size={15} aria-hidden="true" />
           <span>{t("retry")}</span>
@@ -95,7 +95,7 @@ export default function TaskCollection({
           <button
             type="button"
             onClick={onClearFilters}
-            className="v2-btn v2-btn-primary inline-flex items-center gap-2"
+            className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)] inline-flex items-center gap-2"
           >
             <span>{t("clearFilters")}</span>
           </button>
@@ -119,7 +119,7 @@ export default function TaskCollection({
         <button
           type="button"
           onClick={onCreate}
-          className="v2-btn v2-btn-primary inline-flex items-center gap-2"
+          className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)] inline-flex items-center gap-2"
         >
           <span>{t("newTask")}</span>
           <Plus size={15} aria-hidden="true" />
@@ -130,14 +130,19 @@ export default function TaskCollection({
 
   return (
     <>
-      <div className="v2-task-columns" aria-hidden="true">
+      <div
+        className="v2-task-columns grid grid-cols-[minmax(170px,1fr)_126px_90px_100px_100px] items-center gap-x-[16px]
+        p-[12px_4px] [border-bottom:1px_solid_var(--v2-border)] text-[var(--v2-muted)] text-[11px] [font-weight:600]
+        [@container_workspace_(max-width:850px)]:[display:none]"
+        aria-hidden="true"
+      >
         <span>{t("title")}</span>
         <span>{t("status")}</span>
         <span>{t("priority")}</span>
         <span>{t("dueDate")}</span>
         <span />
       </div>
-      <div className="v2-task-list" role="list">
+      <div className="v2-task-list flex flex-col" role="list">
         {tasks.map((task) => (
           <TaskRow
             key={task._id || task.id}
