@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import RoutePendingIndicator from "@/app/RoutePendingIndicator";
 import { AgentSessionProvider } from "@/features/agent/AgentSessionProvider";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import V2Sidebar from "../components/V2Sidebar";
 import V2Topbar from "../components/V2Topbar";
 import V2Dialog from "../components/V2Dialog";
@@ -15,17 +16,21 @@ export default function V2Layout() {
     null,
   );
   const [dock, setDock] = useState({ open: false, width: 420 });
+  const showFloatingBubble = useSettingsStore(
+    (state) => state.agent.showFloatingBubble,
+  );
   const handleDockChange = useCallback(
     (open: boolean, width: number) => setDock({ open, width }),
     [],
   );
+  const isDockActive = showFloatingBubble && dock.open;
 
   return (
     <AgentSessionProvider>
       <div
         className="v2-app"
         data-ui-version="v2"
-        data-dock={dock.open ? "open" : "closed"}
+        data-dock={isDockActive ? "open" : "closed"}
         data-testid="v2-layout"
         style={{ "--v2-dock-width": `${dock.width}px` } as CSSProperties}
       >
@@ -69,10 +74,12 @@ export default function V2Layout() {
           </div>
         </div>
 
-        <V2AgentChatBubble
-          onDockChange={handleDockChange}
-          triggerContainer={assistantTarget}
-        />
+        {showFloatingBubble && (
+          <V2AgentChatBubble
+            onDockChange={handleDockChange}
+            triggerContainer={assistantTarget}
+          />
+        )}
       </div>
     </AgentSessionProvider>
   );

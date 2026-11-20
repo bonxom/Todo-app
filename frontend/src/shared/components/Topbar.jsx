@@ -46,7 +46,8 @@ const getTopbarTitle = (pathname) => {
     categories: "categories",
     calendar: "calendar",
     statistics: "statistics",
-    profile: "account",
+    settings: "settings",
+    profile: "settings",
     notifications: "notifications",
   };
   return `navigation.${routes[pathname.split("/")[1]] || "workspace"}`;
@@ -275,14 +276,14 @@ const Topbar = ({ isDesktop, onOpenSidebar }) => {
 
         <button
           type="button"
-          onClick={() => navigate("/profile")}
+          onClick={() => navigate("/settings")}
           className="ui-avatar-button inline-flex items-center justify-center shrink-0 [border:1px_solid_var(--color-line)]
             [background:var(--color-surface)]
             [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
             w-[2.5rem] h-[2.5rem] overflow-hidden rounded-[999px]
             [&:hover]:border-[color-mix(_in_srgb,var(--color-line)_72%,var(--color-text-muted)_)]
             [&:hover]:[background:var(--color-surface-muted)] [&:hover]:[transform:translateY(-1px)] ui-focus-ring"
-          aria-label={t("navigation.profile")}
+          aria-label={t("navigation.settings")}
         >
           {showAvatar ? (
             <img

@@ -21,13 +21,15 @@ export default function V2Topbar({
   const location = useLocation();
   const sectionTitle = location.pathname.startsWith("/v2/notifications")
     ? t("common:notifications.title")
-    : location.pathname.startsWith("/v2/agents")
-      ? t("v2:agents")
-      : location.pathname.startsWith("/v2/calendar")
-        ? t("v2:calendar")
-        : location.pathname.startsWith("/v2/statistics")
-          ? t("v2:statistics")
-          : t("v2:dashboard");
+    : location.pathname.startsWith("/v2/settings")
+      ? t("v2:settingsTitle")
+      : location.pathname.startsWith("/v2/agents")
+        ? t("v2:agents")
+        : location.pathname.startsWith("/v2/calendar")
+          ? t("v2:calendar")
+          : location.pathname.startsWith("/v2/statistics")
+            ? t("v2:statistics")
+            : t("v2:dashboard");
 
   const isDark = theme === "dark";
   const formattedDate = new Intl.DateTimeFormat(getLocale(), {

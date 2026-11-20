@@ -14,6 +14,7 @@ import {
   useDeleteAllNotificationsMutation,
 } from "../api/notificationMutations";
 import type { NotificationDto } from "@/shared/types/notification";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import NotificationList from "./NotificationList";
 import NotificationBulkActions from "./NotificationBulkActions";
 function NotificationPanel({
@@ -165,6 +166,9 @@ export default function NotificationBell({
   const [open, setOpen] = useState(false);
   const [top, setTop] = useState(88);
   const count = useUnreadCountQuery();
+  const showUnreadBadge = useSettingsStore(
+    (s) => s.notifications.showUnreadBadge,
+  );
   const value = count.data?.count;
   return (
     <>
@@ -190,7 +194,7 @@ export default function NotificationBell({
         }}
       >
         <Bell size={19} aria-hidden="true" />
-        {value !== undefined && value > 0 && (
+        {showUnreadBadge && value !== undefined && value > 0 && (
           <span
             className="notification-badge"
             data-testid="notification-badge"

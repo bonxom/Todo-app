@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useAgentSession } from "@/features/agent/agentSessionContext";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import ChatField from "@/features/tasks/components/chat/ChatField";
 import RecentConversations from "@/features/tasks/components/chat/RecentConversations";
 
@@ -39,6 +40,9 @@ export default function V2AgentChatBubble({
   const navigate = useNavigate();
   const location = useLocation();
   const { chat } = useAgentSession();
+  const defaultBubbleMode = useSettingsStore(
+    (state) => state.agent.defaultBubbleMode,
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<DisplayMode>("compact");
   const [dockWidth, setDockWidth] = useState(DEFAULT_DOCK_WIDTH);
@@ -144,8 +148,12 @@ export default function V2AgentChatBubble({
             ?.focus();
           return;
         }
-        if (isOpen) close();
-        else setIsOpen(true);
+        if (isOpen) {
+          close();
+        } else {
+          setMode(defaultBubbleMode);
+          setIsOpen(true);
+        }
       }}
       aria-label={t("openAssistant")}
       aria-expanded={isFullChatPage ? undefined : isOpen}

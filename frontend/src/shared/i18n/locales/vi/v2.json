@@ -175,5 +175,18 @@
     "breakdowns": "Phân tích công việc",
     "untitledTask": "Công việc chưa có tiêu đề"
   },
-  "agentConversation": "Hội thoại với trợ lý"
+  "agentConversation": "Hội thoại với trợ lý",
+  "settingsTitle": "Cài đặt",
+  "settings": {
+    "palettes": {
+      "mint": {
+        "name": "Mint Glass",
+        "description": "Nền xanh ngọc dịu nhẹ cùng điểm nhấn ngọc lục bảo."
+      },
+      "ocean": {
+        "name": "Ocean Glass",
+        "description": "Sắc xanh đại dương sâu và bề mặt kính xanh biển."
+      }
+    }
+  }
 }

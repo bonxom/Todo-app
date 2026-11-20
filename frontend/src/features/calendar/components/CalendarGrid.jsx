@@ -12,16 +12,17 @@ import CustomSelect from "@/shared/components/CustomSelect";
 import DayCell from "./DayCell";
 import WeekTimeline from "./WeekTimeline";
 import {
-  buildMonthDays,
-  buildWeekDays,
   formatMonthLabel,
   formatWeekLabel,
   getDateKey,
   isSameDay,
   startOfDay,
 } from "./calendarUtils";
+import { buildMonthDays, buildWeekDays } from "../api/calendarRanges";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
-const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const SUNDAY_WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONDAY_WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const CalendarGrid = ({
   currentDate,
@@ -41,6 +42,11 @@ const CalendarGrid = ({
   actions,
 }) => {
   const { t } = useTranslation("workspace");
+  const weekStartsOn = useSettingsStore(
+    (state) => state.workspace.weekStartsOn,
+  );
+  const weekDayHeaders =
+    weekStartsOn === "monday" ? MONDAY_WEEK_DAYS : SUNDAY_WEEK_DAYS;
   const [intervalMinutes, setIntervalMinutes] = useState(30);
   const [weekMode, setWeekMode] = useState("detailed");
   const timelineViewport = useRef({ minute: 480 });
@@ -59,8 +65,8 @@ const CalendarGrid = ({
 
   const calendarDays =
     viewMode === "week"
-      ? buildWeekDays(currentDate)
-      : buildMonthDays(currentDate);
+      ? buildWeekDays(currentDate, weekStartsOn)
+      : buildMonthDays(currentDate, weekStartsOn);
 
   const today = startOfDay(new Date());
   const heading =
@@ -263,7 +269,7 @@ const CalendarGrid = ({
             [&_>_div]:[font-weight:600] [&_>_div]:uppercase [&_>_div]:[letter-spacing:0.07em]"
             data-cal-header-grid
           >
-            {WEEK_DAYS.map((day) => (
+            {weekDayHeaders.map((day) => (
               <div
                 key={t(workspaceKey(day), { defaultValue: day })}
                 className="py-2 text-center text-xs font-semibold text-[var(--color-text-muted)] sm:text-sm"

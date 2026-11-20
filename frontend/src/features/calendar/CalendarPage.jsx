@@ -6,6 +6,10 @@ import { useProjectsQuery } from "@/features/tasks/api/projectQueries";
 import { useCalendarMutations } from "./api/useCalendarMutations";
 import { useVisibleTasks } from "@/stores/useTaskFilterStore";
 import {
+  SETTINGS_STORAGE_KEY,
+  useSettingsStore,
+} from "@/stores/useSettingsStore";
+import {
   getBufferedCalendarRange,
   getVisibleCalendarRange,
   startOfDay,
@@ -15,19 +19,31 @@ import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const CalendarPage = () => {
   const { t } = useTranslation("workspace");
+  const weekStartsOn = useSettingsStore(
+    (state) => state.workspace.weekStartsOn,
+  );
 
   const today = useMemo(() => startOfDay(new Date()), []);
   const [currentDate, setCurrentDate] = useState(today);
-  const [viewMode, setViewMode] = useState("week");
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      if (localStorage.getItem(SETTINGS_STORAGE_KEY)) {
+        return useSettingsStore.getState().workspace.defaultCalendarView;
+      }
+    } catch {
+      // Ignore storage errors and keep V1 week default.
+    }
+    return "week";
+  });
 
   const bufferedRange = useMemo(
-    () => getBufferedCalendarRange(currentDate, viewMode),
-    [currentDate, viewMode],
+    () => getBufferedCalendarRange(currentDate, viewMode, weekStartsOn),
+    [currentDate, viewMode, weekStartsOn],
   );
 
   const visibleRange = useMemo(
-    () => getVisibleCalendarRange(currentDate, viewMode),
-    [currentDate, viewMode],
+    () => getVisibleCalendarRange(currentDate, viewMode, weekStartsOn),
+    [currentDate, viewMode, weekStartsOn],
   );
 
   const tasksQuery = useCalendarTasksQuery({

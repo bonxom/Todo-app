@@ -175,5 +175,18 @@
     "breakdowns": "Task breakdowns",
     "untitledTask": "Untitled task"
   },
-  "agentConversation": "Agent conversation"
+  "agentConversation": "Agent conversation",
+  "settingsTitle": "Settings",
+  "settings": {
+    "palettes": {
+      "mint": {
+        "name": "Mint Glass",
+        "description": "Cool seafoam canvas with deep emerald accents."
+      },
+      "ocean": {
+        "name": "Ocean Glass",
+        "description": "Deep cobalt and coastal sky glass surfaces."
+      }
+    }
+  }
 }

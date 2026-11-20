@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -9,6 +10,7 @@ import {
   Orbit,
 } from "lucide-react";
 import { useLogoutMutation } from "@/features/auth/api/authMutations";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export interface V2SidebarProps {
   onNavigate?: () => void;
@@ -30,6 +32,17 @@ export default function V2Sidebar({
   const navigate = useNavigate();
   const location = useLocation();
   const logout = useLogoutMutation();
+  const user = useAuthStore((state) => state.user);
+  const [brokenAvatarUrl, setBrokenAvatarUrl] = useState("");
+
+  const avatarUrl =
+    typeof user?.avatarUrl === "string" ? user.avatarUrl.trim() : "";
+  const showAvatarImage = Boolean(avatarUrl) && brokenAvatarUrl !== avatarUrl;
+  const userInitial = (user?.name?.trim() || user?.email?.trim() || "U")
+    .charAt(0)
+    .toUpperCase();
+  const displayName = user?.name?.trim() || t("settingsTitle");
+  const isSettingsActive = location.pathname.startsWith("/v2/settings");
 
   const activeTo = NAV_ITEMS.reduce<string | null>((active, item) => {
     if (!location.pathname.startsWith(item.to)) return active;
@@ -47,6 +60,7 @@ export default function V2Sidebar({
       navigate("/");
     }
   };
+
   return (
     <aside
       className={`v2-navigation [border:1px_solid_var(--v2-glass-border)] rounded-[var(--v2-radius-card)] flex flex-col relative isolate [@media(forced-colors:active)]:[border:1px_solid_ButtonBorder] [@media(forced-colors:active)]:text-[CanvasText] [&::before]:absolute [&::before]:inset-[3px] [&::before]:rounded-[21px] [&::before]:pointer-events-none [&::before]:z-[-1] [&_nav]:gap-[6px] ${className}`}
@@ -86,15 +100,60 @@ export default function V2Sidebar({
           );
         })}
       </nav>
-      <button
-        type="button"
-        className="v2-nav-item flex items-center [text-decoration:none] [transition:background_160ms,box-shadow_160ms] justify-start [&_svg]:flex-[0_0_auto] v2-signout w-full mt-auto"
-        onClick={() => void signOut()}
-        disabled={logout.isPending}
+
+      <div
+        data-testid="v2-sidebar-footer"
+        className="mt-auto pt-3 border-t border-[var(--v2-border)] flex items-center gap-1.5"
       >
-        <LogOut size={19} aria-hidden="true" />
-        <span>{t("signOut")}</span>
-      </button>
+        <Link
+          to="/v2/settings"
+          onClick={onNavigate}
+          data-testid="v2-sidebar-profile-link"
+          data-active={isSettingsActive}
+          aria-current={isSettingsActive ? "page" : undefined}
+          aria-label={`${displayName} — ${t("settingsTitle")}`}
+          title={`${displayName} — ${t("settingsTitle")}`}
+          className={`flex-1 min-w-0 min-h-[46px] px-2 py-1.5 rounded-[14px] flex items-center gap-2.5 [text-decoration:none] border transition-[background-color,border-color,box-shadow] duration-150 ${
+            isSettingsActive
+              ? "text-[var(--v2-accent)] [background:linear-gradient(135deg,var(--v2-glass-fill),var(--v2-shell-fill))] border-[var(--v2-glass-border)] [box-shadow:var(--v2-shadow-md)]"
+              : "border-transparent text-[var(--v2-ink)] hover:bg-[var(--v2-shell-fill)]"
+          }`}
+        >
+          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--v2-glass-border)] bg-[color-mix(in_srgb,var(--v2-accent)_16%,var(--v2-surface-solid))] text-xs font-bold text-[var(--v2-accent)] [box-shadow:var(--v2-shadow-sm)]">
+            {showAvatarImage ? (
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                width={36}
+                height={36}
+                className="h-full w-full object-cover"
+                onError={() => setBrokenAvatarUrl(avatarUrl)}
+              />
+            ) : (
+              <span aria-hidden="true">{userInitial}</span>
+            )}
+          </span>
+          <span className="min-w-0 flex-1 flex flex-col leading-tight">
+            <span className="truncate text-[12.5px] font-semibold text-[var(--v2-ink)]">
+              {displayName}
+            </span>
+            <span className="truncate text-[11px] font-medium text-[var(--v2-muted)]">
+              {t("settingsTitle")}
+            </span>
+          </span>
+        </Link>
+
+        <button
+          type="button"
+          className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[14px] border border-transparent text-[var(--v2-muted)] transition-[background-color,color,border-color] duration-150 hover:bg-[var(--v2-shell-fill)] hover:text-[var(--v2-ink)] cursor-pointer disabled:opacity-50"
+          onClick={() => void signOut()}
+          disabled={logout.isPending}
+          aria-label={t("signOut")}
+          title={t("signOut")}
+        >
+          <LogOut size={18} aria-hidden="true" />
+        </button>
+      </div>
     </aside>
   );
 }

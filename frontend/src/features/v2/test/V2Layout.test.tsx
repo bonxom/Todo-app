@@ -157,4 +157,29 @@ describe("V2Layout shell", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
   });
+
+  it("renders user avatar settings link next to Sign out in V2Sidebar", () => {
+    useAuthStore.getState().setSession({
+      accessToken: "test-token",
+      user: {
+        _id: "u1",
+        id: "u1",
+        name: "Alice Orbit",
+        email: "alice@orbit.test",
+        role: "USER",
+        avatarUrl: "",
+      },
+    });
+    renderLayout();
+
+    const settingsLink = screen.getByTestId("v2-sidebar-profile-link");
+    expect(settingsLink).toHaveAttribute("href", "/v2/settings");
+    expect(settingsLink).toHaveTextContent("Alice Orbit");
+
+    const footer = settingsLink.closest("[data-testid='v2-sidebar-footer']");
+    expect(footer).toBeInTheDocument();
+    expect(
+      footer?.querySelector('button[aria-label="Sign out"]'),
+    ).toBeInTheDocument();
+  });
 });

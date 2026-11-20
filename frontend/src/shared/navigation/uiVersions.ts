@@ -13,7 +13,8 @@ export const UI_ROUTES: ReadonlyArray<{
   { id: "calendar", v1: "/calendar" },
   { id: "categories", v1: "/categories" },
   { id: "statistics", v1: "/statistics", v2: "/v2/statistics" },
-  { id: "profile", v1: "/profile" },
+  { id: "settings", v1: "/settings", v2: "/v2/settings" },
+  { id: "profile", v1: "/profile", v2: "/v2/settings" },
   { id: "notifications", v1: "/notifications", v2: "/v2/notifications" },
   { id: "agent", v1: "/agent" },
   { id: "skills", v1: "/agent/skills" },
@@ -45,7 +46,8 @@ export function isSupportedProtectedPath(pathname: string): boolean {
     normalized === "/v2" ||
     normalized === "/v2/dashboard" ||
     normalized === "/v2/notifications" ||
-    normalized === "/v2/statistics"
+    normalized === "/v2/statistics" ||
+    normalized === "/v2/settings"
   ) {
     return true;
   }
@@ -59,6 +61,7 @@ export function isSupportedProtectedPath(pathname: string): boolean {
     "/calendar",
     "/categories",
     "/statistics",
+    "/settings",
     "/profile",
     "/notifications",
     "/agent",
@@ -95,6 +98,14 @@ export function getVersionDestination(
     return { to: "/v2/statistics", isFallback: false };
   if (normalized === "/v2/statistics" && target === "v1")
     return { to: "/statistics", isFallback: false };
+
+  if (
+    (normalized === "/settings" || normalized === "/profile") &&
+    target === "v2"
+  )
+    return { to: "/v2/settings", isFallback: false };
+  if (normalized === "/v2/settings" && target === "v1")
+    return { to: "/settings", isFallback: false };
 
   if (target === "v2") {
     if (normalized === "/dashboard") {

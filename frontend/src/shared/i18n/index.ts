@@ -10,6 +10,8 @@ import enAgent from "./locales/en/agent.json";
 import viAgent from "./locales/vi/agent.json";
 import enV2 from "./locales/en/v2.json";
 import viV2 from "./locales/vi/v2.json";
+import enSettings from "./locales/en/settings.json";
+import viSettings from "./locales/vi/settings.json";
 
 export type Language = "en" | "vi";
 const storageKey = "orbit.language";
@@ -43,6 +45,7 @@ void i18n.use(initReactI18next).init({
       workspace: enWorkspace,
       agent: enAgent,
       v2: enV2,
+      settings: enSettings,
     },
     vi: {
       common: viCommon,
@@ -50,6 +53,7 @@ void i18n.use(initReactI18next).init({
       workspace: viWorkspace,
       agent: viAgent,
       v2: viV2,
+      settings: viSettings,
     },
   },
   lng: getSavedLanguage(),

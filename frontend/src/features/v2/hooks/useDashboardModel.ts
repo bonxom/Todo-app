@@ -1,12 +1,15 @@
 import { useState, useCallback } from "react";
 import { useTasksQuery } from "@/features/tasks/api/taskQueries";
 import { useStatsQuery } from "@/features/statistics/api/statQueries";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import type { TaskStatus } from "@/shared/types/domain";
 
 export function useDashboardModel() {
   const [searchDraft, setSearchDraft] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
-  const [status, setStatusState] = useState<TaskStatus | "">("");
+  const [status, setStatusState] = useState<TaskStatus | "">(
+    () => useSettingsStore.getState().workspace.defaultTaskStatus,
+  );
   const [pageNo, setPageNo] = useState(1);
 
   const submitSearch = useCallback(() => {

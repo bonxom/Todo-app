@@ -17,6 +17,7 @@ import {
 import { getLocale } from "@/shared/i18n";
 import { getApiErrorMessage } from "@/shared/services/apiError";
 import { toISOStringLocal } from "@/shared/utils/dateTime";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import type { Task } from "@/shared/types/domain";
 import TaskDetailsDialog from "../components/TaskDetailsDialog";
 import TaskEditor from "../components/TaskEditor";
@@ -33,9 +34,14 @@ const dayTasks = (map: Map<string, Task[]>, date: Date): Task[] =>
 
 export default function CalendarPage() {
   const { t } = useTranslation("v2");
+  const weekStartsOn = useSettingsStore(
+    (state) => state.workspace.weekStartsOn,
+  );
   const [today] = useState(() => startOfDay(new Date()));
   const [currentDate, setCurrentDate] = useState(today);
-  const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
+  const [viewMode, setViewMode] = useState<CalendarViewMode>(
+    () => useSettingsStore.getState().workspace.defaultCalendarView,
+  );
   const [weekLayout, setWeekLayout] = useState<"detail" | "agenda">("detail");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -44,12 +50,12 @@ export default function CalendarPage() {
   const [dropCellKey, setDropCellKey] = useState<string | null>(null);
 
   const bufferedRange = useMemo(
-    () => getBufferedCalendarRange(currentDate, viewMode),
-    [currentDate, viewMode],
+    () => getBufferedCalendarRange(currentDate, viewMode, weekStartsOn),
+    [currentDate, viewMode, weekStartsOn],
   );
   const visibleRange = useMemo(
-    () => getVisibleCalendarRange(currentDate, viewMode),
-    [currentDate, viewMode],
+    () => getVisibleCalendarRange(currentDate, viewMode, weekStartsOn),
+    [currentDate, viewMode, weekStartsOn],
   );
 
   const calendarMutations = useCalendarMutations();
@@ -83,8 +89,14 @@ export default function CalendarPage() {
     return map;
   }, [renderedTasks]);
 
-  const weekDays = useMemo(() => buildWeekDays(currentDate), [currentDate]);
-  const monthDays = useMemo(() => buildMonthDays(currentDate), [currentDate]);
+  const weekDays = useMemo(
+    () => buildWeekDays(currentDate, weekStartsOn),
+    [currentDate, weekStartsOn],
+  );
+  const monthDays = useMemo(
+    () => buildMonthDays(currentDate, weekStartsOn),
+    [currentDate, weekStartsOn],
+  );
   const monthRows = useMemo(() => {
     const rows: Array<typeof monthDays> = [];
     for (let index = 0; index < monthDays.length; index += 7) {

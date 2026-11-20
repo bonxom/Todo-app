@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Bell } from "lucide-react";
 import Pagination from "@/shared/components/Pagination";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import type { NotificationDto } from "@/shared/types/notification";
 import {
   useNotificationsQuery,
@@ -22,7 +23,9 @@ export default function NotificationsPage({
   const navigate = useNavigate();
   const [pageNo, setPageNo] = useState(1);
   const unreadFilter = useRef<HTMLButtonElement>(null);
-  const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [filter, setFilter] = useState<"all" | "unread">(
+    () => useSettingsStore.getState().notifications.defaultFilter,
+  );
   const list = useNotificationsQuery({ pageNo, pageSize: 20, filter });
   const read = useMarkNotificationReadMutation();
   const all = useMarkAllNotificationsReadMutation();
