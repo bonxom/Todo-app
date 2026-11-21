@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight, Plus, Tag, Trash2 } from "lucide-react";
+import CustomSelect from "@/shared/components/CustomSelect";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useCategoriesQuery } from "@/features/categories/api/categoryQueries";
 import {
@@ -109,26 +110,28 @@ export default function WorkspaceSettingsSection({
                 {t("workspace.defaultStatusHint")}
               </p>
             </div>
-            <select
-              id="settings-default-task-status"
-              value={workspace.defaultTaskStatus}
-              onChange={(event) =>
-                updateWorkspace({
-                  defaultTaskStatus: event.target.value as TaskStatus | "",
-                })
-              }
-              className={`${settingsInputClass(version)} sm:w-52`}
-            >
-              <option value="">{t("workspace.statusAll")}</option>
-              <option value="pending">{t("workspace.statusPending")}</option>
-              <option value="in-progress">
-                {t("workspace.statusInProgress")}
-              </option>
-              <option value="completed">
-                {t("workspace.statusCompleted")}
-              </option>
-              <option value="given-up">{t("workspace.statusGivenUp")}</option>
-            </select>
+            <div className="w-full sm:w-52">
+              <CustomSelect
+                id="settings-default-task-status"
+                value={workspace.defaultTaskStatus}
+                onChange={(event) =>
+                  updateWorkspace({
+                    defaultTaskStatus: event.target.value as TaskStatus | "",
+                  })
+                }
+                className={version === "v1" ? settingsInputClass(version) : ""}
+              >
+                <option value="">{t("workspace.statusAll")}</option>
+                <option value="pending">{t("workspace.statusPending")}</option>
+                <option value="in-progress">
+                  {t("workspace.statusInProgress")}
+                </option>
+                <option value="completed">
+                  {t("workspace.statusCompleted")}
+                </option>
+                <option value="given-up">{t("workspace.statusGivenUp")}</option>
+              </CustomSelect>
+            </div>
           </div>
 
           {/* Default Calendar View */}

@@ -4,6 +4,7 @@ import {
   isValidElement,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -105,6 +106,7 @@ export default function CustomSelect({
 }: CustomSelectProps) {
   const { t } = useTranslation("common");
   const [isOpen, setIsOpen] = useState(false);
+  const [isV2Menu, setIsV2Menu] = useState(false);
   const [menuTheme, setMenuTheme] = useState<CSSProperties>({});
   const [menuPos, setMenuPos] = useState<MenuPosition>({
     top: 0,
@@ -134,7 +136,15 @@ export default function CustomSelect({
     if (!triggerEl || typeof window === "undefined") return;
 
     // The menu lives under body; carry scoped theme values from its trigger.
+    const v2Host = triggerEl.closest(".v2-app");
+    const inV2 = Boolean(v2Host);
+    setIsV2Menu(inV2);
     const computed = getComputedStyle(triggerEl);
+    const v2Computed = v2Host ? getComputedStyle(v2Host) : null;
+    const readVar = (key: string) =>
+      computed.getPropertyValue(key).trim() ||
+      v2Computed?.getPropertyValue(key).trim() ||
+      "";
     const theme = Object.fromEntries(
       [
         "--color-text",
@@ -145,8 +155,24 @@ export default function CustomSelect({
         "--color-accent",
         "--color-accent-soft",
         "--shadow-lg",
+        ...(inV2
+          ? [
+              "--v2-ink",
+              "--v2-muted",
+              "--v2-accent",
+              "--v2-accent-ink",
+              "--v2-glass-fill",
+              "--v2-glass-border",
+              "--v2-surface-solid",
+              "--v2-shell-fill",
+              "--v2-input-fill",
+              "--v2-border",
+              "--v2-shadow-sm",
+              "--v2-shadow-lg",
+            ]
+          : []),
       ]
-        .map((key) => [key, computed.getPropertyValue(key).trim()])
+        .map((key) => [key, readVar(key)])
         .filter(([, value]) => value),
     );
     setMenuTheme(theme as CSSProperties);
@@ -180,10 +206,13 @@ export default function CustomSelect({
     }
   }, []);
 
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    updateMenuPosition();
+  }, [isOpen, updateMenuPosition]);
+
   useEffect(() => {
     if (!isOpen) return undefined;
-
-    updateMenuPosition();
 
     const handleOutsidePointer = (event: PointerEvent | MouseEvent) => {
       const target = event.target;
@@ -329,6 +358,8 @@ export default function CustomSelect({
           <div
             ref={menuRef}
             role="listbox"
+            data-ui-version={isV2Menu ? "v2" : "v1"}
+            data-placement={menuPos.bottom !== undefined ? "top" : "bottom"}
             aria-label={
               rest["aria-label"] || selectedOption.label || t("options")
             }

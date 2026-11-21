@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, Plus } from "lucide-react";
+import CustomSelect from "@/shared/components/CustomSelect";
 import type { TaskStatus } from "@/shared/types/domain";
 
 export interface TaskToolbarProps {
@@ -60,23 +61,19 @@ export default function TaskToolbar({
         </form>
 
         {/* Status filter */}
-        <div className="w-full sm:w-auto">
-          <select
+        <div className="w-full sm:w-auto sm:min-w-[152px]">
+          <CustomSelect
             value={status}
             onChange={(e) => onStatusChange(e.target.value as TaskStatus | "")}
             aria-label={t("filterByStatus")}
-            className="v2-select min-h-[44px] p-[10px_13px] rounded-[12px] [border:1px_solid_var(--v2-border)]
-              [background:var(--v2-input-fill)] [&:focus]:[outline:2px_solid_var(--v2-accent)]
-              [&:focus]:outline-offset-[2px] [@media(forced-colors:active)]:[border:1px_solid_ButtonBorder]
-              [@media(forced-colors:active)]:[background:Canvas] [@media(forced-colors:active)]:[box-shadow:none] w-full
-              sm:w-auto text-sm cursor-pointer"
+            className="v2-select"
           >
             <option value="">{t("allStatuses")}</option>
             <option value="pending">{t("pending")}</option>
             <option value="in-progress">{t("inProgress")}</option>
             <option value="completed">{t("completed")}</option>
             <option value="given-up">{t("givenUp")}</option>
-          </select>
+          </CustomSelect>
         </div>
         <button
           type="button"

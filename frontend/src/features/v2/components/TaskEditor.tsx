@@ -29,6 +29,7 @@ import {
   toISOStringLocal,
 } from "@/shared/utils/dateTime";
 import V2Dialog from "./V2Dialog";
+import CustomSelect from "@/shared/components/CustomSelect";
 const referenceId = (value: Task["categoryId"] | Task["projectId"]) =>
   typeof value === "string" ? value : (value?._id ?? "");
 const initialDraft = (task?: Task) => ({
@@ -232,9 +233,8 @@ export default function TaskEditor({
           <div className="v2-form-grid grid grid-cols-[1fr_1fr] gap-[16px] mt-[10px] [@media(max-width:767px)]:grid-cols-[1fr]">
             <div className="v2-form-field grid [align-content:start] gap-[8px] min-w-[0]">
               <label htmlFor={`${id}-priority`}>{t("priority")}</label>
-              <select
+              <CustomSelect
                 id={`${id}-priority`}
-                className="v2-input [&:focus]:[outline:2px_solid_var(--v2-accent)] [&:focus]:outline-offset-[2px]"
                 value={draft.priority}
                 onChange={(e) => change("priority", e.target.value)}
               >
@@ -243,13 +243,12 @@ export default function TaskEditor({
                     {t(`priority${priority}`)}
                   </option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
             <div className="v2-form-field grid [align-content:start] gap-[8px] min-w-[0]">
               <label htmlFor={`${id}-category`}>{t("category")}</label>
-              <select
+              <CustomSelect
                 id={`${id}-category`}
-                className="v2-input [&:focus]:[outline:2px_solid_var(--v2-accent)] [&:focus]:outline-offset-[2px]"
                 value={draft.categoryId}
                 onChange={(e) => change("categoryId", e.target.value)}
                 disabled={choicesLoading || choicesFailed}
@@ -270,13 +269,12 @@ export default function TaskEditor({
                     {category.name}
                   </option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
             <div className="v2-form-field grid [align-content:start] gap-[8px] min-w-[0]">
               <label htmlFor={`${id}-project`}>{t("project")}</label>
-              <select
+              <CustomSelect
                 id={`${id}-project`}
-                className="v2-input [&:focus]:[outline:2px_solid_var(--v2-accent)] [&:focus]:outline-offset-[2px]"
                 value={draft.projectId}
                 onChange={(e) => change("projectId", e.target.value)}
                 disabled={choicesLoading || choicesFailed}
@@ -297,7 +295,7 @@ export default function TaskEditor({
                     {project.name}
                   </option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
             {(["startDate", "dueDate"] as const).map((key) => (
               <div

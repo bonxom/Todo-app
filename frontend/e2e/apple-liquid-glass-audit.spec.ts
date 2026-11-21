@@ -210,3 +210,125 @@ test("V2 collapsible sidebar & full Apple Liquid Glass consistency across all 9 
 
   expect(pageErrors).toEqual([]);
 });
+
+test("V2 Liquid Glass dropdowns render visibly in Ocean Light and Golden Dark", async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (err) => pageErrors.push(err.message));
+
+  await agentWorkspaceFixture(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  for (const theme of [
+    { palette: "ocean", mode: "light", slug: "ocean-light" },
+    { palette: "golden", mode: "dark", slug: "golden-dark" },
+  ] as const) {
+    await page.goto("/v2/dashboard");
+    await page.evaluate(
+      ({ palette }) => {
+        localStorage.setItem("orbit.v2-palette", palette);
+      },
+      { palette: theme.palette },
+    );
+    await page.reload();
+    await expect(page.getByTestId("v2-dashboard-page")).toBeVisible();
+    const currentTheme = await page.locator("html").getAttribute("data-theme");
+    if (currentTheme !== theme.mode) {
+      await page
+        .getByRole("button", { name: /Switch to (dark|light) mode/i })
+        .click();
+    }
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-theme",
+      theme.mode,
+    );
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-v2-palette",
+      theme.palette,
+    );
+
+    const inspectListbox = async () => {
+      const menu = page.getByRole("listbox");
+      await expect(menu).toBeVisible();
+      await expect(menu).toHaveAttribute("data-ui-version", "v2");
+      await expect
+        .poll(async () =>
+          Number(await menu.evaluate((el) => getComputedStyle(el).opacity)),
+        )
+        .toBeGreaterThan(0.95);
+      const metrics = await menu.evaluate((el) => {
+        const cs = getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        return {
+          opacity: cs.opacity,
+          zIndex: cs.zIndex,
+          backgroundColor: cs.backgroundColor,
+          backdropFilter: cs.backdropFilter,
+          rect: {
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          },
+        };
+      });
+      expect(Number(metrics.opacity)).toBeGreaterThan(0.95);
+      expect(Number(metrics.zIndex)).toBeGreaterThanOrEqual(3000);
+      expect(metrics.rect.width).toBeGreaterThan(120);
+      expect(metrics.rect.height).toBeGreaterThan(60);
+      expect(metrics.backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+      expect(metrics.backdropFilter).toContain("blur(");
+      return menu;
+    };
+
+    // 1. Dashboard status filter dropdown
+    const statusTrigger = page.locator(
+      ".v2-task-toolbar [data-testid='custom-select-trigger']",
+    );
+    await statusTrigger.click();
+    const statusMenu = await inspectListbox();
+    await page.screenshot({
+      path: `${OUT}/dropdown-toolbar-${theme.slug}.png`,
+    });
+    await statusMenu.getByRole("option", { name: "In progress" }).click();
+    await expect(statusMenu).toBeHidden();
+    await expect(statusTrigger).toContainText("In progress");
+
+    // 2. Task Editor modal dropdowns (Project select open!)
+    await page.getByRole("button", { name: "New task", exact: true }).click();
+    const taskDialog = page.getByRole("dialog");
+    await expect(taskDialog).toBeVisible();
+    const projectTrigger = taskDialog
+      .locator("[data-testid='custom-select-trigger']")
+      .nth(2);
+    await projectTrigger.click();
+    const projectMenu = await inspectListbox();
+    await page.screenshot({
+      path: `${OUT}/dropdown-task-editor-${theme.slug}.png`,
+    });
+    const secondProjectOption = projectMenu.getByRole("option").nth(1);
+    const chosenProjectName = (await secondProjectOption.innerText()).trim();
+    await secondProjectOption.click();
+    await expect(projectMenu).toBeHidden();
+    await expect(projectTrigger).toContainText(chosenProjectName);
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Discard changes" }).click();
+    await expect(taskDialog).toBeHidden();
+
+    // 3. Settings Workspace default status dropdown (SPA nav preserves theme)
+    await page.getByRole("link", { name: /Settings/i }).click();
+    await expect(page.getByTestId("v2-settings-page")).toBeVisible();
+    await page.getByRole("button", { name: /Workspace/i }).click();
+    const settingsTrigger = page.locator(
+      "[data-testid='v2-settings-page'] [data-testid='custom-select-trigger']",
+    );
+    await settingsTrigger.click();
+    const settingsMenu = await inspectListbox();
+    await page.screenshot({
+      path: `${OUT}/dropdown-settings-${theme.slug}.png`,
+    });
+    await settingsMenu.getByRole("option").nth(1).click();
+    await expect(settingsMenu).toBeHidden();
+  }
+
+  expect(pageErrors).toEqual([]);
+});

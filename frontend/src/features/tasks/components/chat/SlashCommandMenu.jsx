@@ -56,7 +56,7 @@ const SlashCommandMenu = ({
 
   if (tools.length === 0) {
     return (
-      <div className="absolute bottom-full left-0 right-0 mb-2 z-50 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-center text-xs text-[var(--color-text-muted)] shadow-xl">
+      <div className="slash-command-menu absolute bottom-full left-0 right-0 mb-2 z-50 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3 text-center text-xs text-[var(--color-text-muted)] shadow-xl">
         {t("noSkillsMatch", { query })}
       </div>
     );
@@ -67,7 +67,7 @@ const SlashCommandMenu = ({
       role="listbox"
       aria-label={t("suggestedSkills")}
       ref={listRef}
-      className="absolute bottom-full left-0 right-0 mb-2 z-50 max-h-64 overflow-y-auto rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-1.5 shadow-xl transition-all"
+      className="slash-command-menu absolute bottom-full left-0 right-0 mb-2 z-50 max-h-64 overflow-y-auto rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-1.5 shadow-xl transition-all"
     >
       <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
         {t("skillsCount", { count: tools.length })}
