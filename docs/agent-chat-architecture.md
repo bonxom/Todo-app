@@ -37,6 +37,7 @@ Orbit enforces an on-demand Markdown skill architecture combined with core busin
 - `skills/policy.ts`: Mapping business tools to required skill documents.
 - `mcp/resources/skills.ts`: MCP Resources adapter for registry documents.
 - `agentInteractionService.ts`: internal `grill_user` definition and validated menu creation.
+- `agentVisionService.ts` / `attachmentVisionService.ts`: internal `analyze_image` tool definition, lightweight attachment metadata formatting, server-side ownership/state/MIME checks, bounded storage streaming, and isolated vision model invocation.
 - `interactionAnswerService.ts`: menu selection validation and state transitions.
 - `conversationService.ts` / `conversationTurnService.ts`: history, turn execution and persistence.
 - `chatTurnRepository.ts`: claims, leases, checkpoints, menu persistence and finalization.
@@ -109,6 +110,15 @@ Backend Vitest suite: 26 test files passed (213 unit/integration tests). Integra
 ## Task deletion
 
 `orbit_delete_task` deletes one explicitly requested, owned task using `taskId` and `idempotencyKey`. Deletion, stats rebuild and receipt persistence share the existing per-user write transaction. A matching deletion retry returns the owned receipt without looking up the deleted resource. Verified results include `deleted: true` and produce `task_deleted` activities without a detail link. Explicit proposal-generation turns continue to forbid direct writes.
+
+## On-demand image analysis (`analyze_image`)
+
+Specification: `docs/superpowers/specs/2026-11-21-agent-vision-tool-design.md`
+
+- **Synchronous Storage on Upload**: Image uploads validate bytes and store original bytes synchronously in MinIO/S3 (`attachmentService.upload`), matching document uploads. No vision model call occurs at upload time.
+- **Metadata-Only Turn Context**: `conversationTurnService` attaches lightweight untrusted file metadata (`id`, `name`, `mimeType`, `kind`) to the user message and sets `hasConversationImages` when the current turn or an earlier turn in the same conversation has an attached image.
+- **Conditional Internal Tool**: `agentService` exposes `analyze_image({ attachmentId, prompt })` only when `conversationId` and `hasConversationImages` are present, including inside Auto, Ask, and task proposal flows (`PROPOSAL_ALLOWED_TOOLS`). It is not exposed on external MCP HTTP endpoints.
+- **Isolated Vision Execution**: `attachmentVisionService.analyzeImage` enforces server-side `userId`, `conversationId`, `state === "attached"`, and `image/*` checks, streams bounded bytes (`MAX_ATTACHMENT_BYTES`), and invokes `visionClient.analyzeImage` with the agent's custom prompt and prompt-injection resistance. Multiple calls with different prompts (including parallel calls and follow-up turns) are supported within the turn budget, 20s per-call timeout ceiling, and streaming abort cancellation. Image bytes and base64 data URLs never enter chat messages, checkpoints, or history.
 
 ## Streaming Chat Turns & Real-time Progress (SSE)
 

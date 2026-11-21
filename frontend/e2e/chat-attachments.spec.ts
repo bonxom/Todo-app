@@ -104,6 +104,11 @@ test("private attachment upload, image preview, history reload and download", as
     .getByLabel("Choose images")
     .setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: png });
   await expect(
+    page.getByText(
+      "Add a message to send. The assistant can analyze attached images on demand. Other files are stored for reference.",
+    ),
+  ).toBeVisible();
+  await expect(
     page.getByRole("button", { name: "Send message" }),
   ).toBeDisabled();
   await page

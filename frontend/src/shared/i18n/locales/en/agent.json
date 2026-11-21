@@ -185,7 +185,7 @@
   "unableToDisplayTheInteractiveInterface": "Unable to display the interactive interface.",
   "reload": "Reload",
   "selectedAttachments": "Selected attachments",
-  "addAMessageToSendImagesAreAnalyzedOnceSoTheAssistantCanUseTheirDescriptionsOtherFilesAreStoredForReference": "Add a message to send. Images are analyzed once so the assistant can use their descriptions. Other files are stored for reference.",
+  "addAMessageToSendImagesAreAnalyzedOnceSoTheAssistantCanUseTheirDescriptionsOtherFilesAreStoredForReference": "Add a message to send. The assistant can analyze attached images on demand. Other files are stored for reference.",
   "loading": "Loading…",
   "unableToLoadTheFile": "Unable to load the file.",
   "messageAttachments": "Message attachments",

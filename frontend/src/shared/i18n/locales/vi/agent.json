@@ -185,7 +185,7 @@
   "unableToDisplayTheInteractiveInterface": "Không thể hiển thị giao diện tương tác.",
   "reload": "Tải lại",
   "selectedAttachments": "Tệp đính kèm đã chọn",
-  "addAMessageToSendImagesAreAnalyzedOnceSoTheAssistantCanUseTheirDescriptionsOtherFilesAreStoredForReference": "Thêm tin nhắn để gửi. Hình ảnh được phân tích một lần để trợ lý dùng mô tả của chúng. Các tệp khác được lưu để tham khảo.",
+  "addAMessageToSendImagesAreAnalyzedOnceSoTheAssistantCanUseTheirDescriptionsOtherFilesAreStoredForReference": "Thêm tin nhắn để gửi. Trợ lý có thể tự phân tích hình ảnh đính kèm khi cần. Các tệp khác được lưu để tham khảo.",
   "loading": "Đang tải…",
   "unableToLoadTheFile": "Không thể tải tệp.",
   "messageAttachments": "Tệp đính kèm tin nhắn",
