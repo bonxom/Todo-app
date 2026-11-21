@@ -115,7 +115,7 @@ export default function TaskRow({ task, onOpen, actions }: TaskRowProps) {
           onClick={handleAction}
           disabled={isPending}
           aria-busy={isPending}
-          className="v2-btn text-xs py-1.5 px-3 min-h-0 text-green-600 border-green-500/30 hover:border-green-500 hover:bg-green-500/10 font-medium"
+          className="v2-btn text-xs py-1.5 px-3 min-h-0 !text-[var(--v2-success)] [border-color:color-mix(in_srgb,var(--v2-success)_35%,transparent)] hover:[border-color:var(--v2-success)] hover:[background:color-mix(in_srgb,var(--v2-success)_12%,var(--v2-input-fill))] font-medium"
         >
           {isPending ? (
             <Loader2 size={13} className="animate-spin" aria-hidden="true" />

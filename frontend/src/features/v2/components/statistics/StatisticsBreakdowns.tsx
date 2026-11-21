@@ -9,16 +9,16 @@ export interface StatisticsBreakdownsProps {
 }
 
 const STATUS_COLORS_LIGHT: Record<string, string> = {
-  pending: "#526c72",
-  "in-progress": "#d97706",
-  completed: "#14675f",
-  "given-up": "#ef4444",
+  pending: "var(--v2-muted)",
+  "in-progress": "var(--v2-warning)",
+  completed: "var(--v2-success)",
+  "given-up": "#c0392b",
 };
 
 const STATUS_COLORS_DARK: Record<string, string> = {
-  pending: "#adc5c8",
-  "in-progress": "#fbbf24",
-  completed: "#2dd4bf",
+  pending: "var(--v2-muted)",
+  "in-progress": "var(--v2-warning)",
+  completed: "var(--v2-success)",
   "given-up": "#f87171",
 };
 

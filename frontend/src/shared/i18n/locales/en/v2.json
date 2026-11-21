@@ -5,6 +5,8 @@
   "skipToMain": "Skip to main content",
   "openMenu": "Open navigation menu",
   "closeMenu": "Close navigation menu",
+  "collapseSidebar": "Collapse sidebar",
+  "expandSidebar": "Expand sidebar",
   "tasks": "Tasks",
   "total": "Total",
   "inProgress": "In progress",

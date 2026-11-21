@@ -142,26 +142,35 @@ export default function StatisticsTrend({ dailyStats }: StatisticsTrendProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const completedColor = isDark ? "#2dd4bf" : "#14675f";
+  const readToken = (name: string, fallback: string) => {
+    if (typeof window === "undefined") return fallback;
+    const host = document.querySelector(".v2-app") || document.documentElement;
+    return getComputedStyle(host).getPropertyValue(name).trim() || fallback;
+  };
+
+  const completedColor = readToken(
+    "--v2-accent",
+    isDark ? "#a3e4ce" : "#14675f",
+  );
   const completedBg = isDark
-    ? "rgba(45, 212, 191, 0.16)"
-    : "rgba(20, 103, 95, 0.12)";
-  const givenUpColor = isDark ? "#f87171" : "#ef4444";
+    ? "rgba(255, 255, 255, 0.08)"
+    : "rgba(0, 0, 0, 0.06)";
+  const givenUpColor = isDark ? "#f87171" : "#c0392b";
   const givenUpBg = isDark
     ? "rgba(248, 113, 113, 0.12)"
-    : "rgba(239, 68, 68, 0.08)";
-  const axisColor = isDark ? "#adc5c8" : "#526c72";
-  const gridColor = isDark
-    ? "rgba(190, 232, 229, 0.08)"
-    : "rgba(20, 103, 95, 0.08)";
-  const tooltipBg = isDark
-    ? "rgba(21, 44, 49, 0.95)"
-    : "rgba(255, 255, 255, 0.95)";
-  const tooltipTitle = isDark ? "#e4f3ef" : "#213d43";
-  const tooltipBody = isDark ? "#adc5c8" : "#526c72";
-  const tooltipBorder = isDark
-    ? "rgba(190, 232, 229, 0.2)"
-    : "rgba(56, 93, 99, 0.15)";
+    : "rgba(192, 57, 43, 0.08)";
+  const axisColor = readToken("--v2-muted", isDark ? "#adc5c8" : "#526c72");
+  const gridColor = readToken(
+    "--v2-border",
+    isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)",
+  );
+  const tooltipBg = readToken(
+    "--v2-surface-solid",
+    isDark ? "rgba(28, 52, 57, 0.96)" : "rgba(255, 255, 255, 0.96)",
+  );
+  const tooltipTitle = readToken("--v2-ink", isDark ? "#e4f3ef" : "#213d43");
+  const tooltipBody = axisColor;
+  const tooltipBorder = gridColor;
 
   const chartData = useMemo(
     () => ({

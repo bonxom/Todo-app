@@ -9,9 +9,22 @@ import V2Topbar from "../components/V2Topbar";
 import V2Dialog from "../components/V2Dialog";
 import V2AgentChatBubble from "../components/V2AgentChatBubble";
 
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "orbit.v2-sidebar-collapsed";
+
+function readInitialSidebarCollapsed(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
 export default function V2Layout() {
   const { t } = useTranslation("v2");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(
+    readInitialSidebarCollapsed,
+  );
   const [assistantTarget, setAssistantTarget] = useState<HTMLDivElement | null>(
     null,
   );
@@ -23,6 +36,17 @@ export default function V2Layout() {
     (open: boolean, width: number) => setDock({ open, width }),
     [],
   );
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(next));
+      } catch {
+        /* Ignore storage errors in restricted contexts. */
+      }
+      return next;
+    });
+  }, []);
   const isDockActive = showFloatingBubble && dock.open;
 
   return (
@@ -44,8 +68,14 @@ export default function V2Layout() {
 
         <div className="v2-shell-container flex items-start mx-auto">
           {/* Desktop Sidebar */}
-          <div className="v2-sidebar-desktop [display:none] sticky [@media(min-width:1024px)]:block">
-            <V2Sidebar />
+          <div
+            className="v2-sidebar-desktop [display:none] sticky [@media(min-width:1024px)]:block"
+            data-collapsed={sidebarCollapsed ? "true" : "false"}
+          >
+            <V2Sidebar
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={toggleSidebarCollapsed}
+            />
           </div>
 
           {/* Mobile Navigation Drawer */}

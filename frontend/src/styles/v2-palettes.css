@@ -228,3 +228,84 @@
   --v2-shadow-lg:
     0 30px 90px -25px rgb(0 0 0 / 68%), inset 0 1px 0 rgb(255 208 218 / 20%);
 }
+
+/* Harmonize custom Liquid Glass cursor optics and root canvas with the active V2 palette */
+:root:has(.v2-app) {
+  --color-canvas: #e7efef;
+  --cursor-dot-bg: #14675f;
+  --cursor-snap-bg: rgb(20 103 95 / 12%);
+  --cursor-snap-card-bg: rgb(20 103 95 / 8%);
+  --cursor-snap-border: rgb(20 103 95 / 42%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(20 103 95 / 14%), 0 6px 18px -6px rgb(20 103 95 / 26%);
+}
+
+:root[data-theme="dark"]:has(.v2-app) {
+  --color-canvas: #102126;
+  --cursor-dot-bg: #a3e4ce;
+  --cursor-snap-bg: rgb(163 228 206 / 14%);
+  --cursor-snap-card-bg: rgb(163 228 206 / 9%);
+  --cursor-snap-border: rgb(163 228 206 / 45%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(163 228 206 / 18%), 0 8px 20px -6px rgb(163 228 206 / 28%);
+}
+
+:root[data-v2-palette="ocean"]:has(.v2-app) {
+  --color-canvas: #e6f0f8;
+  --cursor-dot-bg: #0c5da8;
+  --cursor-snap-bg: rgb(12 93 168 / 12%);
+  --cursor-snap-card-bg: rgb(12 93 168 / 8%);
+  --cursor-snap-border: rgb(12 93 168 / 42%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(12 93 168 / 14%), 0 6px 18px -6px rgb(12 93 168 / 26%);
+}
+
+:root[data-theme="dark"][data-v2-palette="ocean"]:has(.v2-app) {
+  --color-canvas: #0b1929;
+  --cursor-dot-bg: #7cc4fa;
+  --cursor-snap-bg: rgb(124 196 250 / 14%);
+  --cursor-snap-card-bg: rgb(124 196 250 / 9%);
+  --cursor-snap-border: rgb(124 196 250 / 45%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(124 196 250 / 18%), 0 8px 20px -6px rgb(124 196 250 / 28%);
+}
+
+:root[data-v2-palette="golden"]:has(.v2-app) {
+  --color-canvas: #f6f1e6;
+  --cursor-dot-bg: #9a6308;
+  --cursor-snap-bg: rgb(154 99 8 / 12%);
+  --cursor-snap-card-bg: rgb(154 99 8 / 8%);
+  --cursor-snap-border: rgb(154 99 8 / 42%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(154 99 8 / 14%), 0 6px 18px -6px rgb(154 99 8 / 26%);
+}
+
+:root[data-theme="dark"][data-v2-palette="golden"]:has(.v2-app) {
+  --color-canvas: #1f190f;
+  --cursor-dot-bg: #f6c453;
+  --cursor-snap-bg: rgb(246 196 83 / 14%);
+  --cursor-snap-card-bg: rgb(246 196 83 / 9%);
+  --cursor-snap-border: rgb(246 196 83 / 46%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(246 196 83 / 18%), 0 8px 20px -6px rgb(246 196 83 / 28%);
+}
+
+:root[data-v2-palette="crimson"]:has(.v2-app) {
+  --color-canvas: #f7eaec;
+  --cursor-dot-bg: #a61c3c;
+  --cursor-snap-bg: rgb(166 28 60 / 12%);
+  --cursor-snap-card-bg: rgb(166 28 60 / 8%);
+  --cursor-snap-border: rgb(166 28 60 / 42%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(166 28 60 / 14%), 0 6px 18px -6px rgb(166 28 60 / 26%);
+}
+
+:root[data-theme="dark"][data-v2-palette="crimson"]:has(.v2-app) {
+  --color-canvas: #211015;
+  --cursor-dot-bg: #ff8fa3;
+  --cursor-snap-bg: rgb(255 143 163 / 14%);
+  --cursor-snap-card-bg: rgb(255 143 163 / 9%);
+  --cursor-snap-border: rgb(255 143 163 / 46%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(255 143 163 / 18%), 0 8px 20px -6px rgb(255 143 163 / 28%);
+}

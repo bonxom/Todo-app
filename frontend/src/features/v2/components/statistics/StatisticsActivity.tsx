@@ -349,8 +349,8 @@ export default function StatisticsActivity({
                 disabled={activityQuery.isFetching}
                 className="v2-statistics-link inline-flex items-center gap-[0.5rem] p-[0.5rem_1.125rem] [background:var(--v2-input-fill)]
                   [border:1px_solid_var(--v2-border)] rounded-[9999px] [backdrop-filter:blur(12px)]
-                  [-webkit-backdrop-filter:blur(12px)] [text-decoration:none] [&:hover]:[background:var(--v2-accent,#14675f)]
-                  [&:hover]:border-[var(--v2-accent,#14675f)] [&:focus-visible]:[outline:2px_solid_var(--v2-accent)]
+                  [-webkit-backdrop-filter:blur(12px)] [text-decoration:none] [&:hover]:[background:var(--v2-accent)]
+                  [&:hover]:!text-[var(--v2-accent-ink)] [&:hover]:border-[var(--v2-accent)] [&:focus-visible]:[outline:2px_solid_var(--v2-accent)]
                   [&:focus-visible]:outline-offset-[2px] cursor-pointer text-xs"
               >
                 <RefreshCw
