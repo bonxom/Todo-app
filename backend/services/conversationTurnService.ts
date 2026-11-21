@@ -1,4 +1,5 @@
 import { attachmentVisionService } from "./attachmentVisionService.js";
+import { attachmentRepository } from "../repositories/attachmentRepository.js";
 import { createAgentTimeContext } from "../utils/agentTimeContext.js";
 import { createAgentBudget } from "../utils/agentBudget.js";
 import type { McpContext } from "../mcp/context.js";
@@ -120,11 +121,19 @@ export async function runConversationTurn(
         };
       }
     }
-    const attachmentContext = await attachmentVisionService.context(
-      String(context.user._id),
-      turn.conversationId,
-      turn.attachments ?? [],
-    );
+    const hasImageAttachment = (files?: ChatTurn["attachments"]) =>
+      (files ?? []).some((file) => file.mimeType.startsWith("image/"));
+    const attachments = turn.attachments ?? [];
+    const attachmentContext =
+      attachmentVisionService.formatAttachmentMetadata(attachments);
+    const hasConversationImages =
+      hasImageAttachment(attachments) ||
+      previous.some((prev) => hasImageAttachment(prev.attachments)) ||
+      (previous.length >= 20 &&
+        (await attachmentRepository.hasAttachedImage(
+          String(context.user._id),
+          turn.conversationId,
+        )));
     execution?.signal.throwIfAborted();
     const response = await agentService.chatWithMcp(
       turn.userInput,
@@ -143,6 +152,8 @@ export async function runConversationTurn(
       },
       {
         budget,
+        conversationId: turn.conversationId,
+        hasConversationImages,
         attachmentContext,
         turnId: turn._id,
         stream: execution

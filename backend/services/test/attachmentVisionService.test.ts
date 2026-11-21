@@ -47,6 +47,9 @@ beforeEach(() => {
 describe("agentVisionService schema and tool definition", () => {
   it("exposes analyze_image function tool and validates strict arguments", () => {
     expect(analyzeImageTool.type).toBe("function");
+    if (analyzeImageTool.type !== "function") {
+      throw new Error("Expected function tool");
+    }
     expect(analyzeImageTool.function.name).toBe("analyze_image");
     expect(
       parseAnalyzeImageArgs({

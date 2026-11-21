@@ -18,7 +18,6 @@ import {
 import User from "../../models/User.js";
 import ChatTurn from "../../models/ChatTurn.js";
 import { agentService } from "../agentService.js";
-import { attachmentVisionService } from "../attachmentVisionService.js";
 import { chatRunService } from "../chatRunService.js";
 import { chatStreamRepository } from "../../repositories/chatStreamRepository.js";
 import { conversationService } from "../conversationService.js";
@@ -63,7 +62,6 @@ describe.skipIf(!hasChatTestMongo())("real streaming turn lifecycle", () => {
         turn.deadlineAt = new Date(Date.now() + 250);
         await turn.save();
       }
-      vi.spyOn(attachmentVisionService, "context").mockResolvedValue("");
       let entered!: () => void;
       const firstDelta = new Promise<void>((resolve) => {
         entered = resolve;

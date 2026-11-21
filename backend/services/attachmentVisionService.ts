@@ -2,7 +2,10 @@ import type { AttachmentView } from "../types/IAttachment.js";
 import { attachmentRepository as repository } from "../repositories/attachmentRepository.js";
 import { objectStorage } from "../libs/objectStorage.js";
 import { analyzeImage as callVisionClient } from "../libs/visionClient.js";
-import { decodeFilename, MAX_ATTACHMENT_BYTES } from "../utils/attachmentFile.js";
+import {
+  decodeFilename,
+  MAX_ATTACHMENT_BYTES,
+} from "../utils/attachmentFile.js";
 
 export type ImageAnalysisErrorCode =
   | "ATTACHMENT_NOT_FOUND"
@@ -108,7 +111,11 @@ export const attachmentVisionService = {
 
     let bytes: Buffer;
     try {
-      bytes = await readImageBytes(record.objectKey, record.size, params.signal);
+      bytes = await readImageBytes(
+        record.objectKey,
+        record.size,
+        params.signal,
+      );
     } catch {
       if (params.signal.aborted) {
         return {
