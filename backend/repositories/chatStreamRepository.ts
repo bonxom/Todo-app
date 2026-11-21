@@ -80,6 +80,9 @@ export function toSnapshot(turn: IChatTurn): TurnSnapshot {
     partialResponse: turn.partialResponse ?? "",
     lastEventSeq: turn.lastEventSeq ?? 0,
     toolProgress: turn.toolProgress ?? [],
+    ...(turn.reasoningBlocks?.length
+      ? { reasoningBlocks: turn.reasoningBlocks }
+      : {}),
     deadlineAt: deadlineDate.toISOString(),
     ...(turn.terminalReason ? { terminalReason: turn.terminalReason } : {}),
     ...(result ? { result: turn.finalResult ?? result } : {}),
@@ -115,6 +118,9 @@ export const chatStreamRepository = {
         partialResponse: live.partialResponse,
         lastEventSeq: live.lastEventSeq,
         toolProgress: live.toolProgress,
+        ...(live.reasoningBlocks?.length
+          ? { reasoningBlocks: live.reasoningBlocks }
+          : {}),
       };
     }
 
@@ -210,6 +216,30 @@ export const chatStreamRepository = {
           throw new AppError(AI_ERROR.CHAT_OUTPUT_LIMIT);
         }
         turn.partialResponse = newText;
+      } else if (event.type === "reasoning.delta") {
+        const blocks = turn.reasoningBlocks ? [...turn.reasoningBlocks] : [];
+        const totalChars = blocks.reduce((sum, b) => sum + b.text.length, 0);
+        const remaining = Math.max(0, 32_000 - totalChars);
+        if (remaining > 0) {
+          const slice = event.payload.text.slice(0, remaining);
+          const idx = blocks.findIndex(
+            (b) => b.blockId === event.payload.blockId,
+          );
+          if (idx >= 0) {
+            blocks[idx] = {
+              ...blocks[idx],
+              text: blocks[idx].text + slice,
+            };
+          } else {
+            blocks.push({
+              blockId: event.payload.blockId,
+              text: slice,
+              order: currentSeq + 1,
+            });
+          }
+          turn.reasoningBlocks = blocks;
+          turn.markModified("reasoningBlocks");
+        }
       } else if (event.type === "tool.started") {
         const list = turn.toolProgress ? [...turn.toolProgress] : [];
         const idx = list.findIndex(
@@ -218,14 +248,21 @@ export const chatStreamRepository = {
         if (idx >= 0) {
           list[idx] = {
             ...list[idx],
+            ...(event.payload.toolName
+              ? { toolName: event.payload.toolName }
+              : {}),
             label: event.payload.label,
             status: "started",
           };
         } else {
           list.push({
             toolCallId: event.payload.toolCallId,
+            ...(event.payload.toolName
+              ? { toolName: event.payload.toolName }
+              : {}),
             label: event.payload.label,
             status: "started",
+            order: currentSeq + 1,
           });
         }
         turn.toolProgress = list;
@@ -238,6 +275,9 @@ export const chatStreamRepository = {
         if (idx >= 0) {
           list[idx] = {
             ...list[idx],
+            ...(event.payload.toolName
+              ? { toolName: event.payload.toolName }
+              : {}),
             status: event.payload.status,
             ...(event.payload.summary
               ? { summary: event.payload.summary }
@@ -246,11 +286,15 @@ export const chatStreamRepository = {
         } else {
           list.push({
             toolCallId: event.payload.toolCallId,
+            ...(event.payload.toolName
+              ? { toolName: event.payload.toolName }
+              : {}),
             label: "Đang xử lý tác vụ",
             status: event.payload.status,
             ...(event.payload.summary
               ? { summary: event.payload.summary }
               : {}),
+            order: currentSeq + 1,
           });
         }
         turn.toolProgress = list;
@@ -463,6 +507,8 @@ export const chatStreamRepository = {
     const live = chatStreamBus.getLiveSnapshot(turnId);
     const finalPartial = live?.partialResponse || turn.partialResponse || "";
     const finalToolProgress = live?.toolProgress || turn.toolProgress || [];
+    const finalReasoningBlocks =
+      live?.reasoningBlocks || turn.reasoningBlocks || [];
     const finalLastSeq = live?.lastEventSeq ?? turn.lastEventSeq ?? 0;
 
     turn.status = outcome.status;
@@ -471,6 +517,9 @@ export const chatStreamRepository = {
     turn.partialResponse = turn.response;
     if (finalToolProgress.length > 0) {
       turn.toolProgress = finalToolProgress;
+    }
+    if (finalReasoningBlocks.length > 0) {
+      turn.reasoningBlocks = finalReasoningBlocks;
     }
     turn.finishedAt = new Date();
     if (outcome.interaction)

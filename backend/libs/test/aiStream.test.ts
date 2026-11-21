@@ -147,26 +147,37 @@ describe("readAiStream", () => {
     expect(call1.function.arguments).toBe('{"b":2}');
   });
 
-  it("ignores reasoning fields and only emits delta.content", async () => {
+  it("streams reasoning_content (or reasoning fallback) via onReasoning without leaking to onText and preserves reasoning_content", async () => {
     async function* chunks() {
       yield providerChunk({
-        reasoning: "Thinking about response...",
-        reasoning_content: "Internal thought",
+        reasoning: "Fallback thought ignored when reasoning_content exists",
+        reasoning_content: "Step 1: check tasks. ",
+      });
+      yield providerChunk({
+        reasoning: "Step 2: summarize.",
         content: "Hello",
       });
       yield providerChunk({ content: " world" }, "stop");
     }
 
     const onText = vi.fn();
+    const onReasoning = vi.fn();
     const result = await readAiStream(chunks(), {
       signal: new AbortController().signal,
       onText,
+      onReasoning,
     });
 
+    expect(onReasoning).toHaveBeenCalledTimes(2);
+    expect(onReasoning).toHaveBeenNthCalledWith(1, "Step 1: check tasks. ");
+    expect(onReasoning).toHaveBeenNthCalledWith(2, "Step 2: summarize.");
     expect(onText).toHaveBeenCalledTimes(2);
     expect(onText).toHaveBeenCalledWith("Hello");
     expect(onText).toHaveBeenCalledWith(" world");
     expect(result.content).toBe("Hello world");
+    expect((result as { reasoning_content?: string }).reasoning_content).toBe(
+      "Step 1: check tasks. Step 2: summarize.",
+    );
   });
 
   it("throws when abort signal is triggered during streaming", async () => {

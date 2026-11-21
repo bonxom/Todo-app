@@ -60,6 +60,7 @@ const schema = new Schema<ChatTurn>(
     terminalReason: { type: String },
     runnerInstanceId: { type: String },
     toolProgress: { type: Schema.Types.Mixed, default: [] },
+    reasoningBlocks: { type: Schema.Types.Mixed, default: [] },
     finishedAt: { type: Date },
     messages: { type: Schema.Types.Mixed, default: [] },
     activities: { type: Schema.Types.Mixed, default: [] },

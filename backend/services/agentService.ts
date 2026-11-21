@@ -183,6 +183,10 @@ export const proposeTasksTool: ChatCompletionTool = {
   },
 };
 
+const MAX_REASONING_CHARS = 32_000;
+const REASONING_FLUSH_CHARS = 48;
+const REASONING_FLUSH_MS = 50;
+
 const PROPOSAL_ALLOWED_MCP_TOOLS = new Set([
   "orbit_get_me",
   "orbit_list_tasks",
@@ -416,6 +420,7 @@ ${webSearchInstruction}`,
         ),
       );
       let attempts = 0;
+      let emittedReasoningChars = 0;
       const rejectCall = async (
         id: string,
         code: string,
@@ -737,6 +742,7 @@ ${webSearchInstruction}`,
             type: "tool.started",
             payload: {
               toolCallId: toolCall.id,
+              toolName: name,
               label: getToolLabel(name),
             },
           });
@@ -778,6 +784,7 @@ ${webSearchInstruction}`,
                 type: "tool.finished",
                 payload: {
                   toolCallId: toolCall.id,
+                  toolName: name,
                   status: "failed",
                   summary: getToolSummary(name, "failed"),
                 },
@@ -815,6 +822,15 @@ ${webSearchInstruction}`,
               }
             } catch (error) {
               if (error instanceof SkillError) {
+                await memory.stream?.emit({
+                  type: "tool.finished",
+                  payload: {
+                    toolCallId: toolCall.id,
+                    toolName: name,
+                    status: "failed",
+                    summary: getToolSummary(name, "failed"),
+                  },
+                });
                 await rejectCall(toolCall.id, error.code, error.message);
                 continue;
               }
@@ -845,6 +861,7 @@ ${webSearchInstruction}`,
                 type: "tool.finished",
                 payload: {
                   toolCallId: toolCall.id,
+                  toolName: name,
                   status: "failed",
                   summary: getToolSummary(name, "failed"),
                 },
@@ -856,6 +873,7 @@ ${webSearchInstruction}`,
                 type: "tool.finished",
                 payload: {
                   toolCallId: toolCall.id,
+                  toolName: name,
                   status: "failed",
                   summary: getToolSummary(name, "failed"),
                 },
@@ -876,6 +894,7 @@ ${webSearchInstruction}`,
               type: "tool.finished",
               payload: {
                 toolCallId: toolCall.id,
+                toolName: name,
                 status: "succeeded",
                 summary: getToolSummary(name, "succeeded"),
               },
@@ -912,6 +931,7 @@ ${webSearchInstruction}`,
                 type: "tool.finished",
                 payload: {
                   toolCallId: toolCall.id,
+                  toolName: name,
                   status: toolResult.isError ? "failed" : "succeeded",
                   summary: getToolSummary(
                     name,
@@ -933,6 +953,7 @@ ${webSearchInstruction}`,
                 type: "tool.finished",
                 payload: {
                   toolCallId: toolCall.id,
+                  toolName: name,
                   status: "failed",
                   summary: getToolSummary(name, "failed"),
                 },
@@ -945,6 +966,7 @@ ${webSearchInstruction}`,
               type: "tool.finished",
               payload: {
                 toolCallId: toolCall.id,
+                toolName: name,
                 status: "succeeded",
                 summary: getToolSummary(name, "succeeded"),
               },
@@ -1040,10 +1062,41 @@ ${webSearchInstruction}`,
           const messageId = memory.turnId
             ? `${memory.turnId}:bot`
             : `${context.requestId}:bot`;
+          const reasoningBlockId = `${memory.turnId ?? context.requestId}:r${step}`;
+          let reasoningBuffer = "";
+          let lastReasoningFlushAt = Date.now();
+          const flushReasoning = async () => {
+            if (!reasoningBuffer) return;
+            const remaining = MAX_REASONING_CHARS - emittedReasoningChars;
+            const toEmit =
+              remaining > 0 ? reasoningBuffer.slice(0, remaining) : "";
+            reasoningBuffer = "";
+            lastReasoningFlushAt = Date.now();
+            if (!toEmit) return;
+            emittedReasoningChars += toEmit.length;
+            await memory.stream!.emit({
+              type: "reasoning.delta",
+              payload: {
+                blockId: reasoningBlockId,
+                text: toEmit,
+              },
+            });
+          };
 
           const rawMessage = await readAiStream(stream, {
             signal: memory.stream.signal,
+            onReasoning: async (text) => {
+              if (emittedReasoningChars >= MAX_REASONING_CHARS) return;
+              reasoningBuffer += text;
+              if (
+                reasoningBuffer.length >= REASONING_FLUSH_CHARS ||
+                Date.now() - lastReasoningFlushAt >= REASONING_FLUSH_MS
+              ) {
+                await flushReasoning();
+              }
+            },
             onText: async (text) => {
+              await flushReasoning();
               await memory.stream!.emit({
                 type: "assistant.delta",
                 payload: {
@@ -1053,6 +1106,7 @@ ${webSearchInstruction}`,
               });
             },
           });
+          await flushReasoning();
           message = validateAgentResponse(rawMessage, finalOnly, seenIds);
         } else {
           const response = await callAiProvider(() =>

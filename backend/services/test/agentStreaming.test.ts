@@ -280,3 +280,85 @@ it("finishes progress for internal skill tools instead of leaving a spinner", as
     createMock.mockReset();
   }
 });
+
+it("streams reasoning.delta blocks with toolName on tool events and caps excessive reasoning safely", async () => {
+  async function* round1() {
+    yield streamChunk({ reasoning_content: "First, inspect skills. " });
+    yield streamChunk({
+      tool_calls: [
+        {
+          index: 0,
+          id: "call-think-1",
+          type: "function",
+          function: { name: "list_skills", arguments: "{}" },
+        },
+      ],
+    });
+    yield streamChunk({}, "tool_calls");
+  }
+  async function* round2() {
+    yield streamChunk({ reasoning_content: "x".repeat(40_000) });
+    yield streamChunk({ content: "All done!" }, "stop");
+  }
+  createMock.mockResolvedValueOnce(round1()).mockResolvedValueOnce(round2());
+
+  const events: Array<{ type: string; payload: Record<string, unknown> }> = [];
+  try {
+    const answer = await agentService.chatWithMcp(
+      "Help me",
+      {
+        user: {
+          _id: "507f1f77bcf86cd799439011",
+          role: "USER",
+        } as unknown as IUserDocument,
+        requestId: "req-reasoning",
+      },
+      {
+        turnId: "turn-reasoning",
+        stream: {
+          signal: new AbortController().signal,
+          emit: async (event) => {
+            events.push(
+              event as { type: string; payload: Record<string, unknown> },
+            );
+          },
+        },
+      },
+    );
+
+    expect(answer).toBe("All done!");
+    const reasoningEvents = events.filter((e) => e.type === "reasoning.delta");
+    expect(reasoningEvents.length).toBeGreaterThanOrEqual(2);
+    expect(reasoningEvents[0].payload).toEqual({
+      blockId: "turn-reasoning:r0",
+      text: "First, inspect skills. ",
+    });
+    const totalReasoningChars = reasoningEvents.reduce(
+      (sum, e) => sum + String(e.payload.text ?? "").length,
+      0,
+    );
+    expect(totalReasoningChars).toBeLessThanOrEqual(32_000);
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: "tool.started",
+        payload: expect.objectContaining({
+          toolCallId: "call-think-1",
+          toolName: "list_skills",
+        }),
+      }),
+    );
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: "tool.finished",
+        payload: expect.objectContaining({
+          toolCallId: "call-think-1",
+          toolName: "list_skills",
+          status: "succeeded",
+        }),
+      }),
+    );
+  } finally {
+    vi.restoreAllMocks();
+    createMock.mockReset();
+  }
+});

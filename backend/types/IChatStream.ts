@@ -11,9 +11,17 @@ export type RunStatus =
 
 export interface ToolProgress {
   toolCallId: string;
+  toolName?: string;
   label: string;
   status: "started" | "succeeded" | "failed" | "unknown";
   summary?: string;
+  order?: number;
+}
+
+export interface ReasoningBlock {
+  blockId: string;
+  text: string;
+  order?: number;
 }
 
 export interface PublicChatResult {
@@ -45,13 +53,18 @@ export type ChatEventInput =
       payload: { messageId: string; text: string };
     }
   | {
+      type: "reasoning.delta";
+      payload: { blockId: string; text: string };
+    }
+  | {
       type: "tool.started";
-      payload: { toolCallId: string; label: string };
+      payload: { toolCallId: string; toolName?: string; label: string };
     }
   | {
       type: "tool.finished";
       payload: {
         toolCallId: string;
+        toolName?: string;
         status: "succeeded" | "failed" | "unknown";
         summary?: string;
       };
@@ -104,6 +117,7 @@ export interface TurnSnapshot {
   partialResponse: string;
   lastEventSeq: number;
   toolProgress: ToolProgress[];
+  reasoningBlocks?: ReasoningBlock[];
   deadlineAt: string;
   terminalReason?: string;
   result?: PublicChatResult;

@@ -61,4 +61,17 @@ describe("turnMessages", () => {
     expect(bot).toBeDefined();
     expect("toolProgress" in (bot as object)).toBe(false);
   });
+
+  it("includes persisted reasoningBlocks on completed bot messages when present", () => {
+    const turn = makeTurn({
+      reasoningBlocks: [
+        { blockId: "turn-1:r0", text: "Plan step 1", order: 1 },
+      ],
+    });
+    const messages = turnMessages(turn);
+    const bot = messages.find((m) => m.sender === "bot");
+    expect((bot as { reasoningBlocks?: unknown }).reasoningBlocks).toEqual([
+      { blockId: "turn-1:r0", text: "Plan step 1", order: 1 },
+    ]);
+  });
 });

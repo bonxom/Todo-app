@@ -2,6 +2,7 @@ import { EventEmitter } from "node:events";
 import type {
   ChatEventInput,
   ChatStreamEvent,
+  ReasoningBlock,
   ToolProgress,
   TurnSnapshot,
   RunStatus,
@@ -16,6 +17,7 @@ export interface LiveTurnState {
   partialResponse: string;
   lastEventSeq: number;
   toolProgress: ToolProgress[];
+  reasoningBlocks: ReasoningBlock[];
   deadlineAt: string;
   events: ChatStreamEvent[];
   cleanupTimer?: NodeJS.Timeout;
@@ -56,6 +58,7 @@ class ChatStreamBus {
       partialResponse: turn.partialResponse || "",
       lastEventSeq: turn.lastEventSeq ?? 0,
       toolProgress: [],
+      reasoningBlocks: [],
       deadlineAt: deadlineStr,
       events: [],
     });
@@ -81,6 +84,7 @@ class ChatStreamBus {
       partialResponse: live.partialResponse,
       lastEventSeq: live.lastEventSeq,
       toolProgress: [...live.toolProgress],
+      reasoningBlocks: live.reasoningBlocks.map((b) => ({ ...b })),
       deadlineAt: live.deadlineAt,
     };
   }
@@ -93,9 +97,7 @@ class ChatStreamBus {
     const live = this.liveTurns.get(turnId);
     if (!live) return null;
 
-    return live.events
-      .filter((e) => e.data.seq > after)
-      .slice(0, limit);
+    return live.events.filter((e) => e.data.seq > after).slice(0, limit);
   }
 
   emitLiveEvent(
@@ -110,6 +112,24 @@ class ChatStreamBus {
 
     if (eventInput.type === "assistant.delta") {
       live.partialResponse += eventInput.payload.text;
+    } else if (eventInput.type === "reasoning.delta") {
+      const blocks = [...live.reasoningBlocks];
+      const idx = blocks.findIndex(
+        (b) => b.blockId === eventInput.payload.blockId,
+      );
+      if (idx >= 0) {
+        blocks[idx] = {
+          ...blocks[idx],
+          text: blocks[idx].text + eventInput.payload.text,
+        };
+      } else {
+        blocks.push({
+          blockId: eventInput.payload.blockId,
+          text: eventInput.payload.text,
+          order: seq,
+        });
+      }
+      live.reasoningBlocks = blocks;
     } else if (eventInput.type === "tool.started") {
       const list = [...live.toolProgress];
       const idx = list.findIndex(
@@ -118,14 +138,21 @@ class ChatStreamBus {
       if (idx >= 0) {
         list[idx] = {
           ...list[idx],
+          ...(eventInput.payload.toolName
+            ? { toolName: eventInput.payload.toolName }
+            : {}),
           label: eventInput.payload.label,
           status: "started",
         };
       } else {
         list.push({
           toolCallId: eventInput.payload.toolCallId,
+          ...(eventInput.payload.toolName
+            ? { toolName: eventInput.payload.toolName }
+            : {}),
           label: eventInput.payload.label,
           status: "started",
+          order: seq,
         });
       }
       live.toolProgress = list;
@@ -137,6 +164,9 @@ class ChatStreamBus {
       if (idx >= 0) {
         list[idx] = {
           ...list[idx],
+          ...(eventInput.payload.toolName
+            ? { toolName: eventInput.payload.toolName }
+            : {}),
           status: eventInput.payload.status,
           ...(eventInput.payload.summary
             ? { summary: eventInput.payload.summary }
@@ -145,11 +175,15 @@ class ChatStreamBus {
       } else {
         list.push({
           toolCallId: eventInput.payload.toolCallId,
+          ...(eventInput.payload.toolName
+            ? { toolName: eventInput.payload.toolName }
+            : {}),
           label: "Đang xử lý tác vụ",
           status: eventInput.payload.status,
           ...(eventInput.payload.summary
             ? { summary: eventInput.payload.summary }
             : {}),
+          order: seq,
         });
       }
       live.toolProgress = list;

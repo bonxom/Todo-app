@@ -381,6 +381,7 @@ describe("agentService analyze_image internal tool", () => {
       type: "tool.started",
       payload: {
         toolCallId: "call_stream_img_ok",
+        toolName: "analyze_image",
         label: "Đang phân tích hình ảnh",
       },
     });
@@ -388,6 +389,7 @@ describe("agentService analyze_image internal tool", () => {
       type: "tool.finished",
       payload: {
         toolCallId: "call_stream_img_ok",
+        toolName: "analyze_image",
         status: "succeeded",
         summary: "Đã phân tích hình ảnh",
       },
@@ -396,6 +398,7 @@ describe("agentService analyze_image internal tool", () => {
       type: "tool.started",
       payload: {
         toolCallId: "call_stream_img_fail",
+        toolName: "analyze_image",
         label: "Đang phân tích hình ảnh",
       },
     });
@@ -403,6 +406,7 @@ describe("agentService analyze_image internal tool", () => {
       type: "tool.finished",
       payload: {
         toolCallId: "call_stream_img_fail",
+        toolName: "analyze_image",
         status: "failed",
         summary: "Phân tích hình ảnh không thành công",
       },
@@ -460,6 +464,7 @@ describe("agentService analyze_image internal tool", () => {
       type: "tool.finished",
       payload: {
         toolCallId: "call_abort_img",
+        toolName: "analyze_image",
         status: "failed",
         summary: "Phân tích hình ảnh không thành công",
       },

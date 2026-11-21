@@ -118,6 +118,9 @@ export function turnMessages(
       interaction: publicInteraction(i),
       skillsRead: turn.skillsRead ?? [],
       ...(turn.toolProgress?.length ? { toolProgress: turn.toolProgress } : {}),
+      ...(turn.reasoningBlocks?.length
+        ? { reasoningBlocks: turn.reasoningBlocks }
+        : {}),
     })),
     ...((turn.response && !turn.interactions?.length) || incomplete || expired
       ? [
@@ -132,6 +135,9 @@ export function turnMessages(
             skillsRead: turn.skillsRead ?? [],
             ...(turn.toolProgress?.length
               ? { toolProgress: turn.toolProgress }
+              : {}),
+            ...(turn.reasoningBlocks?.length
+              ? { reasoningBlocks: turn.reasoningBlocks }
               : {}),
             ...(envelope?.surface ? { surface: envelope.surface } : {}),
             ...(envelope?.proposal ? { proposal: envelope.proposal } : {}),

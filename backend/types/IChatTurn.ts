@@ -7,7 +7,7 @@ import type { AgentInteraction, AgentMode } from "./IAgent.js";
 import type { ProposalIntent } from "./A2UI/ITaskProposal.js";
 import type { StoredUiSurface } from "./A2UI/IUiSurface.js";
 import type { AgentActivity } from "./IAgentActivity.js";
-import type { ToolProgress } from "./IChatStream.js";
+import type { ReasoningBlock, ToolProgress } from "./IChatStream.js";
 
 export interface SkillReadMetadata {
   id: string;
@@ -51,6 +51,7 @@ export interface ChatTurn {
   terminalReason?: string;
   runnerInstanceId?: string;
   toolProgress?: ToolProgress[];
+  reasoningBlocks?: ReasoningBlock[];
   finishedAt?: Date;
   messages: ChatCompletionMessageParam[];
   activities?: AgentActivity[];
