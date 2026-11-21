@@ -34,7 +34,9 @@ for (const theme of ["light", "dark"] as const) {
       "background-color",
       accent,
     );
-    await expect(page.locator('.v2-agents img[src*="pinimg"]')).toHaveCount(0);
+    await expect(
+      page.locator('.v2-agents img.chat-avatar[src*="pinimg"]').first(),
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Context and activity" }),
     ).toHaveCount(0);

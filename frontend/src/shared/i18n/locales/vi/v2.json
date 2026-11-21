@@ -176,6 +176,46 @@
     "untitledTask": "Công việc chưa có tiêu đề"
   },
   "agentConversation": "Hội thoại với trợ lý",
+  "completionRateLabel": "Tỷ lệ hoàn thành",
+  "completionRateBadge": "{{rate}}% hoàn thành",
+  "completedPendingSub": "{{completed}} đã xong · {{pending}} chờ làm",
+  "inProgressBadge": "Đang mở",
+  "inProgressSub": "Công việc đang được triển khai",
+  "completedBadge": "Đã xong",
+  "completedSub": "{{count}} việc hoàn thành trong 7 ngày",
+  "attentionOverdueBadge": "{{count}} quá hạn",
+  "attentionClearBadge": "Đúng tiến độ",
+  "attentionSub": "{{pending}} chờ làm · {{high}} ưu tiên cao",
+  "todayFocusTitle": "Tiêu điểm hôm nay (Today's Focus)",
+  "todayFocusSubtitle": "Điều phối nhanh các việc cần chú ý, việc đang làm và hàng đợi tiếp theo.",
+  "askAiPlanToday": "Nhờ AI sắp lịch hôm nay",
+  "askAiPlanTodayPrompt": "Giúp tôi sắp xếp thứ tự ưu tiên và lịch trình các việc tiêu điểm hôm nay.",
+  "focusBucketOverdueTitle": "Quá hạn & Ưu tiên cao",
+  "focusBucketOverdueBadge": "Cần xử lý",
+  "focusBucketOverdueDesc": "{{overdue}} quá hạn · {{high}} việc ưu tiên cao",
+  "focusBucketOverdueAction": "Nhờ AI gỡ việc",
+  "focusBucketOverduePrompt": "Rà soát các việc quá hạn và ưu tiên cao của tôi rồi đề xuất hướng xử lý.",
+  "focusBucketActiveTitle": "Đang thực hiện",
+  "focusBucketActiveBadge": "Đang tập trung",
+  "focusBucketActiveDesc": "{{count}} công việc đang trong tiến trình",
+  "focusBucketActiveAction": "Lọc việc đang làm",
+  "focusBucketPendingTitle": "Hàng đợi tiếp theo",
+  "focusBucketPendingBadge": "Sẵn sàng",
+  "focusBucketPendingDesc": "{{count}} công việc đang chờ bắt đầu",
+  "focusBucketPendingAction": "Lọc việc chờ làm",
+  "focusResetFilter": "Hiện tất cả việc",
+  "chatNowTitle": "Chat ngay với Orbit Agent",
+  "chatNowSubtitle": "Gửi tin nhắn để chuyển mượt sang không gian hội thoại Trợ lý AI.",
+  "chatNowPlaceholder": "Hỏi Orbit Agent bất cứ điều gì, hoặc mô tả công việc cần tạo…",
+  "chatNowSend": "Chat ngay",
+  "chatNowStarterPlan": "Lên lịch hôm nay",
+  "chatNowStarterOverdue": "Rà soát việc ưu tiên",
+  "chatNowStarterBreakdown": "Chia nhỏ công việc",
+  "projectsRailTitle": "Dự án",
+  "allProjects": "Tất cả dự án",
+  "allProjectsTaskCount": "{{count}} việc",
+  "addProject": "Thêm dự án",
+  "noProjectsYet": "Chưa có dự án nào. Hãy gom các việc liên quan vào dự án.",
   "settingsTitle": "Cài đặt",
   "settings": {
     "palettes": {
@@ -186,6 +226,14 @@
       "ocean": {
         "name": "Ocean Glass",
         "description": "Sắc xanh đại dương sâu và bề mặt kính xanh biển."
+      },
+      "golden": {
+        "name": "Golden Glass",
+        "description": "Sắc vàng hổ phách ấm áp và bề mặt kính ánh kim."
+      },
+      "crimson": {
+        "name": "Crimson Glass",
+        "description": "Điểm nhấn đỏ hồng ngọc trên nền kính hồng trầm."
       }
     }
   }

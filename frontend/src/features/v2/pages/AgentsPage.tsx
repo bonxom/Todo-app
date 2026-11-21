@@ -88,7 +88,10 @@ export default function AgentsPage() {
   const busy =
     resolving || chat.loading || chat.sending || Boolean(chat.pending);
   const newChat =
-    !activeConversationId && !chat.messages.length && !chat.interaction;
+    !activeConversationId &&
+    !chat.messages.length &&
+    !chat.sending &&
+    !chat.interaction;
   const projectUnavailable =
     newChat && activeProjectId && projects.isSuccess && !project;
   const conversationUnavailable = Boolean(
@@ -229,10 +232,11 @@ export default function AgentsPage() {
         <section
           ref={center}
           inert={compact && showHistory}
-          className={`v2-agent-center relative flex h-full min-h-0 min-w-0 flex-1 flex-col ${
+          data-chat-stage={newChat ? "starter" : "active"}
+          className={`v2-agent-center relative flex h-full min-h-0 min-w-0 flex-1 flex-col rounded-[var(--v2-radius-card)] border [transition:background-color_260ms_cubic-bezier(0.22,1,0.36,1),border-color_260ms_cubic-bezier(0.22,1,0.36,1),box-shadow_260ms_cubic-bezier(0.22,1,0.36,1)] ${
             newChat
-              ? ""
-              : "rounded-[var(--v2-radius-card)] border border-[var(--v2-border)] bg-[color-mix(in_srgb,var(--v2-surface-solid)_55%,transparent)] [@media(prefers-reduced-transparency:reduce)]:bg-[var(--v2-surface-solid)]"
+              ? "border-transparent bg-transparent"
+              : "border-[var(--v2-border)] bg-[color-mix(in_srgb,var(--v2-surface-solid)_55%,transparent)] [@media(prefers-reduced-transparency:reduce)]:bg-[var(--v2-surface-solid)]"
           }`}
           aria-label={t("agentConversation")}
         >
@@ -299,7 +303,6 @@ export default function AgentsPage() {
             >
               <ChatField
                 showWelcome={false}
-                avatarAppearance="orbit"
                 chat={chat}
                 messages={chat.messages}
                 onSendMessage={chat.send}

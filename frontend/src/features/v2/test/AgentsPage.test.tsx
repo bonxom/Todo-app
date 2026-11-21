@@ -12,14 +12,26 @@ import { renderWithProviders, resetTestSession } from "./testSupport";
 const send = vi.fn().mockResolvedValue(true);
 
 vi.mock("@/features/tasks/components/chat/ChatField", () => ({
-  default: ({ disabled }: { disabled?: boolean }) => (
-    <div data-testid="chat-field" data-disabled={String(Boolean(disabled))} />
+  default: ({
+    disabled,
+    avatarAppearance = "default",
+  }: {
+    disabled?: boolean;
+    avatarAppearance?: string;
+  }) => (
+    <div
+      data-testid="chat-field"
+      data-disabled={String(Boolean(disabled))}
+      data-avatar-appearance={avatarAppearance}
+    />
   ),
 }));
 
+let mockActiveConversationId: string | undefined = "conversation-1";
+
 vi.mock("@/features/agent/useAgentNavigation", () => ({
   useAgentNavigation: () => ({
-    activeConversationId: "conversation-1",
+    activeConversationId: mockActiveConversationId,
     selectConversation: vi.fn(),
     startNewChat: vi.fn(),
     discardPromptOpen: false,
@@ -79,6 +91,7 @@ describe("V2 Agents page", () => {
   beforeEach(() => {
     resetTestSession();
     vi.clearAllMocks();
+    mockActiveConversationId = "conversation-1";
   });
 
   it("renders the workspace with history and no context panel", () => {
@@ -95,6 +108,10 @@ describe("V2 Agents page", () => {
       screen.queryByRole("button", { name: "Context and activity" }),
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("chat-field")).toBeInTheDocument();
+    expect(screen.getByTestId("chat-field")).toHaveAttribute(
+      "data-avatar-appearance",
+      "default",
+    );
   });
 
   it("disables the composer while the session is locked", () => {
@@ -116,12 +133,28 @@ describe("V2 Agents page", () => {
       screen.getByText(/This conversation is unavailable/i),
     ).toBeInTheDocument();
   });
+
+  it("immediately switches from starter stage to active zoom-out stage while sending first turn", () => {
+    mockActiveConversationId = undefined;
+    renderWithSession(
+      <AgentsPage />,
+      buildSession({
+        conversationId: undefined,
+        messages: [],
+        sending: true,
+      }),
+    );
+
+    const center = screen.getByRole("region", { name: "Agent conversation" });
+    expect(center).toHaveAttribute("data-chat-stage", "active");
+  });
 });
 
 describe("V2 assistant bubble", () => {
   beforeEach(() => {
     resetTestSession();
     vi.clearAllMocks();
+    mockActiveConversationId = "conversation-1";
   });
 
   it("is closed by default and toggles open on click", async () => {
@@ -139,6 +172,10 @@ describe("V2 assistant bubble", () => {
       screen.queryByRole("button", { name: "Open assistant" }),
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("chat-field")).toBeInTheDocument();
+    expect(screen.getByTestId("chat-field")).toHaveAttribute(
+      "data-avatar-appearance",
+      "default",
+    );
   });
 
   it("closes on Escape and returns focus to the trigger", async () => {

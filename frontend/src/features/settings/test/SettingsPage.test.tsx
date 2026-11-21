@@ -111,7 +111,7 @@ describe("SettingsWorkspace", () => {
     useSettingsStore.getState().resetSettings();
   });
 
-  it("shows V2 color palette selector (Mint and Ocean) ONLY in V2 and persists selection", async () => {
+  it("shows V2 color palette selector (Mint, Ocean, Golden, Crimson) ONLY in V2 and persists selection", async () => {
     const user = userEvent.setup();
     renderSettings("v2");
 
@@ -119,11 +119,23 @@ describe("SettingsWorkspace", () => {
 
     expect(screen.getByTestId("v2-palette-picker")).toBeInTheDocument();
     const oceanBtn = screen.getByRole("button", { name: /Ocean Glass/i });
-    await user.click(oceanBtn);
+    const goldenBtn = screen.getByRole("button", { name: /Golden Glass/i });
+    const crimsonBtn = screen.getByRole("button", { name: /Crimson Glass/i });
 
+    await user.click(oceanBtn);
     expect(localStorage.getItem(V2_PALETTE_STORAGE_KEY)).toBe("ocean");
     expect(document.documentElement.dataset.v2Palette).toBe("ocean");
     expect(oceanBtn).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(goldenBtn);
+    expect(localStorage.getItem(V2_PALETTE_STORAGE_KEY)).toBe("golden");
+    expect(document.documentElement.dataset.v2Palette).toBe("golden");
+    expect(goldenBtn).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(crimsonBtn);
+    expect(localStorage.getItem(V2_PALETTE_STORAGE_KEY)).toBe("crimson");
+    expect(document.documentElement.dataset.v2Palette).toBe("crimson");
+    expect(crimsonBtn).toHaveAttribute("aria-pressed", "true");
   });
 
   it("does NOT display the V2 color palette selector in V1", async () => {

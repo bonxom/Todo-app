@@ -120,3 +120,111 @@
   --v2-shadow-lg:
     0 30px 90px -25px rgb(0 0 0 / 68%), inset 0 1px 0 rgb(196 232 255 / 20%);
 }
+
+/* Palette: Golden (Light) */
+[data-v2-palette="golden"] .v2-app {
+  --v2-canvas: #f6f1e6;
+  --v2-ink: #3d2c14;
+  --v2-muted: #6e583b;
+  --v2-accent: #9a6308;
+  --v2-accent-ink: #ffffff;
+  --v2-success: #247356;
+  --v2-warning: #8f5708;
+  --v2-surface-solid: #fcf9f2;
+  --v2-glass-fill: rgb(255 252 245 / 72%);
+  --v2-shell-fill: rgb(255 251 242 / 52%);
+  --v2-glass-border: rgb(255 255 255 / 90%);
+  --v2-border: rgb(118 84 32 / 16%);
+  --v2-grid: rgb(128 92 36 / 4.5%);
+  --v2-input-fill: rgb(255 255 255 / 80%);
+  --v2-bg-glow-1: rgb(246 213 138 / 58%);
+  --v2-bg-glow-2: rgb(242 196 142 / 46%);
+  --v2-progress-start: #9a6308;
+  --v2-progress-end: #f59e0b;
+  --v2-shadow-sm: 0 2px 5px rgb(84 56 14 / 5%);
+  --v2-shadow-md:
+    0 14px 36px -20px rgb(88 58 14 / 28%), inset 0 1px 0 rgb(255 255 255 / 95%);
+  --v2-shadow-lg:
+    0 28px 80px -28px rgb(68 44 10 / 34%), inset 0 1px 0 rgb(255 255 255 / 90%);
+}
+
+/* Palette: Golden (Dark) */
+[data-theme="dark"][data-v2-palette="golden"] .v2-app {
+  --v2-canvas: #1f190f;
+  --v2-ink: #f9f0e1;
+  --v2-muted: #cdb99c;
+  --v2-accent: #f6c453;
+  --v2-accent-ink: #2b1d03;
+  --v2-success: #86e3b3;
+  --v2-warning: #f6c453;
+  --v2-surface-solid: #2e2517;
+  --v2-glass-fill: rgb(48 38 23 / 78%);
+  --v2-shell-fill: rgb(61 48 29 / 58%);
+  --v2-glass-border: rgb(252 225 168 / 24%);
+  --v2-border: rgb(245 215 155 / 16%);
+  --v2-grid: rgb(240 205 140 / 3.5%);
+  --v2-input-fill: rgb(32 25 14 / 88%);
+  --v2-bg-glow-1: rgb(138 94 20 / 44%);
+  --v2-bg-glow-2: rgb(112 72 18 / 40%);
+  --v2-progress-start: #b8790e;
+  --v2-progress-end: #f6c453;
+  --v2-shadow-sm: 0 2px 8px rgb(0 0 0 / 16%);
+  --v2-shadow-md:
+    0 16px 40px -16px rgb(0 0 0 / 42%), inset 0 1px 0 rgb(255 236 196 / 16%);
+  --v2-shadow-lg:
+    0 30px 90px -25px rgb(0 0 0 / 68%), inset 0 1px 0 rgb(255 236 196 / 20%);
+}
+
+/* Palette: Crimson (Light) */
+[data-v2-palette="crimson"] .v2-app {
+  --v2-canvas: #f7eaec;
+  --v2-ink: #3f1820;
+  --v2-muted: #734a53;
+  --v2-accent: #a61c3c;
+  --v2-accent-ink: #ffffff;
+  --v2-success: #217358;
+  --v2-warning: #8f5614;
+  --v2-surface-solid: #fdf4f5;
+  --v2-glass-fill: rgb(255 247 248 / 72%);
+  --v2-shell-fill: rgb(255 245 247 / 52%);
+  --v2-glass-border: rgb(255 255 255 / 90%);
+  --v2-border: rgb(125 36 56 / 16%);
+  --v2-grid: rgb(135 38 60 / 4.5%);
+  --v2-input-fill: rgb(255 255 255 / 80%);
+  --v2-bg-glow-1: rgb(244 176 191 / 56%);
+  --v2-bg-glow-2: rgb(236 184 206 / 46%);
+  --v2-progress-start: #a61c3c;
+  --v2-progress-end: #f43f5e;
+  --v2-shadow-sm: 0 2px 5px rgb(92 22 38 / 5%);
+  --v2-shadow-md:
+    0 14px 36px -20px rgb(96 24 42 / 28%), inset 0 1px 0 rgb(255 255 255 / 95%);
+  --v2-shadow-lg:
+    0 28px 80px -28px rgb(76 18 32 / 35%), inset 0 1px 0 rgb(255 255 255 / 90%);
+}
+
+/* Palette: Crimson (Dark) */
+[data-theme="dark"][data-v2-palette="crimson"] .v2-app {
+  --v2-canvas: #211015;
+  --v2-ink: #fbe9ed;
+  --v2-muted: #cfa8b1;
+  --v2-accent: #ff8fa3;
+  --v2-accent-ink: #380a14;
+  --v2-success: #8ae0b8;
+  --v2-warning: #f0c67d;
+  --v2-surface-solid: #331a21;
+  --v2-glass-fill: rgb(54 26 34 / 78%);
+  --v2-shell-fill: rgb(68 33 43 / 58%);
+  --v2-glass-border: rgb(255 196 208 / 24%);
+  --v2-border: rgb(250 185 198 / 16%);
+  --v2-grid: rgb(245 175 190 / 3.5%);
+  --v2-input-fill: rgb(35 16 22 / 88%);
+  --v2-bg-glow-1: rgb(142 28 54 / 44%);
+  --v2-bg-glow-2: rgb(110 24 62 / 40%);
+  --v2-progress-start: #be123c;
+  --v2-progress-end: #ff8fa3;
+  --v2-shadow-sm: 0 2px 8px rgb(0 0 0 / 16%);
+  --v2-shadow-md:
+    0 16px 40px -16px rgb(0 0 0 / 42%), inset 0 1px 0 rgb(255 208 218 / 16%);
+  --v2-shadow-lg:
+    0 30px 90px -25px rgb(0 0 0 / 68%), inset 0 1px 0 rgb(255 208 218 / 20%);
+}

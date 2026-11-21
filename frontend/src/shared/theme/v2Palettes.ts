@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-export type V2PaletteId = "mint" | "ocean";
+export type V2PaletteId = "mint" | "ocean" | "golden" | "crimson";
 
 export interface V2PalettePreview {
   canvas: string;
@@ -65,6 +65,44 @@ export const V2_PALETTES: readonly V2PaletteDefinition[] = [
         surface: "#14283d",
         accent: "#7cc4fa",
         accentSoft: "#165694",
+      },
+    },
+  },
+  {
+    id: "golden",
+    labelKey: "settings.palettes.golden.name",
+    descriptionKey: "settings.palettes.golden.description",
+    preview: {
+      light: {
+        canvas: "#f6f1e6",
+        surface: "#fcf9f2",
+        accent: "#9a6308",
+        accentSoft: "#f6d58a",
+      },
+      dark: {
+        canvas: "#1f190f",
+        surface: "#2e2517",
+        accent: "#f6c453",
+        accentSoft: "#785314",
+      },
+    },
+  },
+  {
+    id: "crimson",
+    labelKey: "settings.palettes.crimson.name",
+    descriptionKey: "settings.palettes.crimson.description",
+    preview: {
+      light: {
+        canvas: "#f7eaec",
+        surface: "#fdf4f5",
+        accent: "#a61c3c",
+        accentSoft: "#f4b0bf",
+      },
+      dark: {
+        canvas: "#211015",
+        surface: "#331a21",
+        accent: "#ff8fa3",
+        accentSoft: "#7a1d33",
       },
     },
   },

@@ -12,7 +12,7 @@ async function installSettingsFixture(
     version?: "v1" | "v2";
     theme?: "light" | "dark";
     language?: "en" | "vi";
-    palette?: "mint" | "ocean";
+    palette?: "mint" | "ocean" | "golden" | "crimson";
     unreadCount?: number;
   } = {},
 ) {
@@ -345,14 +345,82 @@ test.describe("Settings Page & V2 Ocean Palette", () => {
       fullPage: true,
     });
 
+    // Switch to Golden in Dark mode, then Light mode
+    await page.getByTestId("v2-palette-option-golden").click();
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-v2-palette",
+      "golden",
+    );
+    const goldenDarkAccent = await page
+      .locator(".v2-app")
+      .evaluate((el) =>
+        getComputedStyle(el).getPropertyValue("--v2-accent").trim(),
+      );
+    expect(goldenDarkAccent).toBe("#f6c453");
+    await page.mouse.move(10, 10);
+    await page.waitForTimeout(250);
+    await page.screenshot({
+      path: path.join(ARTIFACT_DIR, "v2-settings-golden-dark.png"),
+      fullPage: true,
+    });
+
+    await page.getByRole("button", { name: /^Light$/i }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    const goldenLightAccent = await page
+      .locator(".v2-app")
+      .evaluate((el) =>
+        getComputedStyle(el).getPropertyValue("--v2-accent").trim(),
+      );
+    expect(goldenLightAccent).toBe("#9a6308");
+    await page.mouse.move(10, 10);
+    await page.waitForTimeout(250);
+    await page.screenshot({
+      path: path.join(ARTIFACT_DIR, "v2-settings-golden-light.png"),
+      fullPage: true,
+    });
+
+    // Switch to Crimson in Light mode, then Dark mode
+    await page.getByTestId("v2-palette-option-crimson").click();
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-v2-palette",
+      "crimson",
+    );
+    const crimsonLightAccent = await page
+      .locator(".v2-app")
+      .evaluate((el) =>
+        getComputedStyle(el).getPropertyValue("--v2-accent").trim(),
+      );
+    expect(crimsonLightAccent).toBe("#a61c3c");
+    await page.mouse.move(10, 10);
+    await page.waitForTimeout(250);
+    await page.screenshot({
+      path: path.join(ARTIFACT_DIR, "v2-settings-crimson-light.png"),
+      fullPage: true,
+    });
+
+    await page.getByRole("button", { name: /^Dark$/i }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    const crimsonDarkAccent = await page
+      .locator(".v2-app")
+      .evaluate((el) =>
+        getComputedStyle(el).getPropertyValue("--v2-accent").trim(),
+      );
+    expect(crimsonDarkAccent).toBe("#ff8fa3");
+    await page.mouse.move(10, 10);
+    await page.waitForTimeout(250);
+    await page.screenshot({
+      path: path.join(ARTIFACT_DIR, "v2-settings-crimson-dark.png"),
+      fullPage: true,
+    });
+
     // Reload and verify localStorage persistence
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute(
       "data-v2-palette",
-      "ocean",
+      "crimson",
     );
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-    await expect(page.getByTestId("v2-palette-option-ocean")).toHaveAttribute(
+    await expect(page.getByTestId("v2-palette-option-crimson")).toHaveAttribute(
       "aria-pressed",
       "true",
     );

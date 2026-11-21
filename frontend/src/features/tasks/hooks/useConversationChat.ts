@@ -185,8 +185,24 @@ export function useConversationChat(options?: ConversationChatOptions) {
     setError(null);
     setUploadError(null);
     let payload = pending;
+    let optimisticRequestId: string | undefined;
     try {
       let id = conversationId;
+      if (!payload && !files.length && text) {
+        optimisticRequestId = generateUUID();
+        setMessages((previous) => [
+          ...previous,
+          {
+            id: optimisticRequestId!,
+            sender: "user",
+            ...(selection
+              ? { replyToInteractionId: selection.interactionId }
+              : {}),
+            text,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+      }
       if (!id) {
         const projectId = session.context?.projectId ?? undefined;
         if (
@@ -217,9 +233,10 @@ export function useConversationChat(options?: ConversationChatOptions) {
           attachments.push(metadata);
         }
         setUploadProgress(null);
+        const requestId = optimisticRequestId ?? generateUUID();
         payload = {
           conversationId: id,
-          requestId: generateUUID(),
+          requestId,
           userInput: text!,
           ...(attachments.length
             ? { attachmentIds: attachments.map((file) => file.id) }
@@ -228,19 +245,21 @@ export function useConversationChat(options?: ConversationChatOptions) {
           ...(selection ? { selection } : {}),
         };
         setPending(payload);
-        setMessages((previous) => [
-          ...previous,
-          {
-            id: payload!.requestId!,
-            sender: "user",
-            ...(selection
-              ? { replyToInteractionId: selection.interactionId }
-              : {}),
-            text: text!,
-            ...(attachments.length ? { attachments } : {}),
-            timestamp: new Date().toISOString(),
-          },
-        ]);
+        if (!optimisticRequestId) {
+          setMessages((previous) => [
+            ...previous,
+            {
+              id: payload!.requestId!,
+              sender: "user",
+              ...(selection
+                ? { replyToInteractionId: selection.interactionId }
+                : {}),
+              text: text!,
+              ...(attachments.length ? { attachments } : {}),
+              timestamp: new Date().toISOString(),
+            },
+          ]);
+        }
       }
 
       try {
@@ -279,6 +298,11 @@ export function useConversationChat(options?: ConversationChatOptions) {
         throw err;
       }
     } catch (err) {
+      if (!payload && optimisticRequestId && isCurrent()) {
+        setMessages((previous) =>
+          previous.filter((message) => message.id !== optimisticRequestId),
+        );
+      }
       if (!payload && files.length) {
         if (isCurrent())
           setUploadError(

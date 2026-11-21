@@ -57,7 +57,7 @@ export function useAgentNavigation() {
 
   useEffect(() => {
     if (resolvedKey !== location.key) {
-      if (chat.loading || chat.sending) return;
+      if (!assistantHandoff && (chat.loading || chat.sending)) return;
       const frame = requestAnimationFrame(() => {
         if (
           activeConversationId &&
@@ -138,6 +138,7 @@ export function useAgentNavigation() {
     activeConversationId,
     activeProjectId,
     resolving:
+      !assistantHandoff &&
       resolvedKey !== location.key &&
       (!activeConversationId || activeConversationId !== chat.conversationId),
     selectConversation,

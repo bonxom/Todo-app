@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { installV2Fixture } from "./frontend-v2.fixture";
+import { agentWorkspaceFixture } from "./agent-workspace.fixture";
 
 test.describe("Frontend V2 Liquid Glass & Coexistence", () => {
   test("URL wins over preference and switching is bidirectional", async ({
@@ -194,5 +195,60 @@ test.describe("Frontend V2 Liquid Glass & Coexistence", () => {
     await dialog.getByRole("button", { name: "Close" }).click();
     await expect(page).toHaveURL(/\/v2\/dashboard$/);
     await expect(dialog).not.toBeVisible();
+  });
+
+  test("V2 Dashboard Command Center layout and Chat Now handoff to Agents", async ({
+    page,
+  }) => {
+    await agentWorkspaceFixture(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/v2/dashboard");
+
+    const focusStrip = page.getByTestId("v2-dashboard-focus");
+    const chatNow = page.getByTestId("v2-dashboard-chat-now");
+    const projectsRail = page.getByTestId("v2-dashboard-projects-rail");
+    const taskPanel = page.locator(".v2-workspace-panel");
+
+    await expect(focusStrip).toBeVisible();
+    await expect(chatNow).toBeVisible();
+    await expect(projectsRail).toBeVisible();
+    await expect(taskPanel).toBeVisible();
+
+    // Verify Chat Now sits between Today's Focus and (Projects + Task List)
+    const focusBox = (await focusStrip.boundingBox())!;
+    const chatNowBox = (await chatNow.boundingBox())!;
+    const projectsBox = (await projectsRail.boundingBox())!;
+    expect(focusBox.y + focusBox.height).toBeLessThanOrEqual(chatNowBox.y + 4);
+    expect(chatNowBox.y + chatNowBox.height).toBeLessThanOrEqual(
+      projectsBox.y + 4,
+    );
+
+    await page.screenshot({
+      path: "artifacts/dashboard-command-center/dashboard-light.png",
+      fullPage: true,
+    });
+
+    // Send a message in Chat Now -> navigates immediately to /v2/agents and streams reply
+    const chatNowInput = chatNow.getByRole("textbox");
+    await chatNowInput.fill("Plan my afternoon priorities");
+    await chatNowInput.press("Enter");
+
+    await expect(page).toHaveURL(/\/v2\/agents/);
+    const agentCenter = page.locator(".v2-agent-center");
+    await expect(agentCenter).toHaveAttribute("data-chat-stage", "active");
+    await expect(
+      agentCenter.getByText("Plan my afternoon priorities", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      agentCenter.getByText(
+        "Phản hồi mẫu từ Orbit Agent cho: Plan my afternoon priorities",
+        { exact: true },
+      ),
+    ).toBeVisible();
+
+    await page.screenshot({
+      path: "artifacts/dashboard-command-center/agents-after-handoff.png",
+      fullPage: true,
+    });
   });
 });

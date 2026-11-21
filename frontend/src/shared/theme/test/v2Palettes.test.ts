@@ -22,16 +22,23 @@ describe("v2Palettes", () => {
     delete document.documentElement.dataset.v2Palette;
   });
 
-  it("registers mint (default) and ocean palettes with light and dark previews", () => {
+  it("registers mint (default), ocean, golden, and crimson palettes with light and dark previews", () => {
     expect(DEFAULT_V2_PALETTE).toBe("mint");
     expect(V2_PALETTE_STORAGE_KEY).toBe("orbit.v2-palette");
-    expect(V2_PALETTES.map((p) => p.id)).toEqual(["mint", "ocean"]);
+    expect(V2_PALETTES.map((p) => p.id)).toEqual([
+      "mint",
+      "ocean",
+      "golden",
+      "crimson",
+    ]);
     for (const palette of V2_PALETTES) {
       expect(palette.preview.light.accent).toMatch(/^#/);
       expect(palette.preview.dark.accent).toMatch(/^#/);
     }
     expect(isV2PaletteId("mint")).toBe(true);
     expect(isV2PaletteId("ocean")).toBe(true);
+    expect(isV2PaletteId("golden")).toBe(true);
+    expect(isV2PaletteId("crimson")).toBe(true);
     expect(isV2PaletteId("sunset")).toBe(false);
   });
 
