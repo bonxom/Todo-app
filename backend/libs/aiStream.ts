@@ -5,14 +5,25 @@ import type {
 import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
 
+type DeltaWithReasoning = ChatCompletionChunk.Choice.Delta & {
+  reasoning_content?: string | null;
+  reasoning?: string | null;
+};
+
+export type StreamedAssistantMessage = ChatCompletionMessage & {
+  reasoning_content?: string;
+};
+
 export async function readAiStream(
   chunks: AsyncIterable<ChatCompletionChunk>,
   options: {
     signal: AbortSignal;
     onText(text: string): Promise<void>;
+    onReasoning?(text: string): Promise<void>;
   },
-): Promise<ChatCompletionMessage> {
+): Promise<StreamedAssistantMessage> {
   let accumulatedContent = "";
+  let accumulatedReasoning = "";
   const toolCallsByIndex = new Map<
     number,
     {
@@ -36,10 +47,24 @@ export async function readAiStream(
       const choice = chunk.choices?.[0];
       if (!choice) continue;
 
-      const delta = choice.delta;
+      const delta = choice.delta as DeltaWithReasoning | undefined;
       if (!delta) continue;
 
-      // Only emit public content; ignore internal reasoning tokens
+      const reasoningChunk =
+        typeof delta.reasoning_content === "string" &&
+        delta.reasoning_content.length > 0
+          ? delta.reasoning_content
+          : typeof delta.reasoning === "string" && delta.reasoning.length > 0
+            ? delta.reasoning
+            : "";
+
+      if (reasoningChunk.length > 0) {
+        accumulatedReasoning += reasoningChunk;
+        if (options.onReasoning) {
+          await options.onReasoning(reasoningChunk);
+        }
+      }
+
       if (typeof delta.content === "string" && delta.content.length > 0) {
         accumulatedContent += delta.content;
         await options.onText(delta.content);
@@ -88,6 +113,9 @@ export async function readAiStream(
     role: "assistant",
     content: accumulatedContent.length > 0 ? accumulatedContent : null,
     refusal: null,
+    ...(accumulatedReasoning.length > 0
+      ? { reasoning_content: accumulatedReasoning }
+      : {}),
     ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
   };
 }

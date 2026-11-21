@@ -2851,101 +2851,35 @@ textarea.ui-input {
 /* Task proposals */
 
 .task-proposal {
-  @apply text-[var(--color-text,#1f2328)] w-full min-w-[0] whitespace-normal flex flex-col gap-[0.75rem];
+  @apply text-[var(--v2-ink,var(--color-text,#1f2328))] w-full min-w-[0] whitespace-normal flex flex-col gap-[0.65rem];
 }
 
-.task-proposal-status {
-  @apply text-[var(--color-accent-strong,#365772)] [background:var(--color-accent-soft,#eaf1f6)];
+.task-proposal .ui-custom-select-trigger {
+  @apply min-h-[36px] px-[10px] py-[6px] rounded-[9px] text-[0.8125rem];
 }
 
-.task-proposal-header--created .task-proposal-status {
-  @apply text-[var(--color-success,#2f7d5a)] [background:var(--color-success-soft,#eaf4ef)];
+.a2ui-card:has(.task-proposal) {
+  @apply p-[0.65rem] sm:p-[0.8rem] rounded-[16px] [border-color:var(--v2-border,var(--color-line,#d9dee5))] [background:var(--v2-shell-fill,color-mix(in_srgb,var(--color-surface,#ffffff)_86%,var(--color-surface-muted,#f1f3f5)))] [box-shadow:none];
 }
 
-.task-proposal-header--cancelled .task-proposal-status {
-  @apply text-[var(--color-text-muted,#667085)] [background:var(--color-surface-muted,#f1f3f5)];
+.task-proposal-glass-btn::before {
+  @apply [content:""] absolute inset-[0] rounded-[inherit] pointer-events-none [background:linear-gradient(115deg,transparent_15%,rgb(255_255_255_/_40%)_45%,transparent_65%)] opacity-[0] [transform:translateX(-45%)] [transition:opacity_160ms_ease,transform_180ms_ease];
 }
 
-.task-proposal-item {
-  @apply [border:1px_solid_var(--color-line,#d9dee5)];
-  @apply [border-left:3px_solid_var(--color-accent,#456b8c)];
+@media (hover: hover) {
+  .task-proposal-glass-btn:hover:not(:disabled)::before {
+    @apply opacity-[0.6] [transform:translateX(0)];
+  }
 }
 
-.task-proposal-priority--high {
-  @apply text-[var(--color-danger,#b25547)] [background:var(--color-danger-soft,#f9ecea)];
+.task-proposal-glass-btn:disabled::before {
+  @apply [display:none];
 }
 
-.task-proposal-priority--medium {
-  @apply text-[var(--color-warning,#a46a2a)] [background:var(--color-warning-soft,#faf0df)];
-}
-
-.task-proposal-priority--low {
-  @apply text-[var(--color-accent,#456b8c)] [background:var(--color-accent-soft,#eaf1f6)];
-}
-
-.task-proposal label {
-  @apply grid gap-[0.25rem] text-[0.74rem] [font-weight:550] text-[var(--color-text-muted,#667085)] m-[0] min-w-[0];
-}
-
-.task-proposal .task-proposal-selection {
-  @apply inline-flex items-center gap-[0.4rem] p-[0.2rem_0.55rem] rounded-[999px] [border:1px_solid_var(--color-line,#d9dee5)] [background:var(--color-surface-muted,#f1f3f5)] text-[var(--color-text,#1f2328)] text-[0.72rem] [font-weight:600] cursor-pointer;
-}
-
-.task-proposal .task-proposal-selection input[type="checkbox"] {
-  @apply [accent-color:var(--color-accent,#456b8c)] w-[0.85rem] h-[0.85rem] m-[0] cursor-pointer;
-}
-
-.task-proposal input:not([type="checkbox"]),
-.task-proposal textarea,
-.task-proposal select {
-  @apply box-border w-full min-w-[0] p-[0.45rem_0.6rem] [border:1px_solid_var(--color-line,#d9dee5)] rounded-[var(--radius-sm,8px)] [background:var(--color-surface,#ffffff)] text-[var(--color-text,#1f2328)] [font:inherit];
-  @apply text-[0.82rem] [transition:border-color_140ms_ease,box-shadow_140ms_ease];
-}
-
-.task-proposal input:not([type="checkbox"]):focus,
-.task-proposal textarea:focus,
-.task-proposal select:focus {
-  @apply [outline:none] border-[var(--color-accent,#456b8c)] [box-shadow:var(--ring-focus-shadow,0_0_0_3px_rgba(69,107,140,0.16))];
-}
-
-.task-proposal button {
-  @apply cursor-pointer p-[0.5rem_0.85rem] [border:1px_solid_var(--color-line,#d9dee5)] rounded-[var(--radius-sm,8px)] text-[0.78rem] [font-weight:600] [background:var(--color-surface,#ffffff)] text-[var(--color-text,#1f2328)] [transition:background-color_140ms_ease,border-color_140ms_ease,color_140ms_ease];
-}
-
-.task-proposal-btn-cancel {
-  @apply text-[var(--color-text-muted,#667085)];
-}
-
-.task-proposal-btn-cancel:hover:not(:disabled) {
-  @apply text-[var(--color-danger,#b25547)];
-}
-
-.task-proposal-actions button:last-child {
-  @apply [background:var(--color-accent,#456b8c)] text-[#ffffff];
-}
-
-.task-proposal-btn-confirm {
-  @apply text-[#ffffff];
-}
-
-.task-proposal-actions button:last-child:hover:not(:disabled) {
-  @apply [background:var(--color-accent-strong,#365772)];
-}
-
-.task-proposal button:disabled {
-  @apply opacity-[0.5] cursor-default;
-}
-
-.task-proposal :focus-visible {
-  @apply [outline:2px_solid_var(--color-accent,#456b8c)] outline-offset-[2px];
-}
-
-.task-proposal-created-link {
-  @apply text-[var(--color-success,#2f7d5a)];
-}
-
-.task-proposal [role="alert"] {
-  @apply m-[0] p-[0.45rem_0.65rem] rounded-[var(--radius-sm,8px)] [background:var(--color-danger-soft,#f9ecea)] text-[var(--color-danger,#b25547)] text-[0.78rem] [font-weight:550];
+@media (prefers-reduced-transparency: reduce) {
+  .task-proposal-glass-btn {
+    @apply [backdrop-filter:none] [-webkit-backdrop-filter:none];
+  }
 }
 
 /* HTML preview */
@@ -7060,6 +6994,143 @@ body:has(.calendar-timeline-event[data-resizing="true"])
   }
   .v2-chat-now {
     transition: none;
+  }
+}
+
+/* Minimal inline Collapsible Agent Process (V1 + V2) */
+.agent-process-panel {
+  @apply mb-2 flex max-w-full flex-col gap-1 text-xs;
+}
+
+.agent-process-panel--compact {
+  @apply mb-1.5 text-[12px];
+}
+
+.agent-process-panel:last-child {
+  @apply mb-0;
+}
+
+.agent-process-trigger {
+  @apply inline-flex w-fit max-w-full items-center gap-1.5 rounded-md border-0 bg-transparent px-0 py-0.5 text-left text-xs font-medium text-[var(--color-text-muted)] cursor-pointer transition-colors hover:text-[var(--color-text)];
+}
+
+.agent-process-title {
+  @apply truncate;
+}
+
+.agent-process-chevron {
+  @apply shrink-0 opacity-75 transition-transform duration-150;
+}
+
+.agent-process-panel[data-expanded="true"] .agent-process-chevron {
+  @apply rotate-180;
+}
+
+.agent-process-steps {
+  @apply ml-1.5 mt-0.5 flex flex-col gap-1 border-l border-[var(--color-line)] pl-2.5;
+}
+
+.agent-process-step {
+  @apply flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-snug;
+}
+
+.agent-process-step-label {
+  @apply truncate text-[var(--color-text-muted)];
+}
+
+.agent-process-panel--live .agent-process-step-label {
+  @apply font-medium text-[var(--color-text)];
+}
+
+.agent-process-step-summary {
+  @apply truncate text-[11px] text-[var(--color-text-muted)] opacity-80;
+}
+
+.agent-process-step-summary::before {
+  content: "· ";
+}
+
+.agent-process-thinking-block {
+  @apply my-0.5 flex flex-col gap-1 rounded-lg border border-[var(--color-line)]/70 bg-[var(--color-surface-muted,rgba(148,163,184,0.08))] px-2.5 py-2 text-xs text-[var(--color-text-muted)];
+}
+
+.agent-process-thinking-block--live {
+  @apply max-h-44 overflow-y-auto;
+}
+
+.agent-process-thinking-header {
+  @apply flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-text-muted)];
+}
+
+.agent-process-thinking-block--active .agent-process-thinking-header {
+  @apply text-[var(--color-text)];
+}
+
+.agent-process-thinking-text {
+  @apply m-0 whitespace-pre-wrap break-words text-[12px] leading-relaxed text-[var(--color-text-muted)];
+}
+
+.v2-app .agent-process-thinking-block {
+  @apply border-[var(--v2-border)] bg-[var(--v2-surface-subtle,rgba(255,255,255,0.4))] text-[var(--v2-muted)];
+}
+
+.v2-app .agent-process-thinking-header,
+.v2-app .agent-process-thinking-text {
+  @apply text-[var(--v2-muted)];
+}
+
+.v2-app .agent-process-thinking-block--active .agent-process-thinking-header {
+  @apply text-[var(--v2-ink)];
+}
+
+.agent-process-icon {
+  @apply shrink-0;
+}
+
+.agent-process-icon--live {
+  @apply text-[var(--color-accent)];
+}
+
+.agent-process-icon--success {
+  @apply text-[var(--color-success,#16a34a)];
+}
+
+.agent-process-icon--error {
+  @apply text-[var(--color-danger,#dc2626)];
+}
+
+.agent-process-icon--muted {
+  @apply text-[var(--color-text-muted)];
+}
+
+.v2-app .agent-process-trigger {
+  @apply text-[var(--v2-muted)] hover:text-[var(--v2-ink)];
+}
+
+.v2-app .agent-process-steps {
+  @apply border-[var(--v2-border)];
+}
+
+.v2-app .agent-process-step-label,
+.v2-app .agent-process-step-summary {
+  @apply text-[var(--v2-muted)];
+}
+
+.v2-app .agent-process-panel--live .agent-process-step-label {
+  @apply text-[var(--v2-ink)];
+}
+
+.v2-app .agent-process-icon--live {
+  @apply text-[var(--v2-accent)];
+}
+
+.v2-app .agent-process-icon--success {
+  @apply text-[var(--v2-success,#16a34a)];
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-process-chevron {
+    @apply transition-none;
   }
 }
 

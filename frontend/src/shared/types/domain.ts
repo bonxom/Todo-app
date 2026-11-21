@@ -1,5 +1,5 @@
 import type { SkillReadRecord } from "./skill";
-import type { TurnSnapshot } from "./chatStream";
+import type { ReasoningBlock, ToolProgress, TurnSnapshot } from "./chatStream";
 export type { TurnSnapshot } from "./chatStream";
 export type EntityId = string;
 export type TaskStatus = "pending" | "in-progress" | "completed" | "given-up";
@@ -231,6 +231,7 @@ export interface AgentActivity {
 
 export type GenerateTasksResponse = ApiEnvelope<Task[]>;
 export interface ChatResponse extends ApiEnvelope<string> {
+  companionText?: string;
   skillsRead?: SkillReadRecord[];
   status?: "processing" | "completed" | "failed" | "cancelled";
   conversationId?: string;
@@ -244,6 +245,8 @@ export interface ChatResponse extends ApiEnvelope<string> {
 
 export interface ConversationMessage {
   turnStatus?: "failed" | "cancelled" | "timed_out" | "interrupted";
+  toolProgress?: ToolProgress[];
+  reasoningBlocks?: ReasoningBlock[];
   skillsRead?: SkillReadRecord[];
   attachments?: ChatAttachment[];
   replyToInteractionId?: string;
@@ -254,6 +257,7 @@ export interface ConversationMessage {
   id: string;
   sender: string;
   text: string;
+  companionText?: string;
   timestamp: string;
 }
 export interface ConversationSnapshot {

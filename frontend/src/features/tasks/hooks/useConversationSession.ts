@@ -253,6 +253,9 @@ export function useConversationSession(options?: ConversationSessionOptions) {
           sender: "bot",
           skillsRead: result.skillsRead ?? [],
           text: result.interaction?.question ?? result.data,
+          ...(result.companionText
+            ? { companionText: result.companionText }
+            : {}),
           interaction: result.interaction,
           proposal: result.proposal,
           a2ui: result.a2ui,

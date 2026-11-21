@@ -97,6 +97,13 @@ describe("chatStreamReducer", () => {
       label: "Tạo công việc",
       status: "started",
     });
+    expect(state1.messages[0]?.toolProgress).toEqual([
+      expect.objectContaining({
+        toolCallId: "call-1",
+        label: "Tạo công việc",
+        status: "started",
+      }),
+    ]);
 
     const finishAction = {
       type: "EVENT" as const,
@@ -124,6 +131,13 @@ describe("chatStreamReducer", () => {
       status: "succeeded",
       summary: "Đã tạo xong",
     });
+    expect(state2.messages[0]?.toolProgress).toEqual([
+      expect.objectContaining({
+        toolCallId: "call-1",
+        status: "succeeded",
+        summary: "Đã tạo xong",
+      }),
+    ]);
   });
 
   it("detects sequence gap and sets connection to reconnecting while preserving cursor", () => {
@@ -270,5 +284,146 @@ describe("chatStreamReducer", () => {
     expect(state.snapshot?.turnId).toBe("turn-new");
     expect(state.messages[0].id).toBe("turn-new:bot");
     expect(state.messages[0].text).toBe("Tải lại trang");
+  });
+
+  it("preserves companionText alongside A2UI surface when turn.finished arrives", () => {
+    const withDelta = reduceChatRun(initialState, {
+      type: "EVENT",
+      event: {
+        id: "2",
+        event: "assistant.delta",
+        data: {
+          version: 1,
+          turnId,
+          seq: 2,
+          occurredAt: new Date().toISOString(),
+          payload: { text: "Mình đã tổng hợp tiến độ tuần này:" },
+        },
+      },
+    });
+
+    const finished = reduceChatRun(withDelta, {
+      type: "EVENT",
+      event: {
+        id: "3",
+        event: "turn.finished",
+        data: {
+          version: 1,
+          turnId,
+          seq: 3,
+          occurredAt: new Date().toISOString(),
+          payload: {
+            status: "completed" as const,
+            result: {
+              turnId,
+              conversationId,
+              status: "completed" as const,
+              mode: "auto" as const,
+              response: "Fallback summary",
+              companionText: "Mình đã tổng hợp tiến độ tuần này:",
+              surface: {
+                text: "Fallback summary",
+                a2ui: {
+                  protocolVersion: "v0.9",
+                  catalogId: "urn:orbit:a2ui:ui-composition:v1",
+                  surfaceId: "s1",
+                  messages: [],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(finished.messages[0]?.surface).toBeDefined();
+    expect(finished.messages[0]?.companionText).toBe(
+      "Mình đã tổng hợp tiến độ tuần này:",
+    );
+  });
+
+  it("accumulates reasoning.delta blocks and preserves toolName and chronological order", () => {
+    const r1 = reduceChatRun(initialState, {
+      type: "EVENT",
+      event: {
+        id: "2",
+        event: "reasoning.delta",
+        data: {
+          version: 1,
+          turnId,
+          seq: 2,
+          occurredAt: new Date().toISOString(),
+          payload: { blockId: "r0", text: "Checking " },
+        },
+      },
+    });
+    const r2 = reduceChatRun(r1, {
+      type: "EVENT",
+      event: {
+        id: "3",
+        event: "reasoning.delta",
+        data: {
+          version: 1,
+          turnId,
+          seq: 3,
+          occurredAt: new Date().toISOString(),
+          payload: { blockId: "r0", text: "your tasks." },
+        },
+      },
+    });
+    const t1 = reduceChatRun(r2, {
+      type: "EVENT",
+      event: {
+        id: "4",
+        event: "tool.started",
+        data: {
+          version: 1,
+          turnId,
+          seq: 4,
+          occurredAt: new Date().toISOString(),
+          payload: {
+            toolCallId: "tc-1",
+            toolName: "orbit_list_tasks",
+            label: "Đang tìm kiếm công việc",
+          },
+        },
+      },
+    });
+    const t2 = reduceChatRun(t1, {
+      type: "EVENT",
+      event: {
+        id: "5",
+        event: "tool.finished",
+        data: {
+          version: 1,
+          turnId,
+          seq: 5,
+          occurredAt: new Date().toISOString(),
+          payload: {
+            toolCallId: "tc-1",
+            toolName: "orbit_list_tasks",
+            status: "succeeded",
+            summary: "Đã tìm kiếm công việc",
+          },
+        },
+      },
+    });
+
+    expect(t2.snapshot?.reasoningBlocks).toEqual([
+      { blockId: "r0", text: "Checking your tasks.", order: 2 },
+    ]);
+    expect(t2.messages[0]?.reasoningBlocks).toEqual([
+      { blockId: "r0", text: "Checking your tasks.", order: 2 },
+    ]);
+    expect(t2.snapshot?.toolProgress).toEqual([
+      {
+        toolCallId: "tc-1",
+        toolName: "orbit_list_tasks",
+        label: "Đang tìm kiếm công việc",
+        status: "succeeded",
+        summary: "Đã tìm kiếm công việc",
+        order: 4,
+      },
+    ]);
   });
 });

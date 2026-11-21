@@ -47,6 +47,7 @@ export function resultFor(
     proposal?: ProposalView;
     a2ui?: unknown;
     text?: string;
+    companionText?: string;
   },
 ) {
   const expired =
@@ -56,6 +57,9 @@ export function resultFor(
     data: expired
       ? interruptedReply(turn.messages)
       : (envelope?.text ?? turn.response),
+    ...(envelope?.companionText
+      ? { companionText: envelope.companionText }
+      : {}),
     conversationId: turn.conversationId,
     requestId: turn.requestId,
     status: expired
@@ -82,6 +86,7 @@ export function turnMessages(
     proposal?: ProposalView;
     a2ui?: unknown;
     text?: string;
+    companionText?: string;
   },
 ) {
   const incomplete = [
@@ -117,6 +122,10 @@ export function turnMessages(
       timestamp: turn.updatedAt.toISOString(),
       interaction: publicInteraction(i),
       skillsRead: turn.skillsRead ?? [],
+      ...(turn.toolProgress?.length ? { toolProgress: turn.toolProgress } : {}),
+      ...(turn.reasoningBlocks?.length
+        ? { reasoningBlocks: turn.reasoningBlocks }
+        : {}),
     })),
     ...((turn.response && !turn.interactions?.length) || incomplete || expired
       ? [
@@ -129,9 +138,18 @@ export function turnMessages(
               (turn.response || interruptedReply(turn.messages)),
             timestamp: turn.updatedAt.toISOString(),
             skillsRead: turn.skillsRead ?? [],
+            ...(turn.toolProgress?.length
+              ? { toolProgress: turn.toolProgress }
+              : {}),
+            ...(turn.reasoningBlocks?.length
+              ? { reasoningBlocks: turn.reasoningBlocks }
+              : {}),
             ...(envelope?.surface ? { surface: envelope.surface } : {}),
             ...(envelope?.proposal ? { proposal: envelope.proposal } : {}),
             ...(envelope?.a2ui ? { a2ui: envelope.a2ui } : {}),
+            ...(envelope?.companionText
+              ? { companionText: envelope.companionText }
+              : {}),
           },
         ]
       : []),

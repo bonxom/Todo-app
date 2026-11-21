@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { chatStreamBus } from "../chatStreamBus.js";
 
 describe("chatStreamBus", () => {
@@ -44,7 +44,11 @@ describe("chatStreamBus", () => {
     const turnId = "turn-bus-abort";
     const controller = new AbortController();
 
-    const waitPromise = chatStreamBus.waitForNext(turnId, 2000, controller.signal);
+    const waitPromise = chatStreamBus.waitForNext(
+      turnId,
+      2000,
+      controller.signal,
+    );
 
     setTimeout(() => {
       controller.abort();
@@ -103,5 +107,58 @@ describe("chatStreamBus", () => {
         resolve();
       }, 30);
     });
+  });
+
+  it("accumulates reasoning.delta blocks and tracks toolName with chronological order", () => {
+    const turnId = "turn-bus-reasoning";
+    chatStreamBus.initLiveTurn({
+      _id: turnId,
+      userId: "user-123",
+      conversationId: "conv-123",
+      lastEventSeq: 0,
+    });
+
+    chatStreamBus.emitLiveEvent(turnId, {
+      type: "reasoning.delta",
+      payload: { blockId: "r0", text: "Checking " },
+    });
+    chatStreamBus.emitLiveEvent(turnId, {
+      type: "reasoning.delta",
+      payload: { blockId: "r0", text: "tasks first." },
+    });
+    chatStreamBus.emitLiveEvent(turnId, {
+      type: "tool.started",
+      payload: {
+        toolCallId: "tc-1",
+        toolName: "orbit_list_tasks",
+        label: "Đang tìm kiếm công việc",
+      },
+    });
+    chatStreamBus.emitLiveEvent(turnId, {
+      type: "tool.finished",
+      payload: {
+        toolCallId: "tc-1",
+        toolName: "orbit_list_tasks",
+        status: "succeeded",
+        summary: "Đã tìm kiếm công việc",
+      },
+    });
+
+    const snapshot = chatStreamBus.getLiveSnapshot(turnId);
+    expect(snapshot?.reasoningBlocks).toEqual([
+      { blockId: "r0", text: "Checking tasks first.", order: 1 },
+    ]);
+    expect(snapshot?.toolProgress).toEqual([
+      {
+        toolCallId: "tc-1",
+        toolName: "orbit_list_tasks",
+        label: "Đang tìm kiếm công việc",
+        status: "succeeded",
+        summary: "Đã tìm kiếm công việc",
+        order: 3,
+      },
+    ]);
+
+    chatStreamBus.finishLiveTurn(turnId);
   });
 });

@@ -5,3 +5,4 @@ deploy.sh
 .vscode
 .vscode
 artifacts/
+docker-compose.minio.local.yml

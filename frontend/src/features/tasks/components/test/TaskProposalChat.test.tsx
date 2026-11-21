@@ -91,8 +91,11 @@ it("wires confirmation to shared API and displays committed state", async () => 
   fireEvent.click(screen.getByRole("button", { name: /Confirm/ }));
   await waitFor(() =>
     expect(
-      screen.getByRole("textbox", { name: "Task 1 title" }),
+      screen.getByRole("checkbox", { name: /Select task: Study Vocabulary/ }),
     ).toBeDisabled(),
   );
+  expect(
+    screen.queryByRole("button", { name: "Edit task 1" }),
+  ).not.toBeInTheDocument();
   expect(aiService.applyProposalAction).toHaveBeenCalledTimes(1);
 });

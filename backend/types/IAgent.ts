@@ -36,6 +36,8 @@ export type AgentStreamHooks = {
 
 export interface AgentMemory {
   turnId?: string;
+  conversationId?: string;
+  hasConversationImages?: boolean;
   attachmentContext?: string;
   budget?: AgentBudget;
   mode?: AgentMode;

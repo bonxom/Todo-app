@@ -207,6 +207,17 @@ export function useTaskProposalEditor(
     }
   };
 
+  const toggleAllSelection = () => {
+    if (!locked) {
+      const allSelected =
+        draftItems.length > 0 && draftSelectedIds.length === draftItems.length;
+      setDraft({
+        ...draft,
+        selectedItemIds: allSelected ? [] : draftItems.map((item) => item.id),
+      });
+    }
+  };
+
   const submit = async (
     action: "save" | "confirm" | "cancel",
     customDispatch?: (actionPayload: ProposalAction) => Promise<unknown>,
@@ -270,6 +281,7 @@ export function useTaskProposalEditor(
     invalid,
     updateItem,
     toggleItemSelection,
+    toggleAllSelection,
     submit,
   };
 }

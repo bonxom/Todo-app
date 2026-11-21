@@ -12,11 +12,13 @@ import {
 } from "lucide-react";
 import type { TurnSnapshot } from "@/shared/types/chatStream";
 import type { ConnectionState } from "@/features/tasks/hooks/chatStreamReducer";
+import { formatToolProcessStep } from "./toolProcessText";
 
 export interface ChatRunStatusProps {
   run: TurnSnapshot | null;
   connection?: ConnectionState;
   status?: TurnSnapshot["status"];
+  hideToolProgress?: boolean;
   onStop?: () => Promise<TurnSnapshot | null | void>;
   onReconnect?: () => Promise<void>;
 }
@@ -25,6 +27,7 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
   run,
   status,
   connection = "idle",
+  hideToolProgress = false,
   onStop,
   onReconnect,
 }) => {
@@ -32,7 +35,28 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
   const [isStopping, setIsStopping] = useState(false);
 
   const runStatus = run?.status ?? status;
-  if (!run && !status && connection === "idle") {
+  const isProcessing = runStatus === "processing";
+  const isStoppingState = isStopping || runStatus === "stopping";
+  const hasBanner =
+    connection === "offline" ||
+    connection === "reconnecting" ||
+    connection === "error";
+  const hasToolProgress = Boolean(
+    !hideToolProgress && run && run.toolProgress && run.toolProgress.length > 0,
+  );
+  const hasTerminalBadge =
+    runStatus === "cancelled" ||
+    runStatus === "failed" ||
+    runStatus === "timed_out" ||
+    runStatus === "interrupted";
+  const hasStopControl = Boolean(
+    (isStoppingState && onStop) ||
+    isStopping ||
+    (runStatus === "stopping" && onStop) ||
+    (isProcessing && onStop),
+  );
+
+  if (!hasBanner && !hasToolProgress && !hasTerminalBadge && !hasStopControl) {
     return null;
   }
 
@@ -47,9 +71,6 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
       setIsStopping(false);
     }
   };
-
-  const isProcessing = runStatus === "processing";
-  const isStoppingState = isStopping || runStatus === "stopping";
 
   return (
     <div className="chat-run-status my-2 flex flex-col gap-2 text-xs">
@@ -97,39 +118,42 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
       )}
 
       {/* Tool progress live region */}
-      {run && run.toolProgress && run.toolProgress.length > 0 && (
+      {hasToolProgress && run && (
         <div
           role="status"
           aria-live="polite"
           className="flex flex-col gap-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-muted)] p-2.5"
         >
-          {run.toolProgress.map((tool) => (
-            <div
-              key={tool.toolCallId}
-              data-testid={`tool-progress-${tool.toolCallId}`}
-              className="flex items-start justify-between gap-2 text-xs"
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                {tool.status === "succeeded" ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[var(--color-success,#16a34a)]" />
-                ) : tool.status === "failed" ? (
-                  <XCircle className="h-3.5 w-3.5 shrink-0 text-[var(--color-danger,#dc2626)]" />
-                ) : tool.status === "unknown" ? (
-                  <HelpCircle className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" />
-                ) : (
-                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-[var(--color-accent,#2563eb)]" />
+          {run.toolProgress.map((tool) => {
+            const formatted = formatToolProcessStep(tool, t);
+            return (
+              <div
+                key={tool.toolCallId}
+                data-testid={`tool-progress-${tool.toolCallId}`}
+                className="flex items-start justify-between gap-2 text-xs"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {tool.status === "succeeded" ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[var(--color-success,#16a34a)]" />
+                  ) : tool.status === "failed" ? (
+                    <XCircle className="h-3.5 w-3.5 shrink-0 text-[var(--color-danger,#dc2626)]" />
+                  ) : tool.status === "unknown" ? (
+                    <HelpCircle className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" />
+                  ) : (
+                    <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-[var(--color-accent,#2563eb)]" />
+                  )}
+                  <span className="font-medium text-[var(--color-text)] truncate">
+                    {formatted.primary}
+                  </span>
+                </div>
+                {formatted.detail && (
+                  <span className="text-[var(--color-text-muted)] text-[11px] truncate max-w-[200px]">
+                    {formatted.detail}
+                  </span>
                 )}
-                <span className="font-medium text-[var(--color-text)] truncate">
-                  {tool.label || t("processingTask")}
-                </span>
               </div>
-              {tool.summary && (
-                <span className="text-[var(--color-text-muted)] text-[11px] truncate max-w-[200px]">
-                  {tool.summary}
-                </span>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -175,7 +199,7 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
       )}
 
       {/* Stop button while active or stopping banner */}
-      {isStoppingState ? (
+      {hasStopControl && isStoppingState ? (
         <div className="inline-flex items-center gap-1.5 self-start rounded-md bg-[var(--color-surface-muted)] px-2.5 py-1 text-xs text-[var(--color-text-muted)]">
           <Loader2 className="h-3 w-3 animate-spin" />
           <span>{t("stopping")}</span>

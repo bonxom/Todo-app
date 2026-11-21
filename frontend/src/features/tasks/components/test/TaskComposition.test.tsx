@@ -70,7 +70,8 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
     const envelope = structuredClone(legacyFixture) as ProposalEnvelope;
 
     render(<TaskProposalSurface envelope={envelope} onAction={onAction} />);
-    await screen.findByRole("option", { name: "Work" });
+    await screen.findByText("Work");
+    await user.click(screen.getByRole("button", { name: "Edit task 1" }));
 
     const titleInput = screen.getByLabelText("Task 1 title");
     await user.clear(titleInput);
@@ -106,6 +107,8 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
         "Review and confirm the proposed study tasks below.",
       ),
     ).toBeInTheDocument();
+    await screen.findByText("Work");
+    await user.click(screen.getByRole("button", { name: "Edit task 1" }));
     await screen.findByRole("option", { name: "Study" });
 
     // Clear title -> disables Confirm and Save in separate TaskProposalActions node
@@ -194,14 +197,14 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
     );
 
     render(<TaskProposalSurface envelope={envelope} onAction={onAction} />);
-    await screen.findByRole("option", { name: "Work" });
-
     expect(
-      screen.getByText("Category is no longer available. Choose again."),
+      await screen.findByText("Category is no longer available. Choose again."),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Confirm/ })).toBeDisabled();
 
-    // Fix category to valid Work
+    // Open edit mode and fix category to valid Work
+    await user.click(screen.getByRole("button", { name: "Edit task 1" }));
+    await screen.findByRole("option", { name: "Work" });
     await user.selectOptions(
       screen.getByLabelText("Task 1 category"),
       "507f1f77bcf86cd799439011",
@@ -236,7 +239,14 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
 
     render(<TaskProposalSurface envelope={envelope} onOpenTask={onOpenTask} />);
 
-    expect(await screen.findByLabelText("Task 1 title")).toBeDisabled();
+    expect(
+      await screen.findByRole("checkbox", {
+        name: "Select task: Study Vocabulary",
+      }),
+    ).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "Edit task 1" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Confirm/ }),
     ).not.toBeInTheDocument();
@@ -260,7 +270,8 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
     ).components = [{ id: "root", component: "Card", children: ["missing"] }];
 
     render(<TaskProposalSurface envelope={envelope} onAction={onAction} />);
-    await screen.findByRole("option", { name: "Work" });
+    await screen.findByText("Work");
+    await user.click(screen.getByRole("button", { name: "Edit task 1" }));
 
     // Legacy form is rendered as fallback and remains interactive
     const titleInput = screen.getByLabelText("Task 1 title");
@@ -370,7 +381,8 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
       </QueryClientProvider>,
     );
 
-    await screen.findByRole("option", { name: "Work" });
+    await screen.findByText("Work");
+    await user.click(screen.getByRole("button", { name: "Edit task 1" }));
     const titleInput = screen.getByLabelText("Task 1 title");
     await user.clear(titleInput);
     await user.type(titleInput, "Saved then confirmed");
@@ -393,7 +405,11 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
         items: [expect.objectContaining({ title: "Saved then confirmed" })],
       }),
     );
-    expect(await screen.findByLabelText("Task 1 title")).toBeDisabled();
+    expect(
+      await screen.findByRole("checkbox", {
+        name: "Select task: Saved then confirmed",
+      }),
+    ).toBeDisabled();
   });
 
   it("discards stale session draft when reloading after a 409 conflict and allows confirming the reloaded revision", async () => {
@@ -481,7 +497,8 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
       </QueryClientProvider>,
     );
 
-    await screen.findByRole("option", { name: "Work" });
+    await screen.findByText("Work");
+    await user.click(screen.getByRole("button", { name: "Edit task 1" }));
     const titleInput = screen.getByLabelText("Task 1 title");
     await user.clear(titleInput);
     await user.type(titleInput, "Stale local edit");
@@ -500,9 +517,7 @@ describe("TaskComposition (split TaskList + TaskProposalActions & legacy TaskPro
     await user.click(discardAndReloadBtn);
 
     await waitFor(() =>
-      expect(screen.getByLabelText("Task 1 title")).toHaveValue(
-        "Server latest title",
-      ),
+      expect(screen.getByText("Server latest title")).toBeInTheDocument(),
     );
 
     // Confirm now sends revision 2 with the reloaded items

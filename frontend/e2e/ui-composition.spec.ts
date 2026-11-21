@@ -45,6 +45,7 @@ test("edits, saves, reloads, and confirms a composed propose_tasks surface with 
     page.getByText("Review and confirm the proposed study tasks below."),
   ).toBeVisible();
 
+  await page.getByRole("button", { name: "Edit task 1", exact: true }).click();
   const title = page.getByRole("textbox", {
     name: "Task 1 title",
     exact: true,
@@ -58,14 +59,19 @@ test("edits, saves, reloads, and confirms a composed propose_tasks surface with 
 
   await page.reload();
   await page.getByRole("button", { name: "Open assistant" }).click();
-  await expect(title).toHaveValue("Master academic vocabulary");
+  await expect(page.getByText("Master academic vocabulary")).toBeVisible();
 
+  await page.getByRole("button", { name: "List view", exact: true }).click();
   await page
     .getByRole("checkbox", { name: "Select task: Practice speaking" })
     .uncheck();
   await page.getByRole("button", { name: "Confirm (1)" }).click();
 
-  await expect(title).toBeDisabled();
+  await expect(
+    page.getByRole("checkbox", {
+      name: "Select task: Master academic vocabulary",
+    }),
+  ).toBeDisabled();
   expect(actions.map((action) => action.action)).toEqual(["save", "confirm"]);
   expect(actions[1].selectedItemIds).toHaveLength(1);
   expect(
@@ -84,6 +90,7 @@ test("edits, saves draft, and immediately confirms without reloading the page", 
   await page.goto("/dashboard");
   await page.getByRole("button", { name: "Open assistant" }).click();
 
+  await page.getByRole("button", { name: "Edit task 1", exact: true }).click();
   const title = page.getByRole("textbox", {
     name: "Task 1 title",
     exact: true,
@@ -93,12 +100,17 @@ test("edits, saves draft, and immediately confirms without reloading the page", 
   await page.getByRole("button", { name: "Save draft" }).click();
   await expect(page.getByText("Draft saved")).toBeVisible();
 
+  await page.getByRole("button", { name: "Next task", exact: true }).click();
   await page
     .getByRole("checkbox", { name: "Select task: Practice speaking" })
     .uncheck();
   await page.getByRole("button", { name: "Confirm (1)" }).click();
 
-  await expect(title).toBeDisabled();
+  await expect(
+    page.getByRole("checkbox", {
+      name: "Select task: Save then confirm without reload",
+    }),
+  ).toBeDisabled();
   expect(actions.map((action) => action.action)).toEqual(["save", "confirm"]);
   expect(actions[1].revision).toBe(2);
   expect(actions[1].selectedItemIds).toHaveLength(1);
@@ -113,6 +125,7 @@ test("falls back to legacy TaskProposalForm when composed proposal surface is in
   await page.goto("/dashboard");
   await page.getByRole("button", { name: "Open assistant" }).click();
 
+  await page.getByRole("button", { name: "Edit task 1", exact: true }).click();
   const title = page.getByRole("textbox", {
     name: "Task 1 title",
     exact: true,
@@ -120,7 +133,11 @@ test("falls back to legacy TaskProposalForm when composed proposal surface is in
   await expect(title).toBeVisible();
   await title.fill("Recovered via legacy form");
   await page.getByRole("button", { name: "Confirm (2)" }).click();
-  await expect(title).toBeDisabled();
+  await expect(
+    page.getByRole("checkbox", {
+      name: "Select task: Recovered via legacy form",
+    }),
+  ).toBeDisabled();
   expect(actions).toHaveLength(1);
 
   await setupUiCompositionMocks(page, { mode: "malformed-readonly" });

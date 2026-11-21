@@ -185,7 +185,7 @@
   "unableToDisplayTheInteractiveInterface": "Không thể hiển thị giao diện tương tác.",
   "reload": "Tải lại",
   "selectedAttachments": "Tệp đính kèm đã chọn",
-  "addAMessageToSendImagesAreAnalyzedOnceSoTheAssistantCanUseTheirDescriptionsOtherFilesAreStoredForReference": "Thêm tin nhắn để gửi. Hình ảnh được phân tích một lần để trợ lý dùng mô tả của chúng. Các tệp khác được lưu để tham khảo.",
+  "addAMessageToSendImagesAreAnalyzedOnceSoTheAssistantCanUseTheirDescriptionsOtherFilesAreStoredForReference": "Thêm tin nhắn để gửi. Trợ lý có thể tự phân tích hình ảnh đính kèm khi cần. Các tệp khác được lưu để tham khảo.",
   "loading": "Đang tải…",
   "unableToLoadTheFile": "Không thể tải tệp.",
   "messageAttachments": "Tệp đính kèm tin nhắn",
@@ -359,6 +359,25 @@
   "proposalProcessing": "Đang xử lý yêu cầu.",
   "proposalRequestFailed": "Không thể thực hiện yêu cầu.",
   "proposalNotFound": "Không tìm thấy đề xuất.",
+  "proposalSlideView": "Xem từng thẻ",
+  "proposalListView": "Xem danh sách",
+  "proposalViewMode": "Chế độ hiển thị đề xuất",
+  "proposalPreviousTask": "Công việc trước",
+  "proposalNextTask": "Công việc tiếp theo",
+  "proposalGoToTask": "Đến công việc {{index}}",
+  "proposalSlideNavigation": "Điều hướng thẻ công việc",
+  "proposalEditTask": "Chỉnh sửa công việc {{index}}",
+  "proposalDoneEditing": "Hoàn tất chỉnh sửa công việc {{index}}",
+  "proposalDone": "Xong",
+  "proposalSelectAll": "Chọn tất cả công việc",
+  "proposalDeselectAll": "Bỏ chọn tất cả công việc",
+  "proposalErrorCount_one": "{{count}} lỗi",
+  "proposalErrorCount_other": "{{count}} lỗi",
+  "proposalJumpToIssue": "Đi tới công việc đầu tiên bị lỗi",
+  "proposalDuePrefix": "Hạn {{date}}",
+  "proposalStartPrefix": "Bắt đầu {{date}}",
+  "proposalUntitledTask": "Công việc chưa đặt tên",
+  "proposalTaskLabel": "Công việc {{index}}",
   "conversationUnavailableOrDeleted": "Hội thoại không khả dụng hoặc đã bị xóa.",
   "taskCompletedSuffix": " (đã hoàn thành)",
   "stop": "Dừng",
@@ -384,5 +403,99 @@
   "startChatHeading": "Bạn cần Orbit giúp gì?",
   "showChats": "Hiện cuộc trò chuyện",
   "hideChats": "Ẩn cuộc trò chuyện",
-  "chatProjectUnavailable": "Dự án này không còn khả dụng."
+  "chatProjectUnavailable": "Dự án này không còn khả dụng.",
+  "thinking": "Đang suy nghĩ…",
+  "thoughtLabel": "Suy nghĩ",
+  "thoughtOnly": "Đã suy nghĩ",
+  "thoughtWithSteps_one": "Đã suy nghĩ · Đã thực hiện {{count}} bước",
+  "thoughtWithSteps_other": "Đã suy nghĩ · Đã thực hiện {{count}} bước",
+  "thoughtWithStepsErrors_one": "Đã suy nghĩ · {{count}} bước (có lỗi)",
+  "thoughtWithStepsErrors_other": "Đã suy nghĩ · {{count}} bước (có lỗi)",
+  "analyzingRequest": "Đang phân tích yêu cầu…",
+  "synthesizingResponse": "Đang tổng hợp câu trả lời…",
+  "processSteps_one": "Đã thực hiện {{count}} bước",
+  "processSteps_other": "Đã thực hiện {{count}} bước",
+  "processRunningSteps_one": "{{label}} ({{count}} bước)",
+  "processRunningSteps_other": "{{label}} ({{count}} bước)",
+  "processStepsWithErrors_one": "{{count}} bước (có lỗi)",
+  "processStepsWithErrors_other": "{{count}} bước (có lỗi)",
+  "toggleAgentProcess": "Đóng mở chi tiết quá trình xử lý",
+  "toolSteps": {
+    "orbit_list_tasks": {
+      "running": "Đang tìm kiếm công việc",
+      "succeeded": "Đã tìm kiếm công việc",
+      "failed": "Tìm kiếm công việc không thành công"
+    },
+    "orbit_get_task": {
+      "running": "Đang xem chi tiết công việc",
+      "succeeded": "Đã xem chi tiết công việc",
+      "failed": "Không thể xem chi tiết công việc"
+    },
+    "orbit_create_task": {
+      "running": "Đang tạo công việc",
+      "succeeded": "Đã tạo công việc",
+      "failed": "Tạo công việc không thành công"
+    },
+    "orbit_update_task": {
+      "running": "Đang cập nhật công việc",
+      "succeeded": "Đã cập nhật công việc",
+      "failed": "Cập nhật công việc không thành công"
+    },
+    "orbit_delete_task": {
+      "running": "Đang xóa công việc",
+      "succeeded": "Đã xóa công việc",
+      "failed": "Xóa công việc không thành công"
+    },
+    "orbit_list_categories": {
+      "running": "Đang tải danh mục",
+      "succeeded": "Đã tải danh mục",
+      "failed": "Tải danh mục không thành công"
+    },
+    "orbit_list_projects": {
+      "running": "Đang tải dự án",
+      "succeeded": "Đã tải dự án",
+      "failed": "Tải dự án không thành công"
+    },
+    "orbit_get_me": {
+      "running": "Đang kiểm tra hồ sơ",
+      "succeeded": "Đã kiểm tra hồ sơ",
+      "failed": "Kiểm tra hồ sơ không thành công"
+    },
+    "orbit_web_search": {
+      "running": "Đang tìm kiếm trên web",
+      "succeeded": "Đã tìm kiếm trên web",
+      "failed": "Tìm kiếm web không thành công"
+    },
+    "propose_tasks": {
+      "running": "Đang chuẩn bị đề xuất công việc",
+      "succeeded": "Đã chuẩn bị đề xuất công việc",
+      "failed": "Chuẩn bị đề xuất không thành công"
+    },
+    "present_ui": {
+      "running": "Đang chuẩn bị giao diện hiển thị",
+      "succeeded": "Đã hiển thị giao diện",
+      "failed": "Hiển thị giao diện không thành công"
+    },
+    "analyze_image": {
+      "running": "Đang phân tích hình ảnh",
+      "succeeded": "Đã phân tích hình ảnh",
+      "failed": "Phân tích hình ảnh không thành công"
+    },
+    "skill": {
+      "running": "Đang tải kỹ năng",
+      "succeeded": "Đã tải kỹ năng",
+      "failed": "Tải kỹ năng không thành công"
+    },
+    "grill_user": {
+      "running": "Đang chuẩn bị lựa chọn",
+      "succeeded": "Đã chuẩn bị lựa chọn",
+      "failed": "Chuẩn bị lựa chọn không thành công"
+    },
+    "default": {
+      "running": "Đang xử lý tác vụ",
+      "succeeded": "Đã hoàn thành tác vụ",
+      "failed": "Xử lý tác vụ không thành công",
+      "unknown": "Trạng thái tác vụ chưa xác định"
+    }
+  }
 }

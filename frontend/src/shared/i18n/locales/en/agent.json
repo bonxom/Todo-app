@@ -185,7 +185,7 @@
   "unableToDisplayTheInteractiveInterface": "Unable to display the interactive interface.",
   "reload": "Reload",
   "selectedAttachments": "Selected attachments",
-  "addAMessageToSendImagesAreAnalyzedOnceSoTheAssistantCanUseTheirDescriptionsOtherFilesAreStoredForReference": "Add a message to send. Images are analyzed once so the assistant can use their descriptions. Other files are stored for reference.",
+  "addAMessageToSendImagesAreAnalyzedOnceSoTheAssistantCanUseTheirDescriptionsOtherFilesAreStoredForReference": "Add a message to send. The assistant can analyze attached images on demand. Other files are stored for reference.",
   "loading": "Loading…",
   "unableToLoadTheFile": "Unable to load the file.",
   "messageAttachments": "Message attachments",
@@ -359,6 +359,25 @@
   "proposalProcessing": "Your request is being processed.",
   "proposalRequestFailed": "Unable to complete the request.",
   "proposalNotFound": "Proposal not found.",
+  "proposalSlideView": "Slide view",
+  "proposalListView": "List view",
+  "proposalViewMode": "Proposal display mode",
+  "proposalPreviousTask": "Previous task",
+  "proposalNextTask": "Next task",
+  "proposalGoToTask": "Go to task {{index}}",
+  "proposalSlideNavigation": "Task slide navigation",
+  "proposalEditTask": "Edit task {{index}}",
+  "proposalDoneEditing": "Done editing task {{index}}",
+  "proposalDone": "Done",
+  "proposalSelectAll": "Select all tasks",
+  "proposalDeselectAll": "Deselect all tasks",
+  "proposalErrorCount_one": "{{count}} issue",
+  "proposalErrorCount_other": "{{count}} issues",
+  "proposalJumpToIssue": "Jump to first task with an issue",
+  "proposalDuePrefix": "Due {{date}}",
+  "proposalStartPrefix": "Starts {{date}}",
+  "proposalUntitledTask": "Untitled task",
+  "proposalTaskLabel": "Task {{index}}",
   "conversationUnavailableOrDeleted": "Conversation is unavailable or was deleted.",
   "taskCompletedSuffix": " (completed)",
   "stop": "Stop",
@@ -384,5 +403,99 @@
   "startChatHeading": "What can I help you with?",
   "showChats": "Show chats",
   "hideChats": "Hide chats",
-  "chatProjectUnavailable": "This project is unavailable."
+  "chatProjectUnavailable": "This project is unavailable.",
+  "thinking": "Thinking…",
+  "thoughtLabel": "Thinking",
+  "thoughtOnly": "Thought",
+  "thoughtWithSteps_one": "Thought · Completed {{count}} step",
+  "thoughtWithSteps_other": "Thought · Completed {{count}} steps",
+  "thoughtWithStepsErrors_one": "Thought · {{count}} step (with issues)",
+  "thoughtWithStepsErrors_other": "Thought · {{count}} steps (with issues)",
+  "analyzingRequest": "Analyzing your request…",
+  "synthesizingResponse": "Synthesizing response…",
+  "processSteps_one": "Completed {{count}} step",
+  "processSteps_other": "Completed {{count}} steps",
+  "processRunningSteps_one": "{{label}} ({{count}} step)",
+  "processRunningSteps_other": "{{label}} ({{count}} steps)",
+  "processStepsWithErrors_one": "{{count}} step (with issues)",
+  "processStepsWithErrors_other": "{{count}} steps (with issues)",
+  "toggleAgentProcess": "Toggle agent process details",
+  "toolSteps": {
+    "orbit_list_tasks": {
+      "running": "Searching tasks",
+      "succeeded": "Searched tasks",
+      "failed": "Failed to search tasks"
+    },
+    "orbit_get_task": {
+      "running": "Reading task details",
+      "succeeded": "Read task details",
+      "failed": "Failed to read task details"
+    },
+    "orbit_create_task": {
+      "running": "Creating task",
+      "succeeded": "Created task",
+      "failed": "Failed to create task"
+    },
+    "orbit_update_task": {
+      "running": "Updating task",
+      "succeeded": "Updated task",
+      "failed": "Failed to update task"
+    },
+    "orbit_delete_task": {
+      "running": "Deleting task",
+      "succeeded": "Deleted task",
+      "failed": "Failed to delete task"
+    },
+    "orbit_list_categories": {
+      "running": "Loading categories",
+      "succeeded": "Loaded categories",
+      "failed": "Failed to load categories"
+    },
+    "orbit_list_projects": {
+      "running": "Loading projects",
+      "succeeded": "Loaded projects",
+      "failed": "Failed to load projects"
+    },
+    "orbit_get_me": {
+      "running": "Checking profile",
+      "succeeded": "Checked profile",
+      "failed": "Failed to check profile"
+    },
+    "orbit_web_search": {
+      "running": "Searching the web",
+      "succeeded": "Searched the web",
+      "failed": "Web search failed"
+    },
+    "propose_tasks": {
+      "running": "Preparing task proposal",
+      "succeeded": "Prepared task proposal",
+      "failed": "Failed to prepare task proposal"
+    },
+    "present_ui": {
+      "running": "Preparing visual view",
+      "succeeded": "Prepared visual view",
+      "failed": "Failed to prepare visual view"
+    },
+    "analyze_image": {
+      "running": "Analyzing image",
+      "succeeded": "Analyzed image",
+      "failed": "Failed to analyze image"
+    },
+    "skill": {
+      "running": "Loading skill",
+      "succeeded": "Loaded skill",
+      "failed": "Failed to load skill"
+    },
+    "grill_user": {
+      "running": "Preparing options",
+      "succeeded": "Prepared options",
+      "failed": "Failed to prepare options"
+    },
+    "default": {
+      "running": "Processing action",
+      "succeeded": "Completed action",
+      "failed": "Action failed",
+      "unknown": "Action outcome unknown"
+    }
+  }
 }
