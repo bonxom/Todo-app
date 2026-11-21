@@ -434,3 +434,54 @@ it("replaces Send with Stop in bubble chat composer when a run is active", async
   await user.click(stopButtons[0]);
   expect(stop).toHaveBeenCalledTimes(1);
 });
+
+it("renders companionText markdown above an A2UI surface without duplicating fallback text", async () => {
+  const composedFixture = (
+    await import("@/test/fixtures/a2ui-composition-v09.json")
+  ).default;
+  const surface = structuredClone(composedFixture.readonly);
+
+  const { rerender } = render(
+    <ChatField
+      onSendMessage={vi.fn()}
+      messages={[
+        {
+          id: "a2ui-with-text:bot",
+          sender: "bot",
+          text: surface.text,
+          companionText: "Mình đã phân tích xong lịch học tuần này cho bạn:",
+          surface,
+          timestamp: new Date().toISOString(),
+        },
+      ]}
+    />,
+  );
+
+  expect(
+    screen.getByText("Mình đã phân tích xong lịch học tuần này cho bạn:"),
+  ).toBeVisible();
+  expect(
+    await screen.findByRole("heading", { name: "Weekly Study Plan" }),
+  ).toBeInTheDocument();
+
+  // Without companionText, only the A2UI surface renders (no duplicate fallbackText paragraph)
+  rerender(
+    <ChatField
+      onSendMessage={vi.fn()}
+      messages={[
+        {
+          id: "a2ui-only:bot",
+          sender: "bot",
+          text: surface.text,
+          surface,
+          timestamp: new Date().toISOString(),
+        },
+      ]}
+    />,
+  );
+
+  expect(
+    screen.queryByText("Mình đã phân tích xong lịch học tuần này cho bạn:"),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText("Monday: Reading (2h)")).not.toBeInTheDocument();
+});

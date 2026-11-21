@@ -74,4 +74,19 @@ describe("turnMessages", () => {
       { blockId: "turn-1:r0", text: "Plan step 1", order: 1 },
     ]);
   });
+
+  it("includes companionText on bot messages when presentation envelope carries it", () => {
+    const turn = makeTurn({
+      response: "Mình đã tổng hợp lịch học của bạn bên dưới:",
+    });
+    const messages = turnMessages(turn, {
+      text: "Fallback summary",
+      companionText: "Mình đã tổng hợp lịch học của bạn bên dưới:",
+    } as never);
+    const bot = messages.find((m) => m.sender === "bot");
+    expect(bot).toBeDefined();
+    expect((bot as { companionText?: string }).companionText).toBe(
+      "Mình đã tổng hợp lịch học của bạn bên dưới:",
+    );
+  });
 });

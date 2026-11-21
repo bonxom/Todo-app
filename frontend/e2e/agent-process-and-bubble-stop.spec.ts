@@ -302,3 +302,138 @@ test("V2 Bubble Chat replaces Send with Stop while processing and shows live col
   await stopButtons.first().click();
   await expect.poll(() => cancelCalled).toBe(true);
 });
+
+test("V2 Agents preserves companion assistant text above an A2UI surface during stream and after reload", async ({
+  page,
+}) => {
+  await agentWorkspaceFixture(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  const convId = "conv-e2e-1";
+  const turnId = "turn-a2ui-companion";
+  const companionText =
+    "Mình đã rà soát lịch tuần này và tổng hợp thành bảng bên dưới để bạn dễ theo dõi:";
+  const composedFixture = (
+    await import("../src/test/fixtures/a2ui-composition-v09.json", {
+      with: { type: "json" },
+    })
+  ).default;
+  const surface = composedFixture.readonly;
+  let completed = false;
+
+  await page.route(`**/api/ai/conversations/${convId}**`, async (route) => {
+    const url = new URL(route.request().url());
+    const path = url.pathname;
+    const method = route.request().method();
+
+    if (path === `/api/ai/conversations/${convId}/turns` && method === "POST") {
+      return route.fulfill({
+        status: 202,
+        json: {
+          data: {
+            turnId,
+            conversationId: convId,
+            requestId: "req-a2ui-1",
+            status: "processing",
+            partialResponse: "",
+            lastEventSeq: 0,
+            toolProgress: [],
+            deadlineAt: new Date(Date.now() + 300_000).toISOString(),
+          },
+        },
+      });
+    }
+
+    if (
+      path === `/api/ai/conversations/${convId}/turns/${turnId}/events` &&
+      method === "GET"
+    ) {
+      completed = true;
+      const now = new Date().toISOString();
+      const body = [
+        `id: 1\nevent: assistant.delta\ndata: ${JSON.stringify({ version: 1, turnId, seq: 1, occurredAt: now, payload: { messageId: `${turnId}:bot`, text: companionText } })}\n\n`,
+        `id: 2\nevent: tool.started\ndata: ${JSON.stringify({ version: 1, turnId, seq: 2, occurredAt: now, payload: { toolCallId: "tc-ui", label: "Đang hiển thị giao diện" } })}\n\n`,
+        `id: 3\nevent: tool.finished\ndata: ${JSON.stringify({ version: 1, turnId, seq: 3, occurredAt: now, payload: { toolCallId: "tc-ui", status: "succeeded", summary: "Đã hiển thị giao diện" } })}\n\n`,
+        `id: 4\nevent: turn.finished\ndata: ${JSON.stringify({ version: 1, turnId, seq: 4, occurredAt: now, payload: { status: "completed", result: { response: surface.text, companionText, surface } } })}\n\n`,
+      ].join("");
+
+      return route.fulfill({
+        status: 200,
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+        },
+        body,
+      });
+    }
+
+    if (path === `/api/ai/conversations/${convId}` && method === "GET") {
+      return route.fulfill({
+        status: 200,
+        json: {
+          data: {
+            conversationId: convId,
+            title: "E2E Workspace Planning",
+            mode: "auto",
+            before: null,
+            pending: [],
+            activeRun: null,
+            context: { projectId: null, available: true },
+            activities: [],
+            messages: [
+              {
+                id: "msg-1",
+                sender: "user",
+                text: "What is the plan for this week?",
+                timestamp: "2026-11-06T00:00:00.000Z",
+              },
+              ...(completed
+                ? [
+                    {
+                      id: `${turnId}:user`,
+                      sender: "user",
+                      text: "Show my weekly study plan",
+                      timestamp: "2026-11-21T08:00:00.000Z",
+                    },
+                    {
+                      id: `${turnId}:bot`,
+                      sender: "bot",
+                      text: surface.text,
+                      companionText,
+                      surface,
+                      toolProgress: [
+                        {
+                          toolCallId: "tc-ui",
+                          label: "Đang hiển thị giao diện",
+                          status: "succeeded",
+                          summary: "Đã hiển thị giao diện",
+                        },
+                      ],
+                      timestamp: "2026-11-21T08:00:04.000Z",
+                    },
+                  ]
+                : []),
+            ],
+          },
+        },
+      });
+    }
+
+    return route.fallback();
+  });
+
+  await page.goto(`/v2/agents?conversation=${convId}`);
+  await expect(page.getByTestId("v2-agents-page")).toBeVisible();
+
+  const input = page.getByRole("textbox", { name: "Message" });
+  await input.fill("Show my weekly study plan");
+  await input.press("Enter");
+
+  // Both the agent's companion text AND the A2UI Weekly Study Plan surface stay visible
+  await expect(page.getByText(companionText)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Weekly Study Plan" }),
+  ).toBeVisible();
+  await expect(page.getByRole("table")).toBeVisible();
+  await page.screenshot({ path: `${OUT}/05-a2ui-with-companion-text.png` });
+});

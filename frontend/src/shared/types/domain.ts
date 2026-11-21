@@ -231,6 +231,7 @@ export interface AgentActivity {
 
 export type GenerateTasksResponse = ApiEnvelope<Task[]>;
 export interface ChatResponse extends ApiEnvelope<string> {
+  companionText?: string;
   skillsRead?: SkillReadRecord[];
   status?: "processing" | "completed" | "failed" | "cancelled";
   conversationId?: string;
@@ -256,6 +257,7 @@ export interface ConversationMessage {
   id: string;
   sender: string;
   text: string;
+  companionText?: string;
   timestamp: string;
 }
 export interface ConversationSnapshot {

@@ -22,11 +22,49 @@ import {
 import { taskProposalUiService } from "./taskProposalUiService.js";
 import { uiSurfaceService } from "./uiSurfaceService.js";
 
+const DEFAULT_PROPOSAL_RESPONSE =
+  "Tôi đã tạo đề xuất các công việc cho bạn. Vui lòng xem lại và xác nhận.";
+
+function extractMessagesCompanionText(
+  messages: ChatTurn["messages"] | undefined,
+): string | undefined {
+  if (!Array.isArray(messages) || messages.length === 0) return undefined;
+  const parts: string[] = [];
+  for (const msg of messages) {
+    if (msg.role !== "assistant" || typeof msg.content !== "string") continue;
+    const trimmed = msg.content.trim();
+    if (trimmed) parts.push(trimmed);
+  }
+  return parts.length > 0 ? parts.join("\n\n") : undefined;
+}
+
+function resolveCompanionText(
+  turnResponse: string | undefined,
+  excluded: Array<string | undefined>,
+  turnMessages?: ChatTurn["messages"],
+): string | undefined {
+  const isExcluded = (candidate: string) =>
+    excluded.some((fallback) => fallback && candidate === fallback.trim());
+
+  const trimmed = turnResponse?.trim();
+  if (trimmed && !isExcluded(trimmed)) {
+    return trimmed;
+  }
+
+  const fromMessages = extractMessagesCompanionText(turnMessages);
+  if (fromMessages && !isExcluded(fromMessages)) {
+    return fromMessages;
+  }
+
+  return undefined;
+}
+
 export type TurnPresentation = {
   surface?: UiSurfaceEnvelope;
   proposal?: ProposalView;
   a2ui?: ProposalEnvelope["a2ui"];
   text: string;
+  companionText?: string;
 };
 
 export const uiPresentationService = {
@@ -44,7 +82,10 @@ export const uiPresentationService = {
   },
 
   forTurn(
-    turn: Pick<ChatTurn, "response" | "uiSurface"> & { _id?: string },
+    turn: Pick<ChatTurn, "response" | "uiSurface"> & {
+      _id?: string;
+      messages?: ChatTurn["messages"];
+    },
     proposal?: ProposalView,
   ): TurnPresentation {
     if (proposal) {
@@ -62,10 +103,19 @@ export const uiPresentationService = {
             turn.uiSurface,
             proposal,
           );
-          return proposalEnvelopeSchema.parse({
+          const parsed = proposalEnvelopeSchema.parse({
             ...legacy,
             surface,
           });
+          const companionText = resolveCompanionText(
+            turn.response,
+            [DEFAULT_PROPOSAL_RESPONSE, legacy.text, surface.text],
+            turn.messages,
+          );
+          return {
+            ...parsed,
+            ...(companionText ? { companionText } : {}),
+          };
         } catch (error) {
           console.warn({
             event: "stored_ui_surface_invalid",
@@ -74,10 +124,32 @@ export const uiPresentationService = {
             error:
               error instanceof Error ? error.message : "Invalid stored surface",
           });
-          return legacy;
+          const companionText = resolveCompanionText(
+            turn.response,
+            [
+              DEFAULT_PROPOSAL_RESPONSE,
+              legacy.text,
+              typeof turn.uiSurface.spec?.fallbackText === "string"
+                ? turn.uiSurface.spec.fallbackText
+                : undefined,
+            ],
+            turn.messages,
+          );
+          return {
+            ...legacy,
+            ...(companionText ? { companionText } : {}),
+          };
         }
       }
-      return legacy;
+      const companionText = resolveCompanionText(
+        turn.response,
+        [DEFAULT_PROPOSAL_RESPONSE, legacy.text],
+        turn.messages,
+      );
+      return {
+        ...legacy,
+        ...(companionText ? { companionText } : {}),
+      };
     }
 
     if (turn.uiSurface) {
@@ -92,9 +164,15 @@ export const uiPresentationService = {
       }
       try {
         const surface = uiSurfaceService.compileSurface(turn.uiSurface);
+        const companionText = resolveCompanionText(
+          turn.response,
+          [surface.text],
+          turn.messages,
+        );
         return {
           surface,
           text: surface.text,
+          ...(companionText ? { companionText } : {}),
         };
       } catch (error) {
         console.warn({

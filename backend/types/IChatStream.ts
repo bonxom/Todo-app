@@ -32,6 +32,7 @@ export interface PublicChatResult {
   mode?: AgentMode;
   data?: string;
   response?: string;
+  companionText?: string;
   interactions?: AgentInteraction[];
   interaction?: unknown;
   activities?: AgentActivity[];

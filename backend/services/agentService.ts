@@ -210,6 +210,18 @@ const PROPOSAL_ALLOWED_TOOLS = new Set([
   "orbit_web_search",
 ]);
 
+function extractCompanionText(
+  turnMessages: ChatCompletionMessageParam[],
+): string | undefined {
+  const parts: string[] = [];
+  for (const msg of turnMessages) {
+    if (msg.role !== "assistant" || typeof msg.content !== "string") continue;
+    const trimmed = msg.content.trim();
+    if (trimmed) parts.push(trimmed);
+  }
+  return parts.length > 0 ? parts.join("\n\n") : undefined;
+}
+
 export const agentService = {
   async chatWithMcp(
     userInput: string,
@@ -218,11 +230,12 @@ export const agentService = {
   ): Promise<
     | string
     | { interaction: AgentInteraction }
-    | { surfaceSpec: SurfaceSpec }
+    | { surfaceSpec: SurfaceSpec; companionText?: string }
     | {
         proposalItems: Omit<ProposalItem, "id">[];
         text?: string;
         presentation?: SurfaceSpec;
+        companionText?: string;
       }
   > {
     const budget = memory.budget ?? createAgentBudget();
@@ -597,7 +610,12 @@ ${webSearchInstruction}`,
               }),
             });
             await checkpoint();
-            return { surfaceSpec };
+            const companionText = extractCompanionText(
+              messages.slice(historyLength),
+            );
+            return companionText
+              ? { surfaceSpec, companionText }
+              : { surfaceSpec };
           }
           if (propose) {
             if (!proposalsEnabled) {
@@ -665,13 +683,16 @@ ${webSearchInstruction}`,
               }),
             });
             await checkpoint();
-            return presentation
-              ? {
-                  proposalItems: rawItems,
-                  text: presentation.fallbackText,
-                  presentation,
-                }
-              : { proposalItems: rawItems };
+            const companionText = extractCompanionText(
+              messages.slice(historyLength),
+            );
+            return {
+              proposalItems: rawItems,
+              ...(presentation
+                ? { text: presentation.fallbackText, presentation }
+                : {}),
+              ...(companionText ? { companionText } : {}),
+            };
           }
           if (isVision) {
             if (!canAnalyzeImages || !sourceRequestId) {

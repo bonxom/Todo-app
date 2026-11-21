@@ -432,4 +432,63 @@ describe("agentUiRuntime", () => {
     const result = await agentService.chatWithMcp("Attempt UI", context);
     expect(result).toBe("Plain text answer.");
   });
+
+  it("preserves companion assistant text emitted before or alongside present_ui", async () => {
+    completionCreate
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: "Để mình tổng hợp lịch học cho bạn nhé.",
+              tool_calls: [
+                call("load-1", "load_skill", { skillId: "ui-composition" }),
+              ],
+            },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: "Dưới đây là bảng lịch chi tiết:",
+              tool_calls: [call("ui-1", "present_ui", fixture.readonly)],
+            },
+          },
+        ],
+      });
+
+    const result = await agentService.chatWithMcp("Show study plan", context);
+    expect(result).toEqual({
+      surfaceSpec: fixture.readonly,
+      companionText:
+        "Để mình tổng hợp lịch học cho bạn nhé.\n\nDưới đây là bảng lịch chi tiết:",
+    });
+  });
+
+  it("preserves companion assistant text emitted alongside propose_tasks", async () => {
+    completionCreate.mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: "Mình gợi ý chia thành 2 buổi tập chính:",
+            tool_calls: [
+              call("prop-1", "propose_tasks", {
+                items: [{ title: "Upper body" }],
+              }),
+            ],
+          },
+        },
+      ],
+    });
+
+    const result = await agentService.chatWithMcp("Plan gym", context);
+    expect(result).toEqual({
+      proposalItems: [{ title: "Upper body" }],
+      companionText: "Mình gợi ý chia thành 2 buổi tập chính:",
+    });
+  });
 });

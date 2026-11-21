@@ -139,6 +139,7 @@ export const conversationService = {
                 proposal: envelope.proposal,
                 a2ui: envelope.a2ui,
                 text: envelope.text,
+                companionText: envelope.companionText,
               }
             : undefined,
         );

@@ -85,6 +85,47 @@ describe("uiPresentationService", () => {
     expect(presented.a2ui).toBeUndefined();
   });
 
+  it("preserves companionText from turn.response and recovers it from turn.messages for proposal turns", () => {
+    const turnWithCompanion = makeTurn({
+      proposalId: sampleProposal.id,
+      response: "Được, lần này mình nói trước rồi mới bung UI.",
+    });
+    const presented1 = uiPresentationService.forTurn(
+      turnWithCompanion,
+      sampleProposal,
+    );
+    expect(presented1.companionText).toBe(
+      "Được, lần này mình nói trước rồi mới bung UI.",
+    );
+
+    // Even if an older turn saved the default fallback response, recover assistant text from turn.messages
+    const legacyFallbackTurn = makeTurn({
+      proposalId: sampleProposal.id,
+      response:
+        "Tôi đã tạo đề xuất các công việc cho bạn. Vui lòng xem lại và xác nhận.",
+      messages: [
+        {
+          role: "assistant",
+          content: "Mình giới thiệu ngắn gọn trước khi hiển thị bản nháp:",
+          tool_calls: [
+            {
+              id: "call-1",
+              type: "function",
+              function: { name: "propose_tasks", arguments: "{}" },
+            },
+          ],
+        },
+      ],
+    });
+    const presented2 = uiPresentationService.forTurn(
+      legacyFallbackTurn,
+      sampleProposal,
+    );
+    expect(presented2.companionText).toBe(
+      "Mình giới thiệu ngắn gọn trước khi hiển thị bản nháp:",
+    );
+  });
+
   it("replays composed proposal turns with current authoritative status (draft, created, cancelled) and same surfaceId", () => {
     const surfaceId = "33333333-3333-4333-8333-333333333333";
     const uiSurface: StoredUiSurface = {

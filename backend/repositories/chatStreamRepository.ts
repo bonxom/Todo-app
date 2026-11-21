@@ -511,10 +511,14 @@ export const chatStreamRepository = {
       live?.reasoningBlocks || turn.reasoningBlocks || [];
     const finalLastSeq = live?.lastEventSeq ?? turn.lastEventSeq ?? 0;
 
+    const persistedResponse =
+      outcome.result.companionText || outcome.result.response || finalPartial;
+    const publicResponse = outcome.result.response || persistedResponse;
+
     turn.status = outcome.status;
     turn.terminalReason = outcome.terminalReason;
-    turn.response = outcome.result.response || finalPartial;
-    turn.partialResponse = turn.response;
+    turn.response = persistedResponse;
+    turn.partialResponse = persistedResponse;
     if (finalToolProgress.length > 0) {
       turn.toolProgress = finalToolProgress;
     }
@@ -531,8 +535,11 @@ export const chatStreamRepository = {
       requestId: turn.requestId,
       turnId,
       status: outcome.status,
-      data: turn.response,
-      response: turn.response,
+      data: publicResponse,
+      response: publicResponse,
+      ...(outcome.result.companionText
+        ? { companionText: outcome.result.companionText }
+        : {}),
       activities: outcome.result.activities ?? turn.activities ?? [],
       skillsRead: outcome.result.skillsRead ?? turn.skillsRead ?? [],
       ...(outcome.terminalReason

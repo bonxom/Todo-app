@@ -27,6 +27,7 @@ export type ChatRunAction =
 interface ResultEnvelope {
   response?: string;
   data?: string;
+  companionText?: string;
   interaction?: ConversationMessage["interaction"];
   proposal?: ConversationMessage["proposal"];
   surface?: ConversationMessage["surface"];
@@ -53,6 +54,15 @@ export function projectMessage(
   const text = terminal
     ? (res?.data ?? res?.response ?? snapshot.partialResponse ?? "")
     : snapshot.partialResponse || "";
+  const streamedCompanion =
+    terminal && (res?.surface || res?.proposal)
+      ? snapshot.partialResponse?.trim() || undefined
+      : undefined;
+  const companionText =
+    res?.companionText?.trim() ||
+    (streamedCompanion && streamedCompanion !== text.trim()
+      ? streamedCompanion
+      : undefined);
 
   const botMessage: ConversationMessage = {
     id: `${snapshot.turnId}:bot`,
@@ -69,6 +79,7 @@ export function projectMessage(
       ? { reasoningBlocks: snapshot.reasoningBlocks }
       : {}),
     text,
+    ...(companionText ? { companionText } : {}),
     timestamp: snapshot.deadlineAt || new Date().toISOString(),
     ...(res?.interaction ? { interaction: res.interaction } : {}),
     ...(res?.proposal ? { proposal: res.proposal } : {}),

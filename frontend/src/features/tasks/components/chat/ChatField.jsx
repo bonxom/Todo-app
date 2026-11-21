@@ -56,10 +56,12 @@ const ChatMessageItem = memo(function ChatMessageItem({
   const { t } = useTranslation("agent");
   const isUser = message.sender === "user";
   const openReply = wideTranscript && !isUser;
+  const companionText = !isUser ? message.companionText?.trim() : undefined;
   const hasVisibleBody = Boolean(
     message.surface ||
     message.proposal ||
     message.interaction ||
+    companionText ||
     (message.text && message.text.length > 0),
   );
 
@@ -99,7 +101,7 @@ const ChatMessageItem = memo(function ChatMessageItem({
             toolProgress={message.toolProgress}
             reasoningBlocks={message.reasoningBlocks}
             isLive={isStreamingMessage}
-            hasResponseText={Boolean(message.text?.trim())}
+            hasResponseText={Boolean(message.text?.trim() || companionText)}
             compact={!wideTranscript}
           />
         )}
@@ -114,33 +116,47 @@ const ChatMessageItem = memo(function ChatMessageItem({
             }`}
           >
             {message.surface ? (
-              <UiSurfaceMessage
-                key={`${conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
-                surface={message.surface}
-                proposalEnvelope={
-                  message.proposal
-                    ? {
-                        proposal: message.proposal,
-                        text: message.text,
-                        a2ui: message.a2ui,
-                        surface: message.surface,
-                      }
-                    : undefined
-                }
-                onDirtyChange={setProposalDirty}
-                disabled={disabled}
-              />
+              <>
+                {companionText && (
+                  <div className="mb-3">
+                    <MarkdownText text={companionText} />
+                  </div>
+                )}
+                <UiSurfaceMessage
+                  key={`${conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
+                  surface={message.surface}
+                  proposalEnvelope={
+                    message.proposal
+                      ? {
+                          proposal: message.proposal,
+                          text: message.text,
+                          a2ui: message.a2ui,
+                          surface: message.surface,
+                        }
+                      : undefined
+                  }
+                  onDirtyChange={setProposalDirty}
+                  disabled={disabled}
+                />
+              </>
             ) : message.proposal ? (
-              <TaskProposalMessage
-                key={`${conversationId}:${message.proposal.id}`}
-                envelope={{
-                  proposal: message.proposal,
-                  text: message.text,
-                  a2ui: message.a2ui,
-                }}
-                onDirtyChange={setProposalDirty}
-                disabled={disabled}
-              />
+              <>
+                {companionText && (
+                  <div className="mb-3">
+                    <MarkdownText text={companionText} />
+                  </div>
+                )}
+                <TaskProposalMessage
+                  key={`${conversationId}:${message.proposal.id}`}
+                  envelope={{
+                    proposal: message.proposal,
+                    text: message.text,
+                    a2ui: message.a2ui,
+                  }}
+                  onDirtyChange={setProposalDirty}
+                  disabled={disabled}
+                />
+              </>
             ) : message.interaction ? (
               <InteractionCard
                 interaction={message.interaction}

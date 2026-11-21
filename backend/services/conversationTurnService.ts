@@ -65,6 +65,9 @@ export async function runConversationTurn(
             : undefined,
         ...(interaction ? { interaction: publicInteraction(interaction) } : {}),
         ...(envelope.surface ? { surface: envelope.surface } : {}),
+        ...(envelope.companionText
+          ? { companionText: envelope.companionText }
+          : {}),
         activities: latestActivities,
         skillsRead,
       },
@@ -220,9 +223,11 @@ export async function runConversationTurn(
           response.surfaceSpec,
           "readonly",
         );
+        const storedResponse =
+          response.companionText || response.surfaceSpec.fallbackText;
         await finish(
           turn._id,
-          response.surfaceSpec.fallbackText,
+          storedResponse,
           "completed",
           turn.executionToken,
           undefined,
@@ -233,7 +238,7 @@ export async function runConversationTurn(
           ...turn,
           activities: latestActivities,
           status: "completed",
-          response: response.surfaceSpec.fallbackText,
+          response: storedResponse,
           skillsRead: latestSkillsRead,
           uiSurface: storedSurface,
         };
@@ -241,6 +246,7 @@ export async function runConversationTurn(
         return resultFor(completedTurn, {
           surface: envelope.surface,
           text: envelope.text,
+          companionText: envelope.companionText,
         });
       }
       if ("proposalItems" in response) {
@@ -276,6 +282,7 @@ export async function runConversationTurn(
             )
           : undefined;
         const finalResponse =
+          response.companionText ||
           response.text ||
           "Tôi đã tạo đề xuất các công việc cho bạn. Vui lòng xem lại và xác nhận.";
         const proposal = await repository.finishWithProposal(

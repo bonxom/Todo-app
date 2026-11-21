@@ -286,6 +286,62 @@ describe("chatStreamReducer", () => {
     expect(state.messages[0].text).toBe("Tải lại trang");
   });
 
+  it("preserves companionText alongside A2UI surface when turn.finished arrives", () => {
+    const withDelta = reduceChatRun(initialState, {
+      type: "EVENT",
+      event: {
+        id: "2",
+        event: "assistant.delta",
+        data: {
+          version: 1,
+          turnId,
+          seq: 2,
+          occurredAt: new Date().toISOString(),
+          payload: { text: "Mình đã tổng hợp tiến độ tuần này:" },
+        },
+      },
+    });
+
+    const finished = reduceChatRun(withDelta, {
+      type: "EVENT",
+      event: {
+        id: "3",
+        event: "turn.finished",
+        data: {
+          version: 1,
+          turnId,
+          seq: 3,
+          occurredAt: new Date().toISOString(),
+          payload: {
+            status: "completed" as const,
+            result: {
+              turnId,
+              conversationId,
+              status: "completed" as const,
+              mode: "auto" as const,
+              response: "Fallback summary",
+              companionText: "Mình đã tổng hợp tiến độ tuần này:",
+              surface: {
+                text: "Fallback summary",
+                a2ui: {
+                  protocolVersion: "v0.9",
+                  catalogId: "urn:orbit:a2ui:ui-composition:v1",
+                  surfaceId: "s1",
+                  messages: [],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(finished.messages[0]?.surface).toBeDefined();
+    expect(finished.messages[0]?.companionText).toBe(
+      "Mình đã tổng hợp tiến độ tuần này:",
+    );
+  });
+
   it("accumulates reasoning.delta blocks and preserves toolName and chronological order", () => {
     const r1 = reduceChatRun(initialState, {
       type: "EVENT",
