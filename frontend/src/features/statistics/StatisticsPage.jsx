@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight, ChartNoAxesCombined } from "lucide-react";
 import { Link } from "react-router-dom";
-import "./statistics.css";
 import { useMemo } from "react";
 import { useStatsQuery } from "./api/statQueries";
 import LineChart from "./components/LineChart";
@@ -32,8 +31,12 @@ const StatisticsPage = () => {
 
   if (loading) {
     return (
-      <div className="ui-page-shell statistics-page">
-        <section className="ui-section-card ui-card-padding text-center">
+      <div
+        className="ui-page-shell mx-auto statistics-page pb-[24px]
+        [&_:is(button,a,input):focus-visible]:[outline:2px_solid_var(--ring-focus-outline)]
+        [&_:is(button,a,input):focus-visible]:outline-offset-[3px]"
+      >
+        <section className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)] text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-[color:var(--color-line)] border-t-[color:var(--color-accent)]" />
           <p className="text-lg font-semibold text-[color:var(--color-text)]">
             {t("loadingStatistics")}
@@ -48,8 +51,12 @@ const StatisticsPage = () => {
 
   if (error) {
     return (
-      <div className="ui-page-shell statistics-page">
-        <section className="ui-section-card ui-card-padding text-center">
+      <div
+        className="ui-page-shell mx-auto statistics-page pb-[24px]
+        [&_:is(button,a,input):focus-visible]:[outline:2px_solid_var(--ring-focus-outline)]
+        [&_:is(button,a,input):focus-visible]:outline-offset-[3px]"
+      >
+        <section className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)] text-center">
           <p className="text-lg font-semibold text-[color:var(--color-danger)]">
             {t("unableToLoadStatistics")}
           </p>
@@ -70,8 +77,12 @@ const StatisticsPage = () => {
 
   if (!stats) {
     return (
-      <div className="ui-page-shell statistics-page">
-        <section className="ui-section-card ui-card-padding text-center">
+      <div
+        className="ui-page-shell mx-auto statistics-page pb-[24px]
+        [&_:is(button,a,input):focus-visible]:[outline:2px_solid_var(--ring-focus-outline)]
+        [&_:is(button,a,input):focus-visible]:outline-offset-[3px]"
+      >
+        <section className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)] text-center">
           <p className="text-lg font-semibold text-[color:var(--color-text)]">
             {t("noStatisticsAvailableYet")}
           </p>
@@ -84,16 +95,27 @@ const StatisticsPage = () => {
   }
 
   return (
-    <div className="ui-page-shell statistics-page">
-      <header className="ui-workspace-heading">
+    <div
+      className="ui-page-shell mx-auto statistics-page pb-[24px]
+      [&_:is(button,a,input):focus-visible]:[outline:2px_solid_var(--ring-focus-outline)]
+      [&_:is(button,a,input):focus-visible]:outline-offset-[3px]"
+    >
+      <header className="ui-workspace-heading flex items-center justify-between">
         <div>
-          <h1 className="ui-page-title">{t("statistics")}</h1>
+          <h1 className="ui-page-title m-[0] text-[var(--color-text)] [font-weight:650] text-balance">
+            {t("statistics")}
+          </h1>
         </div>
       </header>
 
       <StatsSummary stats={stats} />
 
-      <div className="statistics-section-label">
+      <div
+        className="statistics-section-label flex items-center justify-between mt-[6px] mb-[-9px] text-[11px]
+        text-[var(--color-text-muted)] [&_>_span:first-child]:items-center [&_>_span:first-child]:gap-[9px]
+        [&_>_span:first-child]:text-[13px] [&_>_span:first-child]:text-[var(--color-text)]
+        [&_>_span:first-child]:[font-weight:600]"
+      >
         <span>
           <ChartNoAxesCombined size={15} /> {t("yourMomentum")}
         </span>
@@ -101,7 +123,7 @@ const StatisticsPage = () => {
       <LineChart dailyStats={normalizedDailyStats} />
       <ActivityHeatmap dailyStats={normalizedDailyStats} />
 
-      <div className="statistics-breakdowns">
+      <div className="statistics-breakdowns grid grid-cols-[1fr_1fr] gap-[24px] [@media(max-width:1100px)]:grid-cols-[1fr]">
         <StatusPieChart stats={stats} />
         <CategoryPieChart dailyStats={normalizedDailyStats} />
       </div>

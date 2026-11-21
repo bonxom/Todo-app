@@ -363,6 +363,7 @@
   "taskCompletedSuffix": " (completed)",
   "stop": "Stop",
   "stopping": "Stopping...",
+  "stopFailed": "Could not stop the response. Try again.",
   "stopped": "Stopped",
   "failedStatus": "Failed",
   "timedOut": "Timed out",
@@ -374,5 +375,14 @@
   "connectionError": "Connection lost to the active run.",
   "concurrencyLimit": "You have 3 active runs. Please wait for one to finish before starting another.",
   "processingTask": "Processing task",
-  "taskCreated": "Task created"
+  "taskCreated": "Task created",
+  "searchChatsCompact": "Search chats",
+  "recentChats": "Recent",
+  "loadingChatProjects": "Loading projects…",
+  "collapseChatProject": "Collapse {{project}}",
+  "expandChatProject": "Expand {{project}}",
+  "startChatHeading": "What can I help you with?",
+  "showChats": "Show chats",
+  "hideChats": "Hide chats",
+  "chatProjectUnavailable": "This project is unavailable."
 }

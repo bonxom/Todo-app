@@ -85,7 +85,10 @@ const ErrorPage = ({
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-text)] flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 animate-fadeIn relative overflow-hidden">
+    <div
+      className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-text)] flex flex-col items-center justify-center p-4
+      sm:p-6 lg:p-8 animate-fadeIn [@media(prefers-reduced-motion:reduce)]:animate-none! relative overflow-hidden"
+    >
       {/* Dynamic Background Glow Elements */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-tr from-blue-200/30 to-indigo-200/30 blur-3xl rounded-full pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-72 h-72 bg-gradient-to-br from-amber-200/20 to-rose-200/20 blur-3xl rounded-full pointer-events-none" />
@@ -108,7 +111,10 @@ const ErrorPage = ({
           </div>
 
           {/* Video Container (Robot hihi) */}
-          <div className="relative group w-48 h-48 sm:w-56 sm:h-56 rounded-full overflow-hidden border-4 border-white shadow-xl ring-4 ring-slate-100/80 mb-8 transition-transform duration-300 hover:scale-105 bg-slate-900">
+          <div
+            className="relative group w-48 h-48 sm:w-56 sm:h-56 rounded-full overflow-hidden border-4 border-white shadow-xl ring-4
+            ring-slate-100/80 mb-8 transition-transform duration-300 hover:scale-105 bg-slate-900"
+          >
             <video
               ref={videoRef}
               src="/robothihi1.mp4"
@@ -168,7 +174,9 @@ const ErrorPage = ({
             <button
               onClick={handleBack}
               type="button"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)] border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] font-medium text-sm transition-colors shadow-xs"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)] border
+                border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-text)]
+                hover:bg-[var(--color-surface-muted)] font-medium text-sm transition-colors shadow-xs"
             >
               <ArrowLeft className="w-4 h-4" />
               {t("errors.back")}
@@ -178,7 +186,9 @@ const ErrorPage = ({
               <button
                 onClick={onRetry}
                 type="button"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)] bg-[var(--color-accent)] text-[var(--color-on-status,#fff)] hover:bg-[var(--color-accent-strong)] font-medium text-sm transition-colors shadow-xs"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)]
+                  bg-[var(--color-accent)] text-[var(--color-on-status,#fff)] hover:bg-[var(--color-accent-strong)] font-medium
+                  text-sm transition-colors shadow-xs"
               >
                 <RefreshCw className="w-4 h-4" />
                 {t("errors.retry")}
@@ -186,7 +196,9 @@ const ErrorPage = ({
             ) : (
               <Link
                 to="/"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)] bg-[var(--color-accent)] text-[var(--color-on-status,#fff)] hover:bg-[var(--color-accent-strong)] font-medium text-sm transition-colors shadow-xs"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-lg)]
+                  bg-[var(--color-accent)] text-[var(--color-on-status,#fff)] hover:bg-[var(--color-accent-strong)] font-medium
+                  text-sm transition-colors shadow-xs"
               >
                 <Home className="w-4 h-4" />
                 {t("errors.home")}

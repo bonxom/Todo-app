@@ -23,7 +23,11 @@ const TodoTaskToolbar = ({
     Boolean(searchTerm.trim()) || Boolean(activeProjectName);
 
   return (
-    <div className="todo-toolbar space-y-3">
+    <div
+      className="todo-toolbar p-[1rem_var(--space-5)] [background:var(--color-surface-muted)]
+      [border-top:1px_solid_var(--color-line)] [border-bottom:1px_solid_var(--color-line)]
+      [@media(max-width:520px)]:p-[14px_1rem] [@media(max-width:520px)]:[&_.relative]:min-w-[100%] space-y-3"
+    >
       {/* Main control row */}
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Search Box */}
@@ -72,7 +76,7 @@ const TodoTaskToolbar = ({
           </span>
 
           {activeProjectName && (
-            <span className="ui-chip ui-chip--accent">
+            <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-chip--accent">
               {t("project")}
               {activeProjectName}
               <button
@@ -87,7 +91,7 @@ const TodoTaskToolbar = ({
           )}
 
           {searchTerm.trim() && (
-            <span className="ui-chip">
+            <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap">
               {t("keyword")}
               {searchTerm.trim()}"
               <button

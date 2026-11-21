@@ -61,12 +61,11 @@ src/
 │   ├── useAuthStore.ts            # Client session tokens & user profile state
 │   └── useTaskFilterStore.ts      # Global in-progress task toggle state
 ├── styles/
-│   ├── index.css                  # Global tokens, resets, Tailwind base
-│   └── app.css                    # Shared design system rules & utilities
+│   └── index.css                  # Tailwind entry, theme tokens, shared rules
 └── main.tsx                       # React 19 root bootstrap
 ```
 
-[`src/app/router.tsx`](../../frontend/src/app/router.tsx) composes feature routes and lazily loads V1 and V2 presentation. [`src/features/v2/routes.tsx`](../../frontend/src/features/v2/routes.tsx) owns the `/v2` route tree. Reuse domain state and API logic when working on the V2 presentation. Use [Tailwind for new and changed component styling](../design/ui-ux.md#tailwind-only-for-new-styling). Existing V2 tokens and styles live in [`features/v2/styles/`](../../frontend/src/features/v2/styles/) and localized copy lives in [`shared/i18n/locales/`](../../frontend/src/shared/i18n/locales/).
+[`src/app/router.tsx`](../../frontend/src/app/router.tsx) composes feature routes and lazily loads V1 and V2 presentation. [`src/features/v2/routes.tsx`](../../frontend/src/features/v2/routes.tsx) owns the `/v2` route tree. Reuse domain state and API logic when working on the V2 presentation. Follow the [Tailwind styling convention](../design/ui-ux.md#tailwind-styling). Both themes share [`src/styles/index.css`](../../frontend/src/styles/index.css) as their Tailwind entry. Localized copy lives in [`shared/i18n/locales/`](../../frontend/src/shared/i18n/locales/).
 
 ---
 

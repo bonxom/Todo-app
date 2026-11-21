@@ -248,3 +248,21 @@ it("maps statistics between versions and accepts the V2 destination", () => {
     isFallback: false,
   });
 });
+
+it("maps settings between versions and supports legacy /profile path", () => {
+  expect(getVersionDestination({ pathname: "/settings" }, "v2")).toEqual({
+    to: "/v2/settings",
+    isFallback: false,
+  });
+  expect(getVersionDestination({ pathname: "/profile" }, "v2")).toEqual({
+    to: "/v2/settings",
+    isFallback: false,
+  });
+  expect(getVersionDestination({ pathname: "/v2/settings" }, "v1")).toEqual({
+    to: "/settings",
+    isFallback: false,
+  });
+  expect(isSupportedProtectedPath("/settings")).toBe(true);
+  expect(isSupportedProtectedPath("/v2/settings")).toBe(true);
+  expect(isSupportedProtectedPath("/profile")).toBe(true);
+});

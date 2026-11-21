@@ -27,7 +27,8 @@ export default function ChatAvatar({
   )
     return (
       <span
-        className="chat-avatar chat-avatar--fallback"
+        className="chat-avatar w-[28px] h-[28px] flex-[0_0_28px] rounded-[50%] object-cover [border:1px_solid_var(--color-line)]
+          [background:var(--color-surface-muted)] mt-[4px] chat-avatar--fallback flex items-center justify-center"
         role="img"
         aria-label={label}
       >
@@ -36,7 +37,7 @@ export default function ChatAvatar({
     );
   return (
     <img
-      className="chat-avatar"
+      className="chat-avatar w-[28px] h-[28px] flex-[0_0_28px] rounded-[50%] object-cover [border:1px_solid_var(--color-line)] [background:var(--color-surface-muted)] mt-[4px]"
       src={current}
       alt={label}
       width={28}

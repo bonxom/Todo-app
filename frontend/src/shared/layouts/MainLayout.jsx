@@ -61,7 +61,9 @@ const MainLayout = ({ children = null, assistant = null }) => {
 
   return (
     <div
-      className="ui-workspace-layout"
+      className="ui-workspace-layout
+        [--assistant-dock-width:min(_50vw,var(--assistant-dock-preferred-width,clamp(22rem,32vw,30rem))_)]
+        [@media(min-width:1024px)]:[&:has(_.ui-assistant-presence[data-open=true]_.ui-assistant-panel--docked_)_>_.ui-main-shell]:mr-[var(--assistant-dock-width)]"
       style={{
         "--sidebar-w": `${sidebarWidth}px`,
         "--topbar-base-height": `${TOPBAR_HEIGHT}px`,
@@ -82,13 +84,15 @@ const MainLayout = ({ children = null, assistant = null }) => {
       />
 
       <main
-        className="ui-main-shell"
+        className="ui-main-shell min-h-screen [background:var(--color-canvas)] [transition:margin-left_220ms_ease] [@media(max-width:1023px)]:[transition:none]"
         style={{
           marginLeft: isDesktop ? "var(--sidebar-w)" : 0,
           paddingTop: "var(--topbar-height)",
         }}
       >
-        <div className="ui-main-content">{children || <Outlet />}</div>
+        <div className="ui-main-content p-[clamp(1rem,2.2vw,1.5rem)] min-w-[0]">
+          {children || <Outlet />}
+        </div>
       </main>
       {!isAgentRoute && assistant}
     </div>

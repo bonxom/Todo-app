@@ -363,6 +363,7 @@
   "taskCompletedSuffix": " (đã hoàn thành)",
   "stop": "Dừng",
   "stopping": "Đang dừng...",
+  "stopFailed": "Không thể dừng phản hồi. Hãy thử lại.",
   "stopped": "Đã dừng",
   "failedStatus": "Bị lỗi",
   "timedOut": "Hết thời gian",
@@ -374,5 +375,14 @@
   "connectionError": "Mất kết nối với lượt chạy.",
   "concurrencyLimit": "Bạn đang có 3 lượt xử lý cùng lúc. Vui lòng chờ một lượt kết thúc trước khi gửi tiếp.",
   "processingTask": "Đang xử lý tác vụ",
-  "taskCreated": "Đã tạo công việc"
+  "taskCreated": "Đã tạo công việc",
+  "searchChatsCompact": "Tìm hội thoại",
+  "recentChats": "Gần đây",
+  "loadingChatProjects": "Đang tải dự án…",
+  "collapseChatProject": "Thu gọn {{project}}",
+  "expandChatProject": "Mở rộng {{project}}",
+  "startChatHeading": "Bạn cần Orbit giúp gì?",
+  "showChats": "Hiện cuộc trò chuyện",
+  "hideChats": "Ẩn cuộc trò chuyện",
+  "chatProjectUnavailable": "Dự án này không còn khả dụng."
 }

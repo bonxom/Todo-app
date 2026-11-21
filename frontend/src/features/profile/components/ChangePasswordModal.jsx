@@ -55,14 +55,14 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 overscroll-contain">
+    <div className="ui-modal-overlay [background:var(--color-overlay)] fixed inset-0 z-50 flex items-center justify-center p-4 overscroll-contain">
       <div
-        className="ui-modal-shell animate-fadeIn"
+        className="ui-modal-shell overflow-hidden [border:1px_solid_rgba(31,35,40,0.06)] rounded-[var(--radius-2xl)] [background:var(--color-surface)] [box-shadow:var(--shadow-lg)] animate-fadeIn"
         role="dialog"
         aria-modal="true"
         aria-labelledby="change-password-title"
       >
-        <div className="ui-modal-header flex items-center justify-between gap-4">
+        <div className="ui-modal-header p-[1rem_1.25rem] [border-bottom:1px_solid_var(--color-line)] [background:var(--color-surface)] flex items-center justify-between gap-4">
           <div>
             <h2
               id="change-password-title"
@@ -77,7 +77,11 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
           <button
             type="button"
             onClick={onClose}
-            className="ui-modal-close-button ui-focus-ring"
+            className="ui-modal-close-button inline-flex w-[2.5rem] h-[2.5rem] items-center justify-center
+              [border:1px_solid_var(--color-line)] rounded-[var(--radius-md)] [background:var(--color-surface)]
+              [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+              [&:hover]:border-[color-mix(_in_srgb,var(--color-line)_72%,var(--color-text-muted)_)]
+              [&:hover]:[background:var(--color-surface-muted)] [&:hover]:[transform:translateY(-1px)] ui-focus-ring"
             aria-label={t("closeChangePasswordDialog")}
           >
             <X className="w-6 h-6" />
@@ -85,7 +89,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="ui-modal-body space-y-4">
+          <div className="ui-modal-body p-[1.25rem] space-y-4">
             <div>
               <label
                 htmlFor="current-password"
@@ -109,7 +113,9 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                 <button
                   type="button"
                   onClick={() => togglePasswordVisibility("current")}
-                  className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
+                  className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center
+                    rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150
+                    hover:text-[var(--color-text)]"
                   aria-label={
                     showPasswords.current
                       ? t("hideCurrentPassword")
@@ -146,7 +152,9 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                 <button
                   type="button"
                   onClick={() => togglePasswordVisibility("new")}
-                  className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
+                  className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center
+                    rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150
+                    hover:text-[var(--color-text)]"
                   aria-label={
                     showPasswords.new
                       ? t("hideNewPassword")
@@ -188,7 +196,9 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                 <button
                   type="button"
                   onClick={() => togglePasswordVisibility("confirm")}
-                  className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150 hover:text-[var(--color-text)]"
+                  className="ui-focus-ring absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center
+                    rounded-[var(--radius-md)] text-[var(--color-text-muted)] transition-colors duration-150
+                    hover:text-[var(--color-text)]"
                   aria-label={
                     showPasswords.confirm
                       ? t("hideConfirmNewPassword")
@@ -214,7 +224,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
             </div>
           </div>
 
-          <div className="ui-modal-footer">
+          <div className="ui-modal-footer flex flex-wrap gap-[0.75rem] p-[0_1.25rem_1.25rem]">
             <button
               type="button"
               onClick={onClose}

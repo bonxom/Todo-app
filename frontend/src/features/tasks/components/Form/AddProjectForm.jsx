@@ -79,7 +79,12 @@ const AddProjectForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="workspace-form">
+    <form
+      onSubmit={handleSubmit}
+      className="workspace-form flex flex-col gap-[20px] [&_label]:[font-weight:600] [&_label]:mb-[8px]
+      [&_legend]:[font-weight:600] [&_legend]:mb-[8px] [&_.ui-input::placeholder]:opacity-[0.7]
+      [@media(max-width:600px)]:gap-[17px]"
+    >
       <div>
         <label
           htmlFor="project-name"
@@ -102,7 +107,11 @@ const AddProjectForm = ({
         />
       </div>
 
-      <div className="workspace-project-preview">
+      <div
+        className="workspace-project-preview flex items-center gap-[10px] p-[12px_14px] [background:var(--color-accent-soft)]
+        rounded-[9px] text-[12px] [&_i]:w-[10px] [&_i]:h-[10px] [&_i]:[border:1px_solid_var(--color-line)]
+        [&_i]:rounded-[3px] [&_i]:shrink-0 [&_span]:wrap-anywhere"
+      >
         <i style={{ background: color }} />
         <span>{name.trim() || "Your project"}</span>
       </div>
@@ -111,7 +120,9 @@ const AddProjectForm = ({
           {t("projectColor")}
         </legend>
         <div
-          className="workspace-color-options"
+          className="workspace-color-options flex flex-wrap gap-[10px] p-[14px] [background:var(--color-surface-muted)]
+            rounded-[10px] [border:1px_solid_var(--color-line)] [&_button]:w-[24px] [&_button]:h-[24px]
+            [&_button]:shrink-0"
           role="radiogroup"
           aria-label={t("projectColor")}
           onKeyDown={(event) => {
@@ -194,7 +205,9 @@ const AddProjectForm = ({
             className="h-9 w-12 cursor-pointer rounded-lg border border-[color:var(--color-line)] bg-[var(--color-surface)] p-1"
             autoComplete="off"
           />
-          <span className="ui-chip ui-tabular">{color}</span>
+          <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
+            {color}
+          </span>
         </div>
       </fieldset>
 
@@ -218,11 +231,19 @@ const AddProjectForm = ({
       </div>
 
       {submitError && (
-        <p className="workspace-form-error" role="alert">
+        <p
+          className="workspace-form-error text-[var(--color-danger)] [background:var(--color-danger-soft)] rounded-[9px] p-[11px_13px] text-[12px] [line-height:1.6]"
+          role="alert"
+        >
           {submitError}
         </p>
       )}
-      <div className="workspace-form-actions">
+      <div
+        className="workspace-form-actions flex justify-end items-center gap-[10px] m-[4px_-28px_0]
+        [background:var(--color-surface)] [border-top:1px_solid_var(--color-line)] sticky bottom-[0] z-1
+        [&_button]:flex-[initial] [&_button]:rounded-[9px] [&_button]:min-h-[40px]
+        [&_button[type=submit]]:min-w-[120px] [@media(max-width:600px)]:mx-[-20px]"
+      >
         <button
           type="button"
           onClick={() => {

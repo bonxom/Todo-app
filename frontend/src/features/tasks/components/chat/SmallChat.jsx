@@ -15,7 +15,6 @@ import { useConversationChat } from "../../hooks/useConversationChat";
 import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import ChatField from "./ChatField";
 import RecentConversations from "./RecentConversations";
-import "@/styles/chat.css";
 
 const SmallChatView = ({
   onClose,
@@ -168,7 +167,7 @@ const SmallChatView = ({
     >
       {displayMode === "docked" && (
         <div
-          className="ui-assistant-resize-handle ui-focus-ring"
+          className="ui-assistant-resize-handle absolute inset-[0_auto_0_0] z-2 w-[7px] cursor-col-resize touch-none [@media(max-width:1023px)]:[display:none] ui-focus-ring"
           role="separator"
           aria-label={t("resizeChatSidebar")}
           aria-orientation="vertical"
@@ -211,10 +210,13 @@ const SmallChatView = ({
           }}
         />
       )}
-      <div className="ui-assistant-header">
+      <div className="ui-assistant-header shrink-0 [border-bottom:1px_solid_var(--color-line)] [background:var(--color-surface)]">
         <div className="flex items-center justify-between gap-3">
-          <div className="ui-assistant-status">
-            <span className="chat-brand-icon" aria-hidden="true">
+          <div className="ui-assistant-status flex items-center gap-[0.75rem] min-w-[0]">
+            <span
+              className="chat-brand-icon grid place-items-center w-[32px] h-[32px] rounded-[10px] [background:var(--color-accent-soft)] text-[var(--color-accent)]"
+              aria-hidden="true"
+            >
               <Sparkles size={18} />
             </span>
             <div className="min-w-0">
@@ -227,7 +229,9 @@ const SmallChatView = ({
             <button
               ref={historyButton}
               type="button"
-              className="ui-icon-button ui-focus-ring"
+              className="ui-icon-button items-center justify-center
+                [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+                [&:hover]:[transform:translateY(-1px)] ui-focus-ring"
               aria-label={t("chatHistory")}
               title={t("chatHistory")}
               aria-expanded={historyOpen}
@@ -240,7 +244,9 @@ const SmallChatView = ({
               type="button"
               onClick={handleNewChat}
               disabled={chat.loading || chat.sending}
-              className="ui-icon-button ui-focus-ring h-8 w-8 disabled:cursor-not-allowed disabled:opacity-50"
+              className="ui-icon-button items-center justify-center
+                [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+                [&:hover]:[transform:translateY(-1px)] ui-focus-ring h-8 w-8 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label={t("newChat")}
               title={t("newConversation")}
             >
@@ -253,7 +259,9 @@ const SmallChatView = ({
                   onOpenInAgent();
                 }
               }}
-              className="ui-icon-button ui-focus-ring h-8 w-8"
+              className="ui-icon-button items-center justify-center
+                [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+                [&:hover]:[transform:translateY(-1px)] ui-focus-ring h-8 w-8"
               aria-label={t("openInAgent")}
               title={t("openInAgent")}
             >
@@ -264,7 +272,9 @@ const SmallChatView = ({
               onClick={() =>
                 setDisplayMode((current) => nextDisplayMode[current])
               }
-              className="chat-display-mode ui-icon-button ui-focus-ring h-8 w-8"
+              className="chat-display-mode ui-icon-button items-center justify-center
+                [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+                [&:hover]:[transform:translateY(-1px)] ui-focus-ring h-8 w-8"
               aria-label={resizeLabel}
               title={
                 {
@@ -287,7 +297,9 @@ const SmallChatView = ({
               onClick={async () => {
                 if (await chat.confirmDiscard()) onClose();
               }}
-              className="ui-icon-button ui-focus-ring h-8 w-8"
+              className="ui-icon-button items-center justify-center
+                [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+                [&:hover]:[transform:translateY(-1px)] ui-focus-ring h-8 w-8"
               aria-label={t("closeChat")}
               title={t("closeChat")}
             >
@@ -297,12 +309,12 @@ const SmallChatView = ({
         </div>
       </div>
 
-      <div className="chat-body">
+      <div className="chat-body flex-1 min-h-[0] h-full flex flex-col overflow-hidden [background:var(--color-canvas)]">
         {historyOpen && (
-          <div className="chat-history-view">
+          <div className="chat-history-view flex flex-1 flex-col min-h-[0] p-[16px] gap-[12px]">
             <button
               type="button"
-              className="chat-history-back ui-focus-ring"
+              className="chat-history-back flex items-center gap-[8px] self-start p-[8px_0] cursor-pointer ui-focus-ring"
               aria-label={t("backToConversation")}
               onClick={() => {
                 setHistoryOpen(false);
@@ -312,7 +324,12 @@ const SmallChatView = ({
               <ArrowLeft size={16} /> {t("backToConversation")}
             </button>
             {chat.error && (
-              <p role="alert" className="chat-error">
+              <p
+                role="alert"
+                className="chat-error [border:1px_solid_var(--color-danger)] [background:var(--color-danger-soft)]
+                text-[var(--color-text)] p-[12px] [line-height:1.5] [&_[role=alert]]:mb-[4px] [&_[role=alert]]:max-h-[60px]
+                [&_[role=alert]]:overflow-y-auto [@media(max-height:550px)]:[&_>_.text-xs]:[display:none]"
+              >
                 {chat.error}
               </p>
             )}
@@ -347,7 +364,10 @@ const SmallChatView = ({
             </button>
           </div>
         )}
-        <div hidden={historyOpen} className="chat-field-container">
+        <div
+          hidden={historyOpen}
+          className="chat-field-container flex-1 min-h-[0] h-full [&[hidden]]:[display:none]"
+        >
           <ChatField
             key={chatRevision}
             chat={{ ...chat, openConversation: handleOpenConversation }}

@@ -29,10 +29,14 @@ import { chatRunService } from "./chatRunService.js";
 import { chatStreamRepository } from "../repositories/chatStreamRepository.js";
 import type { TurnSnapshot } from "../types/IChatStream.js";
 import type { ChatTurn } from "../types/IChatTurn.js";
+import { requireOwnedProject } from "./conversationContextService.js";
 
 export const conversationService = {
   list: (userId: string) => repository.list(userId),
-  create: (userId: string, id: string) => repository.create(userId, id),
+  async create(userId: string, id: string, projectId?: string) {
+    if (projectId) await requireOwnedProject(userId, projectId);
+    return repository.create(userId, id, projectId);
+  },
   async get(userId: string, id?: string, before?: number) {
     const conversation = id
       ? await repository.get(userId, id)

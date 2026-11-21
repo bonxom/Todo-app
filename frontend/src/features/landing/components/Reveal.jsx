@@ -38,7 +38,10 @@ export default function Reveal({ children, className = "" }) {
   }, []);
 
   return (
-    <div ref={ref} className={`landing-reveal ${className}`}>
+    <div
+      ref={ref}
+      className={`landing-reveal [&_[data-reveal]]:[--reveal-offset:clamp(28px,5vw,76px)] [&_[data-reveal]]:[--reveal-from:calc(-1_*_var(--reveal-offset))] [&_[data-reveal=right]]:[--reveal-from:var(--reveal-offset)] [@media(prefers-reduced-motion:reduce)]:opacity-[1]! [@media(prefers-reduced-motion:reduce)]:[transform:none]! ${className}`}
+    >
       {children}
     </div>
   );

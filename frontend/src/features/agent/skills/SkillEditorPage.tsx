@@ -27,7 +27,6 @@ import {
 } from "./useSkillQueries";
 import MarkdownText from "@/features/tasks/components/chat/MarkdownText";
 import { AgentDiscardDialog } from "../AgentDiscardDialog";
-import "./skills.css";
 import type { SkillDetail } from "@/shared/types/skill";
 import { ApiError } from "@/shared/services/apiError";
 import { useModalKeyboard } from "@/shared/hooks/useModalKeyboard";
@@ -235,7 +234,12 @@ function SkillEditorForm() {
     );
 
   return (
-    <div className="ui-page-shell skills-page skill-editor-page">
+    <div
+      className="ui-page-shell mx-auto skills-page max-w-[1120px]
+      [&_:is(button,a):focus-visible]:[outline:2px_solid_var(--color-accent)]
+      [&_:is(button,a):focus-visible]:outline-offset-[3px] [&_button:disabled]:cursor-not-allowed
+      [&_button:disabled]:opacity-[0.5] skill-editor-page"
+    >
       <AgentDiscardDialog
         isOpen={
           discardDialogOpen || reloadRequested || blocker.state === "blocked"
@@ -253,14 +257,23 @@ function SkillEditorForm() {
       />
       {isDeleteDialogOpen && (
         <div
-          className="skill-modal-backdrop"
+          className="skill-modal-backdrop [&_:is(button,a):focus-visible]:[outline:2px_solid_var(--color-accent)]
+            [&_:is(button,a):focus-visible]:outline-offset-[3px] [&_button:disabled]:cursor-not-allowed
+            [&_button:disabled]:opacity-[0.5] fixed inset-[0] z-150 flex items-center justify-center p-[28px]
+            [background:var(--color-overlay)] [backdrop-filter:blur(3px)]
+            [@media(max-width:760px)]:p-[12px]"
           ref={deleteRef}
           role="dialog"
           aria-modal="true"
           aria-label={t("confirmSkillDeletion")}
         >
-          <div className="skill-delete-dialog">
-            <span className="skill-delete-icon">
+          <div
+            className="skill-delete-dialog w-[min(100%,420px)] [border:1px_solid_var(--color-line)] [background:var(--color-surface)]
+            text-[var(--color-text)] rounded-[12px] [box-shadow:var(--shadow-lg)] p-[28px] [&_h2]:text-[20px]
+            [&_h2]:m-[16px_0_8px] [&_h2]:[font-weight:650] [&_p]:text-[var(--color-text-muted)] [&_p]:text-[14px]
+            [&_p]:[line-height:1.7] [&_.skills-actions]:mt-[24px]"
+          >
+            <span className="skill-delete-icon inline-flex p-[12px] rounded-[10px] text-[var(--color-danger)] [background:var(--color-danger-soft)]">
               <Trash2 size={23} />
             </span>
             <h2>{t("deleteThisSkill")}</h2>
@@ -270,7 +283,7 @@ function SkillEditorForm() {
                 "willBeRemovedFromYourLibraryPastConversationResponsesRemainUnchanged",
               )}
             </p>
-            <div className="skills-actions">
+            <div className="skills-actions flex items-center gap-[10px] shrink-0 [@media(max-width:760px)]:[&_>_:is(a,button)]:flex-1">
               <button
                 className="ui-btn-secondary"
                 onClick={() => setIsDeleteDialogOpen(false)}
@@ -278,7 +291,8 @@ function SkillEditorForm() {
                 {t("cancel")}
               </button>
               <button
-                className="skill-danger-button"
+                className="skill-danger-button inline-flex items-center justify-center gap-[8px] min-h-[44px] p-[0_16px]
+                  [border:1px_solid_var(--color-danger)] rounded-[9px] [background:var(--color-danger)] cursor-pointer"
                 onClick={handleDelete}
                 disabled={deleteMutation.isPending}
               >
@@ -291,16 +305,20 @@ function SkillEditorForm() {
           </div>
         </div>
       )}
-      <div className="skills-section-bar">
+      <div
+        className="skills-section-bar flex items-center justify-between gap-[16px] min-h-[44px]
+        [@media(max-width:760px)]:[&_.agent-navigation_a]:p-[0_9px]
+        [@media(max-width:760px)]:[&_.agent-navigation_svg]:[display:none]"
+      >
         <button
-          className="skill-back-link"
+          className="skill-back-link items-center gap-[8px] [border:0] [background:transparent] p-[8px_0] cursor-pointer"
           onClick={handleBack}
           aria-label={t("backToSkills")}
         >
           <ArrowLeft size={17} />
           {t("personalSkills")}
         </button>
-        <span className="skill-editor-status">
+        <span className="skill-editor-status text-[12px] text-[var(--color-text-muted)]">
           {isSaving
             ? t("saving")
             : isDirty
@@ -310,17 +328,22 @@ function SkillEditorForm() {
                 : t("saved")}
         </span>
       </div>
-      <header className="skills-heading skill-editor-heading">
+      <header
+        className="skills-heading flex items-center justify-between gap-[24px]
+        [@media(max-width:1000px)]:items-start [@media(max-width:1000px)]:[&_.skills-actions]:flex-wrap
+        [@media(max-width:760px)]:flex-col [@media(max-width:760px)]:gap-[18px]
+        [@media(max-width:760px)]:[&_.skills-actions]:w-full skill-editor-heading [&_h1]:wrap-anywhere"
+      >
         <div>
-          <h1 className="ui-page-title">
+          <h1 className="ui-page-title m-[0] text-[var(--color-text)] [font-weight:650] text-balance">
             {isNew ? t("createNewSkill") : name || t("editSkill")}
           </h1>
-          <p className="ui-page-description">
+          <p className="ui-page-description max-w-[68ch] text-[var(--color-text-muted)] [line-height:1.6] text-pretty">
             {t("clearGuidanceForBetterConversations")}
           </p>
         </div>
         <button
-          className="ui-btn-primary skill-save-button"
+          className="ui-btn-primary skill-save-button [@media(max-width:760px)]:self-stretch"
           onClick={handleSave}
           disabled={!isValid || isSaving || deleteMutation.isPending}
         >
@@ -333,7 +356,12 @@ function SkillEditorForm() {
         </button>
       </header>
       {conflictError && (
-        <div className="skills-notice skills-notice--warning" role="alert">
+        <div
+          className="skills-notice flex items-center gap-[10px] p-[14px_16px] [border:1px_solid_var(--color-line)] rounded-[9px]
+          text-[13px] [&_>_svg]:shrink-0 [&_>_span]:flex-1 [&_>_div]:flex-1 [&_p]:m-[5px_0_0]
+          [@media(max-width:760px)]:flex-wrap skills-notice--warning"
+          role="alert"
+        >
           <AlertCircle size={19} />
           <div>
             <strong>{conflictError}</strong>
@@ -353,22 +381,31 @@ function SkillEditorForm() {
         </div>
       )}
       {generalError && (
-        <div className="skills-notice skills-notice--error" role="alert">
+        <div
+          className="skills-notice flex items-center gap-[10px] p-[14px_16px] [border:1px_solid_var(--color-line)] rounded-[9px]
+          text-[13px] [&_>_svg]:shrink-0 [&_>_span]:flex-1 [&_>_div]:flex-1 [&_p]:m-[5px_0_0]
+          [@media(max-width:760px)]:flex-wrap skills-notice--error"
+          role="alert"
+        >
           <AlertCircle size={18} />
           <span>{generalError}</span>
         </div>
       )}
-      <div className="skill-editor-grid">
+      <div className="skill-editor-grid grid gap-[24px] [align-items:start] [@media(max-width:1000px)]:gap-[16px]">
         <section
-          className="skill-info-panel"
+          className="skill-info-panel [background:var(--color-surface)] [border:1px_solid_var(--color-line)] rounded-[12px] overflow-hidden p-[24px] [@media(max-width:760px)]:p-[20px]"
           aria-labelledby="skill-info-heading"
         >
-          <div className="skill-panel-heading">
+          <div className="skill-panel-heading [&_h2]:text-[15px] [&_h2]:m-[0] [&_h2]:[font-weight:650] [&_p]:m-[6px_0_0] [&_p]:text-[var(--color-text-muted)] [&_p]:text-[12px] [&_p]:[line-height:1.6]">
             <h2 id="skill-info-heading">{t("skillInformation")}</h2>
             <p>{t("helpsAgentKnowWhenToUseThisSkill")}</p>
           </div>
-          <div className="skill-field">
-            <div className="skill-field-label">
+          <div className="skill-field mt-[25px]">
+            <div
+              className="skill-field-label flex justify-between items-baseline gap-[10px] mb-[8px] [&_label]:text-[13px]
+              [&_label]:[font-weight:600] [&_>_span]:text-[11px] [&_>_span]:text-[var(--color-text-muted)]
+              [&_label_span]:text-[var(--color-text-muted)]"
+            >
               <label htmlFor="skill-name">
                 {t("skillName")}
                 <span>*</span>
@@ -385,8 +422,12 @@ function SkillEditorForm() {
               placeholder={t("eGIeltsWriting")}
             />
           </div>
-          <div className="skill-field">
-            <div className="skill-field-label">
+          <div className="skill-field mt-[25px]">
+            <div
+              className="skill-field-label flex justify-between items-baseline gap-[10px] mb-[8px] [&_label]:text-[13px]
+              [&_label]:[font-weight:600] [&_>_span]:text-[11px] [&_>_span]:text-[var(--color-text-muted)]
+              [&_label_span]:text-[var(--color-text-muted)]"
+            >
               <label htmlFor="skill-description">
                 {t("skillDescription")}
                 <span>*</span>
@@ -394,7 +435,7 @@ function SkillEditorForm() {
               <span>{description.length}/500</span>
             </div>
             <textarea
-              className="ui-input skill-description-input"
+              className="ui-input skill-description-input [resize:vertical]"
               id="skill-description"
               rows={4}
               value={description}
@@ -403,13 +444,18 @@ function SkillEditorForm() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t("whenShouldAgentUseThisGuidance")}
             />
-            <p className="skill-field-hint">
+            <p className="skill-field-hint text-[11px] [line-height:1.65] text-[var(--color-text-muted)] m-[8px_0_0]">
               {t(
                 "eGWhenINeedFeedbackAndImprovementSuggestionsOnIeltsTask2Writing",
               )}
             </p>
           </div>
-          <div className="skill-enabled-setting">
+          <div
+            className="skill-enabled-setting flex items-center justify-between gap-[14px] [border-top:1px_solid_var(--color-line)]
+            [border-bottom:1px_solid_var(--color-line)] p-[20px_0] mt-[24px] [&_label]:text-[13px]
+            [&_label]:[font-weight:600] [&_p]:m-[5px_0_0] [&_p]:text-[var(--color-text-muted)] [&_p]:text-[11px]
+            [&_p]:[line-height:1.6]"
+          >
             <div>
               <label id="skill-enabled-label">{t("enableSkill")}</label>
               <p>
@@ -419,7 +465,11 @@ function SkillEditorForm() {
               </p>
             </div>
             <button
-              className="skill-switch"
+              className="skill-switch inline-flex items-center w-[38px] h-[23px] [border:1px_solid_var(--color-line)] p-[2px]
+                [background:var(--color-line)] rounded-[99px] shrink-0 cursor-pointer [&_span]:w-[17px] [&_span]:h-[17px]
+                [&_span]:rounded-[50%] [&_span]:[background:#fff] [&_span]:[box-shadow:0_1px_3px_#0002]
+                [&[aria-checked=true]]:[background:var(--color-accent)] [&[aria-checked=true]]:border-[var(--color-accent)]
+                [&[aria-checked=true]_span]:[transform:translateX(15px)]"
               role="switch"
               aria-labelledby="skill-enabled-label"
               aria-checked={enabled}
@@ -429,7 +479,11 @@ function SkillEditorForm() {
               <span />
             </button>
           </div>
-          <div className="skill-editor-help">
+          <div
+            className="skill-editor-help flex items-start gap-[9px] mt-[20px] text-[var(--color-text-muted)] [&_svg]:shrink-0
+            [&_svg]:mt-[2px] [&_p]:m-[0] [&_p]:text-[12px] [&_p]:[line-height:1.7]
+            [@media(max-width:760px)]:[display:none]"
+          >
             <BookOpen size={17} />
             <p>
               {t(
@@ -438,13 +492,13 @@ function SkillEditorForm() {
             </p>
           </div>
           {!isNew && (
-            <div className="skill-editor-danger-zone">
+            <div className="skill-editor-danger-zone flex justify-between items-center flex-wrap gap-[8px] mt-[24px] text-[11px] text-[var(--color-text-muted)]">
               <span>
                 {t("currentVersionV")}
                 {baseline?.version}
               </span>
               <button
-                className="skill-text-action skill-text-danger"
+                className="skill-text-action inline-flex items-center justify-center gap-[7px] p-[8px_0] [border:0] [background:none] cursor-pointer skill-text-danger"
                 disabled={isSaving || deleteMutation.isPending}
                 onClick={() => setIsDeleteDialogOpen(true)}
               >
@@ -454,8 +508,13 @@ function SkillEditorForm() {
             </div>
           )}
         </section>
-        <section className="skill-instructions-panel">
-          <div className="skill-instructions-header">
+        <section className="skill-instructions-panel [background:var(--color-surface)] [border:1px_solid_var(--color-line)] rounded-[12px] overflow-hidden">
+          <div
+            className="skill-instructions-header [&_p]:m-[6px_0_0] [&_p]:text-[var(--color-text-muted)] [&_p]:text-[12px]
+            [&_p]:[line-height:1.6] [&_label_span]:text-[var(--color-text-muted)] p-[22px_24px]
+            [border-bottom:1px_solid_var(--color-line)] flex flex-wrap items-center justify-between gap-[16px]
+            [&_label]:text-[15px] [&_label]:[font-weight:650] [@media(max-width:760px)]:p-[20px]"
+          >
             <div>
               <label id="skill-instructions-label" htmlFor="skill-instructions">
                 {t("instructions")}
@@ -463,7 +522,14 @@ function SkillEditorForm() {
               </label>
               <p>{t("agentWillFollowTheseInstructionsWhenReadingTheSkill")}</p>
             </div>
-            <div className="skill-editor-tabs" aria-label={t("editorMode")}>
+            <div
+              className="skill-editor-tabs inline-flex gap-[3px] [background:var(--color-surface-muted)] p-[3px] rounded-[7px]
+              [&_button]:inline-flex [&_button]:items-center [&_button]:justify-center [&_button]:gap-[6px]
+              [&_button]:p-[7px_10px] [&_button]:[border:0] [&_button]:rounded-[5px] [&_button]:[background:transparent]
+              [&_button]:cursor-pointer [&_button[aria-pressed=true]]:[background:var(--color-surface)]
+              [&_button[aria-pressed=true]]:[box-shadow:var(--shadow-xs)]"
+              aria-label={t("editorMode")}
+            >
               <button
                 aria-pressed={!previewMode}
                 onClick={() => setPreviewMode(false)}
@@ -481,11 +547,11 @@ function SkillEditorForm() {
             </div>
           </div>
           {previewMode ? (
-            <div className="skill-markdown-preview">
+            <div className="skill-markdown-preview min-h-[420px] p-[24px] text-[14px] [line-height:1.8] wrap-anywhere [@media(max-width:760px)]:p-[20px] [@media(max-width:760px)]:min-h-[320px]">
               {instructions.trim() ? (
                 <MarkdownText text={instructions} />
               ) : (
-                <p className="skill-preview-empty">
+                <p className="skill-preview-empty text-[var(--color-text-muted)]">
                   {t("previewContentWillAppearOnceYouAddInstructions")}
                 </p>
               )}
@@ -493,7 +559,10 @@ function SkillEditorForm() {
           ) : (
             <textarea
               id="skill-instructions"
-              className="skill-instructions-input"
+              className="skill-instructions-input block w-full min-h-[420px] p-[24px] [resize:vertical] [border:0] rounded-[0]
+                [background:var(--color-surface)] outline-offset-[-3px] [&::placeholder]:opacity-[0.8]
+                [&:focus-visible]:[outline:2px_solid_var(--color-accent)]
+                [@media(max-width:760px)]:p-[20px] [@media(max-width:760px)]:min-h-[320px]"
               value={instructions}
               maxLength={10000}
               disabled={isSaving || deleteMutation.isPending}
@@ -503,13 +572,13 @@ function SkillEditorForm() {
               )}
             />
           )}
-          <div className="skill-instructions-footer">
+          <div className="skill-instructions-footer flex justify-between gap-[16px] [border-top:1px_solid_var(--color-line)] p-[13px_24px] text-[var(--color-text-muted)] text-[11px]">
             <span>{t("markdownSupported")}</span>
             <span>{t("characterCount", { count: instructions.length })}</span>
           </div>
         </section>
       </div>
-      <p className="skill-editor-footnote">
+      <p className="skill-editor-footnote m-[-12px_0_0] text-[var(--color-text-muted)] text-[12px] text-right [@media(max-width:760px)]:text-left [@media(max-width:760px)]:mt-[-8px]">
         {t("changesApplyFromTheNextChatTurn")}
       </p>
     </div>

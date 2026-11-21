@@ -8,17 +8,7 @@ export interface AuthCacheBoundaryProps {
 }
 
 const DefaultAuthLoading = () => (
-  <div
-    className="auth-loading-screen"
-    style={{
-      minHeight: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "1rem",
-    }}
-  >
+  <div className="auth-loading-screen flex min-h-screen flex-col items-center justify-center gap-4">
     <div className="auth-loading-spinner" />
     <p>Checking session...</p>
   </div>

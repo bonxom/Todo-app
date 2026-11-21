@@ -65,7 +65,7 @@ export function AgentHistoryList({
           type="button"
           onClick={onNewChat}
           disabled={disabled}
-          className="ui-btn-primary agent-new-chat-button"
+          className="ui-btn-primary agent-new-chat-button w-full"
         >
           <Plus className="h-4 w-4" />
           <span>{t("newConversation")}</span>
@@ -79,7 +79,9 @@ export function AgentHistoryList({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("searchConversations")}
             aria-label={t("searchConversationsLabel")}
-            className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] py-1.5 pl-8 pr-3 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-hidden"
+            className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] py-1.5 pl-8 pr-3 text-xs
+              text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-accent)]
+              focus:outline-hidden"
           />
         </div>
       </div>

@@ -60,6 +60,22 @@ export const v2Routes: RouteObject[] = [
         },
       },
       {
+        path: "settings",
+        errorElement: <RouteLoadError />,
+        lazy: async () => {
+          try {
+            const mod = await import("./pages/SettingsPage");
+            return { Component: mod.default };
+          } catch (err) {
+            return { Component: () => <RouteLoadError error={err} /> };
+          }
+        },
+      },
+      {
+        path: "profile",
+        element: <Navigate to="/v2/settings" replace />,
+      },
+      {
         path: "agents",
         errorElement: <RouteLoadError />,
         lazy: async () => {

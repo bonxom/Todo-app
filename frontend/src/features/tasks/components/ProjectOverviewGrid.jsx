@@ -20,7 +20,9 @@ const ProjectOverviewGrid = ({
     <section className="space-y-4" aria-labelledby="project-overview-heading">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="ui-page-kicker">{t("projectFocus")}</p>
+          <p className="ui-page-kicker m-[0] text-[var(--color-accent)] [font-weight:600] [line-height:1.2] uppercase">
+            {t("projectFocus")}
+          </p>
           <h2
             id="project-overview-heading"
             className="text-xl font-semibold text-[var(--color-text)]"
@@ -35,7 +37,10 @@ const ProjectOverviewGrid = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex min-h-[2.5rem] items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-line)] bg-[var(--color-surface)] px-3 text-sm font-medium text-[var(--color-text-muted)]">
+          <label
+            className="inline-flex min-h-[2.5rem] items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-line)]
+            bg-[var(--color-surface)] px-3 text-sm font-medium text-[var(--color-text-muted)]"
+          >
             <input
               type="checkbox"
               checked={showCompletedProjects}
@@ -92,7 +97,7 @@ const ProjectOverviewGrid = ({
                   </p>
                 </div>
 
-                <span className="ui-chip ui-tabular shrink-0">
+                <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums] shrink-0">
                   {item.completed} / {item.total}
                 </span>
               </div>
@@ -112,7 +117,10 @@ const ProjectOverviewGrid = ({
                   <button
                     type="button"
                     onClick={() => onCompleteProject?.(item.id)}
-                    className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-success)] bg-[var(--color-success-soft)] px-4 text-sm font-semibold text-[var(--color-success)] transition-[background-color,border-color,color] duration-150 hover:bg-[var(--color-success)] hover:text-[var(--color-on-status,#fff)]"
+                    className="inline-flex min-h-[2.75rem] flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border
+                      border-[var(--color-success)] bg-[var(--color-success-soft)] px-4 text-sm font-semibold
+                      text-[var(--color-success)] transition-[background-color,border-color,color] duration-150
+                      hover:bg-[var(--color-success)] hover:text-[var(--color-on-status,#fff)]"
                     aria-label={t("messages.completeAndHideV0", {
                       v0: item.name,
                     })}

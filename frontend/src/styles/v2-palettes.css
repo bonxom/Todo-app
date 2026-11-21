@@ -1,0 +1,311 @@
+/*
+ * Orbit V2 Liquid Glass Color Palettes
+ *
+ * Each palette defines Light and Dark token sets scoped to `.v2-app`.
+ * To add a new palette (e.g. "sunset"):
+ * 1. Register it in `src/shared/theme/v2Palettes.ts`.
+ * 2. Add `:root[data-v2-palette="<id>"] .v2-app` and
+ *    `:root[data-theme="dark"][data-v2-palette="<id>"] .v2-app` blocks below.
+ */
+
+/* Base structural tokens + Default Palette: Mint */
+.v2-app {
+  --v2-canvas: #e7efef;
+  --v2-ink: #213d43;
+  --v2-muted: #526c72;
+  --v2-accent: #14675f;
+  --v2-accent-ink: #fff;
+  --v2-success: #23735c;
+  --v2-warning: #835815;
+  --v2-surface-solid: #f2f8f7;
+  --v2-glass-fill: rgb(248 255 253 / 68%);
+  --v2-shell-fill: rgb(249 255 254 / 47%);
+  --v2-glass-border: rgb(255 255 255 / 88%);
+  --v2-border: rgb(56 93 99 / 15%);
+  --v2-grid: rgb(61 106 113 / 4%);
+  --v2-input-fill: rgb(255 255 255 / 76%);
+  --v2-bg-glow-1: rgb(183 228 210 / 65%);
+  --v2-bg-glow-2: rgb(167 201 226 / 50%);
+  --v2-progress-start: #14675f;
+  --v2-progress-end: #2dd4bf;
+  --v2-shadow-sm: 0 2px 5px rgb(37 77 82 / 4%);
+  --v2-shadow-md:
+    0 14px 36px -20px rgb(31 73 80 / 28%), inset 0 1px 0 rgb(255 255 255 / 95%);
+  --v2-shadow-lg:
+    0 28px 80px -28px rgb(18 58 65 / 35%), inset 0 1px 0 rgb(255 255 255 / 90%);
+  --v2-radius-card: 24px;
+  --v2-radius-control: 12px;
+  --v2-radius-pill: 9999px;
+  --v2-font-heading: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --v2-font-body:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+[data-theme="dark"] .v2-app {
+  --v2-canvas: #102126;
+  --v2-ink: #e4f3ef;
+  --v2-muted: #adc5c8;
+  --v2-accent: #a3e4ce;
+  --v2-accent-ink: #123d35;
+  --v2-success: #a3e4ce;
+  --v2-warning: #eac889;
+  --v2-surface-solid: #1c3439;
+  --v2-glass-fill: rgb(25 49 55 / 76%);
+  --v2-shell-fill: rgb(34 65 70 / 56%);
+  --v2-glass-border: rgb(205 245 237 / 25%);
+  --v2-border: rgb(190 232 229 / 15%);
+  --v2-grid: rgb(175 222 217 / 3%);
+  --v2-input-fill: rgb(15 37 42 / 88%);
+  --v2-bg-glow-1: rgb(39 104 83 / 43%);
+  --v2-bg-glow-2: rgb(39 75 105 / 42%);
+  --v2-progress-start: #14675f;
+  --v2-progress-end: #2dd4bf;
+  --v2-shadow-sm: 0 2px 8px rgb(0 0 0 / 12%);
+  --v2-shadow-md:
+    0 16px 40px -16px rgb(0 0 0 / 35%), inset 0 1px 0 rgb(225 255 250 / 15%);
+  --v2-shadow-lg:
+    0 30px 90px -25px rgb(0 0 0 / 65%), inset 0 1px 0 rgb(225 255 250 / 20%);
+}
+
+/* Palette: Ocean (Light) */
+[data-v2-palette="ocean"] .v2-app {
+  --v2-canvas: #e6f0f8;
+  --v2-ink: #16324a;
+  --v2-muted: #4a6782;
+  --v2-accent: #0c5da8;
+  --v2-accent-ink: #ffffff;
+  --v2-success: #16796b;
+  --v2-warning: #8f5c14;
+  --v2-surface-solid: #f1f7fc;
+  --v2-glass-fill: rgb(245 251 255 / 72%);
+  --v2-shell-fill: rgb(244 250 255 / 52%);
+  --v2-glass-border: rgb(255 255 255 / 90%);
+  --v2-border: rgb(30 78 121 / 16%);
+  --v2-grid: rgb(30 82 130 / 4.5%);
+  --v2-input-fill: rgb(255 255 255 / 80%);
+  --v2-bg-glow-1: rgb(147 205 248 / 60%);
+  --v2-bg-glow-2: rgb(159 196 242 / 48%);
+  --v2-progress-start: #0c5da8;
+  --v2-progress-end: #38bdf8;
+  --v2-shadow-sm: 0 2px 5px rgb(22 60 100 / 5%);
+  --v2-shadow-md:
+    0 14px 36px -20px rgb(16 56 96 / 30%), inset 0 1px 0 rgb(255 255 255 / 95%);
+  --v2-shadow-lg:
+    0 28px 80px -28px rgb(12 44 82 / 36%), inset 0 1px 0 rgb(255 255 255 / 90%);
+}
+
+/* Palette: Ocean (Dark) */
+[data-theme="dark"][data-v2-palette="ocean"] .v2-app {
+  --v2-canvas: #0b1929;
+  --v2-ink: #e4f1fc;
+  --v2-muted: #9ebad6;
+  --v2-accent: #7cc4fa;
+  --v2-accent-ink: #09243d;
+  --v2-success: #6ee7d4;
+  --v2-warning: #f0ca86;
+  --v2-surface-solid: #14283d;
+  --v2-glass-fill: rgb(19 41 64 / 78%);
+  --v2-shell-fill: rgb(24 52 80 / 58%);
+  --v2-glass-border: rgb(186 226 255 / 24%);
+  --v2-border: rgb(176 218 252 / 16%);
+  --v2-grid: rgb(158 210 250 / 3.5%);
+  --v2-input-fill: rgb(11 28 46 / 88%);
+  --v2-bg-glow-1: rgb(22 86 148 / 45%);
+  --v2-bg-glow-2: rgb(28 66 122 / 42%);
+  --v2-progress-start: #0c5da8;
+  --v2-progress-end: #38bdf8;
+  --v2-shadow-sm: 0 2px 8px rgb(0 0 0 / 16%);
+  --v2-shadow-md:
+    0 16px 40px -16px rgb(0 0 0 / 40%), inset 0 1px 0 rgb(196 232 255 / 16%);
+  --v2-shadow-lg:
+    0 30px 90px -25px rgb(0 0 0 / 68%), inset 0 1px 0 rgb(196 232 255 / 20%);
+}
+
+/* Palette: Golden (Light) */
+[data-v2-palette="golden"] .v2-app {
+  --v2-canvas: #f6f1e6;
+  --v2-ink: #3d2c14;
+  --v2-muted: #6e583b;
+  --v2-accent: #9a6308;
+  --v2-accent-ink: #ffffff;
+  --v2-success: #247356;
+  --v2-warning: #8f5708;
+  --v2-surface-solid: #fcf9f2;
+  --v2-glass-fill: rgb(255 252 245 / 72%);
+  --v2-shell-fill: rgb(255 251 242 / 52%);
+  --v2-glass-border: rgb(255 255 255 / 90%);
+  --v2-border: rgb(118 84 32 / 16%);
+  --v2-grid: rgb(128 92 36 / 4.5%);
+  --v2-input-fill: rgb(255 255 255 / 80%);
+  --v2-bg-glow-1: rgb(246 213 138 / 58%);
+  --v2-bg-glow-2: rgb(242 196 142 / 46%);
+  --v2-progress-start: #9a6308;
+  --v2-progress-end: #f59e0b;
+  --v2-shadow-sm: 0 2px 5px rgb(84 56 14 / 5%);
+  --v2-shadow-md:
+    0 14px 36px -20px rgb(88 58 14 / 28%), inset 0 1px 0 rgb(255 255 255 / 95%);
+  --v2-shadow-lg:
+    0 28px 80px -28px rgb(68 44 10 / 34%), inset 0 1px 0 rgb(255 255 255 / 90%);
+}
+
+/* Palette: Golden (Dark) */
+[data-theme="dark"][data-v2-palette="golden"] .v2-app {
+  --v2-canvas: #1f190f;
+  --v2-ink: #f9f0e1;
+  --v2-muted: #cdb99c;
+  --v2-accent: #f6c453;
+  --v2-accent-ink: #2b1d03;
+  --v2-success: #86e3b3;
+  --v2-warning: #f6c453;
+  --v2-surface-solid: #2e2517;
+  --v2-glass-fill: rgb(48 38 23 / 78%);
+  --v2-shell-fill: rgb(61 48 29 / 58%);
+  --v2-glass-border: rgb(252 225 168 / 24%);
+  --v2-border: rgb(245 215 155 / 16%);
+  --v2-grid: rgb(240 205 140 / 3.5%);
+  --v2-input-fill: rgb(32 25 14 / 88%);
+  --v2-bg-glow-1: rgb(138 94 20 / 44%);
+  --v2-bg-glow-2: rgb(112 72 18 / 40%);
+  --v2-progress-start: #b8790e;
+  --v2-progress-end: #f6c453;
+  --v2-shadow-sm: 0 2px 8px rgb(0 0 0 / 16%);
+  --v2-shadow-md:
+    0 16px 40px -16px rgb(0 0 0 / 42%), inset 0 1px 0 rgb(255 236 196 / 16%);
+  --v2-shadow-lg:
+    0 30px 90px -25px rgb(0 0 0 / 68%), inset 0 1px 0 rgb(255 236 196 / 20%);
+}
+
+/* Palette: Crimson (Light) */
+[data-v2-palette="crimson"] .v2-app {
+  --v2-canvas: #f7eaec;
+  --v2-ink: #3f1820;
+  --v2-muted: #734a53;
+  --v2-accent: #a61c3c;
+  --v2-accent-ink: #ffffff;
+  --v2-success: #217358;
+  --v2-warning: #8f5614;
+  --v2-surface-solid: #fdf4f5;
+  --v2-glass-fill: rgb(255 247 248 / 72%);
+  --v2-shell-fill: rgb(255 245 247 / 52%);
+  --v2-glass-border: rgb(255 255 255 / 90%);
+  --v2-border: rgb(125 36 56 / 16%);
+  --v2-grid: rgb(135 38 60 / 4.5%);
+  --v2-input-fill: rgb(255 255 255 / 80%);
+  --v2-bg-glow-1: rgb(244 176 191 / 56%);
+  --v2-bg-glow-2: rgb(236 184 206 / 46%);
+  --v2-progress-start: #a61c3c;
+  --v2-progress-end: #f43f5e;
+  --v2-shadow-sm: 0 2px 5px rgb(92 22 38 / 5%);
+  --v2-shadow-md:
+    0 14px 36px -20px rgb(96 24 42 / 28%), inset 0 1px 0 rgb(255 255 255 / 95%);
+  --v2-shadow-lg:
+    0 28px 80px -28px rgb(76 18 32 / 35%), inset 0 1px 0 rgb(255 255 255 / 90%);
+}
+
+/* Palette: Crimson (Dark) */
+[data-theme="dark"][data-v2-palette="crimson"] .v2-app {
+  --v2-canvas: #211015;
+  --v2-ink: #fbe9ed;
+  --v2-muted: #cfa8b1;
+  --v2-accent: #ff8fa3;
+  --v2-accent-ink: #380a14;
+  --v2-success: #8ae0b8;
+  --v2-warning: #f0c67d;
+  --v2-surface-solid: #331a21;
+  --v2-glass-fill: rgb(54 26 34 / 78%);
+  --v2-shell-fill: rgb(68 33 43 / 58%);
+  --v2-glass-border: rgb(255 196 208 / 24%);
+  --v2-border: rgb(250 185 198 / 16%);
+  --v2-grid: rgb(245 175 190 / 3.5%);
+  --v2-input-fill: rgb(35 16 22 / 88%);
+  --v2-bg-glow-1: rgb(142 28 54 / 44%);
+  --v2-bg-glow-2: rgb(110 24 62 / 40%);
+  --v2-progress-start: #be123c;
+  --v2-progress-end: #ff8fa3;
+  --v2-shadow-sm: 0 2px 8px rgb(0 0 0 / 16%);
+  --v2-shadow-md:
+    0 16px 40px -16px rgb(0 0 0 / 42%), inset 0 1px 0 rgb(255 208 218 / 16%);
+  --v2-shadow-lg:
+    0 30px 90px -25px rgb(0 0 0 / 68%), inset 0 1px 0 rgb(255 208 218 / 20%);
+}
+
+/* Harmonize custom Liquid Glass cursor optics and root canvas with the active V2 palette */
+:root:has(.v2-app) {
+  --color-canvas: #e7efef;
+  --cursor-dot-bg: #14675f;
+  --cursor-snap-bg: rgb(20 103 95 / 12%);
+  --cursor-snap-card-bg: rgb(20 103 95 / 8%);
+  --cursor-snap-border: rgb(20 103 95 / 42%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(20 103 95 / 14%), 0 6px 18px -6px rgb(20 103 95 / 26%);
+}
+
+:root[data-theme="dark"]:has(.v2-app) {
+  --color-canvas: #102126;
+  --cursor-dot-bg: #a3e4ce;
+  --cursor-snap-bg: rgb(163 228 206 / 14%);
+  --cursor-snap-card-bg: rgb(163 228 206 / 9%);
+  --cursor-snap-border: rgb(163 228 206 / 45%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(163 228 206 / 18%), 0 8px 20px -6px rgb(163 228 206 / 28%);
+}
+
+:root[data-v2-palette="ocean"]:has(.v2-app) {
+  --color-canvas: #e6f0f8;
+  --cursor-dot-bg: #0c5da8;
+  --cursor-snap-bg: rgb(12 93 168 / 12%);
+  --cursor-snap-card-bg: rgb(12 93 168 / 8%);
+  --cursor-snap-border: rgb(12 93 168 / 42%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(12 93 168 / 14%), 0 6px 18px -6px rgb(12 93 168 / 26%);
+}
+
+:root[data-theme="dark"][data-v2-palette="ocean"]:has(.v2-app) {
+  --color-canvas: #0b1929;
+  --cursor-dot-bg: #7cc4fa;
+  --cursor-snap-bg: rgb(124 196 250 / 14%);
+  --cursor-snap-card-bg: rgb(124 196 250 / 9%);
+  --cursor-snap-border: rgb(124 196 250 / 45%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(124 196 250 / 18%), 0 8px 20px -6px rgb(124 196 250 / 28%);
+}
+
+:root[data-v2-palette="golden"]:has(.v2-app) {
+  --color-canvas: #f6f1e6;
+  --cursor-dot-bg: #9a6308;
+  --cursor-snap-bg: rgb(154 99 8 / 12%);
+  --cursor-snap-card-bg: rgb(154 99 8 / 8%);
+  --cursor-snap-border: rgb(154 99 8 / 42%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(154 99 8 / 14%), 0 6px 18px -6px rgb(154 99 8 / 26%);
+}
+
+:root[data-theme="dark"][data-v2-palette="golden"]:has(.v2-app) {
+  --color-canvas: #1f190f;
+  --cursor-dot-bg: #f6c453;
+  --cursor-snap-bg: rgb(246 196 83 / 14%);
+  --cursor-snap-card-bg: rgb(246 196 83 / 9%);
+  --cursor-snap-border: rgb(246 196 83 / 46%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(246 196 83 / 18%), 0 8px 20px -6px rgb(246 196 83 / 28%);
+}
+
+:root[data-v2-palette="crimson"]:has(.v2-app) {
+  --color-canvas: #f7eaec;
+  --cursor-dot-bg: #a61c3c;
+  --cursor-snap-bg: rgb(166 28 60 / 12%);
+  --cursor-snap-card-bg: rgb(166 28 60 / 8%);
+  --cursor-snap-border: rgb(166 28 60 / 42%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(166 28 60 / 14%), 0 6px 18px -6px rgb(166 28 60 / 26%);
+}
+
+:root[data-theme="dark"][data-v2-palette="crimson"]:has(.v2-app) {
+  --color-canvas: #211015;
+  --cursor-dot-bg: #ff8fa3;
+  --cursor-snap-bg: rgb(255 143 163 / 14%);
+  --cursor-snap-card-bg: rgb(255 143 163 / 9%);
+  --cursor-snap-border: rgb(255 143 163 / 46%);
+  --cursor-snap-glow:
+    0 0 0 1px rgb(255 143 163 / 18%), 0 8px 20px -6px rgb(255 143 163 / 28%);
+}

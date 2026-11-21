@@ -59,15 +59,16 @@ Specification: `docs/superpowers/specs/2026-11-06-agent-workspace.md`
 
 ### 1. Single Shared Session (`AgentSessionProvider`)
 
-- Chat session ownership is lifted to `AgentSessionProvider` wrapping the protected application layout in `router.tsx`.
-- `ChatBubble` and `AgentPage` (`/agent`) are mutually exclusive views of the same underlying session context. When navigating to `/agent`, `ChatBubble` is suppressed from the DOM, preventing duplicate fetches, concurrent requests, duplicate pending turn recoveries, and conflicting keyboard shortcuts.
+- Each workspace version shares an `AgentSessionProvider` between its full-page Agent route and floating assistant. On the full-page route, the workspace owns the composer and message view.
+- Opening `/agent` or `/v2/agents` from primary navigation starts a blank composer. A `conversation` query parameter opens an explicit conversation. The floating assistant's **Open in Agent** action carries the current conversation or draft into the full-page workspace. A blank chat is persisted on its first message.
 - In-memory draft management (`AgentDraft`) stores composer draft text, unuploaded files, and A2UI proposal drafts in memory, keyed by `conversationId` (or `'new'`). No raw files or sensitive drafts are serialized into browser `localStorage`.
-- Browser Back/Forward between conversations checks drafts before changing the URL. Moving between bubble and workspace uses client-side navigation and preserves drafts. Proposal receipts and pending request IDs also survive surface changes.
+- Browser Back/Forward and chat selection check drafts before switching conversations or projects. An explicit assistant handoff uses client-side navigation and keeps the draft, proposal receipts, and any pending request ID.
 - Account switching (`sessionRevision` change) immediately resets all in-memory drafts, conversation sessions, and cached responses to prevent cross-account data leakage.
 
 ### 2. Conversation Project Context
 
 - `Conversation` models persist `contextProjectId: ObjectId | null`, default `null`.
+- V2 groups conversations under Orbit projects using the optional project association returned by `GET /api/ai/conversations`. A new conversation may carry its project on `POST /api/ai/conversations`. The create route validates the project ID and checks ownership before persistence.
 - Updated via `PATCH /api/ai/conversations/:conversationId/context` with strict Zod validation (`{ projectId: string | null }`).
 - Enforces strict project and conversation ownership checks: users can only assign projects they own to conversations they own.
 - Context mutations require an idle conversation lease. If a turn is currently processing (`busyUntil > now`), the context mutation is rejected with `409 CONVERSATION_BUSY`.

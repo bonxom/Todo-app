@@ -5,6 +5,8 @@
   "skipToMain": "Skip to main content",
   "openMenu": "Open navigation menu",
   "closeMenu": "Close navigation menu",
+  "collapseSidebar": "Collapse sidebar",
+  "expandSidebar": "Expand sidebar",
   "tasks": "Tasks",
   "total": "Total",
   "inProgress": "In progress",
@@ -81,8 +83,6 @@
   "agentsHeadingAccent": "always in orbit.",
   "agentsDescription": "Ask, plan, and hand work off without leaving the workspace.",
   "conversationHistory": "Conversations",
-  "contextActions": "Context and activity",
-  "verifiedActivities": "Verified activity",
   "assistant": "Assistant",
   "openAssistant": "Open assistant",
   "closeAssistant": "Close assistant",
@@ -177,5 +177,66 @@
     "breakdowns": "Task breakdowns",
     "untitledTask": "Untitled task"
   },
-  "agentConversation": "Agent conversation"
+  "agentConversation": "Agent conversation",
+  "completionRateLabel": "Completion rate",
+  "completionRateBadge": "{{rate}}% done",
+  "completedPendingSub": "{{completed}} done · {{pending}} pending",
+  "inProgressBadge": "Active",
+  "inProgressSub": "Tasks currently in motion",
+  "completedBadge": "Finished",
+  "completedSub": "{{count}} finished in last 7 days",
+  "attentionOverdueBadge": "{{count}} overdue",
+  "attentionClearBadge": "On track",
+  "attentionSub": "{{pending}} pending · {{high}} high priority",
+  "todayFocusTitle": "Today's Focus",
+  "todayFocusSubtitle": "Triage overdue items, active work, and your next queue in one place.",
+  "askAiPlanToday": "Ask AI to plan today",
+  "askAiPlanTodayPrompt": "Help me prioritize and schedule my focus tasks for today.",
+  "focusBucketOverdueTitle": "Overdue & Urgent",
+  "focusBucketOverdueBadge": "Needs attention",
+  "focusBucketOverdueDesc": "{{overdue}} overdue · {{high}} high priority active",
+  "focusBucketOverdueAction": "Triage with AI",
+  "focusBucketOverduePrompt": "Review my overdue and high-priority tasks and suggest an action plan.",
+  "focusBucketActiveTitle": "In Progress Now",
+  "focusBucketActiveBadge": "Active sprint",
+  "focusBucketActiveDesc": "{{count}} tasks currently in progress",
+  "focusBucketActiveAction": "Filter in progress",
+  "focusBucketPendingTitle": "Up Next Queue",
+  "focusBucketPendingBadge": "Ready to start",
+  "focusBucketPendingDesc": "{{count}} pending tasks waiting in queue",
+  "focusBucketPendingAction": "Filter pending",
+  "focusResetFilter": "Show all tasks",
+  "chatNowTitle": "Chat now with Orbit Agent",
+  "chatNowSubtitle": "Send a message to jump straight into the full Agent workspace.",
+  "chatNowPlaceholder": "Ask Orbit Agent anything, or describe tasks to create…",
+  "chatNowSend": "Chat now",
+  "chatNowStarterPlan": "Plan today's schedule",
+  "chatNowStarterOverdue": "Review priority tasks",
+  "chatNowStarterBreakdown": "Break down tasks",
+  "projectsRailTitle": "Projects",
+  "allProjects": "All projects",
+  "allProjectsTaskCount": "{{count}} tasks",
+  "addProject": "Add project",
+  "noProjectsYet": "No projects yet. Group related tasks into a project.",
+  "settingsTitle": "Settings",
+  "settings": {
+    "palettes": {
+      "mint": {
+        "name": "Mint Glass",
+        "description": "Cool seafoam canvas with deep emerald accents."
+      },
+      "ocean": {
+        "name": "Ocean Glass",
+        "description": "Deep cobalt and coastal sky glass surfaces."
+      },
+      "golden": {
+        "name": "Golden Glass",
+        "description": "Warm amber sunlight and champagne glass surfaces."
+      },
+      "crimson": {
+        "name": "Crimson Glass",
+        "description": "Rich ruby accents over soft rose glass surfaces."
+      }
+    }
+  }
 }

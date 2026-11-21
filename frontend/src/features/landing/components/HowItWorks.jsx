@@ -34,7 +34,9 @@ const HowItWorks = () => {
     <section className="landing-section" id="how-it-works">
       <div className="how-it-works-container">
         <header className="landing-section-header">
-          <p className="ui-page-kicker">{t("workflow")}</p>
+          <p className="ui-page-kicker m-[0] text-[var(--color-accent)] [font-weight:600] [line-height:1.2] uppercase">
+            {t("workflow")}
+          </p>
           <h2 className="how-it-works-title">
             {t("howItWorksCasedHowItWorks")}
           </h2>
@@ -49,7 +51,9 @@ const HowItWorks = () => {
             return (
               <article key={step.number} className="step-card">
                 <div className="step-number-row">
-                  <span className="step-number ui-tabular">{step.number}</span>
+                  <span className="step-number ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
+                    {step.number}
+                  </span>
                   <span className="step-icon">
                     <StepIcon className="h-4 w-4" aria-hidden="true" />
                   </span>

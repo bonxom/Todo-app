@@ -219,7 +219,7 @@ const DayCell = memo(
               className={`mb-1 flex items-center justify-between ${viewMode === "week" ? "px-3" : "px-2.5"}`}
             >
               <span
-                className={`calendar-day-number text-sm font-semibold ${isCurrentMonth ? "" : "opacity-75"}`}
+                className={`calendar-day-number w-[27px] h-[27px] inline-grid place-items-center rounded-[50%] text-sm font-semibold ${isCurrentMonth ? "" : "opacity-75"}`}
                 style={{
                   color:
                     isToday || isSelected ? "var(--color-accent)" : undefined,
@@ -228,12 +228,16 @@ const DayCell = memo(
                 {day.getDate()}
               </span>
               {taskCount > 0 && (
-                <span className="calendar-day-count">{taskCount}</span>
+                <span className="calendar-day-count text-[10px] text-[var(--color-text-muted)] [@media(max-width:650px)]:text-[8px]">
+                  {taskCount}
+                </span>
               )}
             </div>
 
             {taskCount === 0 && viewMode === "week" && (
-              <span className="calendar-day-free">{t("noPlansYet")}</span>
+              <span className="calendar-day-free text-[10px] text-[var(--color-text-muted)] p-[12px] opacity-[0.7]">
+                {t("noPlansYet")}
+              </span>
             )}
             {taskCount > 0 && (
               <div
@@ -310,7 +314,7 @@ const DayCell = memo(
                             className="mt-0.5 text-[10px]"
                             style={{ color: previewTone.metaColor }}
                           >
-                            <span className="ui-tabular">
+                            <span className="ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
                               {formatCellTime(task.dueDate)}
                             </span>
                           </div>

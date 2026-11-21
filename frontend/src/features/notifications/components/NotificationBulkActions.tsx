@@ -58,8 +58,16 @@ export default function NotificationBulkActions({
     }
   };
   return (
-    <div ref={actions} className="notification-bulk-actions" tabIndex={-1}>
-      <div className="notification-action-buttons">
+    <div
+      ref={actions}
+      className="notification-bulk-actions [border-bottom:1px_solid_var(--color-line)]"
+      tabIndex={-1}
+    >
+      <div
+        className="notification-action-buttons flex flex-wrap gap-[8px] [&_button]:inline-flex [&_button]:items-center
+        [&_button]:justify-center [&_button]:gap-[6px] [&_button:disabled]:opacity-[0.5]
+        [&_button:disabled]:cursor-not-allowed"
+      >
         <button
           type="button"
           className="ui-btn-secondary ui-focus-ring"
@@ -84,13 +92,18 @@ export default function NotificationBulkActions({
       </div>
       {confirming && (
         <div
-          className="notification-delete-confirmation"
+          className="notification-delete-confirmation mt-[12px] p-[12px] [border:1px_solid_var(--color-line)] rounded-[10px]
+            [background:var(--color-surface-muted)] [&_p]:mb-[12px] [&_p]:text-[13px] [&_p]:text-[var(--color-text)]"
           data-escape-boundary="true"
           role="group"
           aria-label={t("notifications.deleteConfirmTitle")}
         >
           <p>{t("notifications.deleteConfirm")}</p>
-          <div className="notification-action-buttons">
+          <div
+            className="notification-action-buttons flex flex-wrap gap-[8px] [&_button]:inline-flex [&_button]:items-center
+            [&_button]:justify-center [&_button]:gap-[6px] [&_button:disabled]:opacity-[0.5]
+            [&_button:disabled]:cursor-not-allowed"
+          >
             <button
               ref={cancelButton}
               type="button"

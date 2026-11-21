@@ -82,39 +82,45 @@ const TaskItem = ({
         </h3>
         <div className="flex flex-wrap gap-1.5 mt-2">
           {task.projectId?.name && (
-            <span className="ui-chip ui-chip--accent">
+            <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-chip--accent">
               {task.projectId.name}
             </span>
           )}
           {task.categoryId?.name && (
-            <span className="ui-chip">{task.categoryId.name}</span>
+            <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap">
+              {task.categoryId.name}
+            </span>
           )}
           {task.priority && (
             <span
-              className={`ui-chip ${task.priority.toLowerCase() === "high" ? "ui-chip--danger" : task.priority.toLowerCase() === "low" ? "ui-chip--success" : "ui-chip--warning"}`}
+              className={`ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ${task.priority.toLowerCase() === "high" ? "ui-chip--danger" : task.priority.toLowerCase() === "low" ? "ui-chip--success" : "ui-chip--warning"}`}
             >
               {t(task.priority.toLowerCase(), { defaultValue: task.priority })}
             </span>
           )}
-          {isPending && <span className="ui-chip">{t("pending")}</span>}
+          {isPending && (
+            <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap">
+              {t("pending")}
+            </span>
+          )}
           {task.dueDate &&
             task.status !== "completed" &&
             task.status !== "given-up" && (
               <span
-                className={`ui-chip ui-tabular ${getDeadlineChip(getDaysLeft(task.dueDate))}`}
+                className={`ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums] ${getDeadlineChip(getDaysLeft(task.dueDate))}`}
               >
                 {formatDaysLeft(getDaysLeft(task.dueDate))}
               </span>
             )}
           {task.status === "completed" && task.completedAt && (
-            <span className="ui-chip ui-chip--success">
+            <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-chip--success">
               <CircleCheckBig className="h-3.5 w-3.5" aria-hidden="true" />
               {t("done")}
               {formatDateTime(task.completedAt)}
             </span>
           )}
           {task.status === "given-up" && (
-            <span className="ui-chip">
+            <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap">
               <Frown className="h-3.5 w-3.5" aria-hidden="true" />
               {t("givenUp")}
             </span>
@@ -137,7 +143,9 @@ const TaskItem = ({
         <button
           type="button"
           onClick={() => onEdit(task)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)] transition-[background-color,color] duration-150 hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-muted)]
+            transition-[background-color,color] duration-150 hover:bg-[var(--color-surface-muted)]
+            hover:text-[var(--color-text)]"
           aria-label={t("messages.editV0", { v0: task.title })}
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
@@ -146,7 +154,8 @@ const TaskItem = ({
           <button
             type="button"
             onClick={() => onGiveUp(task._id)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-warning)] transition-[background-color,color] duration-150 hover:bg-[var(--color-warning-soft)]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-warning)]
+              transition-[background-color,color] duration-150 hover:bg-[var(--color-warning-soft)]"
             aria-label={t("messages.giveUpV0", { v0: task.title })}
           >
             <Flag className="h-4 w-4" aria-hidden="true" />
@@ -155,7 +164,8 @@ const TaskItem = ({
         <button
           type="button"
           onClick={() => onDelete(task._id)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-danger)] transition-[background-color,color] duration-150 hover:bg-[var(--color-danger-soft)]"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-danger)]
+            transition-[background-color,color] duration-150 hover:bg-[var(--color-danger-soft)]"
           aria-label={t("messages.deleteV0", { v0: task.title })}
         >
           <Trash2 className="h-4 w-4" aria-hidden="true" />

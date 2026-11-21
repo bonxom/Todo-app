@@ -26,7 +26,9 @@ export default function TaskPagination({
   return (
     <nav
       aria-label="Pagination"
-      className="v2-pagination flex items-center justify-between pt-4 border-t border-[var(--v2-border)]"
+      className="v2-pagination [@media(max-width:359px)]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+        [@media(max-width:359px)]:[&_svg]:w-[12px] [@media(max-width:359px)]:[&_svg]:flex-[0_0_auto] flex items-center
+        justify-between pt-4 border-t border-[var(--v2-border)]"
     >
       <button
         type="button"

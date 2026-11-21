@@ -9,7 +9,9 @@ const ProgressBar = ({
   const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <div className={`ui-section-card ${compact ? "p-4" : "ui-card-padding"}`}>
+    <div
+      className={`ui-section-card ${compact ? "p-4" : "ui-card-padding p-[clamp(1rem,2vw,1.5rem)]"}`}
+    >
       <div
         className={`flex items-center justify-between ${compact ? "mb-2" : "mb-3"}`}
       >
@@ -19,7 +21,7 @@ const ProgressBar = ({
           {title}
         </h3>
         <span
-          className={`${compact ? "text-sm" : "text-base"} ui-tabular font-semibold text-[var(--color-accent)]`}
+          className={`${compact ? "text-sm" : "text-base"} ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums] font-semibold text-[var(--color-accent)]`}
         >
           {percentage}%
         </span>

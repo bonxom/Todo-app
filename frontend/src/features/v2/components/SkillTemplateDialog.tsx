@@ -23,7 +23,12 @@ export default function SkillTemplateDialog({
   const { t: tAgent } = useTranslation("agent");
   const navigate = useNavigate();
   const sessionKey = useSessionKey();
-  const { data: templates, isLoading, error, refetch } = useSkillTemplates(open);
+  const {
+    data: templates,
+    isLoading,
+    error,
+    refetch,
+  } = useSkillTemplates(open);
   const importMutation = useImportTemplateMutation();
   const [importError, setImportError] = useState<string | null>(null);
 
@@ -55,12 +60,22 @@ export default function SkillTemplateDialog({
       className="v2-skills-dialog"
     >
       {isLoading ? (
-        <p className="v2-skills-status" role="status">
-          <Loader2 size={18} className="v2-spin" aria-hidden="true" />
+        <p
+          className="v2-skills-status flex flex-col items-center gap-[12px] p-[36px_16px] text-[var(--v2-muted)] text-[13px] text-center [&_>_svg]:flex-[0_0_auto]"
+          role="status"
+        >
+          <Loader2
+            size={18}
+            className="v2-spin animate-[v2-spin_900ms_linear_infinite] [@media(prefers-reduced-motion:reduce)]:animate-none"
+            aria-hidden="true"
+          />
           {tAgent("loadingTemplates")}
         </p>
       ) : error ? (
-        <div className="v2-skills-status" role="alert">
+        <div
+          className="v2-skills-status flex flex-col items-center gap-[12px] p-[36px_16px] text-[var(--v2-muted)] text-[13px] text-center [&_>_svg]:flex-[0_0_auto]"
+          role="alert"
+        >
           <p>{tAgent("anErrorOccurredWhileSavingTheSkill")}</p>
           <button
             type="button"
@@ -71,21 +86,26 @@ export default function SkillTemplateDialog({
           </button>
         </div>
       ) : (
-        <ul className="v2-template-list">
+        <ul className="v2-template-list flex flex-col gap-[12px] m-[0] p-[0] [list-style:none]">
           {(templates ?? []).map((template) => (
-            <li key={template.id} className="v2-template-row">
+            <li
+              key={template.id}
+              className="v2-template-row flex items-center justify-between gap-[14px] flex-wrap p-[12px] [border:1px_solid_var(--v2-border)] rounded-[16px]"
+            >
               <div>
-                <p className="v2-template-name">{template.name}</p>
-                <p className="v2-template-description">
+                <p className="v2-template-name text-[14px] [font-weight:600]">
+                  {template.name}
+                </p>
+                <p className="v2-template-description mt-[2px] text-[12px] text-[var(--v2-muted)]">
                   {template.description}
                 </p>
-                <p className="v2-template-version">
+                <p className="v2-template-version mt-[4px] text-[11px] text-[var(--v2-muted)] [font-variant-numeric:tabular-nums]">
                   {tAgent("currentVersionV")} {template.version}
                 </p>
               </div>
               <button
                 type="button"
-                className="v2-btn v2-btn-primary"
+                className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)]"
                 disabled={importMutation.isPending}
                 onClick={() => void handleImport(template.id, template.version)}
               >
@@ -97,7 +117,7 @@ export default function SkillTemplateDialog({
         </ul>
       )}
       {importError && (
-        <p className="v2-form-error" role="alert">
+        <p className="v2-form-error text-[13px]" role="alert">
           {importError}
         </p>
       )}

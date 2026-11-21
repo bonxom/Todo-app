@@ -238,19 +238,26 @@ const LineChart = ({ dailyStats }) => {
   const hasNoData = chartData.labels.length === 0;
 
   return (
-    <section className="statistics-card statistics-trend">
+    <section
+      className="statistics-card [background:var(--color-surface)] [border:1px_solid_var(--color-line)] rounded-[14px] p-[24px]
+      min-w-[0] [&_h2]:text-[15px] [&_h2]:[font-weight:600] [&_h2]:[letter-spacing:-0.015em] [&_h3]:text-[15px]
+      [&_h3]:[font-weight:600] [&_h3]:[letter-spacing:-0.015em]
+      [@media(max-width:700px)]:p-[20px] statistics-trend"
+    >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-[color:var(--color-text)]">
             {t("completionTrend")}
           </h2>
         </div>
-        <span className="statistics-range-label">{rangeLabel}</span>
+        <span className="statistics-range-label text-[11px] text-[var(--color-text-muted)] pt-[4px]">
+          {rangeLabel}
+        </span>
       </div>
 
-      <div className="statistics-trend-controls">
-        <div className="statistics-date-inputs">
-          <label className="statistics-date-field">
+      <div className="statistics-trend-controls flex justify-between items-center flex-wrap gap-[16px] mt-[23px] pt-[18px] [border-top:1px_solid_var(--color-line)]">
+        <div className="statistics-date-inputs flex gap-[16px] [@media(max-width:700px)]:flex-wrap [@media(max-width:700px)]:gap-[10px]">
+          <label className="statistics-date-field flex items-center gap-[8px] text-[11px] text-[var(--color-text-muted)]">
             <span>{t("from")}</span>
             <input
               type="date"
@@ -258,12 +265,12 @@ const LineChart = ({ dailyStats }) => {
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
               max={endDate}
-              className="statistics-date-input"
+              className="statistics-date-input w-[133px] p-[8px] [border:1px_solid_var(--color-line)] rounded-[7px] [background:var(--color-surface)] [@media(max-width:700px)]:w-[122px]"
               autoComplete="off"
             />
           </label>
 
-          <label className="statistics-date-field">
+          <label className="statistics-date-field flex items-center gap-[8px] text-[11px] text-[var(--color-text-muted)]">
             <span>{t("to")}</span>
             <input
               type="date"
@@ -272,7 +279,7 @@ const LineChart = ({ dailyStats }) => {
               onChange={(event) => setEndDate(event.target.value)}
               min={startDate}
               max={todayKey}
-              className="statistics-date-input"
+              className="statistics-date-input w-[133px] p-[8px] [border:1px_solid_var(--color-line)] rounded-[7px] [background:var(--color-surface)] [@media(max-width:700px)]:w-[122px]"
               autoComplete="off"
             />
           </label>
@@ -308,11 +315,15 @@ const LineChart = ({ dailyStats }) => {
 
       <div className="mt-6">
         {hasNoData ? (
-          <div className="flex h-[245px] items-center justify-center rounded-[12px] border border-dashed border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 text-sm text-[color:var(--color-text-muted)]">
+          <div
+            className="flex h-[245px] items-center justify-center rounded-[12px] border border-dashed
+            border-[color:var(--color-line)] bg-[var(--color-surface-muted)] px-4 text-sm
+            text-[color:var(--color-text-muted)]"
+          >
             {t("noTrendDataAvailableForThisDateRange")}
           </div>
         ) : (
-          <div className="statistics-chart">
+          <div className="statistics-chart relative h-[245px]">
             <Line
               data={chartData}
               options={options}

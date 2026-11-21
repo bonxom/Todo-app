@@ -24,7 +24,10 @@ export default function V2NotFoundPage() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-          <Link to="/v2/dashboard" className="v2-btn v2-btn-primary">
+          <Link
+            to="/v2/dashboard"
+            className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)]"
+          >
             <LayoutDashboard size={16} />
             <span>{t("goToDashboard")}</span>
           </Link>

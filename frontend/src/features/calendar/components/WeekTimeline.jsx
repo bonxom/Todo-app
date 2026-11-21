@@ -218,14 +218,16 @@ const WeekTimeline = memo(
       <>
         {(resize.saving || resize.error) && (
           <p
-            className="calendar-resize-feedback"
+            className="calendar-resize-feedback p-[8px_22px] text-[var(--color-text-muted)] text-[12px] [&[role=alert]]:text-[var(--color-danger)]"
             role={resize.error ? "alert" : "status"}
           >
             {t(resize.error ? "calendarResizeFailed" : "calendarResizeSaving")}
           </p>
         )}
         <div
-          className="calendar-week-timeline-scroll ui-focus-ring"
+          className="calendar-week-timeline-scroll max-h-[600px] overflow-auto [border-top:1px_solid_var(--color-line)]
+            [scroll-margin-top:80px] [scroll-padding-top:80px] relative isolate
+            [@media(max-width:650px)]:max-h-[520px] ui-focus-ring"
           data-cursor-clip-header=".calendar-week-timeline-header"
           ref={scrollContainerRef}
           tabIndex={0}
@@ -241,8 +243,11 @@ const WeekTimeline = memo(
           }}
         >
           <div className="calendar-week-timeline-board">
-            <div className="calendar-week-timeline-header">
-              <div className="calendar-week-timeline-corner">
+            <div
+              className="calendar-week-timeline-header [&_button]:min-h-[48px] grid grid-cols-[64px_repeat(7,minmax(0,1fr))] sticky
+              top-[0] z-4 [background:var(--color-surface)] [border-bottom:1px_solid_var(--color-line)]"
+            >
+              <div className="calendar-week-timeline-corner sticky left-[0] z-5 grid place-items-center [background:var(--color-surface-muted)] text-[10px] text-[var(--color-text-muted)] text-center p-[6px]">
                 {t("calendarLocalTime")}
               </div>
               {days.map(({ date }) => {
@@ -253,7 +258,9 @@ const WeekTimeline = memo(
                   <button
                     type="button"
                     key={dateKey}
-                    className="calendar-timeline-date ui-focus-ring"
+                    className="calendar-timeline-date grid grid-cols-[1fr_auto] gap-[4px] items-center p-[10px_12px] h-[72px]
+                      [border-left:1px_solid_var(--color-line)] text-left cursor-pointer [&_>_span:first-child]:col-[1_/_-1]
+                      ui-focus-ring"
                     data-timeline-header-day={dateKey}
                     aria-pressed={isSelected}
                     aria-current={isToday ? "date" : undefined}
@@ -273,26 +280,28 @@ const WeekTimeline = memo(
                         defaultValue: WEEK_DAYS[date.getDay()],
                       })}
                     </span>
-                    <span className="calendar-timeline-date-number">
+                    <span className="calendar-timeline-date-number grid place-items-center w-[27px] h-[27px] text-[13px] [font-weight:600] rounded-[50%]">
                       {date.getDate()}
                     </span>
-                    <span className="calendar-day-count">
+                    <span className="calendar-day-count text-[10px] text-[var(--color-text-muted)] [@media(max-width:650px)]:text-[8px]">
                       {(tasksByDate[dateKey] || []).length || ""}
                     </span>
                   </button>
                 );
               })}
             </div>
-            <div className="calendar-week-timeline-body">
-              <div className="calendar-week-time-gutter">
+            <div className="calendar-week-timeline-body grid grid-cols-[64px_repeat(7,minmax(0,1fr))]">
+              <div className="calendar-week-time-gutter sticky left-[0] z-3 [background:var(--color-surface)]">
                 {timeSlots.map((slot) => (
                   <div
                     key={slot.minute}
-                    className="calendar-week-time-label"
+                    className="calendar-week-time-label text-right p-[4px_9px_0_0] text-[10px] text-[var(--color-text-muted)] opacity-[0.65] [&[data-hour=true]]:[font-weight:600] [&[data-hour=true]]:opacity-[1]"
                     data-hour={slot.minute % 60 === 0}
                     style={{ height: slotHeight }}
                   >
-                    <span className="ui-tabular">{slot.label}</span>
+                    <span className="ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
+                      {slot.label}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -310,7 +319,10 @@ const WeekTimeline = memo(
                     key={dateKey}
                     role="button"
                     tabIndex={0}
-                    className="calendar-day calendar-timeline-column ui-focus-ring"
+                    className="calendar-day calendar-timeline-column relative min-w-[0] [border-left:1px_solid_var(--color-line)]
+                      bg-[repeating-linear-gradient(_to_bottom,var(--color-line)_0_1px,transparent_1px_var(--timeline-hour-height)_),repeating-linear-gradient(_to_bottom,color-mix(in_srgb,var(--color-line)_45%,transparent)_0_1px,transparent_1px_var(--timeline-slot-height)_)]
+                      [&[data-selected=true]]:bg-[color-mix(_in_srgb,var(--color-accent-soft)_35%,transparent_)]
+                      [&[data-drag-over=true]]:bg-[var(--color-accent-soft)] ui-focus-ring"
                     style={{ height: totalTimelineHeight }}
                     aria-label={t("dayTaskCount", {
                       date: date.toLocaleDateString(getLocale(), {
@@ -393,7 +405,7 @@ const WeekTimeline = memo(
                       return (
                         <div
                           key={taskId}
-                          className="calendar-timeline-event"
+                          className="calendar-timeline-event absolute [&[data-resizing=true]]:z-3 [&[data-resizing=true]]:[outline:2px_solid_var(--color-accent)] [&[data-resizing=true]]:rounded-[5px]"
                           data-resizing={Boolean(activePreview)}
                           style={{
                             top,
@@ -404,7 +416,7 @@ const WeekTimeline = memo(
                         >
                           <button
                             type="button"
-                            className="calendar-timeline-task ui-focus-ring"
+                            className="calendar-timeline-task [&[data-dragging=true]]:opacity-[0.55] ui-focus-ring"
                             data-cal-task-card
                             data-compact={height < 62 && !activePreview}
                             data-dragging={draggingTaskId === taskId}
@@ -440,10 +452,10 @@ const WeekTimeline = memo(
                               setDragOverDayKey(null);
                             }}
                           >
-                            <span className="calendar-timeline-task-content">
+                            <span className="calendar-timeline-task-content block sticky top-[78px]">
                               <span
                                 data-cal-due-time
-                                className="calendar-timeline-task-time"
+                                className="calendar-timeline-task-time text-[10px] [line-height:1.35] [font-variant-numeric:tabular-nums] mb-[5px] whitespace-normal"
                                 style={{ color: tone.metaColor }}
                               >
                                 {timeLabel}
@@ -457,7 +469,10 @@ const WeekTimeline = memo(
                               {task.description &&
                                 height >= 160 &&
                                 laneCount === 1 && (
-                                  <span className="calendar-timeline-task-description">
+                                  <span
+                                    className="calendar-timeline-task-description [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]
+                                    overflow-hidden text-[10px] [line-height:1.5] mt-[6px] text-[var(--color-text-muted)]"
+                                  >
                                     {task.description}
                                   </span>
                                 )}
@@ -492,7 +507,12 @@ const WeekTimeline = memo(
                                     : "calendarResizeEnd",
                                   { title: task.title },
                                 )}
-                                className="calendar-resize-handle ui-focus-ring"
+                                className="calendar-resize-handle absolute left-[0] right-[0] max-h-[40%] z-2 touch-none [&[data-edge=start]]:top-[0]
+                                  [&[data-edge=end]]:bottom-[0] [&::after]:absolute [&::after]:left-[50%] [&::after]:top-[4px]
+                                  [&::after]:w-[26px] [&::after]:max-w-[70%] [&::after]:rounded-[3px] [&::after]:[transform:translateX(-50%)]
+                                  [&::after]:[background:var(--color-accent)] [&::after]:pointer-events-none [&[data-edge=end]::after]:top-auto
+                                  [&[data-edge=end]::after]:bottom-[4px] [&[aria-disabled=true]]:pointer-events-none
+                                  [@media(max-width:650px)]:max-h-[40%] ui-focus-ring"
                                 data-edge={edge}
                                 data-cursor="native"
                                 {...resize.bind(
@@ -506,7 +526,9 @@ const WeekTimeline = memo(
                             ))}
                           {activePreview && (
                             <span
-                              className="calendar-resize-preview"
+                              className="calendar-resize-preview absolute top-[12px] left-[4px] p-[4px_6px] rounded-[4px]
+                                [background:var(--color-accent)] text-[var(--color-on-accent,white)] text-[11px] whitespace-nowrap
+                                pointer-events-none z-4 [&[data-edge=end]]:top-auto [&[data-edge=end]]:bottom-[12px]"
                               data-edge={
                                 activePreview.field === "startDate"
                                   ? "start"

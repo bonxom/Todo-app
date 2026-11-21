@@ -130,7 +130,7 @@ export default function TaskDetailsDialog({
           <button
             type="button"
             onClick={() => void refetch()}
-            className="v2-btn v2-btn-primary inline-flex items-center gap-1.5"
+            className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)] inline-flex items-center gap-1.5"
           >
             <RefreshCw size={14} aria-hidden="true" />
             <span>{t("retry")}</span>
@@ -143,12 +143,12 @@ export default function TaskDetailsDialog({
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
                 task.status === "completed"
-                  ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                  ? "bg-[color-mix(in_srgb,var(--v2-success)_14%,transparent)] text-[var(--v2-success)]"
                   : task.status === "in-progress"
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    ? "bg-[color-mix(in_srgb,var(--v2-warning)_14%,transparent)] text-[var(--v2-warning)]"
                     : task.status === "given-up"
-                      ? "bg-gray-500/10 text-gray-500 dark:text-gray-400"
-                      : "bg-[var(--v2-accent)]/10 text-[var(--v2-accent)]"
+                      ? "bg-[var(--v2-shell-fill)] text-[var(--v2-muted)]"
+                      : "bg-[color-mix(in_srgb,var(--v2-accent)_14%,transparent)] text-[var(--v2-accent)]"
               }`}
             >
               <StatusIcon size={13} aria-hidden="true" />
@@ -163,14 +163,14 @@ export default function TaskDetailsDialog({
               </span>
             </span>
 
-            <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 text-[var(--v2-muted)]">
+            <span className="text-xs font-medium px-2.5 py-1 rounded-full border border-[var(--v2-border)] bg-[var(--v2-shell-fill)] text-[var(--v2-muted)]">
               {t("priority")}: {t(`priority${task.priority}`)}
             </span>
           </div>
 
           {/* Description */}
           {task.description && (
-            <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5 text-sm text-[var(--v2-ink)] leading-relaxed whitespace-pre-wrap">
+            <div className="p-3.5 rounded-2xl border border-[var(--v2-border)] bg-[var(--v2-input-fill)] text-sm text-[var(--v2-ink)] leading-relaxed whitespace-pre-wrap">
               {task.description}
             </div>
           )}

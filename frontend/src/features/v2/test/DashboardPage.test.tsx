@@ -1,14 +1,26 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Routes, Route, useLocation } from "react-router-dom";
 import DashboardPage from "../pages/DashboardPage";
 import { renderWithProviders, resetTestSession } from "./testSupport";
+import {
+  AgentSessionContext,
+  type AgentSessionContextValue,
+} from "@/features/agent/agentSessionContext";
 import { taskService } from "@/shared/services/taskService";
 import { statService } from "@/shared/services/statService";
-import type { PaginatedResponse, Stat, Task } from "@/shared/types/domain";
+import { projectService } from "@/shared/services/projectService";
+import type {
+  PaginatedResponse,
+  ProjectWithSummary,
+  Stat,
+  Task,
+} from "@/shared/types/domain";
 
 vi.mock("@/shared/services/taskService");
 vi.mock("@/shared/services/statService");
+vi.mock("@/shared/services/projectService");
 
 const createMockTask = (idNumber: number, overrides?: Partial<Task>): Task => ({
   _id: `507f1f77bcf86cd7994390${idNumber.toString().padStart(2, "0")}`,
@@ -58,10 +70,32 @@ const mockTasksPage2: PaginatedResponse<Task> = {
   },
 };
 
+const mockProjects: ProjectWithSummary[] = [
+  {
+    _id: "proj1",
+    name: "Project Orbit",
+    description: "Core V2 workspace",
+    color: "#0284c7",
+    status: "active",
+    summary: {
+      totalTasks: 10,
+      finishedTasks: 6,
+      pendingTasks: 2,
+      inProgressTasks: 2,
+      completedTasks: 6,
+      givenUpTasks: 0,
+      scheduledTasks: 8,
+      canComplete: false,
+      completionRate: 60,
+    },
+  },
+];
+
 describe("DashboardPage integration", () => {
   beforeEach(() => {
     resetTestSession();
     vi.clearAllMocks();
+    vi.mocked(projectService.getAllProjects).mockResolvedValue(mockProjects);
   });
 
   it("renders global statistics and initial task list", async () => {
@@ -267,5 +301,98 @@ describe("DashboardPage integration", () => {
     // Task list shows error and retry
     expect(screen.getByText(/Failed to load tasks/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Retry/i })).toBeInTheDocument();
+  });
+
+  it("renders Today's Focus, Projects Rail filtering, and Chat Now handoff to /v2/agents", async () => {
+    vi.mocked(statService.getUserStats).mockResolvedValue(mockStats);
+    vi.mocked(taskService.getAllTasks).mockResolvedValue(mockTasksPage1);
+    const send = vi.fn().mockResolvedValue(true);
+    const resetConversation = vi.fn().mockReturnValue(true);
+    const session = {
+      chat: {
+        messages: [],
+        sending: false,
+        loading: false,
+        pending: null,
+        error: null,
+        locked: false,
+        conversationId: undefined,
+        activities: [],
+        context: null,
+        discardRequest: false,
+        resolveDiscard: vi.fn(),
+        resetConversation,
+        send,
+      },
+      draft: { text: "", files: [], proposalDrafts: {} },
+      setDraft: vi.fn(),
+      setProposalDraft: vi.fn(),
+      clearDraft: vi.fn(),
+      proposalSessions: new Map(),
+    } as unknown as AgentSessionContextValue;
+
+    function AgentsProbe() {
+      const location = useLocation();
+      return (
+        <div
+          data-testid="agents-route-probe"
+          data-handoff={String(Boolean(location.state?.assistantHandoff))}
+          data-transition={String(location.state?.entryTransition || "")}
+        />
+      );
+    }
+
+    const user = userEvent.setup();
+    renderWithProviders(
+      <AgentSessionContext.Provider value={session}>
+        <Routes>
+          <Route path="/v2/dashboard" element={<DashboardPage />} />
+          <Route path="/v2/agents" element={<AgentsProbe />} />
+        </Routes>
+      </AgentSessionContext.Provider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("v2-dashboard-focus")).toBeInTheDocument();
+      expect(screen.getByTestId("v2-dashboard-chat-now")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("v2-dashboard-projects-rail"),
+      ).toBeInTheDocument();
+    });
+
+    // Click project in rail to filter tasks by projectId
+    const projectBtn = await screen.findByRole("button", {
+      name: /Project Orbit.*6\/10/i,
+    });
+    await user.click(projectBtn);
+
+    await waitFor(() => {
+      expect(taskService.getAllTasks).toHaveBeenCalledWith(
+        expect.objectContaining({
+          projectId: "proj1",
+          pageNo: 1,
+        }),
+        expect.anything(),
+      );
+    });
+
+    // Type message into Chat Now and submit -> sends message & navigates to /v2/agents
+    const chatInput = screen.getByPlaceholderText(
+      /Ask Orbit Agent anything|Hỏi Orbit Agent/i,
+    );
+    await user.type(chatInput, "Plan my afternoon focus{Enter}");
+
+    await waitFor(() => {
+      expect(resetConversation).toHaveBeenCalledWith("proj1");
+      expect(send).toHaveBeenCalledWith("Plan my afternoon focus");
+      expect(screen.getByTestId("agents-route-probe")).toHaveAttribute(
+        "data-handoff",
+        "true",
+      );
+      expect(screen.getByTestId("agents-route-probe")).toHaveAttribute(
+        "data-transition",
+        "zoom-out",
+      );
+    });
   });
 });

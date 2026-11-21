@@ -22,7 +22,6 @@ import Reveal from "./components/Reveal";
 import OrbitMark from "@/shared/components/OrbitMark";
 import ThemeToggle from "@/shared/components/ThemeToggle";
 import WorkspacePreview from "./components/WorkspacePreview";
-import "@/styles/landing.css";
 
 export default function LandingPage() {
   const { t } = useTranslation("account");
@@ -62,11 +61,14 @@ export default function LandingPage() {
       className="landing-page"
       data-motion={motionPaused ? "paused" : "playing"}
     >
-      <a className="landing-skip" href="#landing-main">
+      <a
+        className="landing-skip fixed top-[-100px] left-[20px] z-100 p-[12px_20px] [background:var(--color-surface)] [border:1px_solid_var(--color-line)] rounded-[8px] [&:focus]:top-[12px]"
+        href="#landing-main"
+      >
         {t("skipToMainContent")}
       </a>
-      <header className="landing-navbar">
-        <div className="landing-container nav-inner">
+      <header className="landing-navbar sticky top-[0] z-30 [border-bottom:1px_solid_var(--color-line)] [background:color-mix(in_srgb,var(--color-canvas)_90%,transparent)] [backdrop-filter:blur(20px)]">
+        <div className="landing-container nav-inner flex items-center justify-between">
           <Link to="/" aria-label={t("orbitHome")}>
             <Brand />
           </Link>
@@ -78,9 +80,13 @@ export default function LandingPage() {
                 document.getElementById("landing-menu-toggle")?.focus();
               }
             }}
-            className={
-              menuOpen ? "landing-nav-links is-open" : "landing-nav-links"
-            }
+            className={`landing-nav-links items-center [&_a]:items-center [&_a]:[transition:color_0.2s]
+              [@media(max-width:580px)]:[&.is-open]:absolute [@media(max-width:580px)]:[&.is-open]:top-[70px]
+              [@media(max-width:580px)]:[&.is-open]:left-[0] [@media(max-width:580px)]:[&.is-open]:w-full
+              [@media(max-width:580px)]:[&.is-open]:justify-between
+              [@media(max-width:580px)]:[&.is-open]:[border-bottom:1px_solid_var(--color-line)]
+              [@media(max-width:580px)]:[&.is-open]:[background:var(--color-canvas)]
+              ${menuOpen ? "is-open" : ""}`}
             aria-label={t("mainNavigation")}
           >
             <a href="#features" onClick={() => setMenuOpen(false)}>
@@ -97,20 +103,29 @@ export default function LandingPage() {
               {t("signInCasedSignin")}
             </Link>
           </nav>
-          <div className="nav-actions">
+          <div className="nav-actions flex items-center text-[12px]">
             <LanguageSelect />
             <ThemeToggle />
-            <Link className="sign-in" to="/login">
+            <Link
+              className="sign-in [@media(max-width:580px)]:[display:none]"
+              to="/login"
+            >
               {t("signInCasedSignin")}
             </Link>
-            <Link className="landing-button button-dark nav-cta" to="/register">
+            <Link
+              className="landing-button inline-flex items-center justify-center rounded-[var(--radius-md)]
+              [transition:transform_0.2s,background_0.2s,box-shadow_0.2s] [&_svg]:[transition:transform_0.2s]
+              [&:hover]:[box-shadow:var(--shadow-sm)] button-dark [background:var(--color-primary,var(--color-accent))]
+              [&:hover]:[background:var(--color-primary-hover,var(--color-accent-strong))] nav-cta"
+              to="/register"
+            >
               {t("getStarted")}
               <ArrowUpRight size={15} />
             </Link>
             <button
               id="landing-menu-toggle"
               aria-controls="landing-navigation"
-              className="mobile-menu"
+              className="mobile-menu [display:none] [background:none] [border:0] p-[8px] [@media(max-width:580px)]:grid [@media(max-width:580px)]:place-items-center"
               aria-label={menuOpen ? t("closeNavigation") : t("openNavigation")}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(!menuOpen)}
@@ -122,10 +137,17 @@ export default function LandingPage() {
       </header>
       <main id="landing-main">
         <Reveal>
-          <section className="landing-hero landing-container">
-            <div className="hero-copy" data-reveal="left">
-              <div className="hero-eyebrow">
-                <span className="live-dot" />{" "}
+          <section className="landing-hero relative grid items-center [&_h1]:[font-weight:550] [&_h1_>_span]:text-[var(--color-accent)] landing-container">
+            <div
+              className="hero-copy relative z-2 [&_>_p]:text-[var(--color-text-muted)] [@media(max-width:580px)]:[&_>_p]:max-w-[340px]"
+              data-reveal="left"
+            >
+              <div
+                className="hero-eyebrow flex items-center gap-[9px] [font-weight:600] text-[var(--color-accent)] m-[0_0_27px]
+                [&_.live-dot]:[box-shadow:0_0_0_4px_var(--color-accent-soft)]
+                [@media(max-width:580px)]:mb-[25px]"
+              >
+                <span className="live-dot inline-block shrink-0 rounded-[50%]" />{" "}
                 {t("aLittleClarityALotOfPossibility")}
               </div>
               <h1>
@@ -139,19 +161,34 @@ export default function LandingPage() {
               </h1>
               <p>
                 {t("bringYourTasksProjectsAndCalendarIntoOrbit")}
-                <br className="desktop-break" />{" "}
+                <br className="desktop-break [@media(max-width:800px)]:[display:none]" />{" "}
                 {t("lessOnYourMindMoreRoomToMoveForward")}
               </p>
-              <div className="hero-actions">
-                <Link className="landing-button button-primary" to="/register">
+              <div className="hero-actions flex items-center [@media(max-width:360px)]:[&_.landing-button]:whitespace-nowrap">
+                <Link
+                  className="landing-button inline-flex items-center justify-center rounded-[var(--radius-md)]
+                  [transition:transform_0.2s,background_0.2s,box-shadow_0.2s] [&_svg]:[transition:transform_0.2s]
+                  [&:hover]:[box-shadow:var(--shadow-sm)] button-primary [background:var(--color-primary,var(--color-accent))]
+                  [&:hover]:[background:var(--color-primary-hover,var(--color-accent-strong))]"
+                  to="/register"
+                >
                   {t("findYourFocus")}
                   <ArrowUpRight size={18} />
                 </Link>
-                <a className="hero-demo-link" href="#preview">
-                  <span className="play-icon">▶</span> {t("seeOrbitInAction")}
+                <a
+                  className="hero-demo-link flex items-center gap-[9px] [@media(max-width:580px)]:gap-[7px] [@media(max-width:360px)]:whitespace-nowrap"
+                  href="#preview"
+                >
+                  <span
+                    className="play-icon grid place-items-center w-[29px] h-[29px] [border:1px_solid_var(--color-line)] rounded-[50%]
+                    text-[8px] pl-[2px] shrink-0 [@media(max-width:580px)]:w-[24px] [@media(max-width:580px)]:h-[24px]"
+                  >
+                    ▶
+                  </span>{" "}
+                  {t("seeOrbitInAction")}
                 </a>
               </div>
-              <div className="hero-footnote">
+              <div className="hero-footnote flex items-center gap-[7px] text-[var(--color-text-muted)] mt-[18px] [&_svg]:text-[var(--color-success)] [@media(max-width:580px)]:mt-[17px]">
                 <Check size={14} /> {t("yourIdeasYourPaceYourSpace")}
               </div>
             </div>
@@ -165,7 +202,12 @@ export default function LandingPage() {
           <WorkspacePreview />
         </Reveal>
         <Reveal>
-          <div className="benefit-strip landing-container">
+          <div
+            className="benefit-strip flex justify-between [border-bottom:1px_solid_var(--color-line)] text-[var(--color-text-muted)]
+            [&_>_div]:flex [&_>_div_>_span]:flex [&_svg]:text-[var(--color-accent)]
+            [@media(max-width:800px)]:flex-col [@media(max-width:580px)]:[&_>_div]:flex-wrap
+            [@media(max-width:580px)]:[&_>_div]:justify-center landing-container"
+          >
             <span data-reveal="left">{t("builtForYourEverydayOrbit")}</span>
             <div data-reveal="right">
               <span>
@@ -182,9 +224,17 @@ export default function LandingPage() {
         </Reveal>
         <Reveal>
           <section className="features-section landing-container" id="features">
-            <div className="section-heading">
+            <div
+              className="section-heading flex items-end justify-between [&_h2]:[font-weight:550] [&_h2]:[line-height:1.2]
+              [&_h2_>_span]:text-[var(--color-text-muted)] [&_>_p]:[line-height:1.8] [&_>_p]:text-[var(--color-text-muted)]
+              [@media(max-width:800px)]:flex-col [@media(max-width:800px)]:items-start
+              [@media(max-width:800px)]:[&_>_p_br]:[display:none] [@media(max-width:580px)]:[&_>_p]:max-w-[270px]"
+            >
               <div data-reveal="left">
-                <p className="section-eyebrow">
+                <p
+                  className="section-eyebrow flex items-center gap-[9px] [font-weight:600] text-[var(--color-accent)] [&_>_span]:w-[6px]
+                  [&_>_span]:h-[6px] [&_>_span]:[border:1px_solid_var(--color-accent)] [&_>_span]:rounded-[50%]"
+                >
                   <span /> {t("roomToThinkSpaceToDo")}
                 </p>
                 <h2>
@@ -199,23 +249,41 @@ export default function LandingPage() {
                 {t("aLittleClarityGoesALongWay")}
               </p>
             </div>
-            <div className="feature-grid">
+            <div className="feature-grid grid grid-cols-[repeat(3,1fr)] [@media(max-width:800px)]:grid-cols-[1fr]">
               {features.map((feature, index) => (
                 <article
                   key={feature.className}
                   data-reveal={index % 2 === 0 ? "left" : "right"}
                   style={{ "--reveal-delay": `${index * 110}ms` }}
-                  className={`feature-card feature-${feature.className}`}
+                  className={`feature-card [border:1px_solid_var(--color-line)] rounded-[12px] [background:var(--color-surface)] overflow-hidden [transition:transform_0.3s,border-color_0.3s,box-shadow_0.3s] [&:hover]:border-[var(--color-accent)] [&:hover]:[box-shadow:var(--shadow-sm)] [&_h3]:[font-weight:550] [&_h3]:[letter-spacing:-0.6px] [&_h3]:m-[0_0_13px] [&_>_p]:[line-height:1.85] [&_>_p]:text-[var(--color-text-muted)] [&_>_p]:m-[0] [&.is-revealed_.chart-bars_i]:animate-[orbit-bar-grow_0.9s_both] [@media(max-width:800px)]:grid-cols-[1fr_1fr] [@media(max-width:800px)]:gap-x-[30px] feature-${feature.className}`}
                 >
-                  <div className="feature-icon">
+                  <div
+                    className="feature-icon flex items-center justify-between text-[var(--color-accent)]
+                    [&_>_span]:[font:10px_var(--font-mono)] [&_>_span]:text-[var(--color-text-muted)]
+                    [@media(max-width:800px)]:col-1"
+                  >
                     <feature.icon size={21} />
                     <span>0{index + 1}</span>
                   </div>
                   <h3>{feature.title}</h3>
                   <p>{feature.text}</p>
-                  <div className="feature-art" aria-hidden="true">
+                  <div
+                    className="feature-art h-[170px] flex items-center justify-center
+                    [@media(max-width:800px)]:col-2 [@media(max-width:800px)]:row-[1_/_5] [@media(max-width:800px)]:self-center
+                    [@media(max-width:580px)]:max-w-[280px] [@media(max-width:580px)]:h-[163px]"
+                    aria-hidden="true"
+                  >
                     {index === 0 ? (
-                      <div className="mini-task-stack">
+                      <div
+                        className="mini-task-stack w-full [transition:transform_0.4s] [&_>_div]:flex [&_>_div]:items-center [&_>_div]:gap-[8px]
+                        [&_>_div]:p-[14px_10px] [&_>_div]:[border:1px_solid_var(--color-line)] [&_>_div]:rounded-[6px]
+                        [&_>_div]:[background:var(--color-canvas)] [&_>_div]:text-[var(--color-text-muted)] [&_>_div]:text-[9px]
+                        [&_>_div]:[box-shadow:var(--shadow-xs)] [&_>_div_+_div]:mt-[7px]
+                        [&_>_div:nth-child(2)]:[transform:translateX(6px)] [&_>_div:nth-child(2)]:text-[var(--color-success)]
+                        [&_>_div:nth-child(3)]:[background:transparent] [&_>_div:nth-child(3)]:[border-style:dashed]
+                        [&_>_div_>_span]:ml-auto [&_>_div_>_span]:text-[7px] [&_>_div_>_span]:[background:var(--color-accent-soft)]
+                        [&_>_div_>_span]:text-[var(--color-accent)] [&_>_div_>_span]:p-[3px] [&_>_div_>_span]:rounded-[3px]"
+                      >
                         <div>
                           <Circle size={14} /> {t("theNextBigIdea")}{" "}
                           <span>{t("today")}</span>
@@ -229,7 +297,14 @@ export default function LandingPage() {
                         </div>
                       </div>
                     ) : index === 1 ? (
-                      <div className="mini-folders">
+                      <div
+                        className="mini-folders flex gap-[12px] w-full justify-center pt-[8px] [&_>_div]:flex [&_>_div]:flex-col
+                        [&_>_div]:gap-[7px] [&_>_div]:w-[44%] [&_>_div]:p-[20px_14px] [&_>_div]:[border:1px_solid_var(--color-line)]
+                        [&_>_div]:rounded-[7px] [&_>_div]:[background:var(--color-accent-soft)] [&_>_div]:[transform:rotate(-6deg)]
+                        [&_>_div]:[transition:transform_0.4s] [&_>_div_+_div]:[transform:rotate(7deg)_translateY(9px)]
+                        [&_>_div_+_div]:[background:var(--color-surface-muted)] [&_svg]:text-[var(--color-accent)]
+                        [&_span]:text-[12px] [&_span]:mt-[5px] [&_small]:text-[8px] [&_small]:text-[var(--color-text-muted)]"
+                      >
                         <div>
                           <Folder /> <span>{t("work")}</span>
                           <small>{t("spaceToBuild")}</small>
@@ -240,17 +315,23 @@ export default function LandingPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="mini-chart">
-                        <div className="chart-top">
+                      <div className="mini-chart w-full p-[15px_17px_10px] [border:1px_solid_var(--color-line)] rounded-[7px] [background:var(--color-canvas)]">
+                        <div className="chart-top flex items-center justify-between text-[9px] text-[var(--color-text-muted)] [&_strong]:text-[17px] [&_strong]:text-[var(--color-success)]">
                           <span>{t("littleWinsAddUp")}</span>
                           <strong>↗</strong>
                         </div>
-                        <div className="chart-bars">
+                        <div
+                          className="chart-bars flex items-end gap-[9px] h-[85px] [border-bottom:1px_solid_var(--color-line)] mt-[8px] [&_i]:flex-1
+                          [&_i]:[background:color-mix(in_srgb,var(--color-accent)_35%,var(--color-surface))] [&_i]:rounded-[3px_3px_0_0]
+                          [&_i]:[transform-origin:bottom] [&_i:nth-child(6)]:[background:var(--color-accent)]
+                          [&_i:last-child]:[background:var(--color-success)] [&_i:nth-child(2n)]:[animation-delay:0.1s]
+                          [&_i:nth-child(3n)]:[animation-delay:0.2s]"
+                        >
                           {[28, 46, 37, 62, 54, 79, 95].map((height, i) => (
                             <i key={i} style={{ height: `${height}%` }} />
                           ))}
                         </div>
-                        <div className="chart-days">
+                        <div className="chart-days flex justify-around mt-[6px] text-[7px] text-[var(--color-text-muted)]">
                           <span>{t("mon")}</span>
                           <span>{t("tue")}</span>
                           <span>{t("wed")}</span>
@@ -262,17 +343,34 @@ export default function LandingPage() {
                       </div>
                     )}
                   </div>
-                  <span className="feature-label">{feature.label}</span>
+                  <span
+                    className="feature-label block [border-top:1px_solid_var(--color-line)] pt-[17px] mt-[15px]
+                    text-[var(--color-text-muted)] [letter-spacing:1.2px]
+                    [@media(max-width:800px)]:col-1 [@media(max-width:580px)]:mt-[22px]"
+                  >
+                    {feature.label}
+                  </span>
                 </article>
               ))}
             </div>
           </section>
         </Reveal>
         <Reveal>
-          <section className="how-section" id="how-it-works">
-            <div className="landing-container how-inner">
-              <div className="how-copy" data-reveal="left">
-                <p className="section-eyebrow">
+          <section
+            className="how-section [border-block:1px_solid_var(--color-line)] [background:var(--color-surface-muted)]"
+            id="how-it-works"
+          >
+            <div className="landing-container how-inner grid grid-cols-[1fr_1fr] [@media(max-width:580px)]:grid-cols-[1fr]">
+              <div
+                className="how-copy [&_h2]:[font-weight:550] [&_h2]:[line-height:1.2] [&_h2]:[letter-spacing:-1.7px]
+                [&_h2_>_span]:text-[var(--color-text-muted)] [&_>_p:not(.section-eyebrow)]:text-[var(--color-text-muted)]
+                [&_>_p:not(.section-eyebrow)]:[line-height:1.8]"
+                data-reveal="left"
+              >
+                <p
+                  className="section-eyebrow flex items-center gap-[9px] [font-weight:600] text-[var(--color-accent)] [&_>_span]:w-[6px]
+                  [&_>_span]:h-[6px] [&_>_span]:[border:1px_solid_var(--color-accent)] [&_>_span]:rounded-[50%]"
+                >
                   <span /> {t("smallStepsBigDifference")}
                 </p>
                 <h2>
@@ -285,12 +383,15 @@ export default function LandingPage() {
                   <br />
                   {t("justAGoodPlaceToStart")}
                 </p>
-                <Link className="text-link" to="/register">
+                <Link
+                  className="text-link inline-flex items-center gap-[17px] [border-bottom:1px_solid_var(--color-accent)] pb-[8px]"
+                  to="/register"
+                >
                   {t("letsMakeSomeRoom")}
                   <ArrowUpRight size={17} />
                 </Link>
               </div>
-              <div className="how-steps">
+              <div className="how-steps flex flex-col justify-center">
                 {[
                   [
                     t("getItOutOfYourHead"),
@@ -310,7 +411,13 @@ export default function LandingPage() {
                   ],
                 ].map(([title, text], i) => (
                   <div
-                    className="how-step"
+                    className="how-step relative flex [border-bottom:1px_solid_var(--color-line)] [&:last-child]:[border:0]
+                      [&_>_span:first-child]:grid [&_>_span:first-child]:place-items-center [&_>_span:first-child]:shrink-0
+                      [&_>_span:first-child]:w-[30px] [&_>_span:first-child]:h-[30px]
+                      [&_>_span:first-child]:[border:1px_solid_var(--color-line)]
+                      [&_>_span:first-child]:[background:var(--color-surface)] [&_>_span:first-child]:rounded-[50%]
+                      [&_>_span:first-child]:text-[var(--color-accent)] [&_h3]:[font-weight:550] [&_h3]:[letter-spacing:-0.3px]
+                      [&_h3]:m-[2px_0_7px] [&_p]:[line-height:1.8] [&_p]:text-[var(--color-text-muted)] [&_p]:m-[0]"
                     key={title}
                     data-reveal="right"
                     style={{ "--reveal-delay": `${i * 100}ms` }}
@@ -321,7 +428,10 @@ export default function LandingPage() {
                       <p>{text}</p>
                     </div>
                     {i === 2 && (
-                      <span className="step-star" aria-hidden="true">
+                      <span
+                        className="step-star absolute right-[-20px] top-[12px] text-[var(--color-accent)] text-[46px] [transform:rotate(-15deg)] [@media(max-width:800px)]:[display:none]"
+                        aria-hidden="true"
+                      >
                         ✳
                       </span>
                     )}
@@ -332,15 +442,24 @@ export default function LandingPage() {
           </section>
         </Reveal>
         <Reveal>
-          <section className="closing-section landing-container">
+          <section
+            className="closing-section relative text-center [&_.section-eyebrow]:justify-center [&_h2]:[font-weight:550]
+            [&_h2]:[line-height:1.12] [&_h2_em]:text-[var(--color-accent)] [&_h2_em]:[font-style:normal]
+            [&_>_p:not(.section-eyebrow)]:[line-height:1.8] [&_>_p:not(.section-eyebrow)]:text-[var(--color-text-muted)]
+            landing-container"
+          >
             <div
-              className="closing-orbit"
+              className="closing-orbit absolute left-[5%] top-[140px] [@media(max-width:1100px)]:left-[1%] [@media(max-width:800px)]:[display:none]"
               aria-hidden="true"
               data-reveal="left"
             >
               <OrbitMark />
             </div>
-            <p className="section-eyebrow" data-reveal="right">
+            <p
+              className="section-eyebrow flex items-center gap-[9px] [font-weight:600] text-[var(--color-accent)] [&_>_span]:w-[6px]
+              [&_>_span]:h-[6px] [&_>_span]:[border:1px_solid_var(--color-accent)] [&_>_span]:rounded-[50%]"
+              data-reveal="right"
+            >
               {t("aLittleClarityChangesEverything")}
             </p>
             <h2 data-reveal="left" style={{ "--reveal-delay": "80ms" }}>
@@ -357,14 +476,17 @@ export default function LandingPage() {
             <Link
               data-reveal="left"
               style={{ "--reveal-delay": "200ms" }}
-              className="landing-button button-primary"
+              className="landing-button inline-flex items-center justify-center rounded-[var(--radius-md)]
+                [transition:transform_0.2s,background_0.2s,box-shadow_0.2s] [&_svg]:[transition:transform_0.2s]
+                [&:hover]:[box-shadow:var(--shadow-sm)] button-primary [background:var(--color-primary,var(--color-accent))]
+                [&:hover]:[background:var(--color-primary-hover,var(--color-accent-strong))]"
               to="/register"
             >
               {t("createYourWorkspace")}
               <ArrowUpRight size={18} />
             </Link>
             <span
-              className="closing-note"
+              className="closing-note block text-[10px] text-[var(--color-text-muted)] mt-[16px]"
               data-reveal="right"
               style={{ "--reveal-delay": "240ms" }}
             >
@@ -374,8 +496,13 @@ export default function LandingPage() {
         </Reveal>
       </main>
       <Reveal>
-        <footer className="landing-footer landing-container">
-          <div className="footer-top" data-reveal="left">
+        <footer className="landing-footer [border-top:1px_solid_var(--color-line)] py-[30px_25px] landing-container">
+          <div
+            className="footer-top flex items-center [&_>_p]:text-[var(--color-text-muted)] [&_>_a:last-child]:flex
+            [&_>_a:last-child]:items-center [@media(max-width:580px)]:flex-wrap [@media(max-width:580px)]:[&_>_p]:order-3
+            [@media(max-width:580px)]:[&_>_p]:w-full"
+            data-reveal="left"
+          >
             <Link to="/" aria-label={t("orbitHome")}>
               <Brand />
             </Link>
@@ -385,13 +512,20 @@ export default function LandingPage() {
               <ArrowUpRight size={15} />
             </a>
           </div>
-          <div className="footer-bottom" data-reveal="right">
+          <div
+            className="footer-bottom flex justify-between [border-top:1px_solid_var(--color-line)] mt-[30px] pt-[20px] text-[9px]
+            text-[var(--color-text-muted)] [@media(max-width:580px)]:flex-col [@media(max-width:580px)]:gap-[8px]
+            [@media(max-width:580px)]:mt-[24px] [@media(max-width:580px)]:text-[8px]"
+            data-reveal="right"
+          >
             <span>
               © {new Date().getFullYear()} {t("orbitMakeSpaceForWhatMatters")}
             </span>
             <span>
               {t("madeForHumansWithALotOnTheirMinds")}{" "}
-              <span className="footer-star">✳</span>
+              <span className="footer-star text-[var(--color-accent)] text-[16px] align-middle ml-[7px]">
+                ✳
+              </span>
             </span>
           </div>
         </footer>

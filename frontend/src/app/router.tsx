@@ -8,7 +8,7 @@ import { taskRoutes } from "../features/tasks/routes";
 import { categoryRoutes } from "../features/categories/routes";
 import { calendarRoutes } from "../features/calendar/routes";
 import { statisticsRoutes } from "../features/statistics/routes";
-import { profileRoutes } from "../features/profile/routes";
+import { settingsRoutes } from "../features/settings/routes";
 import { errorRoutes } from "../features/errors/routes";
 import { v2Routes } from "../features/v2/routes";
 
@@ -44,7 +44,7 @@ export const routes: RouteObject[] = [
           ...categoryRoutes,
           ...calendarRoutes,
           ...statisticsRoutes,
-          ...profileRoutes,
+          ...settingsRoutes,
           {
             path: "/agent",
             lazy: async () => ({

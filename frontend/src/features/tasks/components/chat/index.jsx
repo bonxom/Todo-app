@@ -29,7 +29,10 @@ const ChatBubble = ({ onOpenInAgent = undefined }) => {
       {!isChatOpen && <Bubble onClick={handleOpenChat} />}
 
       <div
-        className="ui-assistant-presence"
+        className="ui-assistant-presence [&[data-open=false]_.ui-assistant-panel]:opacity-[0]
+          [&[data-open=false]_.ui-assistant-panel]:[transform:translateY(16px)_scale(0.96)]
+          [&[data-open=false]_.ui-assistant-panel]:[visibility:hidden]
+          [&[data-open=false]_.ui-assistant-panel]:pointer-events-none"
         data-open={isChatOpen}
         inert={!isChatOpen}
         aria-hidden={!isChatOpen}

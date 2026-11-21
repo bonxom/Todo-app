@@ -157,4 +157,62 @@ describe("V2Layout shell", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
   });
+
+  it("renders user avatar settings link next to Sign out in V2Sidebar", () => {
+    useAuthStore.getState().setSession({
+      accessToken: "test-token",
+      user: {
+        _id: "u1",
+        id: "u1",
+        name: "Alice Orbit",
+        email: "alice@orbit.test",
+        role: "USER",
+        avatarUrl: "",
+      },
+    });
+    renderLayout();
+
+    const settingsLink = screen.getByTestId("v2-sidebar-profile-link");
+    expect(settingsLink).toHaveAttribute("href", "/v2/settings");
+    expect(settingsLink).toHaveTextContent("Alice Orbit");
+
+    const footer = settingsLink.closest("[data-testid='v2-sidebar-footer']");
+    expect(footer).toBeInTheDocument();
+    expect(
+      footer?.querySelector('button[aria-label="Sign out"]'),
+    ).toBeInTheDocument();
+  });
+
+  it("collapses and expands the desktop sidebar and persists state in localStorage", async () => {
+    const user = userEvent.setup();
+    renderLayout();
+
+    const toggleBtn = screen.getByTestId("v2-sidebar-toggle");
+    const desktopSidebar = toggleBtn.closest(".v2-sidebar-desktop");
+    expect(toggleBtn).toHaveAttribute("aria-expanded", "true");
+    expect(desktopSidebar).toHaveAttribute("data-collapsed", "false");
+
+    await user.click(toggleBtn);
+
+    expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
+    expect(desktopSidebar).toHaveAttribute("data-collapsed", "true");
+    expect(localStorage.getItem("orbit.v2-sidebar-collapsed")).toBe("true");
+    // Navigation links remain accessible by name even while collapsed
+    expect(screen.getByRole("link", { name: "Dashboard" })).toBeInTheDocument();
+
+    await user.click(toggleBtn);
+    expect(toggleBtn).toHaveAttribute("aria-expanded", "true");
+    expect(desktopSidebar).toHaveAttribute("data-collapsed", "false");
+    expect(localStorage.getItem("orbit.v2-sidebar-collapsed")).toBe("false");
+  });
+
+  it("restores collapsed desktop sidebar preference from localStorage on mount", () => {
+    localStorage.setItem("orbit.v2-sidebar-collapsed", "true");
+    renderLayout();
+
+    const toggleBtn = screen.getByTestId("v2-sidebar-toggle");
+    const desktopSidebar = toggleBtn.closest(".v2-sidebar-desktop");
+    expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
+    expect(desktopSidebar).toHaveAttribute("data-collapsed", "true");
+  });
 });

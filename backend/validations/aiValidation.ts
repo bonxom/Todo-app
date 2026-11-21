@@ -63,15 +63,19 @@ export const conversationChatSchema = chatSchema.extend({
     .optional(),
   selection: interactionSelectionSchema.optional(),
 });
-export const conversationCreateSchema = z.object({ conversationId: z.uuid() });
+const projectIdSchema = z
+  .string()
+  .regex(/^[a-f0-9]{24}$/i, "Invalid project ID format");
+
+export const conversationCreateSchema = z.object({
+  conversationId: z.uuid(),
+  projectId: projectIdSchema.optional(),
+});
 export const conversationParamsSchema = z.object({ conversationId: z.uuid() });
 export const conversationQuerySchema = z.object({
   before: z.coerce.number().int().positive().optional(),
 });
 
 export const conversationContextSchema = z.strictObject({
-  projectId: z
-    .string()
-    .regex(/^[a-f0-9]{24}$/i, "Invalid project ID format")
-    .nullable(),
+  projectId: projectIdSchema.nullable(),
 });

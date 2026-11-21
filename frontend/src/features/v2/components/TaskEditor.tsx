@@ -29,6 +29,7 @@ import {
   toISOStringLocal,
 } from "@/shared/utils/dateTime";
 import V2Dialog from "./V2Dialog";
+import CustomSelect from "@/shared/components/CustomSelect";
 const referenceId = (value: Task["categoryId"] | Task["projectId"]) =>
   typeof value === "string" ? value : (value?._id ?? "");
 const initialDraft = (task?: Task) => ({
@@ -55,7 +56,10 @@ function NavigationGuard({
   }, [pending, blocker]);
   if (blocker.state !== "blocked" || pending) return null;
   return (
-    <div className="v2-discard-confirmation" role="alert">
+    <div
+      className="v2-discard-confirmation p-[16px] [border:1px_solid_var(--v2-border)] rounded-[14px] [background:var(--v2-input-fill)] [&_p]:mb-[12px] [&_p]:text-[13px] [&_button]:mr-[8px]"
+      role="alert"
+    >
       <p>{t("discardPrompt")}</p>
       <button type="button" className="v2-btn" onClick={() => blocker.reset()}>
         {t("keepEditing")}
@@ -179,7 +183,11 @@ export default function TaskEditor({
       className="v2-task-editor"
     >
       {dataRouter && <NavigationGuard dirty={dirty} pending={pending} />}
-      <form className="v2-task-form" onSubmit={submit} noValidate>
+      <form
+        className="v2-task-form grid gap-[18px]"
+        onSubmit={submit}
+        noValidate
+      >
         {choicesLoading && <p role="status">{t("loadingChoices")}</p>}
         {choicesFailed && (
           <div role="alert">
@@ -197,15 +205,18 @@ export default function TaskEditor({
           </div>
         )}
         {error && (
-          <p role="alert" className="v2-form-error">
+          <p role="alert" className="v2-form-error text-[13px]">
             {error}
           </p>
         )}
-        <fieldset disabled={pending} className="v2-form-fields">
+        <fieldset
+          disabled={pending}
+          className="v2-form-fields grid gap-[8px] min-w-[0] [&_>_label:not(:first-child)]:mt-[10px]"
+        >
           <label htmlFor={`${id}-title`}>{t("title")}</label>
           <input
             id={`${id}-title`}
-            className="v2-input"
+            className="v2-input [&:focus]:[outline:2px_solid_var(--v2-accent)] [&:focus]:outline-offset-[2px]"
             value={draft.title}
             onChange={(e) => change("title", e.target.value)}
             required
@@ -214,17 +225,16 @@ export default function TaskEditor({
           <label htmlFor={`${id}-description`}>{t("description")}</label>
           <textarea
             id={`${id}-description`}
-            className="v2-input"
+            className="v2-input [&:focus]:[outline:2px_solid_var(--v2-accent)] [&:focus]:outline-offset-[2px]"
             rows={3}
             value={draft.description}
             onChange={(e) => change("description", e.target.value)}
           />
-          <div className="v2-form-grid">
-            <div className="v2-form-field">
+          <div className="v2-form-grid grid grid-cols-[1fr_1fr] gap-[16px] mt-[10px] [@media(max-width:767px)]:grid-cols-[1fr]">
+            <div className="v2-form-field grid [align-content:start] gap-[8px] min-w-[0]">
               <label htmlFor={`${id}-priority`}>{t("priority")}</label>
-              <select
+              <CustomSelect
                 id={`${id}-priority`}
-                className="v2-input"
                 value={draft.priority}
                 onChange={(e) => change("priority", e.target.value)}
               >
@@ -233,13 +243,12 @@ export default function TaskEditor({
                     {t(`priority${priority}`)}
                   </option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
-            <div className="v2-form-field">
+            <div className="v2-form-field grid [align-content:start] gap-[8px] min-w-[0]">
               <label htmlFor={`${id}-category`}>{t("category")}</label>
-              <select
+              <CustomSelect
                 id={`${id}-category`}
-                className="v2-input"
                 value={draft.categoryId}
                 onChange={(e) => change("categoryId", e.target.value)}
                 disabled={choicesLoading || choicesFailed}
@@ -260,13 +269,12 @@ export default function TaskEditor({
                     {category.name}
                   </option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
-            <div className="v2-form-field">
+            <div className="v2-form-field grid [align-content:start] gap-[8px] min-w-[0]">
               <label htmlFor={`${id}-project`}>{t("project")}</label>
-              <select
+              <CustomSelect
                 id={`${id}-project`}
-                className="v2-input"
                 value={draft.projectId}
                 onChange={(e) => change("projectId", e.target.value)}
                 disabled={choicesLoading || choicesFailed}
@@ -287,14 +295,17 @@ export default function TaskEditor({
                     {project.name}
                   </option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
             {(["startDate", "dueDate"] as const).map((key) => (
-              <div className="v2-form-field" key={key}>
+              <div
+                className="v2-form-field grid [align-content:start] gap-[8px] min-w-[0]"
+                key={key}
+              >
                 <label htmlFor={`${id}-${key}`}>{t(key)}</label>
                 <input
                   id={`${id}-${key}`}
-                  className="v2-input"
+                  className="v2-input [&:focus]:[outline:2px_solid_var(--v2-accent)] [&:focus]:outline-offset-[2px]"
                   type="datetime-local"
                   value={draft[key]}
                   onChange={(e) => change(key, e.target.value)}
@@ -304,7 +315,10 @@ export default function TaskEditor({
           </div>
         </fieldset>
         {discard && (
-          <div className="v2-discard-confirmation" role="alert">
+          <div
+            className="v2-discard-confirmation p-[16px] [border:1px_solid_var(--v2-border)] rounded-[14px] [background:var(--v2-input-fill)] [&_p]:mb-[12px] [&_p]:text-[13px] [&_button]:mr-[8px]"
+            role="alert"
+          >
             <p>{t("discardPrompt")}</p>
             <button
               type="button"
@@ -326,7 +340,7 @@ export default function TaskEditor({
             </button>
           </div>
         )}
-        <div className="v2-form-actions">
+        <div className="v2-form-actions flex justify-end flex-wrap gap-[10px] [border-top:1px_solid_var(--v2-border)] pt-[18px]">
           <button
             type="button"
             className="v2-btn"
@@ -337,7 +351,7 @@ export default function TaskEditor({
           </button>
           <button
             type="submit"
-            className="v2-btn v2-btn-primary"
+            className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)]"
             disabled={pending || choicesLoading || choicesFailed}
           >
             {t(pending ? "saving" : task ? "saveChanges" : "createTask")}

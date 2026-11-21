@@ -10,9 +10,13 @@ import type { ConversationChat } from "@/features/tasks/hooks/useConversationCha
 
 interface AgentContextPanelProps {
   chat: ConversationChat;
+  allowDraftProject?: boolean;
 }
 
-export function AgentContextPanel({ chat }: AgentContextPanelProps) {
+export function AgentContextPanel({
+  chat,
+  allowDraftProject = false,
+}: AgentContextPanelProps) {
   const { t } = useTranslation("agent");
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -52,33 +56,40 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
   const currentProjectId = chat.context?.projectId || "";
   const isUnavailable = chat.context?.available === false;
   const isPending =
-    chat.loading || chat.sending || Boolean(chat.pending) || savingContext;
+    chat.loading ||
+    chat.sending ||
+    chat.isStreaming ||
+    Boolean(chat.pending) ||
+    savingContext;
 
   const handleProjectChange = async (
     e: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     const nextProjectId = e.target.value || null;
     const conversationId = chat.conversationId;
-    if (!conversationId) return;
+    if (!conversationId) {
+      if (allowDraftProject) {
+        chat.setContext({ projectId: nextProjectId, available: true });
+      }
+      return;
+    }
 
     const isCurrent = () =>
       mounted.current && currentIdentity.current === conversationId;
-    const previousProjectId = currentProjectId;
     setSavingContext(true);
     setContextError(null);
 
-    // Optimistically update
-    chat.setContext?.({ projectId: nextProjectId, available: true });
-
     try {
-      await aiService.updateConversationContext(conversationId, nextProjectId);
+      const saved = await aiService.updateConversationContext(
+        conversationId,
+        nextProjectId,
+      );
+      chat.setContextForConversation(conversationId, {
+        projectId: saved.contextProjectId,
+        available: true,
+      });
     } catch (err: unknown) {
       if (!isCurrent()) return;
-      // Revert on error
-      chat.setContext?.({
-        projectId: previousProjectId || null,
-        available: !isUnavailable,
-      });
       if (err instanceof ApiError && err.status === 409) {
         setContextError(
           t("conversationIsBusyProcessingCannotChangeProjectContext"),
@@ -111,7 +122,11 @@ export function AgentContextPanel({ chat }: AgentContextPanelProps) {
           <CustomSelect
             id="agent-context-project-select"
             aria-label={t("projectContext")}
-            disabled={isPending || loadingProjects || !chat.conversationId}
+            disabled={
+              isPending ||
+              loadingProjects ||
+              (!chat.conversationId && !allowDraftProject)
+            }
             value={currentProjectId}
             onChange={handleProjectChange}
             className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"

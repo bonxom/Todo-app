@@ -100,3 +100,21 @@ it("keeps locally scoped theme values on its body portal", () => {
     "rgb(20, 103, 95)",
   );
 });
+
+it("forwards V2 Liquid Glass tokens and marks menu data-ui-version=v2 inside .v2-app", () => {
+  const { container } = render(
+    <div className="v2-app">
+      <StatefulHarness />
+    </div>,
+  );
+  const v2Root = container.querySelector(".v2-app") as HTMLElement;
+  v2Root.style.setProperty("--v2-accent", "#0c5da8");
+  v2Root.style.setProperty("--v2-glass-fill", "rgb(245 251 255 / 72%)");
+
+  const trigger = screen.getByTestId("custom-select-trigger");
+  fireEvent.click(trigger);
+
+  const menu = screen.getByRole("listbox");
+  expect(menu).toHaveAttribute("data-ui-version", "v2");
+  expect(menu.style.getPropertyValue("--v2-accent")).toBe("#0c5da8");
+});

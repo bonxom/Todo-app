@@ -14,7 +14,6 @@ import {
   buildHtmlPreviewDocument,
   PREVIEW_PERMISSIONS,
 } from "./htmlPreviewDocument";
-import "./htmlPreview.css";
 
 export default function HtmlPreview({ code }: { code: string }) {
   const { t } = useTranslation("agent");
@@ -75,7 +74,7 @@ export default function HtmlPreview({ code }: { code: string }) {
     srcDoc !== null ? (
       <iframe
         title={t("htmlPreview")}
-        className="html-preview-frame"
+        className="html-preview-frame block w-full h-[420px] [border:0] [background:white]"
         sandbox="allow-scripts"
         referrerPolicy="no-referrer"
         allow={PREVIEW_PERMISSIONS}
@@ -85,8 +84,11 @@ export default function HtmlPreview({ code }: { code: string }) {
 
   if (srcDoc === null)
     return (
-      <div className="html-preview-fallback">
-        <p className="html-preview-note" role="status">
+      <div className="html-preview-fallback my-[0.75rem] min-w-[0] max-w-full">
+        <p
+          className="html-preview-note m-[0] text-[var(--color-text-muted)] text-[0.7rem]"
+          role="status"
+        >
           {t("htmlIsTooLargeToPreview128KibLimitYouCanStillCopyTheCode")}
         </p>
         <CodeBlock code={code} language="html" />
@@ -94,12 +96,24 @@ export default function HtmlPreview({ code }: { code: string }) {
     );
 
   return (
-    <section className="html-preview" aria-label={t("htmlDocument")}>
-      <div className="chat-rich-header html-preview-toolbar">
+    <section
+      className="html-preview my-[0.75rem] min-w-[0] max-w-full overflow-hidden [border:1px_solid_var(--color-line)]
+      rounded-[0.75rem] [background:var(--color-surface)] [box-shadow:var(--shadow-xs)]"
+      aria-label={t("htmlDocument")}
+    >
+      <div
+        className="chat-rich-header html-preview-toolbar flex items-center justify-between p-[0.375rem_0.75rem]
+        [border-bottom:1px_solid_var(--color-line)] [background:var(--color-surface-muted)]
+        text-[var(--color-text-muted)] text-[0.75rem]"
+      >
         <div
           role="tablist"
           aria-label={t("htmlView")}
-          className="html-preview-tabs"
+          className="html-preview-tabs flex items-center gap-[0.25rem] [&_button]:inline-flex [&_button]:items-center
+            [&_button]:gap-[0.375rem] [&_button]:rounded-[0.5rem] [&_button]:p-[0.25rem_0.625rem]
+            [&_button]:cursor-pointer [&_button]:[transition:background-color_150ms_ease,color_150ms_ease]
+            [&_button[aria-selected=true]]:[background:var(--color-surface)]
+            [&_button[aria-selected=true]]:[box-shadow:var(--shadow-xs)]"
         >
           <button
             ref={previewTab}
@@ -132,25 +146,29 @@ export default function HtmlPreview({ code }: { code: string }) {
             <span>{t("code")}</span>
           </button>
         </div>
-        <div className="html-preview-actions">
+        <div className="html-preview-actions flex items-center gap-[0.5rem]">
           {tab === "preview" && (
             <button
               ref={expandButton}
               type="button"
               onClick={() => setExpanded(true)}
               aria-label={t("expandHtmlPreview")}
-              className="ui-focus-ring html-preview-expand"
+              className="ui-focus-ring html-preview-expand inline-flex items-center gap-[0.375rem] cursor-pointer
+                [transition:background-color_150ms_ease,color_150ms_ease] [&:hover]:[background:var(--color-line)]"
             >
               <Maximize2 size={14} aria-hidden="true" />
               <span>{t("expand")}</span>
             </button>
           )}
-          <span className="html-preview-lang">html</span>
+          <span className="html-preview-lang [font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace)] text-[0.6875rem] text-[var(--color-text-muted)] lowercase">
+            html
+          </span>
           <button
             type="button"
             onClick={handleCopy}
             aria-label={copied ? t("copied") : t("copyCode")}
-            className="ui-focus-ring html-preview-copy"
+            className="ui-focus-ring html-preview-copy inline-flex items-center gap-[0.375rem] cursor-pointer
+              [transition:background-color_150ms_ease,color_150ms_ease] [&:hover]:[background:var(--color-line)]"
           >
             {copied ? (
               <>
@@ -177,13 +195,17 @@ export default function HtmlPreview({ code }: { code: string }) {
       >
         {tab === "preview" ? (
           <>
-            <p className="html-preview-note">
+            <p className="html-preview-note m-[0] text-[var(--color-text-muted)] text-[0.7rem]">
               {t("selfContainedPreviewExternalResourcesAreDisabled")}
             </p>
             {!expanded && preview}
           </>
         ) : (
-          <pre className="html-preview-code">
+          <pre
+            className="html-preview-code m-[0] overflow-x-auto p-[0.875rem]
+            [font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace)] text-[0.75rem] [line-height:1.625]
+            text-[var(--color-text)]"
+          >
             <code>{code}</code>
           </pre>
         )}
@@ -192,19 +214,27 @@ export default function HtmlPreview({ code }: { code: string }) {
         <dialog
           ref={dialog}
           aria-label={t("htmlPreview")}
-          className="html-preview-dialog"
+          className="html-preview-dialog m-auto p-[0] w-[min(1200px,96vw)] max-w-[96vw] h-[90dvh] max-h-[90dvh]
+            [border:1px_solid_var(--color-line)] rounded-[0.75rem] [background:var(--color-surface)]
+            text-[var(--color-text)] overflow-hidden [&[open]]:flex [&[open]]:flex-col
+            [&::backdrop]:[background:rgb(0_0_0_/_55%)] [&_.html-preview-frame]:flex-1 [&_.html-preview-frame]:min-h-[0]"
           // Portal events still bubble through React's chat tree. Keep the
           // dialog's Escape/Tab handling separate from the chat panel's trap.
           onKeyDown={(event) => event.stopPropagation()}
           onCancel={closeExpanded}
           onClose={closeExpanded}
         >
-          <div className="html-preview-toolbar">
+          <div
+            className="html-preview-toolbar flex items-center justify-between p-[0.375rem_0.75rem]
+            [border-bottom:1px_solid_var(--color-line)] [background:var(--color-surface-muted)]
+            text-[var(--color-text-muted)] text-[0.75rem]"
+          >
             <span>{t("htmlPreview")}</span>
             <button
               type="button"
               aria-label={t("closeHtmlPreview")}
-              className="ui-focus-ring html-preview-expand"
+              className="ui-focus-ring html-preview-expand inline-flex items-center gap-[0.375rem] cursor-pointer
+                [transition:background-color_150ms_ease,color_150ms_ease] [&:hover]:[background:var(--color-line)]"
               onClick={() => dialog.current?.close()}
             >
               <X size={18} aria-hidden="true" /> {t("close")}

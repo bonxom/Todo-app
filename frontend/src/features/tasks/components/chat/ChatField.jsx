@@ -5,8 +5,15 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import AttachmentComposer from "./AttachmentComposer";
 import { FILE_ACCEPT, checkFiles } from "./attachmentFiles";
 import AttachmentList from "./AttachmentList";
-import { useState, useRef, useEffect, useContext, useCallback, memo } from "react";
-import { Send, ArrowUpRight, Sparkles } from "lucide-react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useContext,
+  useCallback,
+  memo,
+} from "react";
+import { Send, ArrowUpRight, Sparkles, Square, Loader2 } from "lucide-react";
 import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import ChatToolbar from "./ChatToolbar";
 import InteractionCard from "./InteractionCard";
@@ -42,12 +49,15 @@ const ChatMessageItem = memo(function ChatMessageItem({
   conversationId,
   setProposalDirty,
   disabled,
+  wideTranscript,
 }) {
+  const { t } = useTranslation("agent");
   const isUser = message.sender === "user";
+  const openReply = wideTranscript && !isUser;
 
   return (
     <div
-      className={`chat-message-row ${isUser ? "chat-message-row--user" : "chat-message-row--agent"}`}
+      className={`chat-message-row flex items-start gap-[8px] ${isUser ? "chat-message-row--user flex-row-reverse" : "chat-message-row--agent"}`}
     >
       <ChatAvatar
         key={isUser ? userAvatar || "default" : "agent"}
@@ -56,12 +66,35 @@ const ChatMessageItem = memo(function ChatMessageItem({
         src={isUser ? userAvatar : undefined}
       />
       <div
-        className={`chat-message ${isUser ? "chat-message--user" : "chat-message--bot"} rounded-2xl px-4 py-3 ${
-          isUser ? "rounded-br-sm border" : "rounded-bl-sm border"
+        className={`chat-message min-w-0 ${
+          openReply
+            ? "chat-message--bot w-full max-w-[min(calc(100%_-_36px),88ch)]! pt-0.5 text-base"
+            : isUser
+              ? "chat-message--user rounded-2xl rounded-br-sm border px-4 py-3"
+              : "chat-message--bot w-fit rounded-2xl rounded-bl-sm border px-4 py-3"
         }`}
-        style={isUser ? USER_MESSAGE_STYLE : BOT_MESSAGE_STYLE}
+        style={
+          isUser
+            ? USER_MESSAGE_STYLE
+            : openReply
+              ? undefined
+              : BOT_MESSAGE_STYLE
+        }
       >
-        <div className="text-sm whitespace-pre-wrap break-words">
+        {openReply && (
+          <p className="mb-2 text-sm font-semibold text-[var(--color-text)]">
+            {t("orbitAgent")}
+          </p>
+        )}
+        <div
+          className={`whitespace-pre-wrap ${
+            openReply
+              ? "wrap-anywhere text-[15px] leading-relaxed [&>h1]:text-[19px] [&>h2]:text-[17px] [&>:is(h3,h4,ol,ul)]:[font-size:inherit] [&>:is(ol,ul)]:[line-height:inherit]"
+              : wideTranscript
+                ? "wrap-anywhere text-[15px] leading-normal"
+                : "text-sm break-words"
+          }`}
+        >
           {message.surface ? (
             <UiSurfaceMessage
               key={`${conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
@@ -91,7 +124,11 @@ const ChatMessageItem = memo(function ChatMessageItem({
               disabled={disabled}
             />
           ) : message.interaction ? (
-            <InteractionCard interaction={message.interaction} disabled embedded />
+            <InteractionCard
+              interaction={message.interaction}
+              disabled
+              embedded
+            />
           ) : (
             <>
               {(() => {
@@ -106,7 +143,9 @@ const ChatMessageItem = memo(function ChatMessageItem({
                           tool={match[1]}
                           size="sm"
                           className={
-                            isUser ? "bg-white/20 border-white/40 text-inherit" : ""
+                            isUser
+                              ? "bg-white/20 border-white/40 text-inherit"
+                              : ""
                           }
                         />
                       </div>
@@ -122,16 +161,22 @@ const ChatMessageItem = memo(function ChatMessageItem({
         {!isUser && message.skillsRead && message.skillsRead.length > 0 && (
           <div className="mt-2 mb-1 flex flex-wrap gap-1.5">
             {message.skillsRead.map((skill) => (
-              <SkillReadBadge key={`${skill.id}:${skill.version}`} skill={skill} />
+              <SkillReadBadge
+                key={`${skill.id}:${skill.version}`}
+                skill={skill}
+              />
             ))}
           </div>
         )}
         {message.turnStatus && (
           <ChatRunStatus run={null} status={message.turnStatus} />
         )}
-        <AttachmentList conversationId={conversationId} files={message.attachments} />
+        <AttachmentList
+          conversationId={conversationId}
+          files={message.attachments}
+        />
         <time
-          className="chat-message-time"
+          className="chat-message-time block opacity-[0.75]"
           dateTime={message.timestamp}
           title={formatDateTime(message.timestamp)}
         >
@@ -153,8 +198,12 @@ const ChatField = ({
   chat,
   avatarAppearance = "default",
   showWelcome = true,
+  workspaceComposer = false,
+  startHeading = /** @type {string | undefined} */ (undefined),
+  starters = /** @type {import("react").ReactNode} */ (undefined),
 }) => {
   const { t } = useTranslation("agent");
+  const wideTranscript = workspaceComposer && !startHeading;
 
   const userAvatar = useAuthStore((state) => state.user?.avatarUrl);
   const agentSession = useContext(AgentSessionContext);
@@ -193,6 +242,8 @@ const ChatField = ({
 
   const [fileError, setFileError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [stoppingTurn, setStoppingTurn] = useState(null);
+  const [stopErrorTurn, setStopErrorTurn] = useState(null);
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
   const previousConversation = useRef(chat?.conversationId);
@@ -256,6 +307,31 @@ const ChatField = ({
   const interactionId = chat?.interaction?.id;
   const showChatInput =
     Boolean(interactionId) && messageInteractionId === interactionId;
+  const waitingForAnswer = Boolean(interactionId && !showChatInput);
+  const run = chat?.runStream?.snapshot ?? chat?.activeRun;
+  const activeRun =
+    run?.status === "processing" || run?.status === "stopping" ? run : null;
+  const showStop = Boolean(workspaceComposer && activeRun && chat?.stop);
+  const stopping =
+    showStop &&
+    (activeRun.status === "stopping" || stoppingTurn === activeRun.turnId);
+  const actionLabel = t(
+    showStop ? (stopping ? "stopping" : "stop") : "sendMessage",
+  );
+
+  const stopResponse = async () => {
+    if (!showStop || stopping) return;
+    const turnId = activeRun.turnId;
+    setStoppingTurn(turnId);
+    setStopErrorTurn(null);
+    try {
+      await chat.stop();
+    } catch {
+      setStopErrorTurn(turnId);
+    } finally {
+      setStoppingTurn((current) => (current === turnId ? null : current));
+    }
+  };
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -434,11 +510,22 @@ const ChatField = ({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div
+      className={`flex h-full min-h-0 flex-col ${startHeading ? "overflow-y-auto overscroll-contain" : ""}`}
+    >
+      {startHeading && (
+        <h3 className="mx-auto mt-auto mb-5 w-full max-w-[760px] px-4 pt-6 text-center text-[clamp(1.45rem,3.5vw,2.25rem)] leading-tight font-semibold tracking-tight text-[var(--v2-ink)]">
+          {startHeading}
+        </h3>
+      )}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="chat-messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4"
+        className={`chat-messages min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin] [scroll-padding-block:16px] [&>_*]:w-full ${
+          wideTranscript
+            ? "space-y-6 px-1 py-4 sm:space-y-8"
+            : "space-y-4 p-4 [&>_*]:max-w-[760px]"
+        } ${startHeading ? "hidden" : ""}`}
       >
         {chat?.before && (
           <button
@@ -452,13 +539,21 @@ const ChatField = ({
         )}
         {messages.length === 0 ? (
           !showWelcome ? null : chat && !chat.loading && !chat.interaction ? (
-            <div className="chat-welcome">
-              <div className="chat-welcome-icon">
+            <div
+              className="chat-welcome [&_>_h2]:text-[23px] [&_>_h2]:[line-height:1.3] [&_>_h2]:[font-weight:650]
+              [&_>_h2]:[letter-spacing:-0.5px] [&_>_h2]:max-w-[320px] [&_>_p]:text-[14px] [&_>_p]:[line-height:1.65]
+              [&_>_p]:text-[var(--color-text-muted)] [&_>_p]:mt-[12px] [&_>_p]:max-w-[340px]"
+            >
+              <div className="chat-welcome-icon grid place-items-center rounded-[16px] text-[var(--color-accent)] [background:var(--color-accent-soft)]">
                 <Sparkles size={24} />
               </div>
               <h2>{t("letSMakeYourDayMoreManageable")}</h2>
               <p>{t("planYourDayReviewYourTasksOrBreakDownAGoal")}</p>
-              <div className="chat-starters">
+              <div
+                className="chat-starters grid gap-[8px] [&_button]:flex [&_button]:items-center [&_button]:justify-between
+                [&_button]:gap-[12px] [&_button]:rounded-[12px] [&_button]:p-[13px_14px]
+                [&_button]:[background:var(--color-surface)] [&_button]:text-left [&_button]:cursor-pointer"
+              >
                 {[
                   [t("planMyDay"), "Help me plan my tasks for today."],
                   [t("reviewUpcomingTasks"), "Show me my upcoming tasks."],
@@ -508,12 +603,13 @@ const ChatField = ({
                 conversationId={chat?.conversationId}
                 setProposalDirty={chat?.setProposalDirty}
                 disabled={chat?.loading || chat?.sending}
+                wideTranscript={wideTranscript}
               />
             ))
         )}
 
         {isTyping && !chat?.runStream?.streamingMessage && (
-          <div className="chat-message-row chat-message-row--agent">
+          <div className="chat-message-row flex items-start gap-[8px] chat-message-row--agent">
             <ChatAvatar appearance={avatarAppearance} />
             <div
               className="rounded-2xl rounded-bl-sm border px-4 py-3"
@@ -543,15 +639,9 @@ const ChatField = ({
         )}
 
         <ChatRunStatus
-          run={
-            ["processing", "stopping"].includes(
-              chat?.runStream?.snapshot?.status ?? chat?.activeRun?.status,
-            )
-              ? (chat?.runStream?.snapshot ?? chat?.activeRun ?? null)
-              : null
-          }
+          run={activeRun}
           connection={chat?.runStream?.connection ?? chat?.connection ?? "idle"}
-          onStop={chat?.stop}
+          onStop={workspaceComposer ? undefined : chat?.stop}
           onReconnect={chat?.reconnect}
         />
 
@@ -618,10 +708,14 @@ const ChatField = ({
       )}
 
       <div
-        className={`chat-composer ${chat?.interaction && !showChatInput ? "chat-composer--answer" : ""}`}
+        className={`chat-composer relative shrink-0 ${workspaceComposer ? "agent-workspace-composer mx-auto w-full" : ""} ${startHeading ? "max-w-[760px]" : ""} [&_>_.chat-error]:shrink-0 [&_>_.chat-error]:mb-[10px] ${chat?.interaction && !showChatInput ? "chat-composer--answer flex flex-col min-h-[0] [&_>_form]:min-h-[0]" : ""}`}
       >
         {chat?.error && (
-          <div className="chat-error">
+          <div
+            className="chat-error [border:1px_solid_var(--color-danger)] [background:var(--color-danger-soft)]
+            text-[var(--color-text)] p-[12px] [line-height:1.5] [&_[role=alert]]:mb-[4px] [&_[role=alert]]:max-h-[60px]
+            [&_[role=alert]]:overflow-y-auto [@media(max-height:550px)]:[&_>_.text-xs]:[display:none]"
+          >
             <p role="alert">{chat.error}</p>
             <p className="text-xs">
               {t("yourRequestIsNotCompleteTryAgainOrReloadTheConversation")}
@@ -630,7 +724,7 @@ const ChatField = ({
               {chat.pending && (
                 <button
                   type="button"
-                  className="chat-recovery ui-focus-ring"
+                  className="chat-recovery [border:1px_solid_var(--color-line)] p-[7px_10px] rounded-[8px] [background:var(--color-surface)] cursor-pointer ui-focus-ring"
                   aria-label={t("retryMessage")}
                   disabled={chat.loading || chat.sending}
                   onClick={() => chat.send()}
@@ -640,7 +734,7 @@ const ChatField = ({
               )}
               <button
                 type="button"
-                className="chat-recovery ui-focus-ring"
+                className="chat-recovery [border:1px_solid_var(--color-line)] p-[7px_10px] rounded-[8px] [background:var(--color-surface)] cursor-pointer ui-focus-ring"
                 aria-label={t("reloadConversation")}
                 disabled={chat.loading || chat.sending}
                 onClick={chat.reload}
@@ -651,7 +745,10 @@ const ChatField = ({
           </div>
         )}
         {chat?.pending && !chat.error && !chat.sending && (
-          <div className="chat-pending" role="status">
+          <div
+            className="chat-pending flex flex-wrap items-center gap-[8px] text-[12px] mb-[10px] text-[var(--color-text-muted)]"
+            role="status"
+          >
             <span>
               {t(
                 "yourRequestIsProcessingCheckTheResultBeforeSendingAnotherMessage",
@@ -660,7 +757,7 @@ const ChatField = ({
             <button
               type="button"
               aria-label={t("reloadConversation")}
-              className="chat-recovery ui-focus-ring"
+              className="chat-recovery [border:1px_solid_var(--color-line)] p-[7px_10px] rounded-[8px] [background:var(--color-surface)] cursor-pointer ui-focus-ring"
               disabled={chat.loading}
               onClick={chat.reload}
             >
@@ -669,7 +766,7 @@ const ChatField = ({
           </div>
         )}
         {chat?.interaction && showChatInput && (
-          <div className="chat-answer-back">
+          <div className="chat-answer-back flex flex-col gap-[5px] mb-[10px] text-[12px] [&_button]:self-start [&_button]:cursor-pointer [&_span]:text-[11px] [&_span]:text-[var(--color-text-muted)]">
             <button
               type="button"
               aria-label={t("backToQuestion")}
@@ -712,18 +809,32 @@ const ChatField = ({
             onSwitchToMessage={() => setMessageInteractionId(interactionId)}
           />
         )}
+        {showStop && stopErrorTurn === activeRun.turnId && (
+          <p
+            role="alert"
+            className="mb-2 px-2 text-sm text-[var(--color-danger)]"
+          >
+            {t("stopFailed")}
+          </p>
+        )}
         <form
           onSubmit={handleSubmit}
-          hidden={Boolean(chat?.interaction && !showChatInput)}
-          className="chat-input-form"
+          hidden={waitingForAnswer && !showStop}
+          className={`chat-input-form mx-auto [&[hidden]]:[display:none] ${wideTranscript ? "w-full" : "max-w-[760px]"} ${workspaceComposer ? "grid grid-cols-[minmax(0,1fr)_auto] items-center px-1" : "flex items-end"}`}
         >
-          <ChatToolbar
-            chat={chat}
-            disabled={disabled || submitting}
-            onFiles={() => fileInputRef.current?.click()}
-            onImages={() => imageInputRef.current?.click()}
-          />
-          <div className="relative min-w-0 flex-1">
+          {(!workspaceComposer || !waitingForAnswer) && (
+            <ChatToolbar
+              chat={chat}
+              workspace={workspaceComposer}
+              disabled={disabled || submitting}
+              onFiles={() => fileInputRef.current?.click()}
+              onImages={() => imageInputRef.current?.click()}
+            />
+          )}
+          <div
+            hidden={workspaceComposer && waitingForAnswer}
+            className={`relative min-w-0 flex-1 ${workspaceComposer ? "col-span-2 row-start-1" : ""}`}
+          >
             {isSlashMenuOpen && (
               <SlashCommandMenu
                 query={slashQuery}
@@ -744,24 +855,41 @@ const ChatField = ({
               placeholder={
                 chat?.interaction ? t("newRequest") : t("messageOrbit")
               }
-              className="chat-input ui-focus-ring"
+              className={`chat-input block w-full resize-none [field-sizing:content] [&:placeholder-shown]:whitespace-nowrap
+                [&:placeholder-shown]:overflow-hidden [&:placeholder-shown]:text-ellipsis ui-focus-ring ${startHeading ? "agent-start-input" : wideTranscript ? "agent-active-input" : ""}`}
             />
           </div>
           <button
-            type="submit"
-            aria-label={t("sendMessage")}
-            title={t("sendMessage")}
+            type={showStop ? "button" : "submit"}
+            aria-label={actionLabel}
+            title={actionLabel}
+            onClick={showStop ? stopResponse : undefined}
             disabled={
-              disabled ||
-              submitting ||
-              (!inputValue.trim() && (files.length > 0 || !selectedTool))
+              showStop
+                ? stopping
+                : disabled ||
+                  submitting ||
+                  (!inputValue.trim() && (files.length > 0 || !selectedTool))
             }
-            className="chat-send ui-focus-ring"
+            className={`chat-send grid size-11 shrink-0 cursor-pointer place-items-center border border-transparent bg-[var(--color-accent)] ui-focus-ring disabled:border-[var(--color-line)] ${workspaceComposer ? "col-start-2 self-end rounded-full!" : ""}`}
           >
-            <Send size={18} />
+            {showStop ? (
+              stopping ? (
+                <Loader2
+                  size={18}
+                  className="motion-safe:animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Square size={16} className="fill-current" aria-hidden="true" />
+              )
+            ) : (
+              <Send size={18} aria-hidden="true" />
+            )}
           </button>
         </form>
       </div>
+      {starters && <div className="mt-4 mb-auto px-0.5 pb-8">{starters}</div>}
     </div>
   );
 };

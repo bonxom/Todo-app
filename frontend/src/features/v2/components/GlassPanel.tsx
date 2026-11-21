@@ -1,19 +1,21 @@
 import type { HTMLAttributes, PropsWithChildren } from "react";
 
 export type GlassPanelProps = PropsWithChildren<
-  HTMLAttributes<HTMLDivElement> & {
+  HTMLAttributes<HTMLElement> & {
+    as?: "div" | "section" | "aside" | "article";
     className?: string;
   }
 >;
 
 export default function GlassPanel({
+  as: Component = "div",
   className = "",
   children,
   ...props
 }: GlassPanelProps) {
   return (
-    <div className={`v2-glass-panel ${className}`.trim()} {...props}>
+    <Component className={`v2-glass-panel ${className}`.trim()} {...props}>
       {children}
-    </div>
+    </Component>
   );
 }

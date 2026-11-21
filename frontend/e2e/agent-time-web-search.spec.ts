@@ -47,7 +47,7 @@ test.describe("Agent Time & Web Search E2E", () => {
           }),
         });
       }
-      return route.continue();
+      return route.fallback();
     });
 
     // Override chat-mcp handler to capture payload and return citation
@@ -72,7 +72,7 @@ test.describe("Agent Time & Web Search E2E", () => {
         }),
       });
     });
-    await page.goto("/agent");
+    await page.goto("/agent?conversation=conv-e2e-1");
     const input = page.getByRole("textbox", { name: "Message" });
     await expect(input).toBeVisible();
 
@@ -172,7 +172,7 @@ test.describe("Agent Time & Web Search E2E", () => {
           }),
         });
       }
-      return route.continue();
+      return route.fallback();
     });
 
     await page.route("**/api/ai/chat-mcp", async (route) => {
@@ -197,7 +197,7 @@ test.describe("Agent Time & Web Search E2E", () => {
       });
     });
 
-    await page.goto("/agent");
+    await page.goto("/agent?conversation=conv-e2e-1");
     const input = page.getByRole("textbox", { name: "Message" });
     await input.fill("Tìm kiếm tin tức");
     await page.getByRole("button", { name: "Send message" }).click();

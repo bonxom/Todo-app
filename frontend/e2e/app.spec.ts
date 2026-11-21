@@ -232,10 +232,10 @@ test.describe("Orbit Frontend Architecture E2E", () => {
     await expect(page).toHaveURL("/statistics");
     await expect(page.locator("text=Statistics").first()).toBeVisible();
 
-    // Profile
+    // Profile redirects to Settings
     await page.goto("/profile");
-    await expect(page).toHaveURL("/profile");
-    await expect(page.locator("text=Account").first()).toBeVisible();
+    await expect(page).toHaveURL("/settings");
+    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   });
 
   test("404 error page renders on unknown route", async ({ page }) => {

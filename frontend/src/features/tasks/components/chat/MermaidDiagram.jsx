@@ -140,7 +140,13 @@ const MermaidDiagram = ({ code }) => {
       </div>
 
       {activeTab === "diagram" && !rendering && !error && (
-        <div className="chat-diagram-zoom">
+        <div
+          className="chat-diagram-zoom flex items-center gap-[4px] p-[6px_10px] [border-bottom:1px_solid_var(--color-line)]
+          [&_>_span]:mr-auto [&_>_span]:text-[10px] [&_>_span]:text-[var(--color-text-muted)] [&_button]:grid
+          [&_button]:place-items-center [&_button]:min-w-[30px] [&_button]:h-[30px] [&_button]:p-[0_5px]
+          [&_button]:rounded-[6px] [&_button]:cursor-pointer
+          [&_button:hover:not(:disabled)]:[background:var(--color-surface-muted)] [&_button:disabled]:opacity-[0.4]"
+        >
           <span>{t("zoomInForACloserLook")}</span>
           <button
             type="button"
@@ -172,7 +178,7 @@ const MermaidDiagram = ({ code }) => {
       )}
       {/* Content body - direct pre/code, no nested CodeBlock */}
       {activeTab === "diagram" ? (
-        <div className="chat-diagram-canvas p-4 min-h-[140px] overflow-x-auto">
+        <div className="chat-diagram-canvas [background:var(--color-canvas)] [&_svg]:w-full [&_svg]:h-auto p-4 min-h-[140px] overflow-x-auto">
           {rendering ? (
             <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
               <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--color-accent)] border-t-transparent" />

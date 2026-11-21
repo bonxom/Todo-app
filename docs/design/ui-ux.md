@@ -7,17 +7,17 @@ Read this when changing a web layout, component, interaction, or user-facing cop
 | Area | Visual conventions and source files |
 | --- | --- |
 | V1 workspace | Match the existing [`MainLayout`](../../frontend/src/shared/layouts/MainLayout.jsx) and reuse the semantic `--color-*` tokens from [`index.css`](../../frontend/src/styles/index.css) in Tailwind utilities. |
-| V2 workspace (`/v2/*`) | Match the shell in [`V2Layout`](../../frontend/src/features/v2/layouts/V2Layout.tsx) and reuse the Liquid Glass tokens from [`tokens.css`](../../frontend/src/features/v2/styles/tokens.css) in Tailwind utilities. Keep overlays inside the V2 theme scope. |
-| Landing and authentication | Use the current pages as composition references. [`landing.css`](../../frontend/src/styles/landing.css) and [`auth.css`](../../frontend/src/styles/auth.css) describe the existing visual treatment. |
+| V2 workspace (`/v2/*`) | Match the shell in [`V2Layout`](../../frontend/src/features/v2/layouts/V2Layout.tsx) and reuse the Liquid Glass tokens from [`index.css`](../../frontend/src/styles/index.css). Keep overlays inside the V2 theme scope. |
+| Landing and authentication | Use [`LandingPage`](../../frontend/src/features/landing/LandingPage.jsx) and [`AuthLayout`](../../frontend/src/features/auth/components/AuthLayout.jsx) as composition references. |
 
 Reuse the existing theme and language controls. For shared component changes, verify the affected V1 and V2 routes.
 
-## Tailwind-only for new styling
+## Tailwind styling
 
 - Use Tailwind utilities in JSX or TSX for all new or changed component styling, including layout, responsive behavior, themes, interaction states, and effects. Keep the utilities with the elements they style.
 - Keep shared styling in reusable React components and express variants with Tailwind class combinations. Reuse existing semantic tokens through utilities such as `bg-[var(--v2-surface-solid)]` and `rounded-[var(--v2-radius-control)]`.
-- Keep standalone stylesheets and CSS Modules out of new development. Use Tailwind utilities directly for new styles in existing features as well.
-- Existing components and theme tokens remain available for reuse. When a legacy selector overlaps with a style being changed, inspect computed styles, migrate the affected styling to Tailwind, and verify the relevant states and breakpoints with Playwright.
+- Use [`src/styles/index.css`](../../frontend/src/styles/index.css) as the single Tailwind entry. It holds theme tokens, document defaults, keyframes, and Tailwind `@apply` rules for selectors that depend on document scope, generated markup, or the existing cascade.
+- Keep feature styling in JSX or TSX. Inspect computed styles when changing an element covered by the shared entry, then verify the relevant states and breakpoints with Playwright.
 
 ## V2 visual style
 

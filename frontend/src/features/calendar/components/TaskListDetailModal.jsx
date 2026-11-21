@@ -127,7 +127,7 @@ const TaskListDetailModal = ({
       />
 
       <div
-        className="ui-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
+        className="ui-modal-overlay [background:var(--color-overlay)] fixed inset-0 z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
         <div
@@ -155,7 +155,9 @@ const TaskListDetailModal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="ui-icon-button ui-focus-ring"
+                className="ui-icon-button items-center justify-center
+                  [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+                  [&:hover]:[transform:translateY(-1px)] ui-focus-ring"
                 aria-label={t("closeTaskList")}
               >
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -163,13 +165,15 @@ const TaskListDetailModal = ({
             </div>
 
             <div className="flex flex-wrap gap-2 text-sm">
-              <span className="ui-chip ui-tabular">
+              <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
                 {completedTasks}/{totalTasks} {t("completed")}{" "}
               </span>
-              <span className="ui-chip ui-tabular">
+              <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums]">
                 {totalTasks} {t("totalTasks")}{" "}
               </span>
-              <span className="ui-chip">{t("inProgressFirst")}</span>
+              <span className="ui-chip inline-flex items-center gap-[0.375rem] [line-height:1.1] whitespace-nowrap">
+                {t("inProgressFirst")}
+              </span>
             </div>
           </div>
 

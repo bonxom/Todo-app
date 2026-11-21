@@ -55,11 +55,11 @@ export default function TaskStatusActions({
 
   return (
     <div className="v2-task-actions" data-testid="v2-task-actions">
-      <div className="v2-task-actions-row">
+      <div className="v2-task-actions-row flex flex-wrap items-center gap-[6px]">
         {task.status === "pending" && (
           <button
             type="button"
-            className={`${buttonClass} v2-task-action--accent`}
+            className={`${buttonClass} v2-task-action--accent border-[var(--v2-accent)]`}
             disabled={pending}
             onClick={() => void run(() => startMutation.mutateAsync(task._id))}
           >
@@ -71,7 +71,7 @@ export default function TaskStatusActions({
         {task.status === "in-progress" && (
           <button
             type="button"
-            className={`${buttonClass} v2-task-action--accent`}
+            className={`${buttonClass} v2-task-action--accent border-[var(--v2-accent)]`}
             disabled={pending}
             onClick={() => void run(() => finishMutation.mutateAsync(task._id))}
           >
@@ -85,7 +85,9 @@ export default function TaskStatusActions({
             type="button"
             className={buttonClass}
             disabled={pending}
-            onClick={() => void run(() => restoreMutation.mutateAsync(task._id))}
+            onClick={() =>
+              void run(() => restoreMutation.mutateAsync(task._id))
+            }
           >
             <Undo2 size={14} aria-hidden="true" />
             <span>{t("reopenTask")}</span>
@@ -97,7 +99,9 @@ export default function TaskStatusActions({
             type="button"
             className={buttonClass}
             disabled={pending}
-            onClick={() => void run(() => restoreMutation.mutateAsync(task._id))}
+            onClick={() =>
+              void run(() => restoreMutation.mutateAsync(task._id))
+            }
           >
             <RotateCcw size={14} aria-hidden="true" />
             <span>{t("restoreTask")}</span>
@@ -128,7 +132,7 @@ export default function TaskStatusActions({
       </div>
 
       {error && (
-        <p className="v2-form-error" role="alert">
+        <p className="v2-form-error text-[13px]" role="alert">
           {error}
         </p>
       )}
@@ -139,7 +143,7 @@ export default function TaskStatusActions({
         onClose={() => setConfirmDelete(false)}
       >
         <p>{t("deleteTaskPrompt")}</p>
-        <div className="v2-form-actions">
+        <div className="v2-form-actions flex justify-end flex-wrap gap-[10px] [border-top:1px_solid_var(--v2-border)] pt-[18px]">
           <button
             type="button"
             className="v2-btn"
@@ -149,7 +153,7 @@ export default function TaskStatusActions({
           </button>
           <button
             type="button"
-            className="v2-btn v2-btn-primary"
+            className="v2-btn v2-btn-primary [&:hover]:filter-[brightness(1.08)]"
             disabled={deleteMutation.isPending}
             onClick={() =>
               void run(async () => {

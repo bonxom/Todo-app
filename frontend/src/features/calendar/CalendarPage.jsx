@@ -1,11 +1,14 @@
 import { useTranslation } from "react-i18next";
 import { useMemo, useState } from "react";
-import "./calendar.css";
 import CalendarView from "./components/CalendarView";
 import { useCalendarTasksQuery } from "@/features/tasks/api/taskQueries";
 import { useProjectsQuery } from "@/features/tasks/api/projectQueries";
 import { useCalendarMutations } from "./api/useCalendarMutations";
 import { useVisibleTasks } from "@/stores/useTaskFilterStore";
+import {
+  SETTINGS_STORAGE_KEY,
+  useSettingsStore,
+} from "@/stores/useSettingsStore";
 import {
   getBufferedCalendarRange,
   getVisibleCalendarRange,
@@ -16,19 +19,31 @@ import { getApiErrorMessage } from "@/shared/services/apiError";
 
 const CalendarPage = () => {
   const { t } = useTranslation("workspace");
+  const weekStartsOn = useSettingsStore(
+    (state) => state.workspace.weekStartsOn,
+  );
 
   const today = useMemo(() => startOfDay(new Date()), []);
   const [currentDate, setCurrentDate] = useState(today);
-  const [viewMode, setViewMode] = useState("week");
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      if (localStorage.getItem(SETTINGS_STORAGE_KEY)) {
+        return useSettingsStore.getState().workspace.defaultCalendarView;
+      }
+    } catch {
+      // Ignore storage errors and keep V1 week default.
+    }
+    return "week";
+  });
 
   const bufferedRange = useMemo(
-    () => getBufferedCalendarRange(currentDate, viewMode),
-    [currentDate, viewMode],
+    () => getBufferedCalendarRange(currentDate, viewMode, weekStartsOn),
+    [currentDate, viewMode, weekStartsOn],
   );
 
   const visibleRange = useMemo(
-    () => getVisibleCalendarRange(currentDate, viewMode),
-    [currentDate, viewMode],
+    () => getVisibleCalendarRange(currentDate, viewMode, weekStartsOn),
+    [currentDate, viewMode, weekStartsOn],
   );
 
   const tasksQuery = useCalendarTasksQuery({
@@ -111,14 +126,43 @@ const CalendarPage = () => {
 
   if (isLoading) {
     return (
-      <div className="ui-page-shell calendar-page-shell" aria-busy="true">
-        <header className="ui-workspace-heading">
-          <h1 className="ui-page-title">{t("calendar")}</h1>
+      <div
+        className="ui-page-shell mx-auto calendar-page-shell [&_.calendar-weekdays]:grid-cols-[repeat(7,minmax(0,1fr))]
+        [&_.calendar-days]:grid-cols-[repeat(7,minmax(0,1fr))] [&_.calendar-days_>_.calendar-day]:rounded-[0]
+        [&_.calendar-days_>_.calendar-day]:min-w-[0] [&_.calendar-days_>_.calendar-day]:[box-shadow:none]
+        [&_.calendar-days_>_.calendar-day]:align-top
+        [&_.calendar-days_>_.calendar-day[data-selected=true]]:[box-shadow:inset_0_3px_var(--color-accent)]
+        [&_[data-cal-task-card]]:rounded-[5px] [&_[data-cal-task-card]]:[box-shadow:none]
+        [&_[data-cal-task-name]]:whitespace-normal [&_[data-cal-task-name]]:[-webkit-line-clamp:2]
+        [&_[data-cal-task-name]]:[-webkit-box-orient:vertical]
+        [@media(max-width:650px)]:[&_.calendar-board[data-view=month]_[data-cal-task-card]]:opacity-[0.55]
+        [&_.calendar-timeline-task]:absolute [&_.calendar-timeline-task]:items-stretch
+        [&_.calendar-timeline-task]:justify-start [&_.calendar-timeline-task]:[scroll-margin-top:80px]
+        [&_.calendar-timeline-task]:text-left [&_.calendar-timeline-task]:[border-left-width:3px]
+        [&_.calendar-timeline-task]:overflow-clip
+        [&_.calendar-timeline-task_[data-cal-task-name]]:[-webkit-line-clamp:var(--timeline-title-lines,2)]
+        [&_.calendar-timeline-task_[data-cal-task-name]]:overflow-hidden
+        [&_.calendar-timeline-task_[data-cal-task-name]]:wrap-anywhere
+        [&_.calendar-timeline-event_.calendar-timeline-task]:relative"
+        aria-busy="true"
+      >
+        <header className="ui-workspace-heading flex items-center justify-between">
+          <h1 className="ui-page-title m-[0] text-[var(--color-text)] [font-weight:650] text-balance">
+            {t("calendar")}
+          </h1>
         </header>
-        <div className="calendar-loading" role="status">
-          <div className="calendar-loading-summary" />
+        <div
+          className="calendar-loading text-[var(--color-text-muted)] text-[12px]"
+          role="status"
+        >
+          <div className="calendar-loading-summary h-[175px] [background:var(--color-accent-soft)] rounded-[18px] mb-[24px]" />
           <p>{t("loadingYourSchedule")}</p>
-          <div className="calendar-loading-grid">
+          <div
+            className="calendar-loading-grid mt-[16px] grid grid-cols-[repeat(7,1fr)] min-h-[260px]
+            [border:1px_solid_var(--color-line)] rounded-[14px] overflow-hidden
+            [&_>_div]:[background:var(--color-surface)] [&_>_div]:[border-right:1px_solid_var(--color-line)]
+            [&_>_div:last-child]:[border:0]"
+          >
             {Array.from({ length: 7 }, (_, index) => (
               <div key={index} />
             ))}
@@ -129,14 +173,34 @@ const CalendarPage = () => {
   }
 
   return (
-    <div className="ui-page-shell calendar-page-shell">
+    <div
+      className="ui-page-shell mx-auto calendar-page-shell [&_.calendar-weekdays]:grid-cols-[repeat(7,minmax(0,1fr))]
+      [&_.calendar-days]:grid-cols-[repeat(7,minmax(0,1fr))] [&_.calendar-days_>_.calendar-day]:rounded-[0]
+      [&_.calendar-days_>_.calendar-day]:min-w-[0] [&_.calendar-days_>_.calendar-day]:[box-shadow:none]
+      [&_.calendar-days_>_.calendar-day]:align-top
+      [&_.calendar-days_>_.calendar-day[data-selected=true]]:[box-shadow:inset_0_3px_var(--color-accent)]
+      [&_[data-cal-task-card]]:rounded-[5px] [&_[data-cal-task-card]]:[box-shadow:none]
+      [&_[data-cal-task-name]]:whitespace-normal [&_[data-cal-task-name]]:[-webkit-line-clamp:2]
+      [&_[data-cal-task-name]]:[-webkit-box-orient:vertical]
+      [@media(max-width:650px)]:[&_.calendar-board[data-view=month]_[data-cal-task-card]]:opacity-[0.55]
+      [&_.calendar-timeline-task]:absolute [&_.calendar-timeline-task]:items-stretch
+      [&_.calendar-timeline-task]:justify-start [&_.calendar-timeline-task]:[scroll-margin-top:80px]
+      [&_.calendar-timeline-task]:text-left [&_.calendar-timeline-task]:[border-left-width:3px]
+      [&_.calendar-timeline-task]:overflow-clip
+      [&_.calendar-timeline-task_[data-cal-task-name]]:[-webkit-line-clamp:var(--timeline-title-lines,2)]
+      [&_.calendar-timeline-task_[data-cal-task-name]]:overflow-hidden
+      [&_.calendar-timeline-task_[data-cal-task-name]]:wrap-anywhere
+      [&_.calendar-timeline-event_.calendar-timeline-task]:relative"
+    >
       {errorMessage && (
-        <header className="ui-workspace-heading">
-          <h1 className="ui-page-title">{t("calendar")}</h1>
+        <header className="ui-workspace-heading flex items-center justify-between">
+          <h1 className="ui-page-title m-[0] text-[var(--color-text)] [font-weight:650] text-balance">
+            {t("calendar")}
+          </h1>
         </header>
       )}
       {errorMessage ? (
-        <div className="ui-section-card ui-card-padding text-center">
+        <div className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)] text-center">
           <p className="text-lg font-semibold text-[var(--color-danger)]">
             {t("unableToLoadTheCalendar")}
           </p>

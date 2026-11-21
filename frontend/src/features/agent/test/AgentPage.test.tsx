@@ -203,7 +203,9 @@ describe("AgentPage and Agent routing", () => {
       );
     });
     expect(aiService.getConversation).not.toHaveBeenCalledWith(undefined);
-    expect(screen.getByText("Welcome to specific chat")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Welcome to specific chat"),
+    ).toBeInTheDocument();
   });
 
   it("displays unavailable state when conversation ID is not found and does not fallback to latest", async () => {

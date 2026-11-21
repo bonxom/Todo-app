@@ -34,7 +34,7 @@ for (const theme of ["light", "dark"] as const) {
     const reference = await material(page, ".v2-workspace-panel");
     for (const [route, selector] of [
       ["calendar", ".v2-calendar-panel"],
-      ["agents", ".v2-agent-center"],
+      ["agents", ".v2-agent-history"],
     ]) {
       await page.goto(`/v2/${route}`);
       await expect(page.locator(selector)).toBeVisible();

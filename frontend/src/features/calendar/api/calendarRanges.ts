@@ -1,3 +1,5 @@
+import type { WeekStartDay } from "@/stores/useSettingsStore";
+
 export type CalendarViewMode = "week" | "month";
 
 export interface CalendarRange {
@@ -37,16 +39,25 @@ export const addMonths = (
   return date;
 };
 
-export const getStartOfWeek = (value: Date | string | number): Date => {
+const getWeekStartOffset = (weekStartsOn: WeekStartDay = "sunday"): number =>
+  weekStartsOn === "monday" ? 1 : 0;
+
+export const getStartOfWeek = (
+  value: Date | string | number,
+  weekStartsOn: WeekStartDay = "sunday",
+): Date => {
   const date = startOfDay(value);
-  date.setDate(date.getDate() - date.getDay());
+  const startOffset = getWeekStartOffset(weekStartsOn);
+  const diff = (date.getDay() - startOffset + 7) % 7;
+  date.setDate(date.getDate() - diff);
   return date;
 };
 
 export const buildWeekDays = (
   currentDate: Date,
+  weekStartsOn: WeekStartDay = "sunday",
 ): Array<{ date: Date; isCurrentMonth: boolean }> => {
-  const weekStart = getStartOfWeek(currentDate);
+  const weekStart = getStartOfWeek(currentDate, weekStartsOn);
   return Array.from({ length: 7 }, (_, index) => ({
     date: addDays(weekStart, index),
     isCurrentMonth:
@@ -56,13 +67,15 @@ export const buildWeekDays = (
 
 export const buildMonthDays = (
   currentDate: Date,
+  weekStartsOn: WeekStartDay = "sunday",
 ): Array<{ date: Date; isCurrentMonth: boolean }> => {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDayOfMonth = new Date(year, month, 1);
   const lastDayOfMonth = new Date(year, month + 1, 0);
   const daysInMonth = lastDayOfMonth.getDate();
-  const startingDayOfWeek = firstDayOfMonth.getDay();
+  const startOffset = getWeekStartOffset(weekStartsOn);
+  const startingDayOfWeek = (firstDayOfMonth.getDay() - startOffset + 7) % 7;
   const prevMonthLastDay = new Date(year, month, 0).getDate();
   const totalCells = Math.ceil((daysInMonth + startingDayOfWeek) / 7) * 7;
   const daysFromNextMonth = totalCells - (daysInMonth + startingDayOfWeek);
@@ -96,6 +109,7 @@ export const buildMonthDays = (
 export const getBufferedCalendarRange = (
   currentDate: Date,
   viewMode: CalendarViewMode,
+  weekStartsOn: WeekStartDay = "sunday",
 ): CalendarRange => {
   if (viewMode === "month") {
     const monthStart = new Date(
@@ -118,7 +132,7 @@ export const getBufferedCalendarRange = (
     };
   }
 
-  const weekDays = buildWeekDays(currentDate);
+  const weekDays = buildWeekDays(currentDate, weekStartsOn);
   const start = startOfDay(addDays(weekDays[0].date, -7));
   const end = endOfDay(addDays(weekDays[weekDays.length - 1].date, 7));
   return {
@@ -132,11 +146,12 @@ export const getBufferedCalendarRange = (
 export const getVisibleCalendarRange = (
   currentDate: Date,
   viewMode: CalendarViewMode,
+  weekStartsOn: WeekStartDay = "sunday",
 ): CalendarRange => {
   const days =
     viewMode === "month"
-      ? buildMonthDays(currentDate)
-      : buildWeekDays(currentDate);
+      ? buildMonthDays(currentDate, weekStartsOn)
+      : buildWeekDays(currentDate, weekStartsOn);
   const start = startOfDay(days[0].date);
   const end = endOfDay(days[days.length - 1].date);
   return {

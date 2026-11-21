@@ -19,8 +19,6 @@ import { AgentActivityList } from "./AgentActivityList";
 import { useModalKeyboard } from "@/shared/hooks/useModalKeyboard";
 import { AgentDiscardDialog } from "./AgentDiscardDialog";
 import ChatField from "@/features/tasks/components/chat/ChatField";
-import "@/styles/chat.css";
-import "./agentWorkspace.css";
 
 const DESKTOP_BP = 1280;
 const TABLET_BP = 768;
@@ -38,6 +36,7 @@ export default function AgentPage() {
   const { chat, setDraft } = useAgentSession();
   const {
     activeConversationId,
+    resolving,
     selectConversation,
     startNewChat,
     discardPromptOpen,
@@ -100,7 +99,16 @@ export default function AgentPage() {
   );
 
   return (
-    <div className="agent-workspace">
+    <div
+      className="agent-workspace flex h-[calc(100dvh_-_var(--topbar-height,64px)_-_48px)] [border:1px_solid_var(--color-line)]
+      rounded-[12px] w-full overflow-hidden bg-[var(--color-surface)] text-[var(--color-text)]
+      [@media(max-width:767px)]:flex-col [@media(max-width:767px)]:w-full [@media(max-width:767px)]:max-w-[100vw]
+      [@media(max-width:767px)]:overflow-x-hidden
+      [@media(max-width:767px)]:h-[calc(100dvh_-_var(--topbar-height,64px)_-_32px)]
+      [@media(max-width:767px)]:rounded-[10px]
+      [&_:is(button,a):focus-visible]:[outline:2px_solid_var(--color-accent)]
+      [&_:is(button,a):focus-visible]:outline-offset-[2px]"
+    >
       {/* Live region for accessibility */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {liveStatus}
@@ -119,7 +127,11 @@ export default function AgentPage() {
 
       {/* Desktop / Tablet Left Column: Conversation History */}
       {!isMobile && (
-        <aside className="agent-history-col flex flex-col">
+        <aside
+          className="agent-history-col w-[220px] shrink-0 [border-right:1px_solid_var(--color-line)]
+          bg-[var(--color-surface-muted)] h-full [@media(max-width:1279px)_and_(min-width:768px)]:w-[220px] flex
+          flex-col"
+        >
           <div className="border-b border-[var(--color-line)] p-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
               {t("conversationHistory")}
@@ -129,7 +141,7 @@ export default function AgentPage() {
             <AgentHistoryList
               activeConversationId={chat.conversationId || activeConversationId}
               onSelectConversation={selectConversation}
-              onNewChat={startNewChat}
+              onNewChat={() => startNewChat(null)}
               disabled={chat.loading || chat.sending || Boolean(chat.pending)}
             />
           </div>
@@ -172,7 +184,7 @@ export default function AgentPage() {
                   setHistoryDrawerOpen(false);
                 }}
                 onNewChat={() => {
-                  startNewChat();
+                  startNewChat(null);
                   setHistoryDrawerOpen(false);
                 }}
                 disabled={chat.loading || chat.sending || Boolean(chat.pending)}
@@ -190,10 +202,22 @@ export default function AgentPage() {
       )}
 
       {/* Center Column: Chat Field & Messages */}
-      <section aria-label={t("agentConversation")} className="agent-center-col">
+      <section
+        aria-label={t("agentConversation")}
+        className="agent-center-col flex-1 min-w-[0] flex flex-col h-full relative [@media(max-width:767px)]:w-full [@media(max-width:767px)]:max-w-[100vw] [@media(max-width:767px)]:overflow-x-hidden"
+      >
         {/* Workspace Sub-header */}
-        <header className="agent-chat-header">
-          <div className="agent-chat-identity">
+        <header
+          className="agent-chat-header flex items-center justify-between gap-[12px] p-[14px_20px] min-h-[74px] shrink-0
+          [border-bottom:1px_solid_var(--color-line)] [background:var(--color-surface)]
+          [@media(max-width:1100px)]:flex-wrap [@media(max-width:1100px)]:[&_.agent-navigation]:order-3
+          [@media(max-width:767px)]:grid [@media(max-width:767px)]:grid-cols-[minmax(0,1fr)_auto]
+          [@media(max-width:767px)]:gap-[10px] [@media(max-width:767px)]:p-[12px]
+          [@media(max-width:767px)]:[&_.agent-navigation]:col-[1_/_-1]
+          [@media(max-width:767px)]:[&_.agent-navigation]:justify-self-stretch
+          [@media(max-width:767px)]:[&_.agent-navigation_a]:flex-1"
+        >
+          <div className="agent-chat-identity flex items-center gap-[9px] whitespace-nowrap text-[14px]">
             {isMobile && (
               <button
                 ref={historyTriggerRef}
@@ -212,12 +236,13 @@ export default function AgentPage() {
           </div>
 
           <AgentNavigation active="chat" />
-          <div className="agent-chat-context-toggle">
+          <div className="agent-chat-context-toggle flex shrink-0 [@media(max-width:767px)]:col-2 [@media(max-width:767px)]:row-1">
             {isDesktop ? (
               <button
                 type="button"
                 onClick={() => setDesktopRightPanelOpen((open) => !open)}
-                className="flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+                className="flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] px-2.5 py-1.5 text-xs font-medium
+                  text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
                 aria-label={
                   desktopRightPanelOpen
                     ? t("closeContextPanel")
@@ -253,7 +278,7 @@ export default function AgentPage() {
 
         {/* Content Area */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          {chat.loading && !chat.conversationId ? (
+          {resolving || (chat.loading && !chat.conversationId) ? (
             <div className="flex flex-1 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-[var(--color-accent)]" />
             </div>
@@ -272,7 +297,7 @@ export default function AgentPage() {
               </p>
               <button
                 type="button"
-                onClick={startNewChat}
+                onClick={() => startNewChat(null)}
                 className="ui-btn-primary mt-4"
               >
                 <Plus className="h-4 w-4" />
@@ -299,7 +324,9 @@ export default function AgentPage() {
                         key={starter}
                         type="button"
                         onClick={() => handleSelectStarter(starter)}
-                        className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-1.5 text-xs font-medium text-[var(--color-text)] transition-colors hover:border-[var(--color-accent)] hover:bg-[var(--color-surface-muted)]"
+                        className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface-muted)] px-4 py-1.5 text-xs font-medium
+                          text-[var(--color-text)] transition-colors hover:border-[var(--color-accent)]
+                          hover:bg-[var(--color-surface-muted)]"
                       >
                         {t(
                           [
@@ -317,6 +344,7 @@ export default function AgentPage() {
               {/* ChatField handles messages, attachments, proposals, and composer */}
               <div className="flex-1 overflow-hidden">
                 <ChatField
+                  showWelcome={false}
                   chat={chat}
                   messages={chat.messages}
                   onSendMessage={chat.send}
@@ -331,14 +359,20 @@ export default function AgentPage() {
 
       {/* Desktop Right Column: Project Context & Verified Activity List */}
       {isDesktop && desktopRightPanelOpen && (
-        <aside className="agent-right-col flex flex-col p-4">
+        <aside
+          className="agent-right-col w-[280px] shrink-0 [border-left:1px_solid_var(--color-line)] bg-[var(--color-surface-muted)]
+          h-full overflow-y-auto [transition:width_0.2s_ease-in-out] flex flex-col p-4"
+        >
           <div className="mb-4 border-b border-[var(--color-line)] pb-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
               {t("contextActions")}
             </h2>
           </div>
           <div className="space-y-6">
-            <AgentContextPanel chat={chat} />
+            <AgentContextPanel
+              chat={chat}
+              allowDraftProject={!resolving && !isUnavailable}
+            />
             <div>
               <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                 {t("verifiedActivities")}
@@ -386,7 +420,10 @@ export default function AgentPage() {
               </button>
             </div>
             <div className="flex-1 space-y-6 overflow-y-auto pt-4">
-              <AgentContextPanel chat={chat} />
+              <AgentContextPanel
+                chat={chat}
+                allowDraftProject={!resolving && !isUnavailable}
+              />
               <div>
                 <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                   {t("verifiedActivities")}

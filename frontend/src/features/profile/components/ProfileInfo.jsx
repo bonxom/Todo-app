@@ -78,7 +78,7 @@ const ProfileInfo = ({ user }) => {
   ];
 
   return (
-    <section className="ui-section-card ui-card-padding">
+    <section className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)]">
       <div className="mb-4">
         <h2 className="m-0 text-lg font-semibold tracking-[-0.02em] text-[var(--color-text)]">
           {t("personalInformation")}
@@ -90,9 +90,19 @@ const ProfileInfo = ({ user }) => {
 
       <div>
         {fields.map((field) => (
-          <div key={field.label} className="ui-detail-row">
-            <span className="ui-detail-row__label">{field.label}</span>
-            <span className="ui-detail-row__value">{field.value}</span>
+          <div
+            key={field.label}
+            className="ui-detail-row grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)] gap-[1rem] p-[0.875rem_0]
+            [border-bottom:1px_solid_color-mix(in_srgb,var(--color-line)_82%,var(--color-surface))]
+            [&:last-child]:[border-bottom:none] [@media(max-width:640px)]:grid-cols-[1fr]
+            [@media(max-width:640px)]:gap-[0.375rem]"
+          >
+            <span className="ui-detail-row__label text-[var(--color-text-muted)] text-[0.8125rem] [font-weight:600] [line-height:1.45]">
+              {field.label}
+            </span>
+            <span className="ui-detail-row__value min-w-[0] text-[var(--color-text)] text-[0.9375rem] [line-height:1.55] [word-break:break-word]">
+              {field.value}
+            </span>
           </div>
         ))}
       </div>

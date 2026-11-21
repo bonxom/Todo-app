@@ -39,8 +39,12 @@ const TaskList = ({
 
   if (visibleTasks.length === 0) {
     return (
-      <div className="todo-empty-state">
-        <span className="todo-empty-icon">
+      <div className="todo-empty-state text-center p-[50px_var(--space-5)] [&_>_p:first-of-type]:text-[1.25rem] [&_>_p:first-of-type]:[font-weight:650] [@media(max-width:520px)]:px-[1.125rem]">
+        <span
+          className="todo-empty-icon w-[65px] h-[65px] grid place-items-center [border:1px_solid_var(--color-line)]
+          rounded-[var(--radius-xl)] [background:var(--color-accent-soft)] text-[var(--color-accent)]
+          m-[0_auto_1.375rem] [transform:rotate(-7deg)]"
+        >
           {emptyState?.isFiltered ? (
             <Search size={28} />
           ) : (

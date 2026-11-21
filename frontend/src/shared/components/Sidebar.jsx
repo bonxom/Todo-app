@@ -165,14 +165,21 @@ const Sidebar = ({
       {!isDesktop && isOpen && (
         <button
           type="button"
-          className="ui-shell-overlay"
+          className="ui-shell-overlay fixed inset-[0] z-30 [background:var(--color-overlay)]"
           onClick={onClose}
           aria-label={t("navigation.close")}
         />
       )}
 
       <aside
-        className="ui-shell-sidebar"
+        className="ui-shell-sidebar fixed top-[0] left-[0] bottom-[0] z-40 flex flex-col overflow-visible
+          [border-right:1px_solid_var(--color-line)] [box-shadow:none]
+          [transition:transform_220ms_ease,width_220ms_ease]
+          [&[data-desktop=true]_.ui-shell-sidebar\_\_toggle]:right-[0]
+          [&[data-desktop=true]_.ui-shell-sidebar\_\_toggle]:[box-shadow:var(--shadow-sm)]
+          [&[data-desktop=false]]:[box-shadow:var(--shadow-sm)]
+          [&[data-desktop=false][data-open=false]]:[visibility:hidden]
+          [&[data-desktop=false][data-open=false]]:pointer-events-none [&[data-desktop=false][data-open=true]]:visible"
         data-desktop={isDesktop}
         data-open={isOpen}
         data-expanded={isExpanded}
@@ -197,7 +204,9 @@ const Sidebar = ({
           <button
             type="button"
             onClick={onClose}
-            className="ui-icon-button ui-focus-ring ui-shell-sidebar__toggle"
+            className="ui-icon-button items-center justify-center
+              [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease,transform_160ms_ease]
+              [&:hover]:[transform:translateY(-1px)] ui-focus-ring ui-shell-sidebar__toggle absolute top-[1rem] z-1"
             aria-label={t("navigation.close")}
             title={t("navigation.close")}
           >
@@ -206,21 +215,24 @@ const Sidebar = ({
         )}
 
         <div
-          className="ui-shell-sidebar__content"
+          className="ui-shell-sidebar__content flex min-h-[0] flex-1 flex-col gap-[var(--space-4)] overflow-x-hidden overflow-y-auto [transition:padding_220ms_ease]"
           style={{ padding: showLabels ? "1rem" : "1rem 0.75rem" }}
         >
           <div
-            className={`ui-shell-brand ${showLabels ? "" : "justify-center"}`}
+            className={`ui-shell-brand flex items-center gap-[0.75rem] min-w-[0] ${showLabels ? "" : "justify-center"}`}
           >
-            <div className="ui-shell-brand-mark" aria-hidden="true">
+            <div
+              className="ui-shell-brand-mark grid w-[2.5rem] h-[2.5rem] place-items-center shrink-0"
+              aria-hidden="true"
+            >
               <OrbitMark />
             </div>
             {showLabels && (
-              <div className="ui-shell-brand-copy">
+              <div className="ui-shell-brand-copy min-w-[0] [&_p]:m-[0]">
                 <p className="text-sm font-semibold text-[var(--color-text)]">
                   Orbit
                 </p>
-                <p className="ui-tabular text-xs text-[var(--color-text-muted)]">
+                <p className="ui-tabular [font-family:var(--font-mono)] [font-variant-numeric:tabular-nums] text-xs text-[var(--color-text-muted)]">
                   {todayLabel}
                 </p>
               </div>
@@ -228,12 +240,15 @@ const Sidebar = ({
           </div>
 
           {showLabels && (
-            <p className="ui-shell-section-label px-1">
+            <p className="ui-shell-section-label m-[0] text-[var(--color-text-muted)] text-[0.75rem] [font-weight:600] [line-height:1.2] px-1">
               {t("navigation.workspace")}
             </p>
           )}
 
-          <nav className="ui-shell-nav" aria-label={t("navigation.primary")}>
+          <nav
+            className="ui-shell-nav flex flex-1 flex-col gap-[0.375rem]"
+            aria-label={t("navigation.primary")}
+          >
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
 
@@ -241,7 +256,7 @@ const Sidebar = ({
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`ui-shell-nav-link ui-focus-ring ${showLabels ? "" : "justify-center"}`}
+                  className={`ui-shell-nav-link flex min-h-[2.75rem] items-center gap-[0.75rem] p-[0.75rem] [border:1px_solid_transparent] rounded-[var(--radius-lg)] [text-decoration:none] [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease] [&[data-active=true]]:border-[color-mix(in_srgb,var(--color-accent)_18%,var(--color-line))] ui-focus-ring ${showLabels ? "" : "justify-center"}`}
                   data-active={isActive}
                   aria-current={isActive ? "page" : undefined}
                   onClick={!isDesktop ? onClose : undefined}
@@ -252,7 +267,9 @@ const Sidebar = ({
                     {item.icon}
                   </span>
                   {showLabels && (
-                    <span className="ui-shell-nav-label">{t(item.label)}</span>
+                    <span className="ui-shell-nav-label overflow-hidden text-ellipsis whitespace-nowrap text-[0.9375rem] [font-weight:600]">
+                      {t(item.label)}
+                    </span>
                   )}
                 </Link>
               );
@@ -263,12 +280,12 @@ const Sidebar = ({
             <button
               type="button"
               onClick={handleLogout}
-              className={`ui-shell-nav-link ui-focus-ring w-full ${showLabels ? "" : "justify-center"}`}
+              className={`ui-shell-nav-link flex min-h-[2.75rem] items-center gap-[0.75rem] p-[0.75rem] [border:1px_solid_transparent] rounded-[var(--radius-lg)] [text-decoration:none] [transition:background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease,box-shadow_160ms_ease] [&[data-active=true]]:border-[color-mix(in_srgb,var(--color-accent)_18%,var(--color-line))] ui-focus-ring w-full ${showLabels ? "" : "justify-center"}`}
               title={!showLabels ? t("navigation.logout") : undefined}
             >
               <LogOut className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
               {showLabels && (
-                <span className="ui-shell-nav-label">
+                <span className="ui-shell-nav-label overflow-hidden text-ellipsis whitespace-nowrap text-[0.9375rem] [font-weight:600]">
                   {t("navigation.logout")}
                 </span>
               )}

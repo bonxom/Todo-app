@@ -43,7 +43,7 @@ const ProfileHeader = ({ user, onAvatarUpdate }) => {
   const memberSince = formatMemberSince(user?.createdAt);
 
   return (
-    <section className="ui-section-card ui-card-padding">
+    <section className="ui-section-card ui-card-padding p-[clamp(1rem,2vw,1.5rem)]">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <div className="relative shrink-0">
@@ -53,11 +53,7 @@ const ProfileHeader = ({ user, onAvatarUpdate }) => {
                 alt={user?.name || t("profileAvatar")}
                 width="96"
                 height="96"
-                className="h-24 w-24 rounded-full border object-cover"
-                style={{
-                  borderColor: "var(--color-line)",
-                  boxShadow: "var(--shadow-xs)",
-                }}
+                className="h-24 w-24 rounded-full border border-[var(--color-line)] object-cover [box-shadow:var(--shadow-xs)]"
                 onError={() => {
                   setFailedAvatarUrls((current) => {
                     const next = new Set(current);
@@ -68,14 +64,10 @@ const ProfileHeader = ({ user, onAvatarUpdate }) => {
               />
             ) : (
               <div
-                className="flex h-24 w-24 items-center justify-center rounded-full border text-3xl font-semibold"
-                style={{
-                  borderColor:
-                    "color-mix(in srgb, var(--color-accent) 18%, var(--color-line))",
-                  backgroundColor: "var(--color-accent-soft)",
-                  color: "var(--color-accent)",
-                  boxShadow: "var(--shadow-xs)",
-                }}
+                className="flex h-24 w-24 items-center justify-center rounded-full border
+                  border-[color-mix(in_srgb,var(--color-accent)_18%,var(--color-line))]
+                  bg-[var(--color-accent-soft)] text-3xl font-semibold text-[var(--color-accent)]
+                  [box-shadow:var(--shadow-xs)]"
               >
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
@@ -110,13 +102,9 @@ const ProfileHeader = ({ user, onAvatarUpdate }) => {
         </div>
 
         <div
-          className="min-w-0 max-w-sm rounded-[var(--radius-xl)] border p-4"
-          style={{
-            borderColor: "var(--color-line)",
-            background:
-              "color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-muted))",
-            boxShadow: "var(--shadow-xs)",
-          }}
+          className="min-w-0 max-w-sm rounded-[var(--radius-xl)] border border-[var(--color-line)]
+          bg-[color-mix(in_srgb,var(--color-surface)_88%,var(--color-surface-muted))] p-4
+          [box-shadow:var(--shadow-xs)]"
         >
           <p className="m-0 text-[0.7rem] font-semibold uppercase tracking-[0.06em] text-[var(--color-text-muted)]">
             {t("plannerIdentity")}

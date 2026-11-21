@@ -100,7 +100,7 @@ export default function RecentConversations({
   return (
     <section
       aria-label={t("recentConversations")}
-      className={`flex min-h-0 flex-col py-2 ${expanded ? "flex-1" : "chat-recent"}`}
+      className={`flex min-h-0 flex-col py-2 ${expanded ? "flex-1" : "chat-recent mt-[24px] [border-top:1px_solid_var(--color-line)] pt-[16px]"}`}
       onKeyDown={(event) => {
         if (showAll && event.key === "Escape") {
           event.stopPropagation();
@@ -108,7 +108,9 @@ export default function RecentConversations({
         }
       }}
     >
-      <h2 className="ui-chat-history-label mb-2">{t("recentConversations")}</h2>
+      <h2 className="ui-chat-history-label p-[0_0.5rem] [border:0] [background:transparent] text-left mb-2">
+        {t("recentConversations")}
+      </h2>
       <div
         className={
           showAll
@@ -169,7 +171,8 @@ export default function RecentConversations({
                 type="button"
                 disabled={disabled}
                 onClick={() => onOpen(conversation.id)}
-                className="ui-focus-ring flex w-full items-center gap-4 rounded-lg px-2 py-2.5 text-left text-sm text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)] disabled:opacity-50"
+                className="ui-focus-ring flex w-full items-center gap-4 rounded-lg px-2 py-2.5 text-left text-sm text-[var(--color-text)]
+                  transition-colors hover:bg-[var(--color-surface-muted)] disabled:opacity-50"
               >
                 <span
                   className="min-w-0 flex-1 truncate"
@@ -209,7 +212,7 @@ export default function RecentConversations({
           ref={viewAllRef}
           aria-label={t("viewAll", { count: conversations.length })}
           type="button"
-          className="ui-chat-history-label ui-focus-ring mt-2 self-start"
+          className="ui-chat-history-label p-[0_0.5rem] [border:0] [background:transparent] text-left ui-focus-ring mt-2 self-start"
           onClick={() => setShowAll(true)}
         >
           {t("viewAll", { count: conversations.length })}

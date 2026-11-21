@@ -7,7 +7,6 @@ import {
   toISOStringLocal,
 } from "@/shared/utils/dateTime";
 import { TaskProposalEditorContext } from "./taskProposalEditorContext";
-import "./taskProposal.css";
 
 type TaskListProps = {
   bare?: boolean;
@@ -47,16 +46,22 @@ export function TaskList({ bare = false }: TaskListProps) {
         disabled={locked}
         data-priority={priority}
         data-selected={isSelected ? "true" : "false"}
-        className="task-proposal-item"
+        className="task-proposal-item m-[0] rounded-[var(--radius-xl,12px)] p-[0.875rem_1rem] min-w-[0]
+          [background:var(--color-surface,#ffffff)] [box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))] flex
+          flex-col gap-[0.65rem] [transition:border-color_150ms_ease,opacity_150ms_ease]
+          [&[data-priority=High]]:[border-left-color:var(--color-danger,#b25547)]
+          [&[data-priority=Medium]]:[border-left-color:var(--color-warning,#a46a2a)]
+          [&[data-priority=Low]]:[border-left-color:var(--color-accent,#456b8c)] [&[data-selected=false]]:opacity-[0.68]
+          [&[data-selected=false]]:[background:var(--color-surface-muted,#f1f3f5)]"
       >
-        <div className="task-proposal-item-top">
-          <legend className="task-proposal-legend">
+        <div className="task-proposal-item-top flex flex-wrap items-center justify-between gap-[0.5rem] pb-[0.45rem] [border-bottom:1px_solid_color-mix(in_srgb,var(--color-line,#d9dee5)_65%,transparent)]">
+          <legend className="task-proposal-legend [float:left] p-[0] m-[0] text-[0.78rem] [font-weight:650] text-[var(--color-text,#1f2328)]">
             {t("task")}
             {index + 1}
           </legend>
-          <div className="task-proposal-item-badges">
+          <div className="task-proposal-item-badges flex flex-wrap items-center gap-[0.6rem] ml-auto">
             <span
-              className={`task-proposal-priority task-proposal-priority--${priority.toLowerCase()}`}
+              className={`task-proposal-priority inline-flex items-center p-[0.15rem_0.5rem] rounded-[999px] text-[0.68rem] [font-weight:650] [letter-spacing:0.01em] task-proposal-priority--${priority.toLowerCase()}`}
             >
               {priorityLabel}
             </span>
@@ -92,7 +97,7 @@ export function TaskList({ bare = false }: TaskListProps) {
             }
           />
         </label>
-        <div className="task-proposal-fields">
+        <div className="task-proposal-fields grid grid-cols-[repeat(auto-fit,minmax(min(100%,145px),1fr))] gap-[0.55rem]">
           <label className="task-proposal-field">
             <span>{t("priority")}</span>
             <CustomSelect
@@ -183,7 +188,12 @@ export function TaskList({ bare = false }: TaskListProps) {
           ))}
         </div>
         {!terminal && validation[index] && (
-          <p role="alert" className="task-proposal-alert">
+          <p
+            role="alert"
+            className="task-proposal-alert m-[0] p-[0.45rem_0.65rem] rounded-[var(--radius-sm,8px)]
+            [background:var(--color-danger-soft,#f9ecea)] text-[var(--color-danger,#b25547)] text-[0.78rem]
+            [font-weight:550]"
+          >
             {validation[index]}
           </p>
         )}

@@ -1,11 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams, useBlocker } from "react-router-dom";
+import {
+  useBlocker,
+  useLocation,
+  useNavigationType,
+  useSearchParams,
+} from "react-router-dom";
 import { useAgentSession } from "./agentSessionContext";
 
 export function useAgentNavigation() {
   const { chat, draft, clearDraft } = useAgentSession();
+  const location = useLocation();
+  const navigationType = useNavigationType();
   const [params, setParams] = useSearchParams();
   const activeConversationId = params.get("conversation") || undefined;
+  const assistantHandoff =
+    navigationType === "PUSH" && Boolean(location.state?.assistantHandoff);
+  const newChatProject = activeConversationId
+    ? undefined
+    : params.get("project") || undefined;
+  const activeProjectId = activeConversationId
+    ? (chat.context?.projectId ?? undefined)
+    : newChatProject;
+  const [resolvedKey, setResolvedKey] = useState<string>();
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const hasDraft = Boolean(
     draft.text.trim() ||
@@ -15,84 +31,116 @@ export function useAgentNavigation() {
   );
   const busy = chat.loading || chat.sending || Boolean(chat.pending);
   const internalNavigation = useRef(false);
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    if (
+      internalNavigation.current ||
+      nextLocation.pathname !== currentLocation.pathname
+    ) {
+      return false;
+    }
+    const restartsBlankChat =
+      !activeConversationId && nextLocation.key !== currentLocation.key;
+    return (
+      (nextLocation.search !== currentLocation.search || restartsBlankChat) &&
+      (hasDraft || busy)
+    );
+  });
+
   const writeUrl = useCallback(
-    (id: string, replace = false) => {
+    (nextParams: Record<string, string>, replace = false) => {
       internalNavigation.current = true;
-      setParams({ conversation: id }, { replace });
+      setParams(nextParams, { replace });
       internalNavigation.current = false;
     },
     [setParams],
   );
-  const blocker = useBlocker(({ nextLocation }) => {
-    // Moving to another surface preserves the same session and all drafts.
-    if (internalNavigation.current || nextLocation.pathname !== "/agent")
-      return false;
-    const nextId =
-      new URLSearchParams(nextLocation.search).get("conversation") || undefined;
-    return nextId !== activeConversationId && (hasDraft || busy);
-  });
-  const requested = useRef<string | null>(null);
-  const creating = useRef<{ previousId?: string } | null>(null);
+
   useEffect(() => {
-    if (busy) return;
-    if (creating.current) {
-      if (
-        chat.conversationId &&
-        chat.conversationId !== creating.current.previousId
-      ) {
-        requested.current = chat.conversationId;
-        writeUrl(chat.conversationId);
-        creating.current = null;
-      }
-      return;
+    if (resolvedKey !== location.key) {
+      if (!assistantHandoff && (chat.loading || chat.sending)) return;
+      const frame = requestAnimationFrame(() => {
+        if (
+          activeConversationId &&
+          activeConversationId !== chat.conversationId
+        ) {
+          // A turn left pending in the assistant can be recovered from its URL.
+          if (chat.pending) {
+            chat.resetConversation();
+            return;
+          }
+          clearDraft("new");
+          void chat.openConversation(activeConversationId, true);
+        } else if (!activeConversationId && !assistantHandoff) {
+          clearDraft("new");
+          chat.resetConversation(newChatProject);
+        }
+        setResolvedKey(location.key);
+      });
+      return () => cancelAnimationFrame(frame);
     }
-    if (activeConversationId) {
-      if (activeConversationId === chat.conversationId) {
-        requested.current = activeConversationId;
-      } else if (requested.current !== activeConversationId) {
-        requested.current = activeConversationId;
-        void chat.openConversation(activeConversationId, true);
-      }
-    } else if (chat.conversationId && !chat.error) {
-      writeUrl(chat.conversationId, true);
+
+    if (
+      !activeConversationId &&
+      chat.conversationId &&
+      chat.messages.length &&
+      !chat.loading &&
+      !chat.sending
+    ) {
+      writeUrl({ conversation: chat.conversationId }, assistantHandoff);
     }
-  }, [activeConversationId, chat, busy, writeUrl]);
-  // Never switch away while an execution result is still pending.
+  }, [
+    activeConversationId,
+    assistantHandoff,
+    chat,
+    clearDraft,
+    location.key,
+    newChatProject,
+    resolvedKey,
+    writeUrl,
+  ]);
+
   useEffect(() => {
     if (blocker.state === "blocked" && busy) blocker.reset();
   }, [blocker, busy]);
-  const perform = (action: () => Promise<void>) => {
+
+  const perform = (action: () => void) => {
     if (busy) return;
-    if (hasDraft) setPendingAction(() => () => void action());
-    else void action();
+    if (hasDraft) setPendingAction(() => action);
+    else action();
   };
+
   const selectConversation = (targetId: string) => {
-    if (targetId === chat.conversationId) return;
-    perform(async () => {
-      requested.current = null;
-      writeUrl(targetId);
-    });
+    if (targetId === activeConversationId) return;
+    perform(() => writeUrl({ conversation: targetId }));
   };
-  const startNewChat = () =>
-    perform(async () => {
-      creating.current = { previousId: chat.conversationId };
-      if (!(await chat.newConversation(true))) creating.current = null;
+
+  const startNewChat = (projectId: string | null = activeProjectId ?? null) =>
+    perform(() => {
+      const sameScope =
+        !activeConversationId && (projectId ?? undefined) === newChatProject;
+      writeUrl(projectId ? { project: projectId } : {}, sameScope);
     });
+
   const confirmDiscard = () => {
     clearDraft();
     const action = pendingAction;
     setPendingAction(null);
-    if (blocker.state === "blocked") {
-      requested.current = null;
-      blocker.proceed();
-    } else action?.();
+    if (blocker.state === "blocked") blocker.proceed();
+    else action?.();
   };
+
   const cancelDiscard = () => {
     setPendingAction(null);
     if (blocker.state === "blocked") blocker.reset();
   };
+
   return {
     activeConversationId,
+    activeProjectId,
+    resolving:
+      !assistantHandoff &&
+      resolvedKey !== location.key &&
+      (!activeConversationId || activeConversationId !== chat.conversationId),
     selectConversation,
     startNewChat,
     discardPromptOpen:
