@@ -15,7 +15,7 @@ const storage = vi.hoisted(() => ({
   remove: vi.fn(),
 }));
 const vision = vi.hoisted(() => vi.fn());
-vi.mock("../../libs/visionClient.js", () => ({ describeImage: vision }));
+vi.mock("../../libs/visionClient.js", () => ({ analyzeImage: vision }));
 const conversations = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock("../../repositories/attachmentRepository.js", () => ({
   attachmentRepository: repo,
@@ -24,7 +24,6 @@ vi.mock("../../libs/objectStorage.js", () => ({ objectStorage: storage }));
 vi.mock("../../repositories/conversationRepository.js", () => ({
   conversationRepository: conversations,
 }));
-import { attachmentVisionService } from "../attachmentVisionService.js";
 import { attachmentService } from "../attachmentService.js";
 import {
   validateAttachment,
@@ -46,51 +45,43 @@ describe("private attachments", () => {
     storage.remove.mockResolvedValue(undefined);
     repo.create.mockImplementation(async (value) => value);
   });
-  it.each(["unconfigured", "down", "pending"])(
-    "uses direct vision and cached chat context when storage is %s",
-    async (mode) => {
-      vision.mockImplementation(async (bytes, mime) => {
-        expect(bytes).toEqual(image.buffer);
-        expect(mime).toBe("image/png");
-        expect(storage.put).not.toHaveBeenCalled();
-        return { description: "A blue cup", model: "vision" };
-      });
-      storage.put.mockImplementation(() =>
-        mode === "pending"
-          ? new Promise(() => {})
-          : Promise.reject(new Error(mode)),
-      );
-      const uploaded = await attachmentService.upload(
-        "user",
-        "conversation",
-        image,
-      );
-      const record = repo.create.mock.calls[0][0];
-      repo.get.mockResolvedValue({ ...record, state: "attached" });
-      expect(
-        await attachmentVisionService.context("user", "conversation", [
-          uploaded,
-        ]),
-      ).toContain("A blue cup");
-      expect(vision).toHaveBeenCalledTimes(1);
-      expect(vision).toHaveBeenCalledWith(
-        image.buffer,
-        "image/png",
-        expect.any(AbortSignal),
-      );
-      expect(vision.mock.invocationCallOrder[0]).toBeLessThan(
-        storage.put.mock.invocationCallOrder[0],
-      );
-      expect(storage.get).not.toHaveBeenCalled();
-      expect(repo.claimUnused).not.toHaveBeenCalled();
-      expect(storage.put).toHaveBeenCalledWith(
-        record.objectKey,
-        image.buffer,
-        "image/png",
-      );
-    },
-  );
-  it("rejects unauthorized and invalid images before calling vision", async () => {
+  it("stores image bytes synchronously in object storage without invoking vision at upload", async () => {
+    storage.put.mockImplementation(async () => {
+      expect(repo.create).toHaveBeenCalled();
+    });
+    const uploaded = await attachmentService.upload(
+      "user",
+      "conversation",
+      image,
+    );
+    expect(uploaded).toEqual({
+      id: expect.any(String),
+      name: "photo.png",
+      mimeType: "image/png",
+      size: image.buffer.length,
+    });
+    const record = repo.create.mock.calls[0][0];
+    expect(record.analysis).toBeUndefined();
+    expect(vision).not.toHaveBeenCalled();
+    expect(storage.put).toHaveBeenCalledWith(
+      record.objectKey,
+      image.buffer,
+      "image/png",
+    );
+    expect(repo.ready).toHaveBeenCalledWith(uploaded.id);
+  });
+  it("fails with 503 and compensates when object storage fails for an image upload", async () => {
+    storage.put.mockRejectedValue(new Error("storage unavailable"));
+    repo.claimUnused.mockResolvedValue({ _id: "img-id", objectKey: "key" });
+    await expect(
+      attachmentService.upload("user", "conversation", image),
+    ).rejects.toMatchObject({ statusCode: 503 });
+    expect(vision).not.toHaveBeenCalled();
+    expect(repo.ready).not.toHaveBeenCalled();
+    expect(storage.remove).toHaveBeenCalledWith("key");
+    expect(repo.delete).toHaveBeenCalledWith("img-id");
+  });
+  it("rejects unauthorized and invalid images before touching storage or vision", async () => {
     conversations.get.mockRejectedValueOnce(new Error("not found"));
     await expect(
       attachmentService.upload("user", "other", image),
@@ -104,28 +95,14 @@ describe("private attachments", () => {
     expect(vision).not.toHaveBeenCalled();
     expect(storage.put).not.toHaveBeenCalled();
   });
-  it("retains explicit failed vision analysis and still stores the image", async () => {
-    vision.mockRejectedValue(new Error("vision down"));
-    const uploaded = await attachmentService.upload(
-      "user",
-      "conversation",
-      image,
-    );
-    const record = repo.create.mock.calls[0][0];
-    expect(record.analysis.status).toBe("failed");
-    repo.get.mockResolvedValue({ ...record, state: "attached" });
-    expect(
-      await attachmentVisionService.context("user", "conversation", [uploaded]),
-    ).toContain('"status":"failed"');
-    expect(storage.put).toHaveBeenCalled();
-  });
-  it("does not store image bytes when persistence fails", async () => {
-    vision.mockResolvedValue({ description: "A cup", model: "vision" });
+  it("compensates when marking an uploaded image ready fails", async () => {
     repo.ready.mockResolvedValue(false);
+    repo.claimUnused.mockResolvedValue({ _id: "img-id", objectKey: "key" });
     await expect(
       attachmentService.upload("user", "conversation", image),
-    ).rejects.toThrow();
-    expect(storage.put).not.toHaveBeenCalled();
+    ).rejects.toMatchObject({ statusCode: 503 });
+    expect(storage.remove).toHaveBeenCalledWith("key");
+    expect(repo.delete).toHaveBeenCalledWith("img-id");
   });
   it("allows disabled storage and supports LAN, localhost and Docker endpoints", () => {
     expect(readStorageConfig({})).toBeNull();

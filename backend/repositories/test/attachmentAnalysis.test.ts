@@ -1,53 +1,30 @@
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 const model = vi.hoisted(() => ({
-  findOneAndUpdate: vi.fn(),
-  updateOne: vi.fn(),
+  exists: vi.fn(),
 }));
 vi.mock("../../models/Attachment.js", () => ({ default: model }));
 import { attachmentRepository } from "../attachmentRepository.js";
-it("atomically claims only an owned, bound attachment without any previous attempt", async () => {
-  model.findOneAndUpdate.mockReturnValue({ lean: async () => null });
-  await attachmentRepository.claimAnalysis("owner", "conversation", "image");
-  expect(model.findOneAndUpdate).toHaveBeenCalledWith(
-    {
-      _id: "image",
-      userId: "owner",
-      conversationId: "conversation",
-      state: "attached",
-      analysis: { $exists: false },
-    },
-    {
-      $set: { analysis: { status: "processing", updatedAt: expect.any(Date) } },
-    },
-    { new: true },
-  );
+
+beforeEach(() => {
+  vi.resetAllMocks();
 });
-it("finishes only an owned in-flight analysis", async () => {
-  model.updateOne.mockResolvedValue({ matchedCount: 1 });
+
+it("checks for owned attached images in the current conversation", async () => {
+  model.exists.mockResolvedValue({ _id: "img-1" });
   expect(
-    await attachmentRepository.finishAnalysis(
-      "owner",
-      "conversation",
-      "image",
-      { status: "succeeded", description: "frog" },
-    ),
+    await attachmentRepository.hasAttachedImage("owner", "conversation"),
   ).toBe(true);
-  expect(model.updateOne).toHaveBeenCalledWith(
-    {
-      _id: "image",
-      userId: "owner",
-      conversationId: "conversation",
-      state: "attached",
-      "analysis.status": "processing",
-    },
-    {
-      $set: {
-        analysis: {
-          status: "succeeded",
-          description: "frog",
-          updatedAt: expect.any(Date),
-        },
-      },
-    },
-  );
+  expect(model.exists).toHaveBeenCalledWith({
+    userId: "owner",
+    conversationId: "conversation",
+    state: "attached",
+    mimeType: { $regex: /^image\// },
+  });
+});
+
+it("returns false when no attached image exists in the conversation", async () => {
+  model.exists.mockResolvedValue(null);
+  expect(
+    await attachmentRepository.hasAttachedImage("owner", "conversation"),
+  ).toBe(false);
 });
