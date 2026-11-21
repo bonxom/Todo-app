@@ -7116,6 +7116,39 @@ body:has(.calendar-timeline-event[data-resizing="true"])
   content: "· ";
 }
 
+.agent-process-thinking-block {
+  @apply my-0.5 flex flex-col gap-1 rounded-lg border border-[var(--color-line)]/70 bg-[var(--color-surface-muted,rgba(148,163,184,0.08))] px-2.5 py-2 text-xs text-[var(--color-text-muted)];
+}
+
+.agent-process-thinking-block--live {
+  @apply max-h-44 overflow-y-auto;
+}
+
+.agent-process-thinking-header {
+  @apply flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-text-muted)];
+}
+
+.agent-process-thinking-block--active .agent-process-thinking-header {
+  @apply text-[var(--color-text)];
+}
+
+.agent-process-thinking-text {
+  @apply m-0 whitespace-pre-wrap break-words text-[12px] leading-relaxed text-[var(--color-text-muted)];
+}
+
+.v2-app .agent-process-thinking-block {
+  @apply border-[var(--v2-border)] bg-[var(--v2-surface-subtle,rgba(255,255,255,0.4))] text-[var(--v2-muted)];
+}
+
+.v2-app .agent-process-thinking-header,
+.v2-app .agent-process-thinking-text {
+  @apply text-[var(--v2-muted)];
+}
+
+.v2-app .agent-process-thinking-block--active .agent-process-thinking-header {
+  @apply text-[var(--v2-ink)];
+}
+
 .agent-process-icon {
   @apply shrink-0;
 }

@@ -13,18 +13,30 @@ test("V2 Agents shows live thinking & tool processes, then auto-collapses into a
   const turnId = "turn-stream-1";
   let turnDone = false;
 
+  const reasoningBlocks = [
+    {
+      blockId: `${turnId}:r0`,
+      text: "First I should review the user's open tasks before proposing a focused schedule.",
+      order: 1,
+    },
+  ];
+
   const toolProgress = [
     {
       toolCallId: "tc-list",
-      label: "Searching tasks",
+      toolName: "orbit_list_tasks",
+      label: "Đang tìm kiếm công việc",
       status: "succeeded" as const,
-      summary: "Loaded 7 tasks",
+      summary: "Đã tìm kiếm công việc",
+      order: 2,
     },
     {
       toolCallId: "tc-propose",
-      label: "Preparing task proposal",
+      toolName: "propose_tasks",
+      label: "Đang chuẩn bị đề xuất công việc",
       status: "succeeded" as const,
-      summary: "Prepared 2 suggestions",
+      summary: "Đã chuẩn bị đề xuất công việc",
+      order: 4,
     },
   ];
 
@@ -61,12 +73,13 @@ test("V2 Agents shows live thinking & tool processes, then auto-collapses into a
       turnDone = true;
       const now = new Date().toISOString();
       const body = [
-        `id: 1\nevent: tool.started\ndata: ${JSON.stringify({ version: 1, turnId, seq: 1, occurredAt: now, payload: { toolCallId: "tc-list", label: "Searching tasks" } })}\n\n`,
-        `id: 2\nevent: tool.finished\ndata: ${JSON.stringify({ version: 1, turnId, seq: 2, occurredAt: now, payload: { toolCallId: "tc-list", status: "succeeded", summary: "Loaded 7 tasks" } })}\n\n`,
-        `id: 3\nevent: tool.started\ndata: ${JSON.stringify({ version: 1, turnId, seq: 3, occurredAt: now, payload: { toolCallId: "tc-propose", label: "Preparing task proposal" } })}\n\n`,
-        `id: 4\nevent: tool.finished\ndata: ${JSON.stringify({ version: 1, turnId, seq: 4, occurredAt: now, payload: { toolCallId: "tc-propose", status: "succeeded", summary: "Prepared 2 suggestions" } })}\n\n`,
-        `id: 5\nevent: assistant.delta\ndata: ${JSON.stringify({ version: 1, turnId, seq: 5, occurredAt: now, payload: { messageId: `${turnId}:bot`, text: "I reviewed your 7 tasks and prepared a focused schedule." } })}\n\n`,
-        `id: 6\nevent: turn.finished\ndata: ${JSON.stringify({ version: 1, turnId, seq: 6, occurredAt: now, payload: { status: "completed", result: { response: "I reviewed your 7 tasks and prepared a focused schedule." } } })}\n\n`,
+        `id: 1\nevent: reasoning.delta\ndata: ${JSON.stringify({ version: 1, turnId, seq: 1, occurredAt: now, payload: { blockId: `${turnId}:r0`, text: "First I should review the user's open tasks before proposing a focused schedule." } })}\n\n`,
+        `id: 2\nevent: tool.started\ndata: ${JSON.stringify({ version: 1, turnId, seq: 2, occurredAt: now, payload: { toolCallId: "tc-list", toolName: "orbit_list_tasks", label: "Đang tìm kiếm công việc" } })}\n\n`,
+        `id: 3\nevent: tool.finished\ndata: ${JSON.stringify({ version: 1, turnId, seq: 3, occurredAt: now, payload: { toolCallId: "tc-list", toolName: "orbit_list_tasks", status: "succeeded", summary: "Đã tìm kiếm công việc" } })}\n\n`,
+        `id: 4\nevent: tool.started\ndata: ${JSON.stringify({ version: 1, turnId, seq: 4, occurredAt: now, payload: { toolCallId: "tc-propose", toolName: "propose_tasks", label: "Đang chuẩn bị đề xuất công việc" } })}\n\n`,
+        `id: 5\nevent: tool.finished\ndata: ${JSON.stringify({ version: 1, turnId, seq: 5, occurredAt: now, payload: { toolCallId: "tc-propose", toolName: "propose_tasks", status: "succeeded", summary: "Đã chuẩn bị đề xuất công việc" } })}\n\n`,
+        `id: 6\nevent: assistant.delta\ndata: ${JSON.stringify({ version: 1, turnId, seq: 6, occurredAt: now, payload: { messageId: `${turnId}:bot`, text: "I reviewed your 7 tasks and prepared a focused schedule." } })}\n\n`,
+        `id: 7\nevent: turn.finished\ndata: ${JSON.stringify({ version: 1, turnId, seq: 7, occurredAt: now, payload: { status: "completed", result: { response: "I reviewed your 7 tasks and prepared a focused schedule." } } })}\n\n`,
       ].join("");
 
       return route.fulfill({
@@ -118,6 +131,7 @@ test("V2 Agents shows live thinking & tool processes, then auto-collapses into a
                       sender: "bot",
                       text: "I reviewed your 7 tasks and prepared a focused schedule.",
                       timestamp: "2026-11-21T04:00:04.000Z",
+                      reasoningBlocks,
                       toolProgress,
                     },
                   ]
@@ -153,14 +167,21 @@ test("V2 Agents shows live thinking & tool processes, then auto-collapses into a
   ).toBeVisible();
   const processToggle = page.getByTestId("agent-process-toggle");
   await expect(processToggle).toHaveAttribute("aria-expanded", "false");
-  await expect(processToggle).toContainText(/Completed 2 steps/i);
+  await expect(processToggle).toContainText(/Thought · Completed 2 steps/i);
   await page.screenshot({ path: `${OUT}/02-agents-completed-collapsed.png` });
 
-  // 3. Clicking the toggle expands to reveal persisted tool steps
+  // 3. Clicking the toggle expands to reveal persisted thinking block and localized EN tool steps
   await processToggle.click();
   await expect(processToggle).toHaveAttribute("aria-expanded", "true");
-  await expect(page.getByTestId("tool-progress-tc-list")).toBeVisible();
-  await expect(page.getByTestId("tool-progress-tc-propose")).toBeVisible();
+  await expect(page.getByTestId(`reasoning-block-${turnId}:r0`)).toContainText(
+    "First I should review the user's open tasks before proposing a focused schedule.",
+  );
+  await expect(page.getByTestId("tool-progress-tc-list")).toHaveText(
+    "Searched tasks",
+  );
+  await expect(page.getByTestId("tool-progress-tc-propose")).toHaveText(
+    "Prepared task proposal",
+  );
   await page.screenshot({ path: `${OUT}/03-agents-completed-expanded.png` });
 });
 

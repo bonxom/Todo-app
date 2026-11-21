@@ -57,7 +57,8 @@ export function useConversationChat(options?: ConversationChatOptions) {
 
   if (
     runStream.streamingMessage?.text ||
-    runStream.streamingMessage?.toolProgress?.length
+    runStream.streamingMessage?.toolProgress?.length ||
+    runStream.streamingMessage?.reasoningBlocks?.length
   ) {
     lastCompletedMessageRef.current = runStream.streamingMessage;
   }

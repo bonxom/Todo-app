@@ -285,4 +285,89 @@ describe("chatStreamReducer", () => {
     expect(state.messages[0].id).toBe("turn-new:bot");
     expect(state.messages[0].text).toBe("Tải lại trang");
   });
+
+  it("accumulates reasoning.delta blocks and preserves toolName and chronological order", () => {
+    const r1 = reduceChatRun(initialState, {
+      type: "EVENT",
+      event: {
+        id: "2",
+        event: "reasoning.delta",
+        data: {
+          version: 1,
+          turnId,
+          seq: 2,
+          occurredAt: new Date().toISOString(),
+          payload: { blockId: "r0", text: "Checking " },
+        },
+      },
+    });
+    const r2 = reduceChatRun(r1, {
+      type: "EVENT",
+      event: {
+        id: "3",
+        event: "reasoning.delta",
+        data: {
+          version: 1,
+          turnId,
+          seq: 3,
+          occurredAt: new Date().toISOString(),
+          payload: { blockId: "r0", text: "your tasks." },
+        },
+      },
+    });
+    const t1 = reduceChatRun(r2, {
+      type: "EVENT",
+      event: {
+        id: "4",
+        event: "tool.started",
+        data: {
+          version: 1,
+          turnId,
+          seq: 4,
+          occurredAt: new Date().toISOString(),
+          payload: {
+            toolCallId: "tc-1",
+            toolName: "orbit_list_tasks",
+            label: "Đang tìm kiếm công việc",
+          },
+        },
+      },
+    });
+    const t2 = reduceChatRun(t1, {
+      type: "EVENT",
+      event: {
+        id: "5",
+        event: "tool.finished",
+        data: {
+          version: 1,
+          turnId,
+          seq: 5,
+          occurredAt: new Date().toISOString(),
+          payload: {
+            toolCallId: "tc-1",
+            toolName: "orbit_list_tasks",
+            status: "succeeded",
+            summary: "Đã tìm kiếm công việc",
+          },
+        },
+      },
+    });
+
+    expect(t2.snapshot?.reasoningBlocks).toEqual([
+      { blockId: "r0", text: "Checking your tasks.", order: 2 },
+    ]);
+    expect(t2.messages[0]?.reasoningBlocks).toEqual([
+      { blockId: "r0", text: "Checking your tasks.", order: 2 },
+    ]);
+    expect(t2.snapshot?.toolProgress).toEqual([
+      {
+        toolCallId: "tc-1",
+        toolName: "orbit_list_tasks",
+        label: "Đang tìm kiếm công việc",
+        status: "succeeded",
+        summary: "Đã tìm kiếm công việc",
+        order: 4,
+      },
+    ]);
+  });
 });

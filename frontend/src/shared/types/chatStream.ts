@@ -13,9 +13,17 @@ export type ToolProgressStatus = "started" | "succeeded" | "failed" | "unknown";
 
 export interface ToolProgress {
   toolCallId: string;
+  toolName?: string;
   label?: string;
   status: ToolProgressStatus;
   summary?: string;
+  order?: number;
+}
+
+export interface ReasoningBlock {
+  blockId: string;
+  text: string;
+  order?: number;
 }
 
 export interface TurnSnapshot {
@@ -26,6 +34,7 @@ export interface TurnSnapshot {
   partialResponse?: string;
   lastEventSeq: number;
   toolProgress: ToolProgress[];
+  reasoningBlocks?: ReasoningBlock[];
   deadlineAt: string;
   terminalReason?: string;
   result?: ChatResponse;

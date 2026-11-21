@@ -97,6 +97,7 @@ const ChatMessageItem = memo(function ChatMessageItem({
         {!isUser && (
           <AgentProcessPanel
             toolProgress={message.toolProgress}
+            reasoningBlocks={message.reasoningBlocks}
             isLive={isStreamingMessage}
             hasResponseText={Boolean(message.text?.trim())}
             compact={!wideTranscript}

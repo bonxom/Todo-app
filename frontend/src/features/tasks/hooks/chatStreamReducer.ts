@@ -2,6 +2,7 @@ import type {
   TurnSnapshot,
   TurnStatus,
   ChatStreamEvent,
+  ReasoningBlock,
   ToolProgress,
 } from "@/shared/types/chatStream";
 import type { ConversationMessage } from "@/shared/types/domain";
@@ -33,7 +34,9 @@ interface ResultEnvelope {
 
 interface EventPayload {
   text?: string;
+  blockId?: string;
   toolCallId?: string;
+  toolName?: string;
   label?: string;
   status?: TurnStatus | ToolProgress["status"];
   summary?: string;
@@ -61,6 +64,9 @@ export function projectMessage(
       : {}),
     ...(snapshot.toolProgress?.length
       ? { toolProgress: snapshot.toolProgress }
+      : {}),
+    ...(snapshot.reasoningBlocks?.length
+      ? { reasoningBlocks: snapshot.reasoningBlocks }
       : {}),
     text,
     timestamp: snapshot.deadlineAt || new Date().toISOString(),
@@ -160,6 +166,40 @@ export function reduceChatRun(
         };
       }
 
+      if (event.event === "reasoning.delta") {
+        const deltaText = payload?.text || "";
+        const blockId = payload?.blockId || `${updatedSnapshot.turnId}:r0`;
+        if (!deltaText) {
+          return {
+            ...baseNextState,
+            snapshot: updatedSnapshot,
+          };
+        }
+        const existingBlocks = updatedSnapshot.reasoningBlocks ?? [];
+        const existingIndex = existingBlocks.findIndex(
+          (b) => b.blockId === blockId,
+        );
+        let nextBlocks: ReasoningBlock[];
+        if (existingIndex >= 0) {
+          nextBlocks = [...existingBlocks];
+          nextBlocks[existingIndex] = {
+            ...nextBlocks[existingIndex],
+            text: nextBlocks[existingIndex].text + deltaText,
+          };
+        } else {
+          nextBlocks = [
+            ...existingBlocks,
+            { blockId, text: deltaText, order: event.data.seq },
+          ];
+        }
+        updatedSnapshot.reasoningBlocks = nextBlocks;
+        return {
+          ...baseNextState,
+          snapshot: updatedSnapshot,
+          messages: projectMessage(updatedSnapshot),
+        };
+      }
+
       if (event.event === "tool.started") {
         const toolCallId = payload?.toolCallId;
         if (!toolCallId) {
@@ -169,6 +209,7 @@ export function reduceChatRun(
           };
         }
         const label = payload?.label;
+        const toolName = payload?.toolName;
         const existingIndex = updatedSnapshot.toolProgress.findIndex(
           (t) => t.toolCallId === toolCallId,
         );
@@ -177,13 +218,20 @@ export function reduceChatRun(
           nextToolProgress = [...updatedSnapshot.toolProgress];
           nextToolProgress[existingIndex] = {
             ...nextToolProgress[existingIndex],
+            ...(toolName ? { toolName } : {}),
             label,
             status: "started",
           };
         } else {
           nextToolProgress = [
             ...updatedSnapshot.toolProgress,
-            { toolCallId, label, status: "started" },
+            {
+              toolCallId,
+              ...(toolName ? { toolName } : {}),
+              label,
+              status: "started",
+              order: event.data.seq,
+            },
           ];
         }
         updatedSnapshot.toolProgress = nextToolProgress;
@@ -198,10 +246,12 @@ export function reduceChatRun(
         const toolCallId = payload?.toolCallId;
         const status = payload?.status;
         const summary = payload?.summary;
+        const toolName = payload?.toolName;
         const nextToolProgress = updatedSnapshot.toolProgress.map((t) =>
           t.toolCallId === toolCallId
             ? {
                 ...t,
+                ...(toolName ? { toolName } : {}),
                 status: (status as ToolProgress["status"]) || t.status,
                 summary: summary || t.summary,
               }

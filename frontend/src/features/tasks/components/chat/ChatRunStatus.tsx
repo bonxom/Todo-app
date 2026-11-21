@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { TurnSnapshot } from "@/shared/types/chatStream";
 import type { ConnectionState } from "@/features/tasks/hooks/chatStreamReducer";
+import { formatToolProcessStep } from "./toolProcessText";
 
 export interface ChatRunStatusProps {
   run: TurnSnapshot | null;
@@ -123,33 +124,36 @@ export const ChatRunStatus: React.FC<ChatRunStatusProps> = ({
           aria-live="polite"
           className="flex flex-col gap-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-muted)] p-2.5"
         >
-          {run.toolProgress.map((tool) => (
-            <div
-              key={tool.toolCallId}
-              data-testid={`tool-progress-${tool.toolCallId}`}
-              className="flex items-start justify-between gap-2 text-xs"
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                {tool.status === "succeeded" ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[var(--color-success,#16a34a)]" />
-                ) : tool.status === "failed" ? (
-                  <XCircle className="h-3.5 w-3.5 shrink-0 text-[var(--color-danger,#dc2626)]" />
-                ) : tool.status === "unknown" ? (
-                  <HelpCircle className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" />
-                ) : (
-                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-[var(--color-accent,#2563eb)]" />
+          {run.toolProgress.map((tool) => {
+            const formatted = formatToolProcessStep(tool, t);
+            return (
+              <div
+                key={tool.toolCallId}
+                data-testid={`tool-progress-${tool.toolCallId}`}
+                className="flex items-start justify-between gap-2 text-xs"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {tool.status === "succeeded" ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[var(--color-success,#16a34a)]" />
+                  ) : tool.status === "failed" ? (
+                    <XCircle className="h-3.5 w-3.5 shrink-0 text-[var(--color-danger,#dc2626)]" />
+                  ) : tool.status === "unknown" ? (
+                    <HelpCircle className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" />
+                  ) : (
+                    <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-[var(--color-accent,#2563eb)]" />
+                  )}
+                  <span className="font-medium text-[var(--color-text)] truncate">
+                    {formatted.primary}
+                  </span>
+                </div>
+                {formatted.detail && (
+                  <span className="text-[var(--color-text-muted)] text-[11px] truncate max-w-[200px]">
+                    {formatted.detail}
+                  </span>
                 )}
-                <span className="font-medium text-[var(--color-text)] truncate">
-                  {tool.label || t("processingTask")}
-                </span>
               </div>
-              {tool.summary && (
-                <span className="text-[var(--color-text-muted)] text-[11px] truncate max-w-[200px]">
-                  {tool.summary}
-                </span>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
