@@ -27,6 +27,7 @@ import { TaskProposalMessage } from "./A2UI/TaskProposalMessage";
 import { UiSurfaceMessage } from "./A2UI/UiSurfaceMessage";
 import { SkillReadBadge } from "@/features/agent/skills/SkillReadBadge";
 import { ChatRunStatus } from "./ChatRunStatus";
+import AgentProcessPanel from "./AgentProcessPanel";
 
 const USER_MESSAGE_STYLE = {
   color: "var(--chat-user-text, #fff)",
@@ -50,10 +51,17 @@ const ChatMessageItem = memo(function ChatMessageItem({
   setProposalDirty,
   disabled,
   wideTranscript,
+  isStreamingMessage = false,
 }) {
   const { t } = useTranslation("agent");
   const isUser = message.sender === "user";
   const openReply = wideTranscript && !isUser;
+  const hasVisibleBody = Boolean(
+    message.surface ||
+    message.proposal ||
+    message.interaction ||
+    (message.text && message.text.length > 0),
+  );
 
   return (
     <div
@@ -86,78 +94,88 @@ const ChatMessageItem = memo(function ChatMessageItem({
             {t("orbitAgent")}
           </p>
         )}
-        <div
-          className={`whitespace-pre-wrap ${
-            openReply
-              ? "wrap-anywhere text-[15px] leading-relaxed [&>h1]:text-[19px] [&>h2]:text-[17px] [&>:is(h3,h4,ol,ul)]:[font-size:inherit] [&>:is(ol,ul)]:[line-height:inherit]"
-              : wideTranscript
-                ? "wrap-anywhere text-[15px] leading-normal"
-                : "text-sm break-words"
-          }`}
-        >
-          {message.surface ? (
-            <UiSurfaceMessage
-              key={`${conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
-              surface={message.surface}
-              proposalEnvelope={
-                message.proposal
-                  ? {
-                      proposal: message.proposal,
-                      text: message.text,
-                      a2ui: message.a2ui,
-                      surface: message.surface,
-                    }
-                  : undefined
-              }
-              onDirtyChange={setProposalDirty}
-              disabled={disabled}
-            />
-          ) : message.proposal ? (
-            <TaskProposalMessage
-              key={`${conversationId}:${message.proposal.id}`}
-              envelope={{
-                proposal: message.proposal,
-                text: message.text,
-                a2ui: message.a2ui,
-              }}
-              onDirtyChange={setProposalDirty}
-              disabled={disabled}
-            />
-          ) : message.interaction ? (
-            <InteractionCard
-              interaction={message.interaction}
-              disabled
-              embedded
-            />
-          ) : (
-            <>
-              {(() => {
-                const match = message.text?.match(
-                  /^\[(?:Skill|Tool):\s*([a-zA-Z0-9_-]+)\]\s*([\s\S]*)$/,
-                );
-                if (match) {
-                  return (
-                    <>
-                      <div className="mb-1.5">
-                        <ToolBadge
-                          tool={match[1]}
-                          size="sm"
-                          className={
-                            isUser
-                              ? "bg-white/20 border-white/40 text-inherit"
-                              : ""
-                          }
-                        />
-                      </div>
-                      <MarkdownText text={match[2]} />
-                    </>
-                  );
+        {!isUser && (
+          <AgentProcessPanel
+            toolProgress={message.toolProgress}
+            isLive={isStreamingMessage}
+            hasResponseText={Boolean(message.text?.trim())}
+            compact={!wideTranscript}
+          />
+        )}
+        {hasVisibleBody && (
+          <div
+            className={`whitespace-pre-wrap ${
+              openReply
+                ? "wrap-anywhere text-[15px] leading-relaxed [&>h1]:text-[19px] [&>h2]:text-[17px] [&>:is(h3,h4,ol,ul)]:[font-size:inherit] [&>:is(ol,ul)]:[line-height:inherit]"
+                : wideTranscript
+                  ? "wrap-anywhere text-[15px] leading-normal"
+                  : "text-sm break-words"
+            }`}
+          >
+            {message.surface ? (
+              <UiSurfaceMessage
+                key={`${conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
+                surface={message.surface}
+                proposalEnvelope={
+                  message.proposal
+                    ? {
+                        proposal: message.proposal,
+                        text: message.text,
+                        a2ui: message.a2ui,
+                        surface: message.surface,
+                      }
+                    : undefined
                 }
-                return <MarkdownText text={message.text} />;
-              })()}
-            </>
-          )}
-        </div>
+                onDirtyChange={setProposalDirty}
+                disabled={disabled}
+              />
+            ) : message.proposal ? (
+              <TaskProposalMessage
+                key={`${conversationId}:${message.proposal.id}`}
+                envelope={{
+                  proposal: message.proposal,
+                  text: message.text,
+                  a2ui: message.a2ui,
+                }}
+                onDirtyChange={setProposalDirty}
+                disabled={disabled}
+              />
+            ) : message.interaction ? (
+              <InteractionCard
+                interaction={message.interaction}
+                disabled
+                embedded
+              />
+            ) : (
+              <>
+                {(() => {
+                  const match = message.text?.match(
+                    /^\[(?:Skill|Tool):\s*([a-zA-Z0-9_-]+)\]\s*([\s\S]*)$/,
+                  );
+                  if (match) {
+                    return (
+                      <>
+                        <div className="mb-1.5">
+                          <ToolBadge
+                            tool={match[1]}
+                            size="sm"
+                            className={
+                              isUser
+                                ? "bg-white/20 border-white/40 text-inherit"
+                                : ""
+                            }
+                          />
+                        </div>
+                        <MarkdownText text={match[2]} />
+                      </>
+                    );
+                  }
+                  return <MarkdownText text={message.text} />;
+                })()}
+              </>
+            )}
+          </div>
+        )}
         {!isUser && message.skillsRead && message.skillsRead.length > 0 && (
           <div className="mt-2 mb-1 flex flex-wrap gap-1.5">
             {message.skillsRead.map((skill) => (
@@ -175,16 +193,18 @@ const ChatMessageItem = memo(function ChatMessageItem({
           conversationId={conversationId}
           files={message.attachments}
         />
-        <time
-          className="chat-message-time block opacity-[0.75]"
-          dateTime={message.timestamp}
-          title={formatDateTime(message.timestamp)}
-        >
-          {new Date(message.timestamp).toLocaleTimeString(getLocale(), {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </time>
+        {(!isStreamingMessage || hasVisibleBody) && (
+          <time
+            className="chat-message-time block opacity-[0.75]"
+            dateTime={message.timestamp}
+            title={formatDateTime(message.timestamp)}
+          >
+            {new Date(message.timestamp).toLocaleTimeString(getLocale(), {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </time>
+        )}
       </div>
     </div>
   );
@@ -311,7 +331,7 @@ const ChatField = ({
   const run = chat?.runStream?.snapshot ?? chat?.activeRun;
   const activeRun =
     run?.status === "processing" || run?.status === "stopping" ? run : null;
-  const showStop = Boolean(workspaceComposer && activeRun && chat?.stop);
+  const showStop = Boolean(activeRun && chat?.stop);
   const stopping =
     showStop &&
     (activeRun.status === "stopping" || stoppingTurn === activeRun.turnId);
@@ -604,36 +624,35 @@ const ChatField = ({
                 setProposalDirty={chat?.setProposalDirty}
                 disabled={chat?.loading || chat?.sending}
                 wideTranscript={wideTranscript}
+                isStreamingMessage={Boolean(
+                  activeRun && message.id === `${activeRun.turnId}:bot`,
+                )}
               />
             ))
         )}
 
-        {isTyping && !chat?.runStream?.streamingMessage && (
+        {isTyping && !activeRun && !chat?.runStream?.streamingMessage && (
           <div className="chat-message-row flex items-start gap-[8px] chat-message-row--agent">
             <ChatAvatar appearance={avatarAppearance} />
             <div
-              className="rounded-2xl rounded-bl-sm border px-4 py-3"
-              style={BOT_MESSAGE_STYLE}
+              className={
+                wideTranscript
+                  ? "chat-message chat-message--bot min-w-0 w-full max-w-[min(calc(100%_-_36px),88ch)]! pt-0.5 text-base"
+                  : "chat-message chat-message--bot min-w-0 w-fit rounded-2xl rounded-bl-sm border px-4 py-3"
+              }
+              style={wideTranscript ? undefined : BOT_MESSAGE_STYLE}
             >
-              <div
-                className="flex items-center space-x-1"
-                role="status"
-                aria-label={t("processingRequest")}
-              >
-                <span className="mr-2 text-xs">{t("processing")}</span>
-                <div
-                  className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]"
-                  style={{ animationDelay: "0ms" }}
-                />
-                <div
-                  className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]"
-                  style={{ animationDelay: "150ms" }}
-                />
-                <div
-                  className="h-2 w-2 animate-bounce rounded-full bg-[var(--color-text-muted)]"
-                  style={{ animationDelay: "300ms" }}
-                />
-              </div>
+              {wideTranscript && (
+                <p className="mb-2 text-sm font-semibold text-[var(--color-text)]">
+                  {t("orbitAgent")}
+                </p>
+              )}
+              <AgentProcessPanel
+                toolProgress={[]}
+                isLive
+                hasResponseText={false}
+                compact={!wideTranscript}
+              />
             </div>
           </div>
         )}
@@ -641,7 +660,8 @@ const ChatField = ({
         <ChatRunStatus
           run={activeRun}
           connection={chat?.runStream?.connection ?? chat?.connection ?? "idle"}
-          onStop={workspaceComposer ? undefined : chat?.stop}
+          hideToolProgress
+          onStop={undefined}
           onReconnect={chat?.reconnect}
         />
 

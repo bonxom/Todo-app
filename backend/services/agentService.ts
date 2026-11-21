@@ -529,10 +529,25 @@ ${webSearchInstruction}`,
               );
               continue;
             }
+            await memory.stream?.emit({
+              type: "tool.started",
+              payload: {
+                toolCallId: toolCall.id,
+                label: getToolLabel(name),
+              },
+            });
             let surfaceSpec: SurfaceSpec;
             try {
               surfaceSpec = parseUiToolInput(args, "readonly");
             } catch (error) {
+              await memory.stream?.emit({
+                type: "tool.finished",
+                payload: {
+                  toolCallId: toolCall.id,
+                  status: "failed",
+                  summary: getToolSummary(name, "failed"),
+                },
+              });
               await rejectCall(
                 toolCall.id,
                 "INVALID_UI_SPEC",
@@ -541,6 +556,14 @@ ${webSearchInstruction}`,
               );
               continue;
             }
+            await memory.stream?.emit({
+              type: "tool.finished",
+              payload: {
+                toolCallId: toolCall.id,
+                status: "succeeded",
+                summary: getToolSummary(name, "succeeded"),
+              },
+            });
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,
@@ -562,10 +585,25 @@ ${webSearchInstruction}`,
               );
               continue;
             }
+            await memory.stream?.emit({
+              type: "tool.started",
+              payload: {
+                toolCallId: toolCall.id,
+                label: getToolLabel(name),
+              },
+            });
             const rawItems = Array.isArray(args.items)
               ? (args.items as Omit<ProposalItem, "id">[])
               : [];
             if (rawItems.length === 0 || rawItems.length > 20) {
+              await memory.stream?.emit({
+                type: "tool.finished",
+                payload: {
+                  toolCallId: toolCall.id,
+                  status: "failed",
+                  summary: getToolSummary(name, "failed"),
+                },
+              });
               await rejectCall(
                 toolCall.id,
                 "INVALID_TOOL_ARGUMENTS",
@@ -586,6 +624,14 @@ ${webSearchInstruction}`,
                 presentation = undefined;
               }
             }
+            await memory.stream?.emit({
+              type: "tool.finished",
+              payload: {
+                toolCallId: toolCall.id,
+                status: "succeeded",
+                summary: getToolSummary(name, "succeeded"),
+              },
+            });
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,

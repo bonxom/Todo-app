@@ -7063,6 +7063,110 @@ body:has(.calendar-timeline-event[data-resizing="true"])
   }
 }
 
+/* Minimal inline Collapsible Agent Process (V1 + V2) */
+.agent-process-panel {
+  @apply mb-2 flex max-w-full flex-col gap-1 text-xs;
+}
+
+.agent-process-panel--compact {
+  @apply mb-1.5 text-[12px];
+}
+
+.agent-process-panel:last-child {
+  @apply mb-0;
+}
+
+.agent-process-trigger {
+  @apply inline-flex w-fit max-w-full items-center gap-1.5 rounded-md border-0 bg-transparent px-0 py-0.5 text-left text-xs font-medium text-[var(--color-text-muted)] cursor-pointer transition-colors hover:text-[var(--color-text)];
+}
+
+.agent-process-title {
+  @apply truncate;
+}
+
+.agent-process-chevron {
+  @apply shrink-0 opacity-75 transition-transform duration-150;
+}
+
+.agent-process-panel[data-expanded="true"] .agent-process-chevron {
+  @apply rotate-180;
+}
+
+.agent-process-steps {
+  @apply ml-1.5 mt-0.5 flex flex-col gap-1 border-l border-[var(--color-line)] pl-2.5;
+}
+
+.agent-process-step {
+  @apply flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-snug;
+}
+
+.agent-process-step-label {
+  @apply truncate text-[var(--color-text-muted)];
+}
+
+.agent-process-panel--live .agent-process-step-label {
+  @apply font-medium text-[var(--color-text)];
+}
+
+.agent-process-step-summary {
+  @apply truncate text-[11px] text-[var(--color-text-muted)] opacity-80;
+}
+
+.agent-process-step-summary::before {
+  content: "· ";
+}
+
+.agent-process-icon {
+  @apply shrink-0;
+}
+
+.agent-process-icon--live {
+  @apply text-[var(--color-accent)];
+}
+
+.agent-process-icon--success {
+  @apply text-[var(--color-success,#16a34a)];
+}
+
+.agent-process-icon--error {
+  @apply text-[var(--color-danger,#dc2626)];
+}
+
+.agent-process-icon--muted {
+  @apply text-[var(--color-text-muted)];
+}
+
+.v2-app .agent-process-trigger {
+  @apply text-[var(--v2-muted)] hover:text-[var(--v2-ink)];
+}
+
+.v2-app .agent-process-steps {
+  @apply border-[var(--v2-border)];
+}
+
+.v2-app .agent-process-step-label,
+.v2-app .agent-process-step-summary {
+  @apply text-[var(--v2-muted)];
+}
+
+.v2-app .agent-process-panel--live .agent-process-step-label {
+  @apply text-[var(--v2-ink)];
+}
+
+.v2-app .agent-process-icon--live {
+  @apply text-[var(--v2-accent)];
+}
+
+.v2-app .agent-process-icon--success {
+  @apply text-[var(--v2-success,#16a34a)];
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-process-chevron {
+    @apply transition-none;
+  }
+}
+
 @media (max-width: 767px) {
   .v2-agents .agent-workspace-composer .chat-input {
     @apply text-[16px];

@@ -384,5 +384,15 @@
   "startChatHeading": "What can I help you with?",
   "showChats": "Show chats",
   "hideChats": "Hide chats",
-  "chatProjectUnavailable": "This project is unavailable."
+  "chatProjectUnavailable": "This project is unavailable.",
+  "thinking": "Thinking…",
+  "analyzingRequest": "Analyzing your request…",
+  "synthesizingResponse": "Synthesizing response…",
+  "processSteps_one": "Completed {{count}} step",
+  "processSteps_other": "Completed {{count}} steps",
+  "processRunningSteps_one": "{{label}} ({{count}} step)",
+  "processRunningSteps_other": "{{label}} ({{count}} steps)",
+  "processStepsWithErrors_one": "{{count}} step (with issues)",
+  "processStepsWithErrors_other": "{{count}} steps (with issues)",
+  "toggleAgentProcess": "Toggle agent process details"
 }

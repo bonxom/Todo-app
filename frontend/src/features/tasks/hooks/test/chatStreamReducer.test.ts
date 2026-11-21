@@ -97,6 +97,13 @@ describe("chatStreamReducer", () => {
       label: "Tạo công việc",
       status: "started",
     });
+    expect(state1.messages[0]?.toolProgress).toEqual([
+      expect.objectContaining({
+        toolCallId: "call-1",
+        label: "Tạo công việc",
+        status: "started",
+      }),
+    ]);
 
     const finishAction = {
       type: "EVENT" as const,
@@ -124,6 +131,13 @@ describe("chatStreamReducer", () => {
       status: "succeeded",
       summary: "Đã tạo xong",
     });
+    expect(state2.messages[0]?.toolProgress).toEqual([
+      expect.objectContaining({
+        toolCallId: "call-1",
+        status: "succeeded",
+        summary: "Đã tạo xong",
+      }),
+    ]);
   });
 
   it("detects sequence gap and sets connection to reconnecting while preserving cursor", () => {

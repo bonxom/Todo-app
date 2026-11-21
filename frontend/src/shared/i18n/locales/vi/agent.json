@@ -384,5 +384,15 @@
   "startChatHeading": "Bạn cần Orbit giúp gì?",
   "showChats": "Hiện cuộc trò chuyện",
   "hideChats": "Ẩn cuộc trò chuyện",
-  "chatProjectUnavailable": "Dự án này không còn khả dụng."
+  "chatProjectUnavailable": "Dự án này không còn khả dụng.",
+  "thinking": "Đang suy nghĩ…",
+  "analyzingRequest": "Đang phân tích yêu cầu…",
+  "synthesizingResponse": "Đang tổng hợp câu trả lời…",
+  "processSteps_one": "Đã thực hiện {{count}} bước",
+  "processSteps_other": "Đã thực hiện {{count}} bước",
+  "processRunningSteps_one": "{{label}} ({{count}} bước)",
+  "processRunningSteps_other": "{{label}} ({{count}} bước)",
+  "processStepsWithErrors_one": "{{count}} bước (có lỗi)",
+  "processStepsWithErrors_other": "{{count}} bước (có lỗi)",
+  "toggleAgentProcess": "Đóng mở chi tiết quá trình xử lý"
 }

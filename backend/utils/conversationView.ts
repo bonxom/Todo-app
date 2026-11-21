@@ -117,6 +117,7 @@ export function turnMessages(
       timestamp: turn.updatedAt.toISOString(),
       interaction: publicInteraction(i),
       skillsRead: turn.skillsRead ?? [],
+      ...(turn.toolProgress?.length ? { toolProgress: turn.toolProgress } : {}),
     })),
     ...((turn.response && !turn.interactions?.length) || incomplete || expired
       ? [
@@ -129,6 +130,9 @@ export function turnMessages(
               (turn.response || interruptedReply(turn.messages)),
             timestamp: turn.updatedAt.toISOString(),
             skillsRead: turn.skillsRead ?? [],
+            ...(turn.toolProgress?.length
+              ? { toolProgress: turn.toolProgress }
+              : {}),
             ...(envelope?.surface ? { surface: envelope.surface } : {}),
             ...(envelope?.proposal ? { proposal: envelope.proposal } : {}),
             ...(envelope?.a2ui ? { a2ui: envelope.a2ui } : {}),

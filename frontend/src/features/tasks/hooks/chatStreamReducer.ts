@@ -59,6 +59,9 @@ export function projectMessage(
     )
       ? { turnStatus: snapshot.status as ConversationMessage["turnStatus"] }
       : {}),
+    ...(snapshot.toolProgress?.length
+      ? { toolProgress: snapshot.toolProgress }
+      : {}),
     text,
     timestamp: snapshot.deadlineAt || new Date().toISOString(),
     ...(res?.interaction ? { interaction: res.interaction } : {}),
@@ -187,6 +190,7 @@ export function reduceChatRun(
         return {
           ...baseNextState,
           snapshot: updatedSnapshot,
+          messages: projectMessage(updatedSnapshot),
         };
       }
 
@@ -207,6 +211,7 @@ export function reduceChatRun(
         return {
           ...baseNextState,
           snapshot: updatedSnapshot,
+          messages: projectMessage(updatedSnapshot),
         };
       }
 

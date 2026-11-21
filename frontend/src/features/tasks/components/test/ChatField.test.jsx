@@ -247,3 +247,190 @@ it("keeps the stopped label on a saved partial response after reload", () => {
   expect(screen.getByText("Partial answer")).toBeVisible();
   expect(screen.getByTestId("run-status-cancelled")).toBeVisible();
 });
+
+it("shows live expanded thinking & tool process while streaming and collapses after completion", async () => {
+  const user = userEvent.setup();
+  const timestamp = new Date().toISOString();
+  const activeRun = {
+    turnId: "turn-live",
+    conversationId: "conv-1",
+    requestId: "req-1",
+    status: "processing",
+    partialResponse: "",
+    lastEventSeq: 1,
+    toolProgress: [],
+    deadlineAt: new Date(Date.now() + 300_000).toISOString(),
+  };
+
+  const { rerender } = render(
+    <ChatField
+      onSendMessage={vi.fn()}
+      workspaceComposer
+      messages={[
+        {
+          id: "turn-live:user",
+          sender: "user",
+          text: "Plan my day",
+          timestamp,
+        },
+        {
+          id: "turn-live:bot",
+          sender: "bot",
+          text: "",
+          timestamp,
+          toolProgress: [],
+        },
+      ]}
+      chat={{
+        mode: "auto",
+        setMode: vi.fn(),
+        locked: true,
+        loading: false,
+        sending: false,
+        activeRun,
+        runStream: {
+          snapshot: activeRun,
+          connection: "live",
+          streamingMessage: {
+            id: "turn-live:bot",
+            sender: "bot",
+            text: "",
+            timestamp,
+            toolProgress: [],
+          },
+        },
+        stop: vi.fn(),
+      }}
+    />,
+  );
+
+  // Minimal live thinking line is visible immediately before any tool starts or text streams
+  const liveRegion = screen.getByTestId("agent-process-live");
+  expect(liveRegion).toBeVisible();
+  expect(screen.getByTestId("agent-process-thinking-step")).toHaveTextContent(
+    /thinking/i,
+  );
+
+  // After completion with persisted toolProgress, panel defaults to collapsed and toggles open on click
+  rerender(
+    <ChatField
+      onSendMessage={vi.fn()}
+      workspaceComposer
+      messages={[
+        {
+          id: "turn-live:user",
+          sender: "user",
+          text: "Plan my day",
+          timestamp,
+        },
+        {
+          id: "turn-live:bot",
+          sender: "bot",
+          text: "Here is your daily plan.",
+          timestamp,
+          toolProgress: [
+            {
+              toolCallId: "tc-1",
+              label: "Searching tasks",
+              status: "succeeded",
+              summary: "Found 5 tasks",
+            },
+          ],
+        },
+      ]}
+      chat={{
+        mode: "auto",
+        setMode: vi.fn(),
+        locked: false,
+        loading: false,
+        sending: false,
+        activeRun: null,
+        runStream: {
+          snapshot: null,
+          connection: "idle",
+          streamingMessage: null,
+        },
+        stop: vi.fn(),
+      }}
+    />,
+  );
+
+  const completedToggle = screen.getByTestId("agent-process-toggle");
+  expect(completedToggle).toHaveAttribute("aria-expanded", "false");
+  expect(screen.queryByTestId("tool-progress-tc-1")).not.toBeInTheDocument();
+
+  await user.click(completedToggle);
+  expect(completedToggle).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByTestId("tool-progress-tc-1")).toBeVisible();
+  expect(screen.getByText("Searching tasks")).toBeVisible();
+  expect(screen.getByText("Found 5 tasks")).toBeVisible();
+});
+
+it("replaces Send with Stop in bubble chat composer when a run is active", async () => {
+  const user = userEvent.setup();
+  const stop = vi.fn().mockResolvedValue(null);
+  const activeRun = {
+    turnId: "turn-bubble",
+    conversationId: "conv-1",
+    requestId: "req-2",
+    status: "processing",
+    partialResponse: "",
+    lastEventSeq: 1,
+    toolProgress: [
+      {
+        toolCallId: "tc-bubble",
+        label: "Checking tasks",
+        status: "started",
+      },
+    ],
+    deadlineAt: new Date(Date.now() + 300_000).toISOString(),
+  };
+
+  render(
+    <ChatField
+      onSendMessage={vi.fn()}
+      disabled
+      messages={[
+        {
+          id: "turn-bubble:bot",
+          sender: "bot",
+          text: "",
+          timestamp: new Date().toISOString(),
+          toolProgress: activeRun.toolProgress,
+        },
+      ]}
+      chat={{
+        mode: "auto",
+        setMode: vi.fn(),
+        locked: true,
+        loading: false,
+        sending: false,
+        activeRun,
+        runStream: {
+          snapshot: activeRun,
+          connection: "live",
+          streamingMessage: {
+            id: "turn-bubble:bot",
+            sender: "bot",
+            text: "",
+            timestamp: new Date().toISOString(),
+            toolProgress: activeRun.toolProgress,
+          },
+        },
+        stop,
+      }}
+    />,
+  );
+
+  // Only one Stop button (inside the composer, replacing Send), and it must be enabled
+  const stopButtons = screen.getAllByRole("button", { name: /^stop$/i });
+  expect(stopButtons).toHaveLength(1);
+  expect(stopButtons[0]).toHaveClass("chat-send");
+  expect(stopButtons[0]).not.toBeDisabled();
+
+  // Tool step renders once inside the collapsible panel (not duplicated in ChatRunStatus)
+  expect(screen.getAllByTestId("tool-progress-tc-bubble")).toHaveLength(1);
+
+  await user.click(stopButtons[0]);
+  expect(stop).toHaveBeenCalledTimes(1);
+});

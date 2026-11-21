@@ -134,7 +134,8 @@ export default function V2AgentChatBubble({
     docked: t("compactChat"),
   }[mode];
   const ModeIcon = modeIcon[mode];
-  const busy = chat.loading || chat.sending || Boolean(chat.pending);
+  const busy =
+    chat.loading || chat.sending || Boolean(chat.pending) || chat.isStreaming;
 
   const trigger = (
     <button
@@ -163,7 +164,7 @@ export default function V2AgentChatBubble({
     >
       <Sparkles size={18} strokeWidth={1.7} aria-hidden="true" />
       <span className="v2-assistant-trigger-label">{t("assistant")}</span>
-      {chat.sending && (
+      {(chat.sending || chat.isStreaming) && (
         <span className="v2-assistant-pulse absolute w-[8px] h-[8px] rounded-[100%] animate-[v2-assistant-pulse_1600ms_ease-in-out_infinite] [@media(prefers-reduced-motion:reduce)]:animate-none" />
       )}
     </button>
