@@ -36,6 +36,7 @@ it("renders bound fields and sends edited data through a real A2UI action", asyn
       onDirtyChange={dirty}
     />,
   );
+  fireEvent.click(await screen.findByRole("button", { name: "Edit task 1" }));
   const input = await screen.findByRole("textbox", { name: "Task 1 title" });
   fireEvent.change(input, { target: { value: "Read chapter 2" } });
   expect(dirty).toHaveBeenCalledWith(true);
@@ -54,6 +55,7 @@ it("renders bound fields and sends edited data through a real A2UI action", asyn
 });
 it("rejects invalid fields and supports start date editing", async () => {
   render(<TaskProposalSurface envelope={envelope()} onAction={vi.fn()} />);
+  fireEvent.click(await screen.findByRole("button", { name: "Edit task 1" }));
   fireEvent.change(
     await screen.findByRole("textbox", { name: "Task 1 title" }),
     { target: { value: " " } },
@@ -71,8 +73,13 @@ describe.each(["created", "cancelled"] as const)("%s proposal", (status) => {
     message.value = value.proposal;
     render(<TaskProposalSurface envelope={value} />);
     expect(
-      await screen.findByRole("textbox", { name: "Task 1 title" }),
+      await screen.findByRole("checkbox", {
+        name: /Select task: Study Vocabulary/,
+      }),
     ).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "Edit task 1" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Confirm/ }),
     ).not.toBeInTheDocument();

@@ -1,5 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { Fragment, useContext } from "react";
+import {
+  AlertCircle,
+  ArrowUpRight,
+  Check,
+  CheckCircle2,
+  Save,
+  X,
+} from "lucide-react";
 import type { ProposalAction } from "@/shared/types/A2UI/taskProposal";
 import { TaskProposalEditorContext } from "./taskProposalEditorContext";
 
@@ -36,13 +44,20 @@ export function TaskProposalActions({
     submit,
   } = editor;
 
+  const statusPillClass =
+    proposal.status === "created"
+      ? "bg-[var(--color-success-soft,#eaf4ef)] text-[var(--v2-success,var(--color-success,#2f7d5a))]"
+      : proposal.status === "cancelled"
+        ? "bg-[var(--v2-input-fill,var(--color-surface-muted,#f1f3f5))] text-[var(--v2-muted,var(--color-text-muted,#667085))]"
+        : dirty
+          ? "bg-[var(--color-warning-soft,#faf0df)] text-[var(--v2-warning,var(--color-warning,#a46a2a))]"
+          : "bg-[color-mix(in_srgb,var(--v2-accent,var(--color-accent,#456b8c))_13%,transparent)] text-[var(--v2-accent,var(--color-accent,#456b8c))]";
+
   const content = (
     <Fragment>
       {showHeader && (
-        <header
-          className={`task-proposal-header flex flex-wrap items-center gap-[0.5rem] justify-between pb-[0.65rem] [border-bottom:1px_solid_var(--color-line,#d9dee5)] [&_strong]:text-[0.9rem] [&_strong]:[font-weight:650] [&_strong]:[letter-spacing:-0.01em] task-proposal-header--${proposal.status}`}
-        >
-          <strong>
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--v2-border,var(--color-line,#d9dee5))] pb-2">
+          <strong className="text-[0.875rem] font-semibold tracking-[-0.012em] text-[var(--v2-ink,var(--color-text,#1f2328))]">
             {proposal.status === "created"
               ? t("tasksCreated")
               : proposal.status === "cancelled"
@@ -51,7 +66,7 @@ export function TaskProposalActions({
           </strong>
           <span
             role="status"
-            className="task-proposal-status inline-flex items-center p-[0.2rem_0.55rem] rounded-[999px] text-[0.72rem] [font-weight:600]"
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.71rem] font-semibold ${statusPillClass}`}
           >
             {terminal
               ? proposal.status === "created"
@@ -63,67 +78,97 @@ export function TaskProposalActions({
           </span>
         </header>
       )}
+
       {showAlerts && (error || choiceError) && (
         <p
           role="alert"
-          className="task-proposal-alert m-[0] p-[0.45rem_0.65rem] rounded-[var(--radius-sm,8px)]
-          [background:var(--color-danger-soft,#f9ecea)] text-[var(--color-danger,#b25547)] text-[0.78rem]
-          [font-weight:550]"
+          className="m-0 flex items-start gap-1.5 rounded-[10px] bg-[var(--color-danger-soft,#f9ecea)] px-2.5 py-2 text-[0.77rem] font-medium text-[var(--color-danger,#b25547)]"
         >
-          {error || choiceError}
+          <AlertCircle
+            size={14}
+            className="mt-0.5 shrink-0"
+            aria-hidden="true"
+          />
+          <span>{error || choiceError}</span>
         </p>
       )}
+
       {terminal ? (
-        <ul className="task-proposal-created-list m-[0] p-[0] [list-style:none] flex flex-col gap-[0.4rem]">
-          {proposal.createdTasks.map((task) => (
-            <li key={task.taskId}>
-              {onOpenTask ? (
-                <button
-                  type="button"
-                  className="task-proposal-created-link w-full text-left [background:var(--color-success-soft,#eaf4ef)] border-[color-mix(_in_srgb,var(--color-success,#2f7d5a)_30%,var(--color-line,#d9dee5)_)]"
-                  onClick={() => onOpenTask(task.taskId)}
-                >
-                  {t("createdTask", { title: task.title })}
-                </button>
-              ) : (
-                t("createdTask", { title: task.title })
-              )}
-            </li>
-          ))}
-        </ul>
+        proposal.createdTasks.length > 0 && (
+          <div className="min-w-0 overflow-hidden rounded-[12px] border border-[color-mix(in_srgb,var(--v2-success,var(--color-success,#2f7d5a))_26%,var(--v2-border,var(--color-line,#d9dee5)))] bg-[var(--v2-surface-solid,var(--color-surface,#ffffff))]">
+            <ul className="m-0 max-h-[220px] list-none divide-y divide-[var(--v2-border,var(--color-line,#d9dee5))] overflow-y-auto p-0">
+              {proposal.createdTasks.map((task) => (
+                <li key={task.taskId}>
+                  {onOpenTask ? (
+                    <button
+                      type="button"
+                      aria-label={t("createdTask", { title: task.title })}
+                      onClick={() => onOpenTask(task.taskId)}
+                      className="flex min-h-[40px] w-full cursor-pointer items-center justify-between gap-2 border-0 bg-transparent px-3 py-2 text-left text-[0.82rem] font-medium text-[var(--v2-ink,var(--color-text,#1f2328))] transition-colors duration-150 hover:bg-[color-mix(in_srgb,var(--v2-success,var(--color-success,#2f7d5a))_10%,transparent)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))]"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <CheckCircle2
+                          size={14}
+                          className="shrink-0 text-[var(--v2-success,var(--color-success,#2f7d5a))]"
+                          aria-hidden="true"
+                        />
+                        <span className="truncate">{task.title}</span>
+                      </span>
+                      <ArrowUpRight
+                        size={14}
+                        className="shrink-0 text-[var(--v2-muted,var(--color-text-muted,#667085))]"
+                        aria-hidden="true"
+                      />
+                    </button>
+                  ) : (
+                    <div className="flex min-h-[38px] items-center gap-2 px-3 py-2 text-[0.82rem] font-medium text-[var(--v2-ink,var(--color-text,#1f2328))]">
+                      <CheckCircle2
+                        size={14}
+                        className="shrink-0 text-[var(--v2-success,var(--color-success,#2f7d5a))]"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">
+                        {t("createdTask", { title: task.title })}
+                      </span>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
       ) : (
-        <footer
-          className="task-proposal-actions flex flex-wrap items-center justify-end gap-[0.5rem] pt-[0.35rem]
-          [&_button:last-child]:border-transparent
-          [&_button:last-child]:[box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))]"
-        >
+        <footer className="flex flex-wrap items-center justify-end gap-2 pt-1.5">
           <button
             type="button"
-            className="task-proposal-btn task-proposal-btn-cancel mr-auto [background:transparent]
-              [&:hover:not(:disabled)]:border-[var(--color-danger,#b25547)]
-              [&:hover:not(:disabled)]:[background:var(--color-danger-soft,#f9ecea)]"
             disabled={locked}
             onClick={() => void submit("cancel", onDispatchAction)}
+            className="mr-auto inline-flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-full border border-transparent bg-transparent px-3 py-1.5 text-[0.78rem] font-medium !text-[var(--v2-muted,var(--color-text-muted,#667085))] transition-colors duration-150 hover:bg-[var(--color-danger-soft,#f9ecea)] hover:!text-[var(--color-danger,#b25547)] disabled:cursor-default disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))]"
           >
-            {t("cancel")}
+            <X size={14} aria-hidden="true" />
+            <span>{t("cancel")}</span>
           </button>
+
           <button
             type="button"
-            className="task-proposal-btn task-proposal-btn-save [&:hover:not(:disabled)]:border-[var(--color-accent,#456b8c)] [&:hover:not(:disabled)]:[background:var(--color-surface-muted,#f1f3f5)]"
             disabled={locked || invalid}
             onClick={() => void submit("save", onDispatchAction)}
+            className="task-proposal-glass-btn relative inline-flex min-h-[36px] cursor-pointer items-center gap-1.5 overflow-hidden rounded-full border border-[var(--v2-border,var(--color-line,#d9dee5))] bg-[linear-gradient(145deg,var(--v2-glass-fill,var(--color-surface,#ffffff)),var(--v2-shell-fill,var(--color-surface-muted,#f1f3f5)))] px-3.5 py-1.5 text-[0.78rem] font-semibold !text-[var(--v2-ink,var(--color-text,#1f2328))] shadow-[inset_0_1px_0_var(--v2-glass-border,rgb(255_255_255_/_85%)),inset_0_-1px_0_color-mix(in_srgb,var(--v2-border,var(--color-line,#d9dee5))_70%,transparent),0_4px_12px_-6px_rgb(16_45_55_/_20%),0_1px_2px_rgb(16_45_55_/_6%)] backdrop-blur-[12px] backdrop-saturate-150 transition-[background-color,border-color,box-shadow,transform,opacity] duration-150 hover:border-[color-mix(in_srgb,var(--v2-accent,var(--color-accent,#456b8c))_38%,var(--v2-border,var(--color-line,#d9dee5)))] hover:shadow-[inset_0_1px_0_var(--v2-glass-border,rgb(255_255_255_/_95%)),0_6px_16px_-8px_var(--v2-accent,var(--color-accent,#456b8c))] active:translate-y-[1px] disabled:cursor-default disabled:opacity-45 disabled:active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))]"
           >
-            {t("saveDraft")}
+            <Save size={13} aria-hidden="true" />
+            <span>{t("saveDraft")}</span>
           </button>
+
           <button
             type="button"
-            className="task-proposal-btn task-proposal-btn-confirm [background:var(--color-accent,#456b8c)] border-transparent
-              [box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))]
-              [&:hover:not(:disabled)]:[background:var(--color-accent-strong,#365772)]"
             disabled={locked || invalid || !draft.selectedItemIds.length}
             onClick={() => void submit("confirm", onDispatchAction)}
+            className="task-proposal-glass-btn relative inline-flex min-h-[36px] cursor-pointer items-center gap-1.5 overflow-hidden rounded-full border border-[color-mix(in_srgb,var(--v2-glass-border,rgb(255_255_255_/_50%))_45%,transparent)] bg-[linear-gradient(155deg,color-mix(in_srgb,var(--v2-accent,var(--color-accent,#456b8c))_86%,#ffffff),var(--v2-accent,var(--color-accent,#456b8c))_55%,color-mix(in_srgb,var(--v2-accent,var(--color-accent,#456b8c))_88%,#000000))] px-4 py-1.5 text-[0.78rem] font-semibold !text-[var(--v2-accent-ink,var(--color-primary-text,#ffffff))] shadow-[inset_0_1px_0_rgb(255_255_255_/_46%),inset_0_-1px_0_rgb(0_0_0_/_18%),0_8px_20px_-8px_var(--v2-accent,var(--color-accent,#456b8c)),0_2px_5px_-2px_rgb(0_0_0_/_16%)] backdrop-blur-[12px] backdrop-saturate-150 transition-[filter,box-shadow,transform,opacity] duration-150 hover:brightness-[1.06] hover:shadow-[inset_0_1px_0_rgb(255_255_255_/_58%),inset_0_-1px_0_rgb(0_0_0_/_18%),0_10px_24px_-8px_var(--v2-accent,var(--color-accent,#456b8c))] active:translate-y-[1px] disabled:cursor-default disabled:opacity-45 disabled:hover:brightness-100 disabled:active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))]"
           >
-            {t("confirmCount", { count: draft.selectedItemIds.length })}
+            <Check size={14} strokeWidth={2.35} aria-hidden="true" />
+            <span>
+              {t("confirmCount", { count: draft.selectedItemIds.length })}
+            </span>
           </button>
         </footer>
       )}

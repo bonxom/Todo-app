@@ -213,6 +213,9 @@ describe("AgentSessionProvider", () => {
 
     const user = userEvent.setup();
     render(<AgentSessionHarness initialSurface="bubble" />);
+    await user.click(
+      await screen.findByRole("button", { name: "Edit task 1" }),
+    );
     const titleInput = await screen.findByRole("textbox", {
       name: "Task 1 title",
     });
@@ -220,9 +223,7 @@ describe("AgentSessionProvider", () => {
     await user.type(titleInput, "Updated Study IELTS");
 
     await user.click(screen.getByRole("button", { name: /open in agent/i }));
-    expect(
-      await screen.findByRole("textbox", { name: "Task 1 title" }),
-    ).toHaveValue("Updated Study IELTS");
+    expect(await screen.findByText("Updated Study IELTS")).toBeInTheDocument();
   });
 
   it("preserves an uncertain proposal action request ID across chat surfaces", async () => {
@@ -383,6 +384,9 @@ describe("AgentSessionProvider", () => {
       ),
     ).toBeInTheDocument();
 
+    await user.click(
+      await screen.findByRole("button", { name: "Edit task 1" }),
+    );
     const titleInput = await screen.findByRole("textbox", {
       name: "Task 1 title",
     });
@@ -395,7 +399,7 @@ describe("AgentSessionProvider", () => {
       await screen.findByRole("heading", { name: "Weekly Study Plan" }),
     ).toBeInTheDocument();
     expect(
-      await screen.findByRole("textbox", { name: "Task 1 title" }),
-    ).toHaveValue("Composed draft across views");
+      await screen.findByText("Composed draft across views"),
+    ).toBeInTheDocument();
   });
 });

@@ -1,20 +1,33 @@
 import { useTranslation } from "react-i18next";
-import { Fragment, useContext } from "react";
-import type { ProposalItem } from "@/shared/types/A2UI/taskProposal";
-import CustomSelect from "@/shared/components/CustomSelect";
 import {
-  toDateTimeLocalValue,
-  toISOStringLocal,
-} from "@/shared/utils/dateTime";
+  Fragment,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  GalleryHorizontalEnd,
+  List,
+} from "lucide-react";
 import { TaskProposalEditorContext } from "./taskProposalEditorContext";
+import { TaskProposalSlideCard } from "./TaskProposalSlideCard";
+import { TaskProposalCompactList } from "./TaskProposalCompactList";
 
 type TaskListProps = {
   bare?: boolean;
 };
 
+type ViewMode = "slide" | "list";
+
+const MAX_DOT_INDICATORS = 7;
+
 export function TaskList({ bare = false }: TaskListProps) {
   const { t } = useTranslation("agent");
-
   const editor = useContext(TaskProposalEditorContext);
   if (!editor) {
     throw new Error("Missing task proposal editor context");
@@ -28,181 +41,264 @@ export function TaskList({ bare = false }: TaskListProps) {
     validation,
     updateItem,
     toggleItemSelection,
+    toggleAllSelection,
   } = editor;
 
-  const content = draft.items.map((item, index) => {
-    const priority = item.priority ?? "Medium";
-    const isSelected = draft.selectedItemIds.includes(item.id);
-    const priorityLabel =
-      priority === "High"
-        ? t("highPriority")
-        : priority === "Low"
-          ? t("lowPriority")
-          : t("medium");
+  const items = draft.items;
+  const totalCount = items.length;
+  const selectedCount = draft.selectedItemIds.length;
+  const allSelected = totalCount > 0 && selectedCount === totalCount;
+  const someSelected = selectedCount > 0 && selectedCount < totalCount;
+  const hasMultiple = totalCount > 1;
 
-    return (
-      <fieldset
-        key={item.id}
-        disabled={locked}
-        data-priority={priority}
-        data-selected={isSelected ? "true" : "false"}
-        className="task-proposal-item m-[0] rounded-[var(--radius-xl,12px)] p-[0.875rem_1rem] min-w-[0]
-          [background:var(--color-surface,#ffffff)] [box-shadow:var(--shadow-xs,0_1px_2px_rgba(16,24,40,0.06))] flex
-          flex-col gap-[0.65rem] [transition:border-color_150ms_ease,opacity_150ms_ease]
-          [&[data-priority=High]]:[border-left-color:var(--color-danger,#b25547)]
-          [&[data-priority=Medium]]:[border-left-color:var(--color-warning,#a46a2a)]
-          [&[data-priority=Low]]:[border-left-color:var(--color-accent,#456b8c)] [&[data-selected=false]]:opacity-[0.68]
-          [&[data-selected=false]]:[background:var(--color-surface-muted,#f1f3f5)]"
+  const [viewMode, setViewMode] = useState<ViewMode>("slide");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const selectAllRef = useRef<HTMLInputElement>(null);
+
+  const safeIndex = totalCount > 0 ? Math.min(activeIndex, totalCount - 1) : 0;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected;
+    }
+  }, [someSelected]);
+
+  const activeEditingId = terminal ? null : editingItemId;
+
+  const invalidIndices = !terminal
+    ? validation.reduce<number[]>((acc, message, idx) => {
+        if (message) acc.push(idx);
+        return acc;
+      }, [])
+    : [];
+  const errorCount = invalidIndices.length;
+  const firstInvalidIndex = invalidIndices[0] ?? -1;
+
+  const goToSlide = (nextIndex: number, openEdit = false) => {
+    const clamped = Math.max(0, Math.min(totalCount - 1, nextIndex));
+    setActiveIndex(clamped);
+    setViewMode("slide");
+    if (openEdit && !locked && !terminal && items[clamped]) {
+      setEditingItemId(items[clamped].id);
+    } else {
+      setEditingItemId(null);
+    }
+  };
+
+  const handleNavKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "ArrowLeft" && safeIndex > 0) {
+      event.preventDefault();
+      goToSlide(safeIndex - 1);
+    } else if (event.key === "ArrowRight" && safeIndex < totalCount - 1) {
+      event.preventDefault();
+      goToSlide(safeIndex + 1);
+    }
+  };
+
+  const currentItem = items[safeIndex];
+  const effectiveViewMode: ViewMode = hasMultiple ? viewMode : "slide";
+  const showToolbar = hasMultiple || errorCount > 0;
+
+  const slideNavFooter = hasMultiple ? (
+    <nav
+      aria-label={t("proposalSlideNavigation")}
+      onKeyDown={handleNavKeyDown}
+      className="flex items-center justify-between gap-2 border-t border-[var(--v2-border,var(--color-line,#d9dee5))] bg-[color-mix(in_srgb,var(--v2-input-fill,var(--color-surface-muted,#f1f3f5))_60%,transparent)] px-2 py-1.5"
+    >
+      <button
+        type="button"
+        disabled={safeIndex === 0}
+        onClick={() => goToSlide(safeIndex - 1)}
+        aria-label={t("proposalPreviousTask")}
+        title={t("proposalPreviousTask")}
+        className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent !text-[var(--v2-ink,var(--color-text,#1f2328))] transition-colors duration-150 hover:bg-[var(--v2-surface-solid,var(--color-surface,#ffffff))] disabled:cursor-default disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))]"
       >
-        <div className="task-proposal-item-top flex flex-wrap items-center justify-between gap-[0.5rem] pb-[0.45rem] [border-bottom:1px_solid_color-mix(in_srgb,var(--color-line,#d9dee5)_65%,transparent)]">
-          <legend className="task-proposal-legend [float:left] p-[0] m-[0] text-[0.78rem] [font-weight:650] text-[var(--color-text,#1f2328)]">
-            {t("task")}
-            {index + 1}
-          </legend>
-          <div className="task-proposal-item-badges flex flex-wrap items-center gap-[0.6rem] ml-auto">
-            <span
-              className={`task-proposal-priority inline-flex items-center p-[0.15rem_0.5rem] rounded-[999px] text-[0.68rem] [font-weight:650] [letter-spacing:0.01em] task-proposal-priority--${priority.toLowerCase()}`}
-            >
-              {priorityLabel}
-            </span>
-            <label className="task-proposal-selection">
-              <input
-                type="checkbox"
-                checked={isSelected}
-                aria-label={t("selectTask", { title: item.title })}
-                onChange={() => toggleItemSelection(item.id)}
-              />
-              <span>{t("selectToCreate")}</span>
-            </label>
+        <ChevronLeft size={16} aria-hidden="true" />
+      </button>
+
+      <div className="flex min-w-0 flex-1 items-center justify-center gap-2.5">
+        <span className="text-[0.74rem] font-semibold tabular-nums text-[var(--v2-muted,var(--color-text-muted,#667085))]">
+          {safeIndex + 1} / {totalCount}
+        </span>
+
+        {totalCount <= MAX_DOT_INDICATORS ? (
+          <div className="flex items-center gap-1.5">
+            {items.map((dotItem, idx) => {
+              const isDotActive = idx === safeIndex;
+              const isDotInvalid = !terminal && Boolean(validation[idx]);
+              const isDotSelected = draft.selectedItemIds.includes(dotItem.id);
+              return (
+                <button
+                  key={dotItem.id}
+                  type="button"
+                  onClick={() => goToSlide(idx)}
+                  aria-label={t("proposalGoToTask", { index: idx + 1 })}
+                  aria-current={isDotActive ? "step" : undefined}
+                  className={`h-1.5 cursor-pointer rounded-full border-0 p-0 transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))] ${
+                    isDotActive ? "w-5" : "w-1.5"
+                  } ${
+                    isDotInvalid
+                      ? "bg-[var(--color-danger,#b25547)]"
+                      : isDotActive
+                        ? "bg-[var(--v2-accent,var(--color-accent,#456b8c))]"
+                        : isDotSelected
+                          ? "bg-[color-mix(in_srgb,var(--v2-muted,var(--color-text-muted,#667085))_48%,transparent)] hover:bg-[var(--v2-muted,var(--color-text-muted,#667085))]"
+                          : "bg-[color-mix(in_srgb,var(--v2-border,var(--color-line,#d9dee5))_90%,transparent)]"
+                  }`}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div
+            aria-hidden="true"
+            className="h-1.5 w-24 flex-1 max-w-[120px] overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--v2-border,var(--color-line,#d9dee5))_75%,transparent)]"
+          >
+            <div
+              className="h-full min-w-[10px] rounded-full bg-[var(--v2-accent,var(--color-accent,#456b8c))] transition-[width] duration-200"
+              style={{
+                width: `${((safeIndex + 1) / totalCount) * 100}%`,
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      <button
+        type="button"
+        disabled={safeIndex >= totalCount - 1}
+        onClick={() => goToSlide(safeIndex + 1)}
+        aria-label={t("proposalNextTask")}
+        title={t("proposalNextTask")}
+        className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent !text-[var(--v2-ink,var(--color-text,#1f2328))] transition-colors duration-150 hover:bg-[var(--v2-surface-solid,var(--color-surface,#ffffff))] disabled:cursor-default disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))]"
+      >
+        <ChevronRight size={16} aria-hidden="true" />
+      </button>
+    </nav>
+  ) : null;
+
+  const content = (
+    <Fragment>
+      {showToolbar && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {!terminal && hasMultiple && (
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--v2-border,var(--color-line,#d9dee5))] bg-[var(--v2-input-fill,var(--color-surface-muted,#f1f3f5))] px-2.5 py-1 text-[0.73rem] font-semibold text-[var(--v2-ink,var(--color-text,#1f2328))] select-none">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={allSelected}
+                  disabled={locked}
+                  aria-label={
+                    allSelected
+                      ? t("proposalDeselectAll")
+                      : t("proposalSelectAll")
+                  }
+                  onChange={toggleAllSelection}
+                  className="h-3.5 w-3.5 cursor-pointer rounded-[3px] accent-[var(--v2-accent,var(--color-accent,#456b8c))] disabled:cursor-default disabled:opacity-50"
+                />
+                <span className="tabular-nums">
+                  {selectedCount}/{totalCount}
+                </span>
+              </label>
+            )}
+          </div>
+
+          <div className="ml-auto flex items-center gap-1.5">
+            {errorCount > 0 && (
+              <button
+                type="button"
+                onClick={() => goToSlide(firstInvalidIndex, true)}
+                aria-label={t("proposalJumpToIssue")}
+                title={t("proposalJumpToIssue")}
+                className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-[color-mix(in_srgb,var(--color-danger,#b25547)_35%,transparent)] bg-[var(--color-danger-soft,#f9ecea)] px-2.5 py-1 text-[0.72rem] font-semibold !text-[var(--color-danger,#b25547)] transition-opacity duration-150 hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-danger,#b25547)]"
+              >
+                <AlertCircle size={12} aria-hidden="true" />
+                <span>{t("proposalErrorCount", { count: errorCount })}</span>
+              </button>
+            )}
+
+            {hasMultiple && (
+              <div
+                role="group"
+                aria-label={t("proposalViewMode")}
+                className="inline-flex items-center rounded-[10px] border border-[var(--v2-border,var(--color-line,#d9dee5))] bg-[var(--v2-input-fill,var(--color-surface-muted,#f1f3f5))] p-0.5"
+              >
+                <button
+                  type="button"
+                  aria-label={t("proposalSlideView")}
+                  title={t("proposalSlideView")}
+                  aria-pressed={effectiveViewMode === "slide"}
+                  onClick={() => {
+                    setViewMode("slide");
+                  }}
+                  className={`inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-[7px] border-0 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))] ${
+                    effectiveViewMode === "slide"
+                      ? "bg-[var(--v2-surface-solid,var(--color-surface,#ffffff))] !text-[var(--v2-accent,var(--color-accent,#456b8c))] shadow-[var(--v2-shadow-sm,var(--shadow-xs))]"
+                      : "bg-transparent !text-[var(--v2-muted,var(--color-text-muted,#667085))] hover:!text-[var(--v2-ink,var(--color-text,#1f2328))]"
+                  }`}
+                >
+                  <GalleryHorizontalEnd size={14} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={t("proposalListView")}
+                  title={t("proposalListView")}
+                  aria-pressed={effectiveViewMode === "list"}
+                  onClick={() => {
+                    setEditingItemId(null);
+                    setViewMode("list");
+                  }}
+                  className={`inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-[7px] border-0 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))] ${
+                    effectiveViewMode === "list"
+                      ? "bg-[var(--v2-surface-solid,var(--color-surface,#ffffff))] !text-[var(--v2-accent,var(--color-accent,#456b8c))] shadow-[var(--v2-shadow-sm,var(--shadow-xs))]"
+                      : "bg-transparent !text-[var(--v2-muted,var(--color-text-muted,#667085))] hover:!text-[var(--v2-ink,var(--color-text,#1f2328))]"
+                  }`}
+                >
+                  <List size={14} aria-hidden="true" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
-        <label className="task-proposal-field">
-          <span>{t("title")}</span>
-          <input
-            aria-label={t("taskTitle", { index: index + 1 })}
-            value={item.title}
-            maxLength={200}
-            onChange={(e) => updateItem(item.id, { title: e.target.value })}
-          />
-        </label>
-        <label className="task-proposal-field">
-          <span>{t("description")}</span>
-          <textarea
-            aria-label={t("taskDescription", { index: index + 1 })}
-            value={item.description ?? ""}
-            maxLength={1000}
-            rows={2}
-            onChange={(e) =>
-              updateItem(item.id, { description: e.target.value })
-            }
-          />
-        </label>
-        <div className="task-proposal-fields grid grid-cols-[repeat(auto-fit,minmax(min(100%,145px),1fr))] gap-[0.55rem]">
-          <label className="task-proposal-field">
-            <span>{t("priority")}</span>
-            <CustomSelect
-              disabled={locked}
-              aria-label={t("taskPriority", { index: index + 1 })}
-              value={priority}
-              onChange={(e) =>
-                updateItem(item.id, {
-                  priority: e.target.value as ProposalItem["priority"],
-                })
-              }
-            >
-              <option value="Low">{t("low")}</option>
-              <option value="Medium">{t("medium")}</option>
-              <option value="High">{t("high")}</option>
-            </CustomSelect>
-          </label>
-          <label className="task-proposal-field">
-            <span>{t("category")}</span>
-            <CustomSelect
-              disabled={locked}
-              aria-label={t("taskCategory", { index: index + 1 })}
-              value={item.categoryId ?? ""}
-              onChange={(e) =>
-                updateItem(item.id, { categoryId: e.target.value || undefined })
-              }
-            >
-              <option value="">{t("uncategorized")}</option>
-              {item.categoryId &&
-                !choices.categories.some((c) => c._id === item.categoryId) && (
-                  <option value={item.categoryId}>
-                    {t("currentCategory")}
-                  </option>
-                )}
-              {choices.categories.map((c) => (
-                <option key={c._id} value={c._id}>
-                  {c.name}
-                </option>
-              ))}
-            </CustomSelect>
-          </label>
-          <label className="task-proposal-field">
-            <span>{t("project")}</span>
-            <CustomSelect
-              disabled={locked}
-              aria-label={t("taskProject", { index: index + 1 })}
-              value={item.projectId ?? ""}
-              onChange={(e) =>
-                updateItem(item.id, { projectId: e.target.value || null })
-              }
-            >
-              <option value="">{t("noProject")}</option>
-              {item.projectId &&
-                !choices.projects.some((p) => p._id === item.projectId) && (
-                  <option value={item.projectId}>{t("currentProject")}</option>
-                )}
-              {choices.projects.map((p) => (
-                <option
-                  key={p._id}
-                  value={p._id}
-                  disabled={p.status === "completed"}
-                >
-                  {p.name}
-                  {p.status === "completed" ? t("taskCompletedSuffix") : ""}
-                </option>
-              ))}
-            </CustomSelect>
-          </label>
-          {(["startDate", "dueDate"] as const).map((field) => (
-            <label key={field} className="task-proposal-field">
-              <span>{field === "startDate" ? t("start") : t("dueDate")}</span>
-              <input
-                type="datetime-local"
-                aria-label={t(
-                  field === "startDate" ? "taskStartDate" : "taskDueDate",
-                  { index: index + 1 },
-                )}
-                value={toDateTimeLocalValue(item[field] ?? "")}
-                onChange={(e) =>
-                  updateItem(item.id, {
-                    [field]: e.target.value
-                      ? toISOStringLocal(e.target.value)
-                      : null,
-                  })
-                }
-              />
-            </label>
-          ))}
-        </div>
-        {!terminal && validation[index] && (
-          <p
-            role="alert"
-            className="task-proposal-alert m-[0] p-[0.45rem_0.65rem] rounded-[var(--radius-sm,8px)]
-            [background:var(--color-danger-soft,#f9ecea)] text-[var(--color-danger,#b25547)] text-[0.78rem]
-            [font-weight:550]"
-          >
-            {validation[index]}
-          </p>
-        )}
-      </fieldset>
-    );
-  });
+      )}
+
+      {effectiveViewMode === "slide" && currentItem ? (
+        <TaskProposalSlideCard
+          item={currentItem}
+          index={safeIndex}
+          isSelected={draft.selectedItemIds.includes(currentItem.id)}
+          isEditing={activeEditingId === currentItem.id}
+          locked={locked}
+          terminal={terminal}
+          choices={choices}
+          validationError={validation[safeIndex] ?? ""}
+          onToggleSelect={toggleItemSelection}
+          onStartEdit={(id) => setEditingItemId(id)}
+          onDoneEdit={() => setEditingItemId(null)}
+          onUpdateItem={updateItem}
+          footer={slideNavFooter}
+        />
+      ) : (
+        <TaskProposalCompactList
+          items={items}
+          selectedItemIds={draft.selectedItemIds}
+          activeIndex={safeIndex}
+          locked={locked}
+          terminal={terminal}
+          choices={choices}
+          validation={validation}
+          onToggleSelect={toggleItemSelection}
+          onSelectSlide={(idx) => goToSlide(idx, false)}
+          onEditSlide={(idx) => goToSlide(idx, true)}
+        />
+      )}
+    </Fragment>
+  );
 
   if (bare) {
-    return <Fragment>{content}</Fragment>;
+    return content;
   }
 
   return <div className="task-proposal">{content}</div>;

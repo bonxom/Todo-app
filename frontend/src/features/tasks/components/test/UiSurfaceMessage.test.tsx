@@ -109,7 +109,7 @@ describe("UiSurfaceMessage", () => {
         "Review and confirm the proposed study tasks below.",
       ),
     ).toBeInTheDocument();
-    await screen.findByRole("option", { name: "Work" });
+    expect(await screen.findByText("Work")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Confirm/ }));
     expect(applyAction).toHaveBeenCalledTimes(1);
