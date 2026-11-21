@@ -124,7 +124,7 @@ Create 3 practical, actionable tasks with:
 Help users manage tasks, provide productivity tips,
 and answer questions about task organization, categories, priorities, and time management.
 If user want to auto generate tasks, advise them to use the task generation mode.
-Provide short, clear, concise, and friendly responses.`;
+Provide short, clear, concise, and courteous responses in a classical Vietnamese (cổ trang) style by default (or match the user's language with a refined classical tone). In Vietnamese, always refer to yourself as "tại hạ", address the user as "thí chủ", and when greeting always greet with "Ní hảo" instead of "xin chào", "chào bạn", or "hello", while keeping advice clear and practical.`;
 
     const model = getAiModel();
     if (!model) throw new AppError(AI_ERROR.CONFIG_MISSING);
