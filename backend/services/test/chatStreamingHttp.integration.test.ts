@@ -2,7 +2,9 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import express from "express";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import TaskProposal from "../../models/A2UI/TaskProposal.js";
 import {
   connectChatTestMongo,
   disconnectChatTestMongo,
@@ -37,6 +39,7 @@ describe.skipIf(!hasChatTestMongo())(
     let backendUrl: string;
     let release = deferred();
     let useTool = false;
+    let lastProviderRequest: any = null;
 
     beforeAll(async () => {
       await connectChatTestMongo("orbit_chat_http");
@@ -44,6 +47,7 @@ describe.skipIf(!hasChatTestMongo())(
         let body = "";
         for await (const chunk of req) body += chunk;
         const request = JSON.parse(body);
+        lastProviderRequest = request;
         res.writeHead(200, { "Content-Type": "text/event-stream" });
         const send = (delta: object, finish_reason: string | null = null) =>
           res.write(
@@ -217,6 +221,48 @@ describe.skipIf(!hasChatTestMongo())(
         expect(done.data.status).toBe("cancelled");
         expect(done.data.result.response).toBe("Nội dung đầu tiên ");
       });
+    });
+
+    it("includes confirmed proposal context in streaming turn provider request", async () => {
+      release = deferred();
+      useTool = false;
+      const { userId, conversationIds } = await createUserAndConversations(1);
+      const headers = {
+        Authorization: `Bearer ${jwt.sign({ id: userId }, "fixture-only-jwt-secret", { expiresIn: "1h" })}`,
+        "Content-Type": "application/json",
+      };
+      await TaskProposal.create({
+        userId: new mongoose.Types.ObjectId(userId),
+        conversationId: conversationIds[0],
+        turnId: randomUUID(),
+        proposalId: "stream-prop-1",
+        status: "created",
+        createdTasks: [{ taskId: "stream-task-1", title: "Stream task" }],
+      });
+      const base = `${backendUrl}/api/ai/conversations/${conversationIds[0]}/turns`;
+      const initial = await fetch(base, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          requestId: randomUUID(),
+          userInput: "Check proposals",
+        }),
+      }).then((r) => r.json());
+      release.resolve();
+      await vi.waitFor(async () => {
+        const live = await fetch(`${base}/${initial.data.turnId}`, {
+          headers,
+        }).then((r) => r.json());
+        expect(live.data.status).toBe("completed");
+      });
+      const systemMessage = lastProviderRequest?.messages?.find(
+        (m: { role: string }) => m.role === "system",
+      )?.content;
+      expect(systemMessage).toContain(
+        "Confirmed task proposals (server data):",
+      );
+      expect(systemMessage).toContain("stream-task-1");
+      expect(systemMessage).toContain("Stream task");
     });
   },
 );

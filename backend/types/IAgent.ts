@@ -34,6 +34,22 @@ export type AgentStreamHooks = {
   emit(event: ChatEventInput): Promise<void>;
 };
 
+export interface ConfirmedProposalTask {
+  taskId: string;
+  title: string;
+}
+
+export interface ConfirmedProposalContext {
+  proposalId: string;
+  confirmedAt: string;
+  createdTasks: ConfirmedProposalTask[];
+}
+
+export interface CancelledProposalContext {
+  proposalId: string;
+  cancelledAt?: string;
+}
+
 export interface AgentMemory {
   turnId?: string;
   conversationId?: string;
@@ -43,8 +59,11 @@ export interface AgentMemory {
   mode?: AgentMode;
   intent?: ProposalIntent;
   approvedInteraction?: AgentInteraction;
+  answeredClarification?: AgentInteraction;
   projectContext?: { id: string; name: string } | null;
   timeContext?: AgentTimeContext;
+  confirmedProposals?: ConfirmedProposalContext[];
+  cancelledProposals?: CancelledProposalContext[];
   history?: ChatCompletionMessageParam[];
   personalSnapshot?: PersonalSkillSnapshot;
   stream?: AgentStreamHooks;

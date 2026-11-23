@@ -1,14 +1,13 @@
 # Orbit UI Composition Guidance
 
-Developer-authored guidance for choosing and composing safe A2UI surfaces. The **versioned, code-owned catalog schema** is authoritative; this skill guides decisions but cannot register components or grant permissions.
+The versioned catalog schema defines the available A2UI components and permissions.
 
 ## 1. Choose the response mode
 
-- **Plain text:** Short answers, single facts, acknowledgements, simple follow-ups, or explanations that do not benefit from layout. Never create a surface only to wrap one sentence.
-- **Read-only UI (`present_ui`):** Multi-day schedules, KPI dashboards, charts, process diagrams, comparisons, or grouped breakdowns that are easier to scan visually. No task editing or write actions.
-- **Task proposal (`propose_tasks`):** When users want actionable tasks to review, edit, select, or create. **Omit `presentation` by default** to use the complete `TaskProposalForm`. Include `presentation` only if supporting KPIs, charts, diagrams, or tables improve the decision to confirm tasks.
-- A suggested informational plan does **not** automatically require task creation. Use `present_ui` for plans intended only for reading.
-- If UI composition is disabled, unavailable, or not authorized by loaded developer guidance in the accepted provider context, use plain text or the standard proposal flow. Never claim a UI rendered when it did not.
+- **Plain text** suits brief answers, acknowledgements, and simple follow-ups.
+- **Read-only UI (`present_ui`)** suits informational plans, schedules, metrics, diagrams, and comparisons.
+- **Task proposal (`propose_tasks`)** suits actionable drafts the user intends to review or create. Omit `presentation` by default. Add it if a supporting visual helps the confirmation decision.
+- Use plain text or the standard proposal flow when UI composition is unavailable. Describe the actual result.
 
 ## 2. Available components
 
@@ -53,7 +52,9 @@ Choose for the user's information need, not for decoration.
 
 ## 4. Authoring contract and safety
 
-`present_ui` takes a read-only `SurfaceSpec`; `propose_tasks` takes required `items` and optional `presentation: SurfaceSpec`. `SurfaceSpec` contains **only** `fallbackText` (1–8,000 chars), `components`, and `displayData`.
+Both tools take top-level `companionText` (1–600 characters). Answer or explain the suggestions in one or two sentences in the user's language. This text appears above the UI.
+
+`present_ui` adds `companionText` to the `SurfaceSpec` fields. `propose_tasks` takes `companionText`, `items`, and optional `presentation: SurfaceSpec`. A stored or nested `SurfaceSpec` has `fallbackText` (1–8,000 chars), `components`, and `displayData`.
 
 ### Graph and binding constraints
 
@@ -69,6 +70,7 @@ Choose for the user's information need, not for decoration.
 
 ```json
 {
+  "companionText": "IELTS accounts for most of the time in this example week.",
   "fallbackText": "Example: 5.5 total hours across Monday (IELTS 2h, Gym 1h) and Wednesday (IELTS 1.5h, Gym 1h).",
   "components": [
     {
@@ -134,6 +136,7 @@ Choose for the user's information need, not for decoration.
 
 ```json
 {
+  "companionText": "Start with a reading exercise and a short workout so both goals fit this week.",
   "items": [
     { "title": "Practice IELTS Reading", "priority": "High" },
     { "title": "Complete upper-body workout", "priority": "Medium" }
@@ -145,6 +148,7 @@ Choose for the user's information need, not for decoration.
 
 ```json
 {
+  "companionText": "Put the reading session first while your focus is fresh.",
   "items": [
     { "title": "Practice IELTS Reading", "priority": "High" },
     { "title": "Complete upper-body workout", "priority": "Medium" }

@@ -1,7 +1,74 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import ChatField from "../chat/ChatField";
+import { useConversationChat } from "../../hooks/useConversationChat";
+
+const mutateAsync = vi
+  .fn()
+  .mockResolvedValue({ status: "completed", data: "Done" });
+vi.mock("@/features/tasks/api/aiMutations", () => ({
+  useAgenticChatMutation: () => ({ mutateAsync }),
+  useStartChatTurnMutation: () => ({
+    mutateAsync: vi.fn().mockRejectedValue(new Error("fallback to legacy")),
+  }),
+}));
+
+const mockSession = {
+  messages: [],
+  setMessages: vi.fn(),
+  conversationId: "conv-1",
+  setConversationId: vi.fn(),
+  mode: "auto",
+  setMode: vi.fn(),
+  interaction: {
+    id: "clarify-1",
+    kind: "clarification",
+    question: "Which project?",
+    options: [{ id: "proj-1", label: "Project 1" }],
+    allowCustomAnswer: false,
+    status: "pending",
+  },
+  capabilities: null,
+  before: null,
+  loading: false,
+  sending: false,
+  setSending: vi.fn(),
+  error: null,
+  setError: vi.fn(),
+  pending: null,
+  setPending: vi.fn(),
+  busy: { current: false },
+  isCurrent: () => true,
+  acknowledgeSelection: vi.fn(),
+  receive: vi.fn(),
+  load: vi.fn(),
+  reload: vi.fn(),
+  loadEarlier: vi.fn(),
+  newConversation: vi.fn(),
+  openConversation: vi.fn(),
+  setActiveRun: vi.fn(),
+  proposalDirty: false,
+  setProposalDirty: vi.fn(),
+  discardRequest: null,
+  resolveDiscard: vi.fn(),
+  confirmDiscard: vi.fn(),
+  context: null,
+  setContext: vi.fn(),
+  setContextForConversation: vi.fn(),
+  activities: [],
+  setActivities: vi.fn(),
+};
+
+vi.mock("../../hooks/useConversationSession", () => ({
+  useConversationSession: () => mockSession,
+}));
 
 vi.mock("@/shared/services/aiService", () => ({
   aiService: { listConversations: vi.fn().mockResolvedValue([]) },
@@ -120,4 +187,81 @@ it("shows default avatars for both senders and falls back safely when images fai
   expect(screen.getByRole("img", { name: "Agent avatar" }).tagName).toBe(
     "SPAN",
   );
+});
+
+it("submits a pending Auto clarification preserving auto mode and selection", async () => {
+  const { result } = renderHook(() => useConversationChat());
+  await act(async () => {
+    await result.current.answer({ optionId: "proj-1" });
+  });
+  expect(mutateAsync).toHaveBeenCalledWith(
+    expect.objectContaining({
+      mode: "auto",
+      selection: {
+        interactionId: "clarify-1",
+        optionId: "proj-1",
+      },
+    }),
+  );
+});
+
+it("preserves custom clarification text across change request and back, skips with cancel, and sends replacement without selection", async () => {
+  const user = userEvent.setup();
+  const onSendMessage = vi.fn().mockResolvedValue(true);
+  const answer = vi.fn();
+  const customInteraction = {
+    id: "clarify-custom-1",
+    kind: "clarification",
+    question: "Which time slot?",
+    options: [{ id: "opt-1", label: "Option 1" }],
+    allowCustomAnswer: true,
+    status: "pending",
+  };
+
+  const testChat = {
+    ...chat,
+    interaction: customInteraction,
+    answer,
+  };
+
+  render(
+    <ChatField messages={[]} onSendMessage={onSendMessage} chat={testChat} />,
+  );
+
+  // Select custom answer radio and type
+  const customRadio = screen.getByRole("radio", {
+    name: "Write my own answer",
+  });
+  await user.click(customRadio);
+  const customInput = screen.getByRole("textbox", { name: "Your answer" });
+  await user.type(customInput, "My special time");
+
+  // Click Change request
+  await user.click(screen.getByRole("button", { name: "Change request" }));
+
+  // Main composer is now shown, InteractionCard is hidden
+  const messageInput = screen.getByRole("textbox", { name: "Message" });
+  expect(messageInput).toHaveFocus();
+
+  // Return via "Back to question"
+  await user.click(screen.getByRole("button", { name: /Back to question/i }));
+
+  // Assert textarea still retains the text
+  expect(screen.getByRole("textbox", { name: "Your answer" })).toHaveValue(
+    "My special time",
+  );
+  expect(customInput).toHaveFocus();
+
+  // Click Change request again
+  await user.click(screen.getByRole("button", { name: "Change request" }));
+
+  // From alternate composer, click "Skip question"
+  await user.click(screen.getByRole("button", { name: "Skip question" }));
+  expect(answer).toHaveBeenCalledWith(undefined, true);
+
+  // The question stays pending until the server accepts the skip.
+  expect(messageInput).toBeVisible();
+  await user.type(messageInput, "Create a different task instead");
+  await user.click(screen.getByRole("button", { name: "Send message" }));
+  expect(onSendMessage).toHaveBeenCalledWith("Create a different task instead");
 });

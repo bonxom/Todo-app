@@ -241,11 +241,12 @@ describe.skipIf(!hasChatTestMongo())(
       expect(snapshot.lastEventSeq).toBe(5);
       expect(snapshot.partialResponse).toBe("Chào bạn!");
       expect(snapshot.toolProgress).toHaveLength(1);
-      expect(snapshot.toolProgress[0]).toEqual({
+      expect(snapshot.toolProgress[0]).toMatchObject({
         toolCallId: "call-1",
         label: "Đang tìm kiếm tác vụ",
         status: "succeeded",
         summary: "Tìm thấy 3 tác vụ",
+        order: 4,
       });
 
       // Public snapshot projection must not contain executionToken or messages

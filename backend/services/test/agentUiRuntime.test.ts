@@ -491,4 +491,60 @@ describe("agentUiRuntime", () => {
       companionText: "Mình gợi ý chia thành 2 buổi tập chính:",
     });
   });
+
+  it("keeps the read-only answer supplied with a tool-only A2UI response", async () => {
+    const companionText = "Reading takes most of your study time this week.";
+    completionCreate
+      .mockResolvedValueOnce(
+        response(call("load-1", "load_skill", { skillId: "ui-composition" })),
+      )
+      .mockResolvedValueOnce(
+        response(
+          call("ui-1", "present_ui", { ...fixture.readonly, companionText }),
+        ),
+      )
+      .mockResolvedValueOnce({
+        choices: [
+          { message: { role: "assistant", content: "Plain fallback" } },
+        ],
+      });
+
+    const result = await agentService.chatWithMcp(
+      "Summarize my study week",
+      context,
+    );
+    expect(result).toEqual({ surfaceSpec: fixture.readonly, companionText });
+    const tool = completionCreate.mock.calls[1][0].tools.find(
+      (tool: { function: { name: string } }) =>
+        tool.function.name === "present_ui",
+    );
+    expect(tool.function.parameters.required).toContain("companionText");
+  });
+
+  it("keeps the reason for a tool-only proposal even without a composed surface", async () => {
+    const companionText =
+      "I started with a short reading exercise to fit your 15-minute window.";
+    completionCreate.mockResolvedValueOnce(
+      response(
+        call("prop-1", "propose_tasks", {
+          companionText,
+          items: [{ title: "Practice reading for 15 minutes" }],
+        }),
+      ),
+    );
+
+    const result = await agentService.chatWithMcp(
+      "Suggest something I can do in 15 minutes",
+      context,
+    );
+    expect(result).toEqual({
+      proposalItems: [{ title: "Practice reading for 15 minutes" }],
+      companionText,
+    });
+    const tool = completionCreate.mock.calls[0][0].tools.find(
+      (tool: { function: { name: string } }) =>
+        tool.function.name === "propose_tasks",
+    );
+    expect(tool.function.parameters.required).toContain("companionText");
+  });
 });

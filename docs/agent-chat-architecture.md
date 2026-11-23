@@ -4,7 +4,22 @@
 
 Both modes use the same model/tool execution loop in `backend/services/agentService.ts`. Ask adds `grill_user` and prompt guidance to propose useful directions or ask when a decision is needed. Tool descriptions encourage asking before ambiguous writes, but there is no backend Ask approval gate, preview fingerprint, synthetic approved tool call, or tool-name allowlist for Ask.
 
-The model chooses when to ask and which tools to call. After the user answers a menu, that answer becomes a new user turn and the model continues. A clear request does not require a separate confirmation for every create/update call. Existing authorization, input validation, idempotency and execution lease checks remain in place for both modes.
+The model chooses when to ask and which tools to call. After the user answers a menu, that answer becomes a new user turn and the model continues. Clarification selections preserve the active turn mode (Auto or Ask). A clear request does not require a separate confirmation for every create/update call. Existing authorization, input validation, idempotency and execution lease checks remain in place for both modes.
+
+### Task creation and proposal policy
+
+- **Auto mode**: When creation requests and essential details are clear, `orbit_create_task` is exposed and called directly to save tasks immediately. If essential details are missing, the agent asks a focused clarification question using `grill_user`. When the user explicitly requests to plan, suggest tasks, or preview changes, `propose_tasks` is used to present an interactive draft.
+- **Ask mode**: Direct task creation (`orbit_create_task`) is blocked with `WRITE_FORBIDDEN` when task proposals are enabled. The agent uses `propose_tasks` to draft editable tasks, and tasks are only created when the user explicitly clicks Confirm on the proposal.
+- **Explicit proposal turns**: Any turn with `intent: "task_proposal"` restricts the turn to proposal tools and blocks direct writes.
+
+### Task proposal outcomes in chat and model context
+
+The Confirm transaction is the source of truth for task creation via proposals. Before each model turn, up to 3 recently confirmed proposals (`status: "created"`, sorted by `updatedAt: -1, _id: -1`) owned by the user in the current conversation are read and injected into the system prompt under `Confirmed task proposals (server data):`.
+- Contains `proposalId`, `confirmedAt`, and `createdTasks` (projected to `taskId` and `title`).
+- Records what was actually created at confirmation time, even if the user edited titles or selected only a subset of items.
+- The model treats titles as user data, uses exact IDs for subsequent reads/updates, and requires a new explicit user request before modifying those tasks.
+- The next model turn also receives up to 3 recently cancelled proposal IDs and timestamps for the same user and conversation. Committed outcomes supersede the draft state in earlier messages, and a partial confirmation closes the proposal.
+- Confirm and Cancel return the saved result in the API envelope. The chat shows a short acknowledgement from that result, including the created count or the cancellation. The response is available immediately and after reloading conversation history. A proposal action does not start a model turn.
 
 ## Skills and Execution Policy Gate
 

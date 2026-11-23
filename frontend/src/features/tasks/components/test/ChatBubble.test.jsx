@@ -357,14 +357,16 @@ it("restores Ask, allows new messages, and retries a choice with the same reques
   const user = userEvent.setup();
   render(<ChatBubble />);
   await user.click(screen.getByRole("button", { name: "Open assistant" }));
-  expect(await screen.findByText("Choose a plan")).toBeVisible();
+  expect(
+    await screen.findByRole("heading", { name: "Choose a plan" }),
+  ).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Change request" }));
   await user.click(screen.getByRole("button", { name: "Expand options" }));
   expect(
     screen.getByRole("button", { name: "Agent mode: ask" }),
   ).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByRole("textbox", { name: "Message" })).toBeEnabled();
-  await user.click(screen.getByRole("button", { name: "← Back to question" }));
+  await user.click(screen.getByRole("button", { name: /Back to question/i }));
   await user.click(screen.getByRole("radio", { name: "Quick plan" }));
   await user.click(screen.getByRole("button", { name: "Send answer" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -449,11 +451,13 @@ it("sends selected mode and allows a custom clarification answer", async () => {
     screen.getByRole("textbox", { name: "Message" }),
     "Plan my day{Enter}",
   );
-  expect(await screen.findByText("Choose a plan")).toBeVisible();
+  expect(
+    await screen.findByRole("heading", { name: "Choose a plan" }),
+  ).toBeVisible();
   expect(send).toHaveBeenCalledWith(expect.objectContaining({ mode: "ask" }));
-  await user.click(screen.getByRole("button", { name: "Other answer" }));
+  await user.click(screen.getByRole("radio", { name: /Write my own answer/i }));
   await user.type(
-    screen.getByRole("textbox", { name: "Other answer" }),
+    screen.getByRole("textbox", { name: /Your answer/i }),
     "Only morning tasks",
   );
   send.mockResolvedValue({ data: "Done", status: "completed" });
@@ -550,7 +554,9 @@ it("allows a new message to replace a menu without treating text as approval", a
   const user = userEvent.setup();
   render(<ChatBubble />);
   await user.click(screen.getByRole("button", { name: "Open assistant" }));
-  expect(await screen.findByText("Choose a plan")).toBeVisible();
+  expect(
+    await screen.findByRole("heading", { name: "Choose a plan" }),
+  ).toBeVisible();
   load.mockResolvedValue({
     ...snapshot([message("New response")]),
     conversationId: "saved",
@@ -567,7 +573,9 @@ it("allows a new message to replace a menu without treating text as approval", a
     mode: "ask",
   });
   expect(send.mock.calls[0][0]).not.toHaveProperty("selection");
-  expect(screen.queryByText("Choose a plan")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "Choose a plan" }),
+  ).not.toBeInTheDocument();
 });
 
 it("starts a fresh conversation and clears the draft with the plus button", async () => {

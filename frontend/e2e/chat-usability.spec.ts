@@ -10,7 +10,6 @@ import type {
 
 test.use({ reducedMotion: "reduce" });
 
-const shots = resolve("../docs/ui-audit/2026-11-03-chatbot/after");
 const question: AgentInteraction = {
   id: "ask-question",
   kind: "clarification",
@@ -37,13 +36,18 @@ const question: AgentInteraction = {
 };
 const timestamp = "2026-11-03T12:00:00.000Z";
 async function screenshot(page: Page, name: string) {
+  const shots = test.info().outputPath("screenshots");
   await mkdir(shots, { recursive: true });
   await page.screenshot({
     path: resolve(shots, `${name}.png`),
     animations: "disabled",
   });
 }
-async function chatFixture(page: Page, pending = false) {
+async function chatFixture(
+  page: Page,
+  pending = false,
+  workspacePath?: string,
+) {
   await dashboardFixture(page);
   const requests: ChatPayload[] = [];
   let failure = 0;
@@ -150,13 +154,14 @@ async function chatFixture(page: Page, pending = false) {
       json: { message: "Unknown mock route" },
     });
   });
-  await page.goto("/dashboard");
+  await page.goto(workspacePath ?? "/dashboard");
   await page.waitForLoadState("networkidle");
-  await page.getByRole("button", { name: "Open assistant" }).click();
-  await expect(page.getByRole("region", { name: "Assistant chat" })).toHaveCSS(
-    "transform",
-    "none",
-  );
+  if (!workspacePath) {
+    await page.getByRole("button", { name: "Open assistant" }).click();
+    await expect(
+      page.getByRole("region", { name: "Assistant chat" }),
+    ).toHaveCSS("transform", "none");
+  }
   return {
     requests,
     fail: (status: number) => (failure = status),
@@ -375,9 +380,11 @@ test("Ask custom answer, cancel and replacement retain distinct payloads", async
   page,
 }) => {
   const api = await chatFixture(page, true);
-  await page.getByRole("button", { name: "Other answer", exact: true }).click();
   await page
-    .getByRole("textbox", { name: "Other answer" })
+    .getByRole("radio", { name: "Write my own answer", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Your answer" })
     .fill("Tôi chỉ có 10 phút mỗi ngày");
   await screenshot(page, "07-ask-custom-desktop");
   await page.getByRole("button", { name: "Send answer", exact: true }).click();
@@ -399,11 +406,19 @@ test("Ask custom answer, cancel and replacement retain distinct payloads", async
     await page.reload();
     await page.getByRole("button", { name: "Open assistant" }).click();
     await expect(
-      page.getByRole("button", { name: "Cancel", exact: true }),
+      page.getByRole("button", { name: "Change request", exact: true }),
     ).toBeVisible();
   };
   await resetQuestion();
-  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Cancel", exact: true }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Change request", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Skip question", exact: true })
+    .click();
   await expect.poll(() => api.requests.length).toBe(2);
   expect(api.requests[1].selection?.cancel).toBe(true);
   await resetQuestion();
@@ -418,27 +433,194 @@ test("Ask custom answer, cancel and replacement retain distinct payloads", async
   await expect(page.getByRole("radio")).toHaveCount(0);
 });
 
+test("keyboard users can move past the custom option and resume their typed answer", async ({
+  page,
+}) => {
+  await chatFixture(page, true);
+  const lastOption = page.getByRole("radio", { name: "Luyện thi IELTS" });
+  const ownAnswer = page.getByRole("radio", { name: "Write my own answer" });
+  const answer = page.getByRole("textbox", { name: "Your answer" });
+
+  await lastOption.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(ownAnswer).toBeFocused();
+  await expect(ownAnswer).toBeChecked();
+  await page.keyboard.press("ArrowUp");
+  await expect(lastOption).toBeFocused();
+
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Tab");
+  await expect(answer).toBeFocused();
+  await answer.fill("Cuối tuần");
+  await page.getByRole("button", { name: "Change request" }).click();
+  await expect(page.getByRole("textbox", { name: "Message" })).toBeFocused();
+  await page.getByRole("button", { name: /Back to question/ }).click();
+  await expect(answer).toBeFocused();
+  await expect(answer).toHaveValue("Cuối tuần");
+});
+
+test("answered clarification shows one compact row and opens the original question on demand", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 600 });
+  await chatFixture(page, true);
+  await page.getByRole("radio", { name: "Luyện thi IELTS" }).check();
+  await page.getByRole("button", { name: "Send answer" }).click();
+  const summary = page.locator("summary").filter({ hasText: "You selected" });
+  await expect(summary).toContainText("Luyện thi IELTS");
+  await expect(page.getByText(question.question, { exact: true })).toBeHidden();
+  await expect(summary.locator("..")).not.toHaveAttribute("open", "");
+  expect((await summary.boundingBox())!.height).toBeLessThanOrEqual(44);
+  expect(
+    await summary
+      .getByText("Luyện thi IELTS", { exact: true })
+      .evaluate((label) => label.scrollWidth <= label.clientWidth),
+  ).toBe(true);
+  await screenshot(page, "clarification-history-collapsed");
+  await summary.press("Enter");
+  await expect(
+    page.getByText(question.question, { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("15 phút mỗi ngày, dễ duy trì khi bận rộn."),
+  ).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "Open assistant" }).click();
+  await expect(summary).toBeVisible();
+  await expect(page.getByText(question.question, { exact: true })).toBeHidden();
+});
+
+test("accepted clarification collapses while the agent is still streaming", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 700 });
+  await chatFixture(page, true, "/v2/agents?conversation=existing-ask");
+  let accept!: () => void;
+  const acceptance = new Promise<void>((resolve) => {
+    accept = resolve;
+  });
+  await page.route(
+    "**/api/ai/conversations/existing-ask/turns",
+    async (route) => {
+      const payload = route.request().postDataJSON() as ChatPayload;
+      await acceptance;
+      await route.fulfill({
+        status: 202,
+        json: {
+          data: {
+            conversationId: payload.conversationId,
+            requestId: payload.requestId,
+            turnId: "answer-run",
+            status: "processing",
+            partialResponse: "I am preparing the next steps.",
+            lastEventSeq: 1,
+            toolProgress: [],
+            deadlineAt: new Date(Date.now() + 300_000).toISOString(),
+          },
+        },
+      });
+    },
+  );
+  await page.route("**/turns/answer-run/events?**", (route) =>
+    route.fulfill({ contentType: "text/event-stream", body: "" }),
+  );
+
+  const option = page.getByRole("radio", { name: "Luyện thi IELTS" });
+  const summary = page
+    .locator("summary")
+    .filter({ hasText: "Luyện thi IELTS" });
+  try {
+    await option.check();
+    await page.getByRole("button", { name: "Send answer" }).click();
+    await expect(option).toBeDisabled();
+    await expect(summary).toHaveCount(0);
+  } finally {
+    accept();
+  }
+  await expect(page.getByText("I am preparing the next steps.")).toBeVisible();
+  await expect(summary).toBeVisible();
+  await expect(option).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Send answer" })).toHaveCount(
+    0,
+  );
+  await expect(
+    page.getByRole("button", { name: "Stop", exact: true }),
+  ).toBeVisible();
+  await screenshot(page, "clarification-collapsed-during-streaming");
+});
+
 test("short mobile Ask keeps custom input and submit reachable in dark mode", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 390, height: 500 });
+  await page.setViewportSize({ width: 320, height: 500 });
   await chatFixture(page, true);
   await page.getByRole("button", { name: "Close chat" }).click();
   await page.getByRole("button", { name: "Switch to dark mode" }).click();
   await page.getByRole("button", { name: "Open assistant" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await page.getByRole("button", { name: "Other answer", exact: true }).click();
   await page
-    .getByRole("textbox", { name: "Other answer" })
+    .getByRole("radio", { name: "Write my own answer", exact: true })
+    .click();
+  await page
+    .getByRole("textbox", { name: "Your answer" })
     .fill("20 phút vào buổi sáng");
   const send = page.getByRole("button", { name: "Send answer", exact: true });
+  const change = page.getByRole("button", {
+    name: "Change request",
+    exact: true,
+  });
   await expect(send).toBeEnabled();
-  const box = (await send.boundingBox())!;
-  expect(box.y + box.height).toBeLessThanOrEqual(500);
+  await expect(send).toBeInViewport({ ratio: 1 });
+  await expect(change).toBeInViewport({ ratio: 1 });
+  await expect(
+    page.getByRole("textbox", { name: "Your answer" }),
+  ).toBeInViewport({ ratio: 0.95 });
+  await expect(page.getByRole("textbox", { name: "Your answer" })).toHaveCSS(
+    "resize",
+    "none",
+  );
+  expect((await send.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect((await change.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await screenshot(page, "08-mobile-short-dark-ask");
   await send.click();
   await expect(page.getByText("Đã nhận lựa chọn của bạn.")).toBeVisible();
 });
+
+for (const width of [390, 768, 1440]) {
+  test(`V2 workspace at ${width}px fits the Vietnamese clarification and its actions`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: width === 390 ? 600 : 850 });
+    await page.addInitScript(() =>
+      localStorage.setItem("orbit.language", "vi"),
+    );
+    const api = await chatFixture(
+      page,
+      true,
+      "/v2/agents?conversation=existing-ask",
+    );
+    const group = page.getByRole("radiogroup", { name: question.question });
+    await expect(group).toBeVisible();
+    const custom = group.getByRole("radio", { name: "Tự nhập câu trả lời" });
+    await custom.click();
+    const input = page.getByRole("textbox", { name: "Câu trả lời của bạn" });
+    await expect(input).toBeFocused();
+    await input.fill("Tôi chỉ rảnh vào buổi tối các ngày trong tuần.");
+    const send = page.getByRole("button", {
+      name: "Gửi câu trả lời",
+      exact: true,
+    });
+    await expect(send).toBeInViewport({ ratio: 1 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBe(width);
+    await screenshot(page, `clarification-workspace-vi-${width}`);
+    await send.click();
+    await expect
+      .poll(() => api.requests[0]?.selection?.customAnswer)
+      .toBe("Tôi chỉ rảnh vào buổi tối các ngày trong tuần.");
+  });
+}
 
 test("rich content stays readable in expanded, docked and mobile dark chat", async ({
   page,

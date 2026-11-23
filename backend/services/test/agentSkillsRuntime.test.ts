@@ -171,10 +171,7 @@ describe("request-bound skill gate", () => {
         .mockResolvedValueOnce(response(call("denied", name)))
         .mockImplementationOnce(async (payload) => {
           expect(results(payload.messages).at(-1)).toMatchObject({
-            code:
-              name === "orbit_create_task"
-                ? "WRITE_FORBIDDEN"
-                : "TOOL_NOT_ALLOWED",
+            code: "TOOL_NOT_ALLOWED",
             executed: false,
           });
           return done;
@@ -182,6 +179,18 @@ describe("request-bound skill gate", () => {
       await agentService.chatWithMcp("Act", context);
     },
   );
+  it("blocks direct orbit_create_task in ask mode with WRITE_FORBIDDEN", async () => {
+    completion
+      .mockResolvedValueOnce(response(call("denied", "orbit_create_task")))
+      .mockImplementationOnce(async (payload) => {
+        expect(results(payload.messages).at(-1)).toMatchObject({
+          code: "WRITE_FORBIDDEN",
+          executed: false,
+        });
+        return done;
+      });
+    await agentService.chatWithMcp("Act", context, { mode: "ask" });
+  });
   it("counts each attempt and produces a result for the entire oversized batch", async () => {
     const read = vi.spyOn(categoryService, "getAll").mockResolvedValue([]);
     completion

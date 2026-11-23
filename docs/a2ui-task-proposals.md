@@ -25,8 +25,8 @@ A2UI_TASK_PROPOSALS_ENABLED=true
   - Historical proposal messages are rendered in graceful textual fallback mode.
 - **When enabled (`true`)**:
   - `GET /api/ai/conversations/capabilities` reports `{ "taskProposals": true }`.
-  - AI chooses propose_tasks automatically for actionable plans/creation requests in Auto or Ask. Ordinary conversation remains text; there is no Plan tasks toggle.
-  - Direct orbit_create_task calls are hidden and rejected. Creating tasks requires confirmation on the proposal.
+  - In Ask mode (or explicit `intent: "task_proposal"` turns), AI chooses `propose_tasks` automatically for actionable plans/creation requests. Direct `orbit_create_task` calls are hidden and rejected (`WRITE_FORBIDDEN`). Creating tasks requires confirmation on the proposal.
+  - In Auto mode, the agent can call `orbit_create_task` directly when creation requests and essential details are clear, and uses `propose_tasks` when the user asks to plan, suggest tasks, or preview changes. Clarification answers retain the active mode (Auto or Ask). Legacy confirmations retain Ask-mode requirements.
   - Task proposal turns generate valid v0.9 protocol envelopes.
 
 ---

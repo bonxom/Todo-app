@@ -160,7 +160,9 @@ test.describe("Chat streaming and live controls", () => {
     expect(cancelCalled).toBe(true);
 
     // Transitions to Stopping
-    await expect(page.getByText(/đang dừng|stopping/i)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /đang dừng|stopping/i }),
+    ).toBeVisible();
   });
 
   test("handles 429 concurrency limit error, displays explanation, and preserves draft", async ({

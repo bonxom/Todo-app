@@ -30,6 +30,7 @@ import Task from "../../models/Task.js";
 import Stat from "../../models/Stat.js";
 import Conversation from "../../models/Conversation.js";
 import ChatTurn from "../../models/ChatTurn.js";
+import TaskProposal from "../../models/A2UI/TaskProposal.js";
 import {
   McpWriteReceipt,
   writeRepository,
@@ -944,6 +945,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
       conversationId,
       requestId: randomUUID(),
       userInput: "Draft reading plan",
+      mode: "ask",
     });
 
     expect(proposalTurn.body.status).toBe("completed");
@@ -1038,6 +1040,199 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     expect(normalTurn.body.status).toBe("completed");
     expect(await Task.countDocuments({ title: "Ordinary Task" })).toBe(1);
     expect(writeSpy).toHaveBeenCalled();
+  });
+
+  it("creates a task directly in Auto mode with title only, handles idempotent replay, and reports failed tool execution", async () => {
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
+    const conversationId = await create();
+    const requestId = randomUUID();
+
+    completion
+      .mockResolvedValueOnce(
+        tool("orbit_create_task", {
+          title: "Send the report",
+          idempotencyKey: randomUUID(),
+        }),
+      )
+      .mockResolvedValueOnce(answer("Created task Send the report"));
+
+    const createTurn = await post("chat-mcp", {
+      conversationId,
+      requestId,
+      userInput: "Create a task to send the report",
+      mode: "auto",
+    });
+
+    expect(createTurn.body.status).toBe("completed");
+    const createdActivity = createTurn.body.activities?.find(
+      (a: { kind: string }) => a.kind === "task_created",
+    );
+    expect(createdActivity).toMatchObject({
+      kind: "task_created",
+      status: "succeeded",
+    });
+    expect(await Task.countDocuments({ title: "Send the report" })).toBe(1);
+
+    // Replay with the same requestId
+    const replayTurn = await post("chat-mcp", {
+      conversationId,
+      requestId,
+      userInput: "Create a task to send the report",
+      mode: "auto",
+    });
+    expect(replayTurn.body).toEqual(createTurn.body);
+    expect(await Task.countDocuments({ title: "Send the report" })).toBe(1);
+
+    // Separate turn where create fails
+    vi.spyOn(taskWriteService, "create").mockRejectedValueOnce(
+      new Error("Database write error"),
+    );
+    let failedToolResult: unknown;
+    completion
+      .mockResolvedValueOnce(
+        tool("orbit_create_task", {
+          title: "Failed task",
+          idempotencyKey: randomUUID(),
+        }),
+      )
+      .mockImplementationOnce(
+        async ({
+          messages,
+        }: {
+          messages: Array<{
+            role: string;
+            tool_call_id?: string;
+            content: string;
+          }>;
+        }) => {
+          const reversed = [...messages].reverse();
+          const toolMsg =
+            reversed.find(
+              (m) => m.role === "tool" && m.tool_call_id?.startsWith("call-"),
+            ) ?? reversed.find((m) => m.role === "tool");
+          failedToolResult = JSON.parse(toolMsg?.content ?? "{}");
+          return answer("Failed to create task");
+        },
+      );
+
+    const failedTurn = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Create failed task",
+      mode: "auto",
+    });
+    expect(failedToolResult).toMatchObject({ isError: true });
+    expect(failedTurn.body.activities ?? []).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "task_created",
+          status: "succeeded",
+        }),
+      ]),
+    );
+    expect(await Task.countDocuments({ title: "Failed task" })).toBe(0);
+  });
+
+  it("continues Auto mode after clarification and creates task with chosen project", async () => {
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
+    const conversationId = await create();
+    const project = await Project.create({
+      name: "Project A",
+      userId: users[0],
+      status: "active",
+    });
+
+    completion.mockResolvedValueOnce(
+      tool("grill_user", {
+        question: "Which project should I use?",
+        options: [
+          { id: String(project._id), label: "Project A" },
+          { id: "other", label: "Other" },
+        ],
+      }),
+    );
+
+    const askTurn = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Create a deployment task",
+      mode: "auto",
+    });
+    expect(askTurn.body.interaction).toBeDefined();
+    const interactionId = askTurn.body.interaction.id;
+
+    completion
+      .mockResolvedValueOnce(
+        tool("orbit_create_task", {
+          title: "Deploy app",
+          projectId: String(project._id),
+          idempotencyKey: randomUUID(),
+        }),
+      )
+      .mockResolvedValueOnce(answer("Created deployment task in Project A"));
+
+    const selectionPayload = {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Project A",
+      mode: "auto",
+      selection: {
+        interactionId,
+        optionId: String(project._id),
+      },
+    };
+
+    const answerTurn = await post("chat-mcp", selectionPayload);
+    expect(selectionPayload).toMatchObject({
+      mode: "auto",
+      selection: { interactionId, optionId: String(project._id) },
+    });
+    expect(answerTurn.body.status).toBe("completed");
+    expect(
+      await Task.countDocuments({
+        title: "Deploy app",
+        projectId: project._id,
+      }),
+    ).toBe(1);
+  });
+
+  it("rejects legacy confirmation answers submitted in Auto mode", async () => {
+    const conversationId = await create();
+    const interactionId = randomUUID();
+    await ChatTurn.create({
+      _id: randomUUID(),
+      conversationId,
+      userId: users[0],
+      requestId: randomUUID(),
+      sequence: 1,
+      userInput: "Delete everything",
+      status: "completed",
+      mode: "ask",
+      response: "Are you sure?",
+      expiresAt: new Date(Date.now() + 60000),
+      messages: [{ role: "user", content: "Delete everything" }],
+      interactions: [
+        {
+          id: interactionId,
+          kind: "confirmation",
+          question: "Are you sure?",
+          options: [
+            { id: "confirm", label: "Yes" },
+            { id: "cancel", label: "No" },
+          ],
+          status: "pending",
+        },
+      ],
+    });
+
+    const res = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Yes",
+      mode: "auto",
+      selection: { interactionId, optionId: "confirm" },
+    });
+    expect(res.status).toBe(422);
   });
   it("blocks proposal requests and clarification continuations while disabled", async () => {
     const conversationId = await create();
@@ -1390,5 +1585,233 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
       (m: { text: string }) => m.text === "Old query",
     );
     expect(userMsg).toBeDefined();
+  });
+
+  it("passes a committed cancellation to the model without cancelling the next chat turn", async () => {
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
+    const conversationId = await create();
+    completion.mockResolvedValueOnce(
+      tool("propose_tasks", { items: [{ title: "Read the report" }] }),
+    );
+    const draft = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Propose a reading task",
+      mode: "ask",
+    });
+    expect(draft.status).toBe(200);
+    const proposal = draft.body.proposal;
+    const action = {
+      action: "cancel",
+      revision: proposal.revision,
+      requestId: randomUUID(),
+    };
+    const path = `conversations/${conversationId}/proposals/${proposal.id}/actions`;
+    const callsBeforeCancel = completion.mock.calls.length;
+    const cancelled = await post(path, action);
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.body.data.proposal.status).toBe("cancelled");
+    const replay = await post(path, action);
+    expect(replay.status).toBe(200);
+    expect(replay.body.data.proposal).toEqual(cancelled.body.data.proposal);
+    expect(completion).toHaveBeenCalledTimes(callsBeforeCancel);
+
+    completion.mockImplementationOnce(async ({ messages }) => {
+      const system = messages.find(
+        (m: { role: string }) => m.role === "system",
+      );
+      expect(system?.content).toContain(
+        "Cancelled task proposals (server data):",
+      );
+      expect(system?.content).toContain(JSON.stringify(proposal.id));
+      return answer("You cancelled that proposal.");
+    });
+    const next = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "What happened to that proposal?",
+      mode: "ask",
+    });
+    expect(next.body.status).toBe("completed");
+    expect(next.body.data).toBe("You cancelled that proposal.");
+  });
+
+  it("includes confirmed proposal results in the next model request and makes no provider call on confirm", async () => {
+    vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
+    const conversationId = await create();
+
+    // 1. Create a 5-item proposal through chat
+    completion.mockResolvedValueOnce(
+      tool("propose_tasks", {
+        items: [
+          { title: "Task 1", priority: "Low" },
+          { title: "Task 2", priority: "Medium" },
+          { title: "Task 3", priority: "High" },
+          { title: "Task 4", priority: "Medium" },
+          { title: "Task 5", priority: "Low" },
+        ],
+      }),
+    );
+
+    const proposalTurn = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Propose 5 tasks",
+      mode: "ask",
+    });
+    expect(proposalTurn.body.status).toBe("completed");
+    const proposal = proposalTurn.body.proposal;
+    expect(proposal.items).toHaveLength(5);
+
+    const providerCallsBeforeConfirm = completion.mock.calls.length;
+
+    // 2. Change a title and confirm two rows through the action endpoint
+    const item0 = { ...proposal.items[0], title: "Send the revised report" };
+    const item1 = { ...proposal.items[1], title: "Schedule the review" };
+    const confirmPayload = {
+      action: "confirm",
+      revision: proposal.revision ?? 1,
+      requestId: randomUUID(),
+      items: [
+        item0,
+        item1,
+        proposal.items[2],
+        proposal.items[3],
+        proposal.items[4],
+      ],
+      selectedItemIds: [item0.id, item1.id],
+    };
+
+    const confirmRes = await post(
+      `conversations/${conversationId}/proposals/${proposal.id}/actions`,
+      confirmPayload,
+    );
+    expect(confirmRes.status).toBe(200);
+    expect(confirmRes.body.data.proposal.status).toBe("created");
+    expect(confirmRes.body.data.proposal.createdTasks).toHaveLength(2);
+
+    // Replay confirm with same requestId
+    const replayRes = await post(
+      `conversations/${conversationId}/proposals/${proposal.id}/actions`,
+      confirmPayload,
+    );
+    expect(replayRes.status).toBe(200);
+
+    // Confirm must make NO provider calls
+    expect(completion).toHaveBeenCalledTimes(providerCallsBeforeConfirm);
+
+    // 3. Inspect system message on the next chat request
+    let nextSystemMessage = "";
+    completion.mockImplementationOnce(async ({ messages }) => {
+      const sys = messages.find((m: { role: string }) => m.role === "system");
+      nextSystemMessage = sys?.content ?? "";
+      return answer("Here are the tasks you confirmed");
+    });
+
+    const nextTurn = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "What did I confirm?",
+      mode: "auto",
+    });
+    expect(nextTurn.body.status).toBe("completed");
+    expect(nextSystemMessage).toContain(
+      "Confirmed task proposals (server data):",
+    );
+    expect(nextSystemMessage).toContain("Send the revised report");
+    expect(nextSystemMessage).toContain("Schedule the review");
+    expect(nextSystemMessage).not.toContain("Task from failed confirmation");
+
+    // 4. Exercise a rejected confirmation and verify its title does not enter model context
+    const secondProposalTurn = await TaskProposal.create({
+      userId: users[0],
+      conversationId,
+      turnId: randomUUID(),
+      proposalId: "failed-prop",
+      status: "draft",
+      createdTasks: [],
+    });
+    // Failed write
+    const failedConfirmRes = await post(
+      `conversations/${conversationId}/proposals/${secondProposalTurn.proposalId}/actions`,
+      {
+        action: "confirm",
+        requestId: randomUUID(),
+        items: [{ id: "fail-item", title: "Task from failed confirmation" }],
+        selectedItemIds: ["non-existent-id"],
+      },
+    );
+    expect(failedConfirmRes.status).toBe(400);
+
+    // Verify next turn still does not contain "Task from failed confirmation"
+    let followingSystemMessage = "";
+    completion.mockImplementationOnce(async ({ messages }) => {
+      const sys = messages.find((m: { role: string }) => m.role === "system");
+      followingSystemMessage = sys?.content ?? "";
+      return answer("Follow up response");
+    });
+    await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Follow up",
+      mode: "auto",
+    });
+    expect(followingSystemMessage).not.toContain(
+      "Task from failed confirmation",
+    );
+
+    const question = "How should we continue after the revised report?";
+    const preference = "Focus the next steps on review feedback.";
+    completion.mockResolvedValueOnce(
+      tool("grill_user", {
+        question,
+        options: [
+          { id: "feedback", label: "Review feedback", description: preference },
+          { id: "schedule", label: "Adjust the schedule" },
+        ],
+      }),
+    );
+    const followUpMenu = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Ask what to focus on before drafting next steps",
+      mode: "ask",
+    });
+    expect(followUpMenu.body.interaction.question).toBe(question);
+
+    let continuationContext = "";
+    completion.mockImplementationOnce(async ({ messages }) => {
+      continuationContext =
+        messages.find((message: { role: string }) => message.role === "system")
+          ?.content ?? "";
+      return tool("propose_tasks", {
+        items: [{ title: "Collect review feedback" }],
+      });
+    });
+    const continuation = await post(
+      "chat-mcp",
+      choose(
+        conversationId,
+        followUpMenu.body.interaction,
+        { optionId: "feedback" },
+        "Review feedback",
+      ),
+    );
+    expect(
+      continuation.body.proposal.items.map(
+        (item: { title: string }) => item.title,
+      ),
+    ).toEqual(["Collect review feedback"]);
+    expect(continuationContext).toContain(
+      "Answered clarification (server data):",
+    );
+    expect(continuationContext).toContain(question);
+    expect(continuationContext).toContain(preference);
+    expect(continuationContext).toContain(
+      confirmRes.body.data.proposal.createdTasks[0].taskId,
+    );
+    expect(continuationContext).toContain(
+      "Use confirmed tasks as existing work when drafting follow-up plans",
+    );
   });
 });

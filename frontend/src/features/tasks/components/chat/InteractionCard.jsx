@@ -1,16 +1,156 @@
 import { useTranslation } from "react-i18next";
-import { useState, useId } from "react";
-import {
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Send,
-  MessageCircle,
-  X,
-} from "lucide-react";
+import { useState, useId, useLayoutEffect, useRef } from "react";
+import { Check, ChevronDown, ChevronUp, Send, X } from "lucide-react";
+
+function AnswerOption({
+  name,
+  value,
+  label,
+  description,
+  checked,
+  onChange,
+  onClick,
+  onKeyDown,
+}) {
+  const labelId = useId();
+  const descriptionId = `${labelId}-description`;
+
+  return (
+    <label
+      className={`flex min-h-11 cursor-pointer items-start gap-2.5 px-3 py-2.5 text-sm has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-[var(--color-accent)] has-disabled:cursor-default ${checked ? "bg-[var(--color-accent-soft)]" : "hover:bg-[var(--color-surface-muted)]"}`}
+    >
+      <input
+        type="radio"
+        name={name}
+        value={value}
+        aria-labelledby={labelId}
+        aria-describedby={description ? descriptionId : undefined}
+        checked={checked}
+        onChange={onChange}
+        onClick={onClick}
+        onKeyDown={onKeyDown}
+        className="mt-0.5 size-4 shrink-0 accent-[var(--color-accent)]"
+      />
+      <span className="min-w-0 flex-1">
+        <span
+          id={labelId}
+          className="block font-medium leading-snug wrap-anywhere text-[var(--color-text)]"
+        >
+          {label}
+        </span>
+        {description && (
+          <span
+            id={descriptionId}
+            className="mt-0.5 block text-xs leading-normal wrap-anywhere text-[var(--color-text-muted)]"
+          >
+            {description}
+          </span>
+        )}
+      </span>
+    </label>
+  );
+}
+
+function focusAnswerInput(input) {
+  input?.focus({ preventScroll: true });
+  input?.scrollIntoView?.({ block: "nearest" });
+}
+
+function ClarificationSummary({ interaction, children }) {
+  const { t } = useTranslation("agent");
+  const { answer, options = [] } = interaction;
+  const cancelled = interaction.status === "cancelled";
+  const customAnswer = answer?.customAnswer;
+  const selectedOption = options.find(
+    (option) => option.id === answer?.optionId,
+  );
+  const answerText = customAnswer ?? selectedOption?.label ?? answer?.optionId;
+  const label = cancelled
+    ? t("cancelledLabel")
+    : t(customAnswer ? "yourAnswer" : "youSelected");
+
+  return (
+    <details className="group w-fit min-w-0 max-w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] text-sm text-[var(--color-text)]">
+      <summary className="ui-focus-ring flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-2 hover:bg-[var(--color-surface-muted)] [&::-webkit-details-marker]:hidden">
+        {cancelled ? (
+          <X
+            className="size-4 shrink-0 text-[var(--color-text-muted)]"
+            aria-hidden="true"
+          />
+        ) : (
+          <Check
+            className="size-4 shrink-0 text-[var(--color-success)]"
+            aria-hidden="true"
+          />
+        )}
+        <span role="status" className="flex min-w-0 items-baseline gap-2">
+          <span
+            className={
+              cancelled || !answerText
+                ? "shrink-0 text-xs text-[var(--color-text-muted)]"
+                : "sr-only"
+            }
+          >
+            {label}
+          </span>
+          {!cancelled && answerText && (
+            <span className="truncate font-semibold group-open:whitespace-pre-wrap group-open:wrap-anywhere">
+              {answerText}
+            </span>
+          )}
+        </span>
+        <ChevronDown
+          className="ml-auto size-4 shrink-0 text-[var(--color-text-muted)] group-open:rotate-180"
+          aria-hidden="true"
+        />
+      </summary>
+      <div className="space-y-3 border-t border-[var(--color-line)] px-3 py-3">
+        <p className="font-medium leading-snug wrap-anywhere">
+          {interaction.question}
+        </p>
+        {options.length > 0 && (
+          <ul className="divide-y divide-[var(--color-line)]">
+            {options.map((option) => (
+              <li key={option.id} className="py-2 wrap-anywhere">
+                <div className="flex items-start gap-2">
+                  {option === selectedOption && !cancelled && (
+                    <>
+                      <Check
+                        className="mt-0.5 size-4 shrink-0 text-[var(--color-success)]"
+                        aria-hidden="true"
+                      />
+                      <span className="sr-only">{t("selected")}</span>
+                    </>
+                  )}
+                  <span className="font-medium">{option.label}</span>
+                </div>
+                {option.description && (
+                  <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                    {option.description}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {children}
+      </div>
+    </details>
+  );
+}
 
 export default function InteractionCard(props) {
-  const { interaction } = props;
+  const { interaction, children } = props;
+  if (
+    interaction.kind === "clarification" &&
+    interaction.status !== "pending"
+  ) {
+    return (
+      <ClarificationSummary key={interaction.id} interaction={interaction}>
+        {children}
+      </ClarificationSummary>
+    );
+  }
   // Remount local draft state only when the question or saved answer changes.
   const stateKey = JSON.stringify([
     interaction.id,
@@ -34,23 +174,38 @@ function InteractionCardContent({
   const { t } = useTranslation("agent");
 
   const questionId = useId();
+  const customInputId = useId();
+  const customTextareaRef = useRef(null);
+  const focusCustomOnMount = useRef(false);
+
+  const initialMode = interaction.answer?.customAnswer
+    ? "custom"
+    : interaction.answer?.optionId
+      ? "option"
+      : "";
+
+  const [selectedMode, setSelectedMode] = useState(initialMode);
   const [optionId, setOptionId] = useState(interaction.answer?.optionId ?? "");
   const [customAnswer, setCustomAnswer] = useState(
     interaction.answer?.customAnswer ?? "",
   );
-  const [showCustomAnswer, setShowCustomAnswer] = useState(
-    Boolean(interaction.answer?.customAnswer),
-  );
   const [showDetails, setShowDetails] = useState(false);
+  const customSelected = selectedMode === "custom";
+
+  useLayoutEffect(() => {
+    if (!customSelected || !focusCustomOnMount.current) return;
+    focusCustomOnMount.current = false;
+    focusAnswerInput(customTextareaRef.current);
+  }, [customSelected]);
 
   const isResolved = interaction.status !== "pending";
   const effectiveAnswer = interaction.answer;
   const isBusy = disabled || sending;
+  const confirmation = interaction.kind === "confirmation";
   const isCancelled =
     interaction.status === "cancelled" ||
-    effectiveAnswer?.optionId === "cancel";
+    (confirmation && effectiveAnswer?.optionId === "cancel");
 
-  const confirmation = interaction.kind === "confirmation";
   const options = interaction.options || [];
   const visibleOptions = options.filter(
     (option) => !(confirmation && option.id === "cancel"),
@@ -74,19 +229,32 @@ function InteractionCardContent({
     if (event) event.preventDefault();
     if (isBusy || isResolved) return;
 
-    const trimmedCustom = showCustomAnswer ? customAnswer.trim() : "";
-    const selectedId = directOption?.id ?? (showCustomAnswer ? "" : optionId);
-    if (!trimmedCustom && !selectedId) return;
+    if (directOption) {
+      onAnswer?.({ optionId: directOption.id });
+      return;
+    }
 
-    const answer = trimmedCustom
-      ? { customAnswer: trimmedCustom }
-      : { optionId: selectedId };
-    onAnswer?.(answer);
+    if (customSelected) {
+      const trimmed = customAnswer.trim();
+      if (!trimmed) return;
+      onAnswer?.({ customAnswer: trimmed });
+    } else if (selectedMode === "option" && optionId) {
+      onAnswer?.({ optionId });
+    }
   };
 
   const handleCancel = () => {
     if (isBusy || isResolved) return;
     onCancel?.();
+  };
+
+  const activateCustom = () => {
+    if (customSelected) {
+      focusAnswerInput(customTextareaRef.current);
+      return;
+    }
+    focusCustomOnMount.current = true;
+    setSelectedMode("custom");
   };
 
   // --- RESOLVED VIEW (CODING AGENT COMPACT SUMMARY) ---
@@ -231,7 +399,10 @@ function InteractionCardContent({
   const canSubmit =
     !isBusy &&
     Boolean(
-      directOption || (showCustomAnswer ? customAnswer.trim() : optionId),
+      directOption ||
+      (customSelected
+        ? customAnswer.trim()
+        : selectedMode === "option" && optionId),
     );
 
   return (
@@ -244,159 +415,128 @@ function InteractionCardContent({
       }
       onSubmit={handleSubmit}
     >
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 pb-2 text-xs">
-        <div className="inline-flex items-center gap-1.5 text-[var(--color-accent-strong)]">
-          <MessageCircle className="h-4 w-4" aria-hidden="true" />
-          <span className="font-medium">
-            {confirmation ? t("confirmAction") : t("letSClarifyYourRequest")}
-          </span>
-        </div>
-        {onSwitchToMessage && (
-          <button
-            type="button"
-            aria-label={t("changeRequest")}
-            disabled={isBusy}
-            onClick={onSwitchToMessage}
-            title={t("sendANewRequestInsteadOfAnsweringThisQuestion")}
-            className="ui-focus-ring rounded-lg px-2 py-1.5 text-xs text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50"
-          >
-            {t("changeRequestLabel")}
-          </button>
-        )}
-      </div>
-
-      <h3
-        id={questionId}
-        className="chat-ask-question shrink-0 max-h-[88px] overflow-y-auto text-[14px] [font-weight:650] [line-height:1.5] mb-[12px]"
-      >
-        {interaction.question}
-      </h3>
-
-      {interaction.allowCustomAnswer && !confirmation && (
-        <div
-          className="mb-2 flex shrink-0 gap-1 rounded-lg bg-[var(--color-surface-muted)] p-1"
-          aria-label={t("answerMethod")}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-py-2 py-1 [scrollbar-width:thin]">
+        <h3
+          id={questionId}
+          className="mb-2.5 text-sm font-semibold leading-snug wrap-anywhere text-[var(--color-text)]"
         >
-          <button
-            type="button"
-            aria-pressed={!showCustomAnswer}
-            disabled={isBusy}
-            onClick={() => setShowCustomAnswer(false)}
-            className={`ui-focus-ring flex-1 rounded-md px-2 py-2 text-xs font-medium ${!showCustomAnswer ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-xs" : "text-[var(--color-text-muted)]"}`}
-          >
-            {t("chooseAnOption")}
-          </button>
-          <button
-            type="button"
-            aria-pressed={showCustomAnswer}
-            disabled={isBusy}
-            onClick={() => setShowCustomAnswer(true)}
-            className={`ui-focus-ring flex-1 rounded-md px-2 py-2 text-xs font-medium ${showCustomAnswer ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-xs" : "text-[var(--color-text-muted)]"}`}
-          >
-            {t("otherAnswer")}
-          </button>
-        </div>
-      )}
+          {interaction.question}
+        </h3>
 
-      <div className="min-h-0 overflow-y-auto overscroll-contain py-2 pr-1 [scrollbar-width:thin]">
-        <fieldset
-          aria-labelledby={questionId}
-          disabled={isBusy}
-          className="min-w-0 space-y-3"
-        >
-          {hasDetails && (
-            <dl className="space-y-1 rounded-lg bg-[var(--color-surface-muted)] p-3 text-xs">
-              {interaction.details.map((detail, index) => (
-                <div key={index} className="flex flex-wrap gap-x-2 gap-y-1">
-                  <dt className="font-medium text-[var(--color-text-muted)]">
-                    {detail.label}:
-                  </dt>
-                  <dd className="min-w-0 break-words text-[var(--color-text)]">
-                    {detail.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          )}
-          {showCustomAnswer ? (
-            <label className="block space-y-2">
-              <span className="text-xs text-[var(--color-text-muted)]">
-                {t("yourAnswerLabel")}
-              </span>
-              <textarea
-                aria-label={t("otherAnswer")}
-                rows={3}
-                autoFocus
-                className="ui-input block w-full resize-none rounded-xl px-3 py-2 text-sm"
-                placeholder={t("tellTheAssistantWhatWorksForYou")}
-                value={customAnswer}
-                maxLength={2000}
-                onChange={(event) => {
-                  setCustomAnswer(event.target.value);
-                  setOptionId("");
-                }}
-              />
-            </label>
-          ) : (
-            !directOption && (
-              <div className="space-y-2">
-                {visibleOptions.map((option) => {
-                  const isSelected = optionId === option.id;
-                  return (
-                    <label
-                      key={option.id}
-                      className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition-colors focus-within:ring-2 focus-within:ring-[var(--color-accent)] ${isSelected ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]" : "border-[var(--color-line)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-muted)]"}`}
-                    >
-                      <input
-                        type="radio"
-                        name={`interaction-${interaction.id}`}
-                        value={option.id}
-                        aria-label={option.label}
-                        checked={isSelected}
-                        onChange={() => setOptionId(option.id)}
-                        className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-accent)]"
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-medium leading-snug break-words text-[var(--color-text)]">
-                          {option.label}
-                        </span>
-                        {option.description && (
-                          <span className="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">
-                            {option.description}
-                          </span>
-                        )}
-                      </span>
-                    </label>
-                  );
-                })}
+        {hasDetails && (
+          <dl className="mb-3 space-y-1 rounded-lg bg-[var(--color-surface-muted)] p-3 text-xs">
+            {interaction.details.map((detail, index) => (
+              <div key={index} className="flex flex-wrap gap-x-2 gap-y-1">
+                <dt className="font-medium text-[var(--color-text-muted)]">
+                  {detail.label}:
+                </dt>
+                <dd className="min-w-0 break-words text-[var(--color-text)]">
+                  {detail.value}
+                </dd>
               </div>
-            )
-          )}
-          {directOption?.description && (
+            ))}
+          </dl>
+        )}
+
+        {directOption ? (
+          directOption.description && (
             <p className="text-sm text-[var(--color-text-muted)]">
               {directOption.description}
             </p>
-          )}
-        </fieldset>
+          )
+        ) : (
+          <fieldset
+            role="radiogroup"
+            aria-labelledby={questionId}
+            disabled={isBusy}
+            className="min-w-0 divide-y divide-[var(--color-line)] overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)]"
+          >
+            {visibleOptions.map((option) => (
+              <AnswerOption
+                key={option.id}
+                name={questionId}
+                value={option.id}
+                label={option.label}
+                description={option.description}
+                checked={selectedMode === "option" && optionId === option.id}
+                onChange={() => {
+                  setOptionId(option.id);
+                  setSelectedMode("option");
+                }}
+              />
+            ))}
+            {interaction.allowCustomAnswer && !confirmation && (
+              <AnswerOption
+                name={questionId}
+                label={t("writeOwnAnswer")}
+                checked={customSelected}
+                onChange={() => setSelectedMode("custom")}
+                onClick={(event) => {
+                  // Native arrow navigation also dispatches a click, without a pointer.
+                  if (event.detail > 0) activateCustom();
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== " ") return;
+                  event.preventDefault();
+                  activateCustom();
+                }}
+              />
+            )}
+          </fieldset>
+        )}
+
+        {customSelected && (
+          <div className="mt-2 space-y-1">
+            <label
+              htmlFor={customInputId}
+              className="block text-xs text-[var(--color-text-muted)]"
+            >
+              {t("yourAnswerLabel")}
+            </label>
+            <textarea
+              id={customInputId}
+              ref={customTextareaRef}
+              rows={2}
+              className="ui-input ui-focus-ring block min-h-[68px]! w-full resize-none! rounded-lg px-3 py-2 text-base sm:text-sm"
+              placeholder={t("tellTheAssistantWhatWorksForYou")}
+              disabled={isBusy}
+              value={customAnswer}
+              maxLength={2000}
+              onChange={(event) => setCustomAnswer(event.target.value)}
+            />
+          </div>
+        )}
       </div>
-      <div className="mt-2 flex shrink-0 items-center justify-end gap-2 border-t border-[var(--color-line)] pt-3">
+
+      <div className="mt-1.5 flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 border-t border-[var(--color-line)] pt-2">
+        {onSwitchToMessage && (
+          <button
+            type="button"
+            disabled={isBusy}
+            onClick={onSwitchToMessage}
+            className="ui-focus-ring mr-auto min-h-11 cursor-pointer rounded-md px-1 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] disabled:cursor-default disabled:opacity-60"
+          >
+            {t("changeRequest")}
+          </button>
+        )}
+        {onCancel && (confirmation || !onSwitchToMessage) && (
+          <button
+            className="ui-btn-secondary ui-focus-ring min-h-11 rounded-lg px-3 text-xs font-medium disabled:opacity-50"
+            type="button"
+            disabled={isBusy}
+            onClick={handleCancel}
+          >
+            {t("cancel")}
+          </button>
+        )}
         <button
-          className="ui-btn-secondary ui-focus-ring rounded-lg px-3 text-xs font-medium disabled:opacity-50"
-          type="button"
-          aria-label={t("cancel")}
-          disabled={isBusy}
-          onClick={handleCancel}
-        >
-          {t("cancel")}
-        </button>
-        <button
-          className="ui-btn-primary ui-focus-ring min-w-0 rounded-lg px-3 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+          className="ui-btn-primary ui-focus-ring flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
           type="submit"
           aria-label={confirmation ? t("confirmLabel") : t("sendAnswer")}
           disabled={!canSubmit}
         >
-          <Send className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span className="break-words leading-snug">
+          <Send className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="leading-snug wrap-anywhere">
             {sending
               ? t("sending")
               : (directOption?.label ??
