@@ -119,6 +119,15 @@ describe("Ask runner", () => {
     vi.restoreAllMocks();
     completionCreate.mockReset();
   });
+  it("includes short, relevant options guidance in the Ask mode prompt", async () => {
+    completionCreate.mockResolvedValueOnce(done);
+    await agentService.chatWithMcp("Help", askContext, { mode: "ask" });
+    const systemMessage = completionCreate.mock.calls[0][0].messages[0];
+    expect(systemMessage.content).toContain(
+      "Ask one short, direct question in the user's language. Offer two to four relevant options. Use at most one sentence per option description when it helps the user decide. Keep tool names and jargon out of the question.",
+    );
+  });
+
   it("completes a menu tool call and starts the choice as a new user message", async () => {
     const read = vi.spyOn(categoryService, "getAll").mockResolvedValue([]);
     completionCreate
@@ -395,33 +404,51 @@ describe("Automatic task proposal selection", () => {
     completionCreate.mockReset();
   });
 
-  it.each(["auto", "ask"] as const)(
-    "accepts proposals without client intent in %s mode",
-    async (mode) => {
-      completionCreate.mockResolvedValueOnce(
-        response(
-          call("proposal", "propose_tasks", {
-            items: [{ title: "Learn TypeScript", priority: "High" }],
-          }),
-        ),
-      );
-      const result = await agentService.chatWithMcp(
-        "Help me plan TypeScript study",
-        askContext,
-        { mode },
-      );
-      expect(result).toEqual({
-        proposalItems: [{ title: "Learn TypeScript", priority: "High" }],
-      });
-      const names = completionCreate.mock.calls[0][0].tools.map(
-        (tool: { function: { name: string } }) => tool.function.name,
-      );
-      expect(names).toContain("propose_tasks");
-      expect(names).not.toContain("orbit_create_task");
-      expect(names).toContain("orbit_update_task");
-      expect(names).toContain("orbit_delete_task");
-    },
-  );
+  it("offers both orbit_create_task and propose_tasks in auto mode and accepts a preview", async () => {
+    completionCreate.mockResolvedValueOnce(
+      response(
+        call("proposal", "propose_tasks", {
+          items: [{ title: "Learn TypeScript", priority: "High" }],
+        }),
+      ),
+    );
+    const result = await agentService.chatWithMcp(
+      "Help me plan TypeScript study",
+      askContext,
+      { mode: "auto" },
+    );
+    expect(result).toEqual({
+      proposalItems: [{ title: "Learn TypeScript", priority: "High" }],
+    });
+    const autoToolNames = completionCreate.mock.calls[0][0].tools.map(
+      (tool: { function: { name: string } }) => tool.function.name,
+    );
+    expect(autoToolNames).toEqual(
+      expect.arrayContaining(["orbit_create_task", "propose_tasks"]),
+    );
+    expect(autoToolNames).toContain("orbit_update_task");
+    expect(autoToolNames).toContain("orbit_delete_task");
+  });
+
+  it("filters orbit_create_task in ask mode", async () => {
+    completionCreate.mockResolvedValueOnce(
+      response(
+        call("proposal", "propose_tasks", {
+          items: [{ title: "Learn TypeScript", priority: "High" }],
+        }),
+      ),
+    );
+    await agentService.chatWithMcp(
+      "Help me plan TypeScript study",
+      askContext,
+      { mode: "ask" },
+    );
+    const askToolNames = completionCreate.mock.calls[0][0].tools.map(
+      (tool: { function: { name: string } }) => tool.function.name,
+    );
+    expect(askToolNames).toContain("propose_tasks");
+    expect(askToolNames).not.toContain("orbit_create_task");
+  });
 
   it("keeps ordinary chat textual", async () => {
     completionCreate.mockResolvedValueOnce({
@@ -434,6 +461,7 @@ describe("Automatic task proposal selection", () => {
 
   it("rejects a hallucinated create call before accepting a proposal", async () => {
     const create = vi.spyOn(taskWriteService, "create");
+    let rejectedAskCall: unknown;
     completionCreate
       .mockResolvedValueOnce(
         response(call("bypass", "orbit_create_task", createArgs)),
@@ -442,7 +470,8 @@ describe("Automatic task proposal selection", () => {
         const rejected = messages.find(
           (m: { tool_call_id?: string }) => m.tool_call_id === "bypass",
         );
-        expect(JSON.parse(rejected.content)).toMatchObject({
+        rejectedAskCall = JSON.parse(rejected.content);
+        expect(rejectedAskCall).toMatchObject({
           code: "WRITE_FORBIDDEN",
           executed: false,
         });
@@ -451,9 +480,15 @@ describe("Automatic task proposal selection", () => {
         );
       });
     await expect(
-      agentService.chatWithMcp("Create a reading task", askContext),
+      agentService.chatWithMcp("Create a reading task", askContext, {
+        mode: "ask",
+      }),
     ).resolves.toEqual({ proposalItems: [{ title: "Read" }] });
     expect(create).not.toHaveBeenCalled();
+    expect(rejectedAskCall).toMatchObject({
+      code: "WRITE_FORBIDDEN",
+      executed: false,
+    });
   });
 
   it("allows clarification in Auto without client intent", async () => {

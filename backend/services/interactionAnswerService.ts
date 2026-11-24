@@ -21,7 +21,9 @@ export function prepareInteractionSelection(
   ) {
     throw new AppError(AI_ERROR.INTERACTION_CONFLICT);
   }
-  if (selection && mode !== "ask") throw new AppError(AI_ERROR.ANSWER_INVALID);
+  if (selection && pending.kind === "confirmation" && mode !== "ask") {
+    throw new AppError(AI_ERROR.ANSWER_INVALID);
+  }
   if (
     selection &&
     !selection.cancel &&

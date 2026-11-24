@@ -194,7 +194,7 @@ export default function AgentsPage() {
 
       <div
         ref={workspace}
-        className="relative flex min-w-0 gap-3 h-[max(470px,calc(100dvh_-_var(--v2-current-topbar-height,76px)_-_98px))] [@container_workspace_(width<720px)]:h-[max(430px,calc(100dvh_-_var(--v2-current-topbar-height,76px)_-_144px))]"
+        className={`relative flex min-w-0 gap-3 h-[max(470px,calc(100dvh_-_var(--v2-current-topbar-height,76px)_-_98px))] [@container_workspace_(width<720px)]:h-[max(var(--agent-workspace-min-height,430px),calc(100dvh_-_var(--v2-current-topbar-height,76px)_-_144px))] ${chat.interaction ? "[--agent-workspace-min-height:260px]" : ""}`}
       >
         <aside
           ref={historyPanel}

@@ -185,4 +185,153 @@ describe.skipIf(!uri)("task proposal repository with real MongoDB", () => {
     ).toBe(0);
     expect(await TaskProposalReceipt.countDocuments({ requestId })).toBe(0);
   });
+
+  it("finds the newest three confirmed proposals with stable tie-break and isolates other users/conversations", async () => {
+    const conversationId = randomUUID();
+    const otherConversationId = randomUUID();
+    const otherUserId = new mongoose.Types.ObjectId();
+
+    const t0 = new Date("2026-11-20T10:00:00.000Z");
+    const t1 = new Date("2026-11-21T10:00:00.000Z");
+    const t2 = new Date("2026-11-22T10:00:00.000Z");
+    const t3 = new Date("2026-11-23T10:00:00.000Z");
+    const tEqual = new Date("2026-11-23T12:00:00.000Z");
+
+    // 1. Old draft created at t0, confirmed last at tEqual
+    const lateConfirmedId = new mongoose.Types.ObjectId();
+    const lateConfirmed = {
+      _id: lateConfirmedId,
+      userId,
+      conversationId,
+      turnId: randomUUID(),
+      proposalId: "prop-late",
+      status: "created",
+      createdTasks: [{ taskId: "task-late", title: "Late task" }],
+      createdAt: t0,
+      updatedAt: tEqual,
+    };
+
+    // 2. Another confirmed with same timestamp tEqual
+    const equalConfirmedId = new mongoose.Types.ObjectId();
+    const equalConfirmed = {
+      _id: equalConfirmedId,
+      userId,
+      conversationId,
+      turnId: randomUUID(),
+      proposalId: "prop-equal",
+      status: "created",
+      createdTasks: [{ taskId: "task-equal", title: "Equal task" }],
+      createdAt: t1,
+      updatedAt: tEqual,
+    };
+
+    // 3. Confirmed at t3
+    const nextConfirmed = {
+      _id: new mongoose.Types.ObjectId(),
+      userId,
+      conversationId,
+      turnId: randomUUID(),
+      proposalId: "prop-next",
+      status: "created",
+      createdTasks: [{ taskId: "task-next", title: "Next task" }],
+      createdAt: t2,
+      updatedAt: t3,
+    };
+
+    // 4. Older confirmed at t2 (should be 4th, so not in top 3)
+    const oldConfirmed = {
+      _id: new mongoose.Types.ObjectId(),
+      userId,
+      conversationId,
+      turnId: randomUUID(),
+      proposalId: "prop-old",
+      status: "created",
+      createdTasks: [{ taskId: "task-old", title: "Old task" }],
+      createdAt: t1,
+      updatedAt: t2,
+    };
+
+    // 5. Cancelled record
+    const cancelled = {
+      _id: new mongoose.Types.ObjectId(),
+      userId,
+      conversationId,
+      turnId: randomUUID(),
+      proposalId: "prop-cancelled",
+      status: "cancelled",
+      createdTasks: [{ taskId: "task-c", title: "Cancelled" }],
+      createdAt: t1,
+      updatedAt: tEqual,
+    };
+
+    // 6. Draft record
+    const draftRec = {
+      _id: new mongoose.Types.ObjectId(),
+      userId,
+      conversationId,
+      turnId: randomUUID(),
+      proposalId: "prop-draft",
+      status: "draft",
+      createdTasks: [],
+      createdAt: t1,
+      updatedAt: tEqual,
+    };
+
+    // 7. Confirmed record in another conversation
+    const otherConv = {
+      _id: new mongoose.Types.ObjectId(),
+      userId,
+      conversationId: otherConversationId,
+      turnId: randomUUID(),
+      proposalId: "prop-other-conv",
+      status: "created",
+      createdTasks: [{ taskId: "task-oc", title: "Other conv task" }],
+      createdAt: t1,
+      updatedAt: tEqual,
+    };
+
+    // 8. Confirmed record owned by another user
+    const otherUserRec = {
+      _id: new mongoose.Types.ObjectId(),
+      userId: otherUserId,
+      conversationId,
+      turnId: randomUUID(),
+      proposalId: "prop-other-user",
+      status: "created",
+      createdTasks: [{ taskId: "task-ou", title: "Other user task" }],
+      createdAt: t1,
+      updatedAt: tEqual,
+    };
+
+    await TaskProposal.collection.insertMany([
+      lateConfirmed,
+      equalConfirmed,
+      nextConfirmed,
+      oldConfirmed,
+      cancelled,
+      draftRec,
+      otherConv,
+      otherUserRec,
+    ]);
+
+    const results = await repository.findRecentConfirmed(
+      String(userId),
+      conversationId,
+    );
+
+    expect(results).toHaveLength(3);
+    const expectedTopTwo = [equalConfirmed, lateConfirmed].sort((a, b) =>
+      b._id.toString().localeCompare(a._id.toString()),
+    );
+    expect(results.map((r) => r.proposalId)).toEqual([
+      expectedTopTwo[0].proposalId,
+      expectedTopTwo[1].proposalId,
+      "prop-next",
+    ]);
+    expect(results[0]).toMatchObject({
+      proposalId: expectedTopTwo[0].proposalId,
+      confirmedAt: tEqual.toISOString(),
+      createdTasks: expect.any(Array),
+    });
+  });
 });

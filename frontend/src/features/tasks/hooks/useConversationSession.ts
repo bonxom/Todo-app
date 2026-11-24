@@ -12,6 +12,7 @@ import type {
   ChatPayload,
   ChatResponse,
   ConversationMessage,
+  InteractionSelection,
 } from "@/shared/types/domain";
 
 export type ConversationSessionOptions = {
@@ -233,6 +234,37 @@ export function useConversationSession(options?: ConversationSessionOptions) {
     }
   };
 
+  const acknowledgeSelection = ({
+    interactionId,
+    optionId,
+    customAnswer,
+    cancel,
+  }: InteractionSelection) => {
+    setInteraction((current) =>
+      current?.id === interactionId ? undefined : current,
+    );
+    setMessages((previous) =>
+      previous.map((message) => {
+        const question = message.interaction;
+        if (question?.id !== interactionId || question.status !== "pending")
+          return message;
+
+        const cancelled =
+          cancel || (question.kind === "confirmation" && optionId === "cancel");
+        return {
+          ...message,
+          interaction: {
+            ...question,
+            status: cancelled ? "cancelled" : "answered",
+            answer: cancelled
+              ? { optionId: "cancel" }
+              : { optionId, customAnswer },
+          },
+        };
+      }),
+    );
+  };
+
   const receive = (result: ChatResponse, requestId?: string) => {
     setInteraction(result.interaction);
     if (result.status !== "processing") setPending(null);
@@ -312,6 +344,7 @@ export function useConversationSession(options?: ConversationSessionOptions) {
     busy,
     isCurrent,
     load,
+    acknowledgeSelection,
     receive,
     reload,
     openConversation,

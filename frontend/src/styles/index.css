@@ -1234,10 +1234,6 @@ textarea.ui-input {
   @apply text-[12px];
 }
 
-.chat-answer-back button {
-  @apply text-[var(--color-accent-strong)];
-}
-
 .chat-history-back {
   @apply text-[13px] text-[var(--color-accent-strong)];
 }
@@ -1318,16 +1314,6 @@ textarea.ui-input {
 
 .chat-diagram-canvas svg {
   @apply max-w-none!;
-}
-
-.ui-ask-card textarea.ui-input {
-  @apply resize-none min-h-[88px] h-[88px];
-}
-
-@media (max-height: 550px) {
-  .ui-ask-card textarea.ui-input {
-    @apply min-h-[68px] h-[68px];
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

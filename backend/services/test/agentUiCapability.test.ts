@@ -13,6 +13,7 @@ import {
   formatDeveloperUiSkillContext,
   parseUiToolInput,
   presentUiTool,
+  readUiCompanionText,
   resolveUiCapability,
 } from "../agentUiService.js";
 
@@ -182,7 +183,11 @@ describe("agentUiCapability", () => {
       ...skillDoc.text.matchAll(/```json\r?\n([\s\S]*?)```/g),
     ].map((m) => JSON.parse(m[1]));
     expect(jsonBlocks).toHaveLength(3);
-    expect(() => parseUiToolInput(jsonBlocks[0], "readonly")).not.toThrow();
+    const { companionText, ...readOnlySpec } = jsonBlocks[0];
+    expect(readUiCompanionText(companionText)).toBe(companionText);
+    expect(() => parseUiToolInput(readOnlySpec, "readonly")).not.toThrow();
+    expect(readUiCompanionText(jsonBlocks[1].companionText)).toBeTruthy();
+    expect(readUiCompanionText(jsonBlocks[2].companionText)).toBeTruthy();
     expect(Array.isArray(jsonBlocks[1].items)).toBe(true);
     expect(jsonBlocks[1].presentation).toBeUndefined();
     expect(() =>

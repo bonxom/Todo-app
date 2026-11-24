@@ -245,7 +245,8 @@ export function useConversationChat(options?: ConversationChatOptions) {
           ...(attachments.length
             ? { attachmentIds: attachments.map((file) => file.id) }
             : {}),
-          mode: selection ? "ask" : mode,
+          mode:
+            selection && interaction?.kind === "confirmation" ? "ask" : mode,
           ...(selection ? { selection } : {}),
         };
         setPending(payload);
@@ -269,6 +270,7 @@ export function useConversationChat(options?: ConversationChatOptions) {
       try {
         const snapshot = await startTurnMutation.mutateAsync(payload);
         if (!isCurrent()) return false;
+        if (payload.selection) session.acknowledgeSelection(payload.selection);
         session.setActiveRun(snapshot);
         setPending(null);
         if (

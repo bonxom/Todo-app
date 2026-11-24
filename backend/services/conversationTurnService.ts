@@ -21,6 +21,7 @@ import {
 } from "./A2UI/taskProposalGenerationService.js";
 import { uiPresentationService } from "./A2UI/uiPresentationService.js";
 import { projectPersistedProposal } from "../utils/agentActivity.js";
+import { taskProposalRepository } from "../repositories/A2UI/taskProposalRepository.js";
 import {
   chatStreamRepository,
   toSnapshot,
@@ -137,6 +138,11 @@ export async function runConversationTurn(
           String(context.user._id),
           turn.conversationId,
         )));
+    const userId = String(context.user._id);
+    const [confirmedProposals, cancelledProposals] = await Promise.all([
+      taskProposalRepository.findRecentConfirmed(userId, turn.conversationId),
+      taskProposalRepository.findRecentCancelled(userId, turn.conversationId),
+    ]);
     execution?.signal.throwIfAborted();
     const response = await agentService.chatWithMcp(
       turn.userInput,
@@ -173,7 +179,14 @@ export async function runConversationTurn(
           createAgentTimeContext(
             turn.createdAt ? new Date(turn.createdAt) : new Date(),
           ),
+        confirmedProposals,
+        cancelledProposals,
         history: prepareHistory(previous),
+        answeredClarification:
+          selectedInteraction?.kind === "clarification" &&
+          selectedInteraction.status === "answered"
+            ? selectedInteraction
+            : undefined,
         approvedInteraction:
           selectedInteraction?.kind === "confirmation"
             ? selectedInteraction

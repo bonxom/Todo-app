@@ -8,7 +8,7 @@ export const grillUserTool: ChatCompletionTool = {
   function: {
     name: "grill_user",
     description:
-      "Ask the user to choose a direction or clarify an action when their decision is needed. Offer 2–4 concrete options with descriptive labels and useful tradeoffs; allow a custom answer where appropriate. You may recommend an option without assuming it was selected. Do not ask again for details or actions the user has already clearly requested or confirmed. This displays a menu and waits for the next user message. Use the answer to continue the task and write a natural response after executing tools.",
+      "Ask one short, direct question in the user's language. Offer two to four relevant options. Use at most one sentence per option description when it helps the user decide. Keep tool names and jargon out of the question. Allow a custom answer where appropriate. You may recommend an option without assuming it was selected. Do not ask again for details or actions the user has already clearly requested or confirmed. This displays a menu and waits for the next user message. Use the answer to continue the task and write a natural response after executing tools.",
     parameters: grillUserSchema.toJSONSchema(),
   },
 };

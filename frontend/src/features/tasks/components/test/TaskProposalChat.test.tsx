@@ -43,59 +43,74 @@ it("sends ordinary text without forcing a proposal intent", async () => {
   fireEvent.click(screen.getByRole("button", { name: /send message/i }));
   await waitFor(() => expect(send).toHaveBeenCalledWith("Learn TypeScript"));
 });
-it("wires confirmation to shared API and displays committed state", async () => {
-  const created = structuredClone(fixture);
-  const result = {
-    ...created,
-    proposal: {
-      ...created.proposal,
-      status: "created",
-      revision: 2,
-      createdTasks: [
-        {
-          itemId: created.proposal.items[0].id,
-          taskId: "507f1f77bcf86cd799439019",
-          title: "Study Vocabulary",
-        },
-      ],
-    },
-  };
-  (
-    result.a2ui.messages[2] as { updateDataModel: { value: unknown } }
-  ).updateDataModel.value = result.proposal;
-  vi.spyOn(aiService, "applyProposalAction").mockResolvedValue(result as never);
-  render(
-    <QueryClientProvider client={new QueryClient()}>
-      <ChatField
-        messages={[
-          {
-            id: "m",
-            sender: "bot",
-            text: fixture.text,
-            timestamp: new Date().toISOString(),
-            proposal: fixture.proposal,
-            a2ui: fixture.a2ui,
-          },
-        ]}
-        onSendMessage={vi.fn()}
-        chat={{
-          conversationId: fixture.proposal.conversationId,
-          setProposalDirty: vi.fn(),
-        }}
-      />
-    </QueryClientProvider>,
-  );
-  await waitFor(() =>
-    expect(screen.getByRole("button", { name: /Confirm/ })).toBeEnabled(),
-  );
-  fireEvent.click(screen.getByRole("button", { name: /Confirm/ }));
-  await waitFor(() =>
+it.each([
+  ["Confirm", "created", "Created 1 task from this proposal."],
+  ["Cancel", "cancelled", "Proposal cancelled. No tasks were created."],
+] as const)(
+  "reports the committed result of %s in chat",
+  async (action, status, feedback) => {
+    const created = structuredClone(fixture);
+    const result = {
+      ...created,
+      proposal: {
+        ...created.proposal,
+        status,
+        revision: 2,
+        createdTasks:
+          status === "created"
+            ? [
+                {
+                  itemId: created.proposal.items[0].id,
+                  taskId: "507f1f77bcf86cd799439019",
+                  title: "Study Vocabulary",
+                },
+              ]
+            : [],
+      },
+    };
+    (
+      result.a2ui.messages[2] as { updateDataModel: { value: unknown } }
+    ).updateDataModel.value = result.proposal;
+    vi.spyOn(aiService, "applyProposalAction").mockResolvedValue(
+      result as never,
+    );
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ChatField
+          messages={[
+            {
+              id: "m",
+              sender: "bot",
+              text: fixture.text,
+              timestamp: new Date().toISOString(),
+              proposal: fixture.proposal,
+              a2ui: fixture.a2ui,
+            },
+          ]}
+          onSendMessage={vi.fn()}
+          chat={{
+            conversationId: fixture.proposal.conversationId,
+            setProposalDirty: vi.fn(),
+          }}
+        />
+      </QueryClientProvider>,
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: new RegExp(action) }),
+      ).toBeEnabled(),
+    );
+    expect(screen.queryByText(feedback)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(action) }));
+    expect(await screen.findByText(feedback)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("checkbox", { name: /Select task: Study Vocabulary/ }),
+      ).toBeDisabled(),
+    );
     expect(
-      screen.getByRole("checkbox", { name: /Select task: Study Vocabulary/ }),
-    ).toBeDisabled(),
-  );
-  expect(
-    screen.queryByRole("button", { name: "Edit task 1" }),
-  ).not.toBeInTheDocument();
-  expect(aiService.applyProposalAction).toHaveBeenCalledTimes(1);
-});
+      screen.queryByRole("button", { name: "Edit task 1" }),
+    ).not.toBeInTheDocument();
+    expect(aiService.applyProposalAction).toHaveBeenCalledTimes(1);
+  },
+);

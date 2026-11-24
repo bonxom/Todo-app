@@ -10,6 +10,12 @@ test("renders a read-only present_ui surface with Card, Text, and Table on deskt
   await page.getByRole("button", { name: "Open assistant" }).click();
 
   await expect(
+    page.getByText(
+      "I’ve organized the results below so you can review them at a glance.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(
     page.getByRole("heading", { name: "Weekly Study Plan" }),
   ).toBeVisible();
   await expect(page.getByRole("table")).toBeVisible();
@@ -41,6 +47,12 @@ test("edits, saves, reloads, and confirms a composed propose_tasks surface with 
   await page.goto("/dashboard");
   await page.getByRole("button", { name: "Open assistant" }).click();
 
+  await expect(
+    page.getByText(
+      "I’ve laid out the suggested tasks below so you can see what each one involves.",
+      { exact: true },
+    ),
+  ).toBeVisible();
   await expect(
     page.getByText("Review and confirm the proposed study tasks below."),
   ).toBeVisible();

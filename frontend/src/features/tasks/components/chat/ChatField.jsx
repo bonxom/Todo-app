@@ -9,6 +9,7 @@ import {
   useState,
   useRef,
   useEffect,
+  useLayoutEffect,
   useContext,
   useCallback,
   memo,
@@ -56,7 +57,13 @@ const ChatMessageItem = memo(function ChatMessageItem({
   const { t } = useTranslation("agent");
   const isUser = message.sender === "user";
   const openReply = wideTranscript && !isUser;
-  const companionText = !isUser ? message.companionText?.trim() : undefined;
+  const hasA2ui = Boolean(message.surface || message.proposal);
+  const companionText = isUser
+    ? undefined
+    : message.companionText?.trim() ||
+      (hasA2ui
+        ? t(message.proposal ? "proposalIntro" : "surfaceIntro")
+        : undefined);
   const hasVisibleBody = Boolean(
     message.surface ||
     message.proposal ||
@@ -64,6 +71,49 @@ const ChatMessageItem = memo(function ChatMessageItem({
     companionText ||
     (message.text && message.text.length > 0),
   );
+  const processPanel = !isUser && (
+    <AgentProcessPanel
+      toolProgress={message.toolProgress}
+      reasoningBlocks={message.reasoningBlocks}
+      isLive={isStreamingMessage}
+      hasResponseText={Boolean(message.text?.trim() || companionText)}
+      compact={!wideTranscript}
+    />
+  );
+  const skillsRead = !isUser && message.skillsRead?.length > 0 && (
+    <div className="mt-2 mb-1 flex flex-wrap gap-1.5">
+      {message.skillsRead.map((skill) => (
+        <SkillReadBadge key={skill.id + ":" + skill.version} skill={skill} />
+      ))}
+    </div>
+  );
+  const timestamp = (!isStreamingMessage || hasVisibleBody) && (
+    <time
+      className="chat-message-time block opacity-[0.75]"
+      dateTime={message.timestamp}
+      title={formatDateTime(message.timestamp)}
+    >
+      {new Date(message.timestamp).toLocaleTimeString(getLocale(), {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </time>
+  );
+
+  if (
+    message.interaction?.kind === "clarification" &&
+    message.interaction.status !== "pending"
+  ) {
+    return (
+      <div className="chat-message-row chat-message-row--agent min-w-0 pl-9">
+        <InteractionCard interaction={message.interaction}>
+          {processPanel}
+          {skillsRead}
+          {timestamp}
+        </InteractionCard>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -96,15 +146,7 @@ const ChatMessageItem = memo(function ChatMessageItem({
             {t("orbitAgent")}
           </p>
         )}
-        {!isUser && (
-          <AgentProcessPanel
-            toolProgress={message.toolProgress}
-            reasoningBlocks={message.reasoningBlocks}
-            isLive={isStreamingMessage}
-            hasResponseText={Boolean(message.text?.trim() || companionText)}
-            compact={!wideTranscript}
-          />
-        )}
+        {processPanel}
         {hasVisibleBody && (
           <div
             className={`whitespace-pre-wrap ${
@@ -115,48 +157,39 @@ const ChatMessageItem = memo(function ChatMessageItem({
                   : "text-sm break-words"
             }`}
           >
+            {hasA2ui && companionText && (
+              <div className="mb-3">
+                <MarkdownText text={companionText} />
+              </div>
+            )}
             {message.surface ? (
-              <>
-                {companionText && (
-                  <div className="mb-3">
-                    <MarkdownText text={companionText} />
-                  </div>
-                )}
-                <UiSurfaceMessage
-                  key={`${conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
-                  surface={message.surface}
-                  proposalEnvelope={
-                    message.proposal
-                      ? {
-                          proposal: message.proposal,
-                          text: message.text,
-                          a2ui: message.a2ui,
-                          surface: message.surface,
-                        }
-                      : undefined
-                  }
-                  onDirtyChange={setProposalDirty}
-                  disabled={disabled}
-                />
-              </>
+              <UiSurfaceMessage
+                key={`${conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
+                surface={message.surface}
+                proposalEnvelope={
+                  message.proposal
+                    ? {
+                        proposal: message.proposal,
+                        text: message.text,
+                        a2ui: message.a2ui,
+                        surface: message.surface,
+                      }
+                    : undefined
+                }
+                onDirtyChange={setProposalDirty}
+                disabled={disabled}
+              />
             ) : message.proposal ? (
-              <>
-                {companionText && (
-                  <div className="mb-3">
-                    <MarkdownText text={companionText} />
-                  </div>
-                )}
-                <TaskProposalMessage
-                  key={`${conversationId}:${message.proposal.id}`}
-                  envelope={{
-                    proposal: message.proposal,
-                    text: message.text,
-                    a2ui: message.a2ui,
-                  }}
-                  onDirtyChange={setProposalDirty}
-                  disabled={disabled}
-                />
-              </>
+              <TaskProposalMessage
+                key={`${conversationId}:${message.proposal.id}`}
+                envelope={{
+                  proposal: message.proposal,
+                  text: message.text,
+                  a2ui: message.a2ui,
+                }}
+                onDirtyChange={setProposalDirty}
+                disabled={disabled}
+              />
             ) : message.interaction ? (
               <InteractionCard
                 interaction={message.interaction}
@@ -193,16 +226,7 @@ const ChatMessageItem = memo(function ChatMessageItem({
             )}
           </div>
         )}
-        {!isUser && message.skillsRead && message.skillsRead.length > 0 && (
-          <div className="mt-2 mb-1 flex flex-wrap gap-1.5">
-            {message.skillsRead.map((skill) => (
-              <SkillReadBadge
-                key={`${skill.id}:${skill.version}`}
-                skill={skill}
-              />
-            ))}
-          </div>
-        )}
+        {skillsRead}
         {message.turnStatus && (
           <ChatRunStatus run={null} status={message.turnStatus} />
         )}
@@ -210,18 +234,7 @@ const ChatMessageItem = memo(function ChatMessageItem({
           conversationId={conversationId}
           files={message.attachments}
         />
-        {(!isStreamingMessage || hasVisibleBody) && (
-          <time
-            className="chat-message-time block opacity-[0.75]"
-            dateTime={message.timestamp}
-            title={formatDateTime(message.timestamp)}
-          >
-            {new Date(message.timestamp).toLocaleTimeString(getLocale(), {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </time>
-        )}
+        {timestamp}
       </div>
     </div>
   );
@@ -345,6 +358,25 @@ const ChatField = ({
   const showChatInput =
     Boolean(interactionId) && messageInteractionId === interactionId;
   const waitingForAnswer = Boolean(interactionId && !showChatInput);
+  const interactionBusy = Boolean(
+    chat?.loading ||
+    chat?.sending ||
+    chat?.pending ||
+    chat?.error ||
+    chat?.isStreaming,
+  );
+  const interactionFocusRef = useRef(null);
+  const interactionContainerRef = useRef(null);
+
+  const handleSwitchToMessage = () => {
+    interactionFocusRef.current = "message";
+    setMessageInteractionId(interactionId);
+  };
+
+  const handleBackToQuestion = () => {
+    interactionFocusRef.current = "answer";
+    setMessageInteractionId(null);
+  };
   const run = chat?.runStream?.snapshot ?? chat?.activeRun;
   const activeRun =
     run?.status === "processing" || run?.status === "stopping" ? run : null;
@@ -371,6 +403,22 @@ const ChatField = ({
   };
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const target = interactionFocusRef.current;
+    interactionFocusRef.current = null;
+    if (target === "message" && showChatInput) {
+      textareaRef.current?.focus();
+    }
+    if (target === "answer" && waitingForAnswer) {
+      const card = interactionContainerRef.current?.querySelector("form");
+      const answer =
+        card?.querySelector("textarea:enabled") ??
+        card?.querySelector("input:checked:enabled") ??
+        card?.querySelector("input:enabled, button:enabled");
+      answer?.focus();
+    }
+  }, [showChatInput, waitingForAnswer]);
 
   const availableTools = filterTools(slashQuery);
 
@@ -803,48 +851,59 @@ const ChatField = ({
           </div>
         )}
         {chat?.interaction && showChatInput && (
-          <div className="chat-answer-back flex flex-col gap-[5px] mb-[10px] text-[12px] [&_button]:self-start [&_button]:cursor-pointer [&_span]:text-[11px] [&_span]:text-[var(--color-text-muted)]">
-            <button
-              type="button"
-              aria-label={t("backToQuestion")}
-              onClick={() => setMessageInteractionId(null)}
-              className="ui-focus-ring"
-            >
-              {t("backToQuestion")}
-            </button>
-            <span>{t("yourNewMessageWillReplaceThePendingQuestion")}</span>
+          <div className="mb-2 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-x-3">
+              <button
+                type="button"
+                onClick={handleBackToQuestion}
+                disabled={chat.sending}
+                className="ui-focus-ring min-h-11 rounded-md px-1 font-medium text-[var(--color-accent-strong)] disabled:opacity-60"
+              >
+                {t("backToQuestion")}
+              </button>
+              <button
+                type="button"
+                onClick={() => chat.answer(undefined, true)}
+                disabled={interactionBusy}
+                className="ui-focus-ring min-h-11 rounded-md px-1 font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] disabled:opacity-60"
+              >
+                {t("skipQuestion")}
+              </button>
+            </div>
+            <span className="text-[11px] text-[var(--color-text-muted)]">
+              {t("yourNewMessageWillReplaceThePendingQuestion")}
+            </span>
           </div>
         )}
-        {chat?.interaction && !showChatInput && (
-          <div className="flex flex-wrap gap-2">
-            {(
-              messages.find(
-                (message) => message.interaction?.id === chat.interaction.id,
-              )?.skillsRead ?? []
-            ).map((skill) => (
-              <SkillReadBadge
-                key={`${skill.id}:${skill.version}`}
-                skill={skill}
-              />
-            ))}
+        {chat?.interaction && (
+          <div
+            ref={interactionContainerRef}
+            hidden={showChatInput}
+            className={showChatInput ? "hidden" : "contents"}
+          >
+            <div className="flex flex-wrap gap-2">
+              {(
+                messages.find(
+                  (message) => message.interaction?.id === chat.interaction.id,
+                )?.skillsRead ?? []
+              ).map((skill) => (
+                <SkillReadBadge
+                  key={`${skill.id}:${skill.version}`}
+                  skill={skill}
+                />
+              ))}
+            </div>
+            <InteractionCard
+              key={chat.interaction.id}
+              interaction={chat.interaction}
+              onAnswer={chat.answer}
+              onCancel={() => chat.answer(undefined, true)}
+              disabled={interactionBusy}
+              sending={chat.sending}
+              docked
+              onSwitchToMessage={handleSwitchToMessage}
+            />
           </div>
-        )}
-        {chat?.interaction && !showChatInput && (
-          <InteractionCard
-            key={chat.interaction.id}
-            interaction={chat.interaction}
-            onAnswer={chat.answer}
-            onCancel={() => chat.answer(undefined, true)}
-            disabled={
-              chat.loading ||
-              chat.sending ||
-              Boolean(chat.pending) ||
-              Boolean(chat.error)
-            }
-            sending={chat.sending}
-            docked
-            onSwitchToMessage={() => setMessageInteractionId(interactionId)}
-          />
         )}
         {showStop && stopErrorTurn === activeRun.turnId && (
           <p

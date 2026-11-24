@@ -37,6 +37,16 @@ export function TaskProposalMessage({
   });
   const [detail, setDetail] = useState<Task | null>(null);
   const [detailError, setDetailError] = useState("");
+  const { status, createdTasks, items } = proposal.envelope.proposal;
+  const count = createdTasks.length;
+  const outcome =
+    status === "cancelled"
+      ? t("proposalCancelFeedback")
+      : status === "created" && count > 0
+        ? count < items.length
+          ? t("proposalPartialConfirmFeedback", { count, total: items.length })
+          : t("proposalConfirmFeedback", { count })
+        : "";
   const locked =
     proposal.isSubmitting ||
     Boolean(proposal.pendingAction) ||
@@ -76,6 +86,13 @@ export function TaskProposalMessage({
           proposal.dirty ? setConfirmReload(true) : void runReload()
         }
       />
+
+      <div
+        role="status"
+        className={outcome ? "text-[var(--color-text)]" : "sr-only"}
+      >
+        {outcome}
+      </div>
 
       {(proposal.error || detailError) && (
         <p
