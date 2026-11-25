@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { toISOStringLocal } from "@/shared/utils/dateTime";
+import { taskService } from "@/shared/services/taskService";
 import userEvent from "@testing-library/user-event";
 import CalendarPage from "../pages/CalendarPage";
 import { renderWithProviders, resetTestSession } from "./testSupport";
@@ -94,8 +95,28 @@ vi.mock("../components/TaskDetailsDialog", () => ({
 }));
 
 vi.mock("../components/TaskEditor", () => ({
-  default: ({ onCancel }: { onCancel: () => void }) => (
-    <div data-testid="task-editor">
+  default: ({
+    onCancel,
+    initialStartDate,
+    initialDueDate,
+  }: {
+    onCancel: () => void;
+    initialStartDate?: Date | string;
+    initialDueDate?: Date | string;
+  }) => (
+    <div
+      data-testid="task-editor"
+      data-start={
+        initialStartDate instanceof Date
+          ? `${initialStartDate.getFullYear()}-${String(initialStartDate.getMonth() + 1).padStart(2, "0")}-${String(initialStartDate.getDate()).padStart(2, "0")}T${String(initialStartDate.getHours()).padStart(2, "0")}:${String(initialStartDate.getMinutes()).padStart(2, "0")}`
+          : (initialStartDate ?? "")
+      }
+      data-due={
+        initialDueDate instanceof Date
+          ? `${initialDueDate.getFullYear()}-${String(initialDueDate.getMonth() + 1).padStart(2, "0")}-${String(initialDueDate.getDate()).padStart(2, "0")}T${String(initialDueDate.getHours()).padStart(2, "0")}:${String(initialDueDate.getMinutes()).padStart(2, "0")}`
+          : (initialDueDate ?? "")
+      }
+    >
       <button type="button" onClick={onCancel}>
         cancel editor
       </button>
@@ -283,8 +304,147 @@ describe("V2 calendar", () => {
 
     await user.click(screen.getByRole("button", { name: "New task" }));
     expect(screen.getByTestId("task-editor")).toBeInTheDocument();
+    expect(screen.getByTestId("task-editor")).toHaveAttribute(
+      "data-start",
+      "2026-11-10T00:00",
+    );
+    expect(screen.getByTestId("task-editor")).toHaveAttribute(
+      "data-due",
+      "2026-11-10T23:59",
+    );
     await user.click(screen.getByRole("button", { name: "cancel editor" }));
     expect(screen.queryByTestId("task-editor")).not.toBeInTheDocument();
+  });
+
+  it("leaves default start and due empty when no calendar cell is selected, and selects day when clicking cell container", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CalendarPage />, { initialEntries: ["/v2/calendar"] });
+
+    await user.click(screen.getByRole("button", { name: "New task" }));
+    expect(screen.getByTestId("task-editor")).toHaveAttribute("data-start", "");
+    expect(screen.getByTestId("task-editor")).toHaveAttribute("data-due", "");
+    await user.click(screen.getByRole("button", { name: "cancel editor" }));
+
+    const cellButton = screen.getByRole("button", {
+      name: /November 18, 2026/i,
+    });
+    const gridCell = cellButton.closest('[role="gridcell"]')!;
+    await user.click(gridCell);
+
+    await user.click(screen.getByRole("button", { name: "New task" }));
+    expect(screen.getByTestId("task-editor")).toHaveAttribute(
+      "data-start",
+      "2026-11-18T00:00",
+    );
+    expect(screen.getByTestId("task-editor")).toHaveAttribute(
+      "data-due",
+      "2026-11-18T23:59",
+    );
+  });
+
+  it("switches to Timeline starting today, preserves browsed period, and refreshes anchor after midnight", async () => {
+    const getAllTasksSpy = vi
+      .spyOn(taskService, "getAllTasks")
+      .mockImplementation(async (params) => {
+        const start = params?.startDate ? new Date(params.startDate) : null;
+        const isNov15Window =
+          start &&
+          start.getFullYear() === 2026 &&
+          start.getMonth() === 10 &&
+          start.getDate() === 15;
+        const isNov16Window =
+          start &&
+          start.getFullYear() === 2026 &&
+          start.getMonth() === 10 &&
+          start.getDate() === 16;
+
+        const data = (
+          isNov15Window
+            ? [
+                mocks.makeTask("tl-15", "Today deadline", 15, 9),
+                mocks.makeTask("tl-16", "Tomorrow deadline", 16, 14),
+              ]
+            : isNov16Window
+              ? [
+                  mocks.makeTask(
+                    "tl-16-next",
+                    "Midnight refreshed task",
+                    16,
+                    14,
+                  ),
+                ]
+              : []
+        ).map((task) => ({ ...task, startDate: "" }));
+
+        return {
+          data,
+          pageInfo: {
+            pageNo: 1,
+            pageSize: 100,
+            totalCount: data.length,
+            totalPage: 1,
+          },
+        };
+      });
+
+    const scrollIntoViewMock = vi.fn();
+    const originalScrollIntoView = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrollIntoViewMock;
+
+    try {
+      const user = userEvent.setup();
+      renderWithProviders(<CalendarPage />, {
+        initialEntries: ["/v2/calendar"],
+      });
+
+      // Navigate Month view to December 2026 before entering Timeline.
+      await user.click(screen.getByRole("button", { name: "Next period" }));
+      const browsedHeading = screen.getByRole("heading", {
+        level: 2,
+      }).textContent;
+      expect(browsedHeading).toMatch(/December 2026/i);
+
+      await user.click(screen.getByRole("button", { name: "Timeline" }));
+
+      expect(
+        screen.queryByRole("button", { name: "Previous period" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Next period" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Today" })).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(screen.getByText("Today deadline")).toBeInTheDocument();
+      });
+      expect(screen.getByText("Tomorrow deadline")).toBeInTheDocument();
+
+      // Same-day Today action scrolls to top without refetching a new anchor.
+      const callsBeforeToday = getAllTasksSpy.mock.calls.length;
+      await user.click(screen.getByRole("button", { name: "Today" }));
+      expect(scrollIntoViewMock).toHaveBeenCalled();
+      expect(getAllTasksSpy.mock.calls.length).toBe(callsBeforeToday);
+
+      // Advance local clock past midnight and click Today to move the query anchor.
+      vi.setSystemTime(new Date(2026, 10, 16, 0, 5, 0));
+      await user.click(screen.getByRole("button", { name: "Today" }));
+
+      await waitFor(() => {
+        expect(screen.getByText("Midnight refreshed task")).toBeInTheDocument();
+      });
+
+      // Switching back to Month preserves the previously browsed December 2026 period.
+      await user.click(screen.getByRole("button", { name: "Month" }));
+      expect(screen.getByRole("heading", { level: 2 }).textContent).toBe(
+        browsedHeading,
+      );
+      expect(
+        screen.getByRole("button", { name: "Previous period" }),
+      ).toBeInTheDocument();
+    } finally {
+      Element.prototype.scrollIntoView = originalScrollIntoView;
+      getAllTasksSpy.mockRestore();
+    }
   });
 });
 
