@@ -119,7 +119,7 @@
   "weekDetail": "Chi tiết",
   "weekAgenda": "Danh sách",
   "weekLayoutLabel": "Bố cục tuần",
-  "weekDetailHint": "Mốc giờ là hạn chót của task. Task trùng giờ sẽ chia đôi cột.",
+  "weekDetailHint": "Kéo mép trên hoặc dưới của công việc để chỉnh giờ bắt đầu hoặc hạn chót.",
   "dragHint": "Kéo task sang ngày hoặc giờ khác để đổi lịch.",
   "errorMovingTask": "Không di chuyển được task. Task đã trở về chỗ cũ.",
   "giveUp": "Từ bỏ",

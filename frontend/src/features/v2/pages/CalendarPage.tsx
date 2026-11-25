@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type DragEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { useCalendarTasksQuery } from "@/features/tasks/api/taskQueries";
@@ -23,6 +23,7 @@ import TaskDetailsDialog from "../components/TaskDetailsDialog";
 import TaskEditor from "../components/TaskEditor";
 import WeekDetailGrid from "../components/WeekDetailGrid";
 import TaskStatusActions from "../components/TaskStatusActions";
+import CalendarTaskCard from "../components/CalendarTaskCard";
 
 const dayKey = (value: Date | string): string => {
   const date = value instanceof Date ? value : new Date(value);
@@ -175,12 +176,38 @@ export default function CalendarPage() {
       setMoveError(err instanceof Error ? err.message : t("errorMovingTask"));
     }
   };
+
+  const dateDropTarget = (date: Date) => {
+    const key = dayKey(date);
+    return {
+      "data-drop": dropCellKey === key,
+      onDragOver: (event: DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+        setDropCellKey(key);
+      },
+      onDragLeave: (event: DragEvent<HTMLDivElement>) => {
+        const next = event.relatedTarget;
+        if (!(next instanceof Node && event.currentTarget.contains(next))) {
+          setDropCellKey(null);
+        }
+      },
+      onDrop: (event: DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        const taskId = event.dataTransfer.getData("text/plain");
+        setDropCellKey(null);
+        if (taskId) void handleMoveTask(taskId, date, null);
+      },
+    };
+  };
+
   const selectedTasks = selectedDate ? dayTasks(tasksByDay, selectedDate) : [];
 
   return (
     <div
       className="v2-calendar flex flex-col gap-[18px]"
       data-testid="v2-calendar-page"
+      onDragEnd={() => setDropCellKey(null)}
     >
       <h1 className="sr-only">{t("calendar")}</h1>
       <header className="v2-page-actions [&.v2-skills-header]:items-center [&.v2-skills-header]:justify-between [&.v2-skills-header]:flex-wrap [&.v2-skills-header]:gap-[12px] flex justify-end">
@@ -358,34 +385,20 @@ export default function CalendarPage() {
                   const isToday = dayKey(date) === dayKey(today);
                   return (
                     <div
-                      className="v2-calendar-cell relative flex flex-col gap-[4px] [border-top:1px_solid_var(--v2-border)]
+                      className="v2-calendar-cell v2-calendar-date-target relative flex flex-col gap-[4px] [border-top:1px_solid_var(--v2-border)]
                         [&[data-outside=true]]:opacity-[0.55] [&[data-today=true]]:[background:var(--v2-input-fill)]
                         [&[data-today=true]]:[box-shadow:inset_0_0_0_1px_var(--v2-accent)] [&[data-has-tasks=true]::after]:w-[5px]
                         [&[data-has-tasks=true]::after]:h-[5px] [&[data-has-tasks=true]::after]:mt-auto
                         [&[data-has-tasks=true]::after]:rounded-[100%] [&[data-has-tasks=true]::after]:[background:var(--v2-accent)]
                         [@media(max-width:640px)]:items-center [@media(max-width:640px)]:[&[data-has-tasks=true]::after]:absolute
                         [@media(max-width:640px)]:[&[data-has-tasks=true]::after]:bottom-[8px]
-                        [@media(max-width:640px)]:[&[data-has-tasks=true]::after]:pointer-events-none
-                        [&[data-drop=true]]:[outline:1px_dashed_var(--v2-accent)] [&[data-drop=true]]:outline-offset-[-2px]
-                        [&[data-drop=true]]:[background:var(--v2-shell-fill)]"
+                        [@media(max-width:640px)]:[&[data-has-tasks=true]::after]:pointer-events-none"
                       role="gridcell"
                       key={date.toISOString()}
                       data-outside={!isCurrentMonth}
                       data-today={isToday}
                       data-has-tasks={tasks.length > 0}
-                      data-drop={dropCellKey === dayKey(date)}
-                      onDragOver={(event) => {
-                        event.preventDefault();
-                        event.dataTransfer.dropEffect = "move";
-                        setDropCellKey(dayKey(date));
-                      }}
-                      onDragLeave={() => setDropCellKey(null)}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        const taskId = event.dataTransfer.getData("text/plain");
-                        setDropCellKey(null);
-                        if (taskId) void handleMoveTask(taskId, date, null);
-                      }}
+                      {...dateDropTarget(date)}
                     >
                       <button
                         type="button"
@@ -409,33 +422,16 @@ export default function CalendarPage() {
                       <ul className="v2-calendar-chips flex flex-col gap-[3px] m-[0] p-[0] [list-style:none] min-w-[0] [@media(max-width:640px)]:[display:none]">
                         {tasks.slice(0, 3).map((task) => (
                           <li key={task._id}>
-                            <button
-                              type="button"
-                              className="v2-calendar-chip flex items-baseline gap-[6px] w-full min-h-[0] p-[3px_6px] overflow-hidden
-                                [border:1px_solid_transparent] rounded-[8px] [background:var(--v2-input-fill)] text-left
-                                [&_span]:overflow-hidden [&_span]:text-ellipsis [&_span]:whitespace-nowrap [&_time]:flex-[0_0_auto]
-                                [&_time]:text-[var(--v2-muted)] [&_time]:[font-variant-numeric:tabular-nums]
-                                [&:hover]:border-[var(--v2-accent)] [&[data-status=given-up]]:[text-decoration:line-through]
-                                [&[draggable=true]]:cursor-grab [&[draggable=true]:active]:cursor-grabbing"
-                              data-status={task.status}
-                              draggable
-                              onDragStart={(event) => {
-                                event.dataTransfer.effectAllowed = "move";
-                                event.dataTransfer.setData(
-                                  "text/plain",
-                                  task._id,
-                                );
-                              }}
+                            <CalendarTaskCard
+                              task={task}
+                              variant="month"
+                              time={
+                                task.dueDate
+                                  ? timeFormat.format(new Date(task.dueDate))
+                                  : undefined
+                              }
                               onClick={() => setSelectedTaskId(task._id)}
-                              title={task.title}
-                            >
-                              {task.dueDate && (
-                                <time>
-                                  {timeFormat.format(new Date(task.dueDate))}
-                                </time>
-                              )}
-                              <span>{task.title}</span>
-                            </button>
+                            />
                           </li>
                         ))}
                       </ul>
@@ -465,6 +461,12 @@ export default function CalendarPage() {
             onMoveTask={(taskId, target, minute) =>
               void handleMoveTask(taskId, target, minute)
             }
+            onResizeTask={async (taskId, dates) => {
+              const task = renderedTasks.find(
+                (candidate) => candidate._id === taskId,
+              );
+              if (task) await calendarMutations.changeTaskDates(task, dates);
+            }}
           />
         ) : (
           <div className="v2-calendar-week-view grid grid-cols-[repeat(7,minmax(0,1fr))] gap-[10px] [@media(max-width:899px)]:grid-cols-[minmax(0,1fr)]">
@@ -472,12 +474,13 @@ export default function CalendarPage() {
               const tasks = dayTasks(tasksByDay, date);
               return (
                 <div
-                  className="v2-calendar-week-col flex flex-col gap-[8px] min-h-[220px] p-[10px] [border:1px_solid_var(--v2-border)]
+                  className="v2-calendar-week-col v2-calendar-date-target flex flex-col gap-[8px] min-h-[220px] p-[10px] [border:1px_solid_var(--v2-border)]
                     rounded-[16px] [background:var(--v2-input-fill)]
                     [&[data-today=true]]:[box-shadow:inset_0_0_0_1px_var(--v2-accent)]
                     [@media(max-width:899px)]:min-h-[0]"
                   key={date.toISOString()}
                   data-today={dayKey(date) === dayKey(today)}
+                  {...dateDropTarget(date)}
                 >
                   <button
                     type="button"
@@ -496,22 +499,16 @@ export default function CalendarPage() {
                     <ul className="v2-calendar-week-list flex flex-col gap-[4px] m-[0] p-[0] [list-style:none]">
                       {tasks.map((task) => (
                         <li key={task._id}>
-                          <button
-                            type="button"
-                            className="v2-calendar-week-task flex flex-col gap-[2px] w-full min-h-[0] p-[6px_8px] [border:1px_solid_transparent]
-                              rounded-[10px] [background:var(--v2-glass-fill)] text-left cursor-pointer [&_time]:text-[10px]
-                              [&_time]:text-[var(--v2-muted)] [&_time]:[font-variant-numeric:tabular-nums]
-                              [&:hover]:border-[var(--v2-accent)] [&[data-status=given-up]]:[text-decoration:line-through]"
-                            data-status={task.status}
+                          <CalendarTaskCard
+                            task={task}
+                            variant="agenda"
+                            time={
+                              task.dueDate
+                                ? timeFormat.format(new Date(task.dueDate))
+                                : undefined
+                            }
                             onClick={() => setSelectedTaskId(task._id)}
-                          >
-                            {task.dueDate && (
-                              <time>
-                                {timeFormat.format(new Date(task.dueDate))}
-                              </time>
-                            )}
-                            <span>{task.title}</span>
-                          </button>
+                          />
                         </li>
                       ))}
                     </ul>
@@ -557,22 +554,16 @@ export default function CalendarPage() {
                     key={task._id}
                     className="v2-calendar-day-item flex flex-col gap-[6px]"
                   >
-                    <button
-                      type="button"
-                      className="v2-calendar-day-task flex gap-[10px] w-full min-h-[0] p-[8px_10px] [border:1px_solid_var(--v2-border)]
-                        rounded-[10px] [background:var(--v2-input-fill)] text-left cursor-pointer [&_time]:flex-[0_0_auto]
-                        [&_time]:text-[var(--v2-muted)] [&_time]:text-[11px] [&_time]:[font-variant-numeric:tabular-nums]
-                        [&:hover]:border-[var(--v2-accent)]"
-                      data-status={task.status}
-                      onClick={() => setSelectedTaskId(task._id)}
-                    >
-                      <time>
-                        {task.dueDate
+                    <CalendarTaskCard
+                      task={task}
+                      variant="day"
+                      time={
+                        task.dueDate
                           ? timeFormat.format(new Date(task.dueDate))
-                          : ""}
-                      </time>
-                      <span>{task.title}</span>
-                    </button>
+                          : undefined
+                      }
+                      onClick={() => setSelectedTaskId(task._id)}
+                    />
                     <TaskStatusActions task={task} compact />
                   </li>
                 ))}

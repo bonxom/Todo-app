@@ -5930,39 +5930,104 @@ body:has(.calendar-timeline-event[data-resizing="true"])
 
 .v2-calendar-cell {
   @apply min-h-[112px] p-[6px] [border-right:1px_solid_var(--v2-border)];
+  container: calendar-day / inline-size;
 }
 
 .v2-calendar-week > .v2-calendar-cell:last-child {
   @apply [border-right:0];
 }
 
-.v2-calendar-chip {
-  @apply text-[var(--v2-ink)] text-[11px];
+.v2-calendar-task-card {
+  border: 1px solid var(--calendar-task-border, transparent);
+  background-color: var(--calendar-task-fill, var(--v2-input-fill));
+  color: var(--v2-ink);
+  font-size: 12px;
+  line-height: 1.25;
 }
 
-.v2-calendar-chip[data-status="completed"] {
-  @apply text-[var(--v2-success)];
+.v2-calendar-week-task {
+  --calendar-task-fill: var(--v2-glass-fill);
 }
 
-.v2-calendar-chip[data-status="given-up"] {
-  @apply text-[var(--v2-muted)];
+.v2-timeline-block,
+.v2-calendar-day-task {
+  --calendar-task-border: var(--v2-border);
+}
+
+.v2-timeline-block {
+  --calendar-task-fill: var(--v2-surface-solid);
+}
+
+.v2-calendar-chip,
+.v2-timeline-block {
+  font-size: 11px;
+}
+
+.v2-calendar-day-task {
+  font-size: 13px;
+}
+
+.v2-timeline-block .v2-calendar-task-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+
+.v2-timeline-block .v2-calendar-task-time {
+  margin-inline-start: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@container calendar-day (max-width: 154px) {
+  .v2-calendar-chip .v2-calendar-task-time {
+    display: none;
+  }
+}
+
+.v2-calendar-task-card[data-status="completed"] {
+  --calendar-task-fill: color-mix(
+    in srgb,
+    var(--v2-success) 10%,
+    var(--v2-surface-solid)
+  );
+  --calendar-task-border: color-mix(
+    in srgb,
+    var(--v2-success) 23%,
+    var(--v2-surface-solid)
+  );
+  --calendar-task-marker: var(--v2-success);
+  border-inline-start: 3px solid var(--calendar-task-marker);
+}
+
+.v2-calendar-task-card[data-status="given-up"] {
+  --calendar-task-fill: color-mix(
+    in srgb,
+    var(--v2-muted) 7%,
+    var(--v2-surface-solid)
+  );
+  --calendar-task-border: color-mix(
+    in srgb,
+    var(--v2-muted) 42%,
+    var(--v2-surface-solid)
+  );
+  --calendar-task-marker: var(--v2-muted);
+  border-style: dashed;
+}
+
+.v2-calendar-task-card:hover {
+  border-color: var(--v2-accent);
+  border-inline-start-color: var(--calendar-task-marker, var(--v2-accent));
+}
+
+.v2-calendar-task-status {
+  color: var(--calendar-task-marker);
 }
 
 .v2-calendar-more {
   @apply text-[var(--v2-accent)] text-[11px];
-}
-
-.v2-calendar-week-task {
-  @apply text-[12px];
-}
-
-.v2-calendar-week-task[data-status="completed"],
-.v2-calendar-chip[data-status="completed"] {
-  @apply text-[var(--v2-success)];
-}
-
-.v2-calendar-week-task[data-status="given-up"] {
-  @apply text-[var(--v2-muted)];
 }
 
 .v2-agent-panel.v2-calendar-day-panel {
@@ -5971,10 +6036,6 @@ body:has(.calendar-timeline-event[data-resizing="true"])
 
 .v2-calendar-day-panel .v2-agent-panel-close {
   @apply inline-flex;
-}
-
-.v2-calendar-day-task {
-  @apply text-[13px];
 }
 
 .v2-calendar-cell[data-has-tasks="true"]::after {
@@ -6022,19 +6083,68 @@ body:has(.calendar-timeline-event[data-resizing="true"])
   @apply [border-left:1px_solid_var(--v2-border)];
 }
 
-.v2-timeline-block {
-  @apply text-[var(--v2-ink)] text-[11px];
-}
-
-.v2-timeline-block[data-status="completed"] {
-  @apply text-[var(--v2-success)];
-}
-
-.v2-timeline-block[data-status="given-up"] {
-  @apply text-[var(--v2-muted)];
-}
-
 /* ---------- Calendar drag and drop ---------- */
+
+.v2-calendar-date-target[data-drop="true"] {
+  outline: 1px dashed var(--v2-accent);
+  outline-offset: -2px;
+  background: var(--v2-shell-fill);
+}
+
+.v2-timeline-resize-handle {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 2;
+  height: min(9px, 28%);
+  border-radius: 4px;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.v2-timeline-resize-handle[data-edge="start"] {
+  top: 0;
+}
+
+.v2-timeline-resize-handle[data-edge="end"] {
+  bottom: 0;
+}
+
+.v2-timeline-resize-handle::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 1px;
+  margin-inline: auto;
+  width: min(22px, 55%);
+  height: 2px;
+  border-radius: 2px;
+  background: var(--v2-accent);
+  opacity: 0;
+}
+
+.v2-timeline-resize-handle[data-edge="end"]::after {
+  inset-block: auto 1px;
+}
+
+.v2-timeline-resize-handle[aria-disabled="true"] {
+  pointer-events: none;
+}
+
+.v2-timeline-event:hover .v2-timeline-resize-handle::after,
+.v2-timeline-event:focus-within .v2-timeline-resize-handle::after,
+.v2-timeline-event[data-resizing="true"] .v2-timeline-resize-handle::after {
+  opacity: 1;
+}
+
+@media (pointer: coarse) {
+  .v2-timeline-resize-handle {
+    height: min(14px, 35%);
+  }
+
+  .v2-timeline-resize-handle::after {
+    opacity: 0.65;
+  }
+}
 
 /* ---------- Task status actions (calendar, details) ---------- */
 

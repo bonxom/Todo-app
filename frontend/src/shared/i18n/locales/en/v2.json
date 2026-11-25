@@ -119,7 +119,7 @@
   "weekDetail": "Detail",
   "weekAgenda": "Agenda",
   "weekLayoutLabel": "Week layout",
-  "weekDetailHint": "Times are task due dates. Overlapping tasks split the column.",
+  "weekDetailHint": "Drag a task's top or bottom edge to adjust its start or due time.",
   "dragHint": "Drag a task to another day or time to reschedule it.",
   "errorMovingTask": "Could not move the task. It was returned to its slot.",
   "giveUp": "Give up",

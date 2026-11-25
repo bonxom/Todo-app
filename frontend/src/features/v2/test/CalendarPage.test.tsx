@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => {
     refetch: vi.fn(),
     query: vi.fn(),
     move: vi.fn(),
+    resize: vi.fn(),
     start: vi.fn(),
     finish: vi.fn(),
     giveUp: vi.fn(),
@@ -63,7 +64,7 @@ vi.mock("@/features/tasks/api/taskMutations", () => ({
 vi.mock("@/features/calendar/api/useCalendarMutations", () => ({
   useCalendarMutations: () => ({
     changeTaskDueDate: mocks.move,
-    changeTaskDates: vi.fn(),
+    changeTaskDates: mocks.resize,
     isMutating: false,
   }),
 }));
@@ -124,6 +125,57 @@ describe("V2 calendar", () => {
     expect(screen.queryByText(/^\+\d+$/)).not.toBeInTheDocument();
   });
 
+  it("exposes completed and given-up statuses on month, week, and day task cards", async () => {
+    const original = mocks.tasks;
+    (mocks as { tasks: unknown[] }).tasks = [
+      { ...mocks.makeTask("done", "Send report", 17, 9), status: "completed" },
+      {
+        ...mocks.makeTask("skipped", "Review notes", 17, 14),
+        status: "given-up",
+      },
+    ];
+    try {
+      const user = userEvent.setup();
+      renderWithProviders(<CalendarPage />, {
+        initialEntries: ["/v2/calendar"],
+      });
+      const getCompleted = () =>
+        screen.getByRole("button", { name: /Send report.*Completed/ });
+      const getGivenUp = () =>
+        screen.getByRole("button", { name: /Review notes.*Given up/ });
+
+      expect(getCompleted()).toHaveClass("v2-calendar-chip");
+      expect(getGivenUp()).toHaveClass("v2-calendar-chip");
+
+      await user.click(screen.getByRole("button", { name: "Week" }));
+      expect(getCompleted()).toHaveClass("v2-timeline-block");
+      expect(getGivenUp()).toHaveClass("v2-timeline-block");
+
+      await user.click(screen.getByRole("button", { name: "Agenda" }));
+      expect(within(getCompleted()).getByText("Completed")).not.toHaveClass(
+        "sr-only",
+      );
+      expect(within(getGivenUp()).getByText("Given up")).not.toHaveClass(
+        "sr-only",
+      );
+
+      await user.click(
+        screen.getByRole("button", { name: /November 17, 2026/ }),
+      );
+      const day = screen.getByRole("complementary", {
+        name: /November 17, 2026/,
+      });
+      expect(
+        within(day).getByRole("button", { name: /Send report.*Completed/ }),
+      ).toHaveClass("v2-calendar-day-task");
+      expect(
+        within(day).getByRole("button", { name: /Review notes.*Given up/ }),
+      ).toHaveClass("v2-calendar-day-task");
+    } finally {
+      mocks.tasks = original;
+    }
+  });
+
   it("opens the week detail timeline and can switch to the agenda", async () => {
     const user = userEvent.setup();
     const { container } = renderWithProviders(<CalendarPage />, {
@@ -152,7 +204,7 @@ describe("V2 calendar", () => {
 
     await user.click(screen.getByRole("button", { name: "Week" }));
 
-    const block = container.querySelector<HTMLElement>(".v2-timeline-block");
+    const block = container.querySelector<HTMLElement>(".v2-timeline-event");
     // t3 is due at 11:00: 660 minutes * 1.2px/min - one 36px slot.
     expect(block).toHaveStyle({ top: "756px", height: "36px" });
   });
@@ -171,7 +223,7 @@ describe("V2 calendar", () => {
     });
     await user.click(screen.getByRole("button", { name: "Week" }));
 
-    const block = container.querySelector<HTMLElement>(".v2-timeline-block");
+    const block = container.querySelector<HTMLElement>(".v2-timeline-event");
     expect(block).toHaveStyle({ top: "756px", height: "36px" });
 
     (mocks as { tasks: unknown[] }).tasks = original;
@@ -284,6 +336,39 @@ describe("V2 calendar drag and drop", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date(2026, 10, 15, 10, 0, 0));
     mocks.move.mockReset().mockResolvedValue({});
+    mocks.resize.mockReset().mockResolvedValue({});
+  });
+
+  it("updates only the selected endpoint when adjusting a Week Detail handle", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CalendarPage />, { initialEntries: ["/v2/calendar"] });
+    await user.click(screen.getByRole("button", { name: "Week" }));
+    const start = screen.getByRole("slider", {
+      name: "Adjust start time of Plan week",
+    });
+    const end = screen.getByRole("slider", {
+      name: "Adjust end time of Plan week",
+    });
+
+    fireEvent.keyDown(start, { key: "ArrowUp" });
+    await waitFor(() =>
+      expect(start).toHaveAttribute("aria-disabled", "false"),
+    );
+    fireEvent.keyDown(end, { key: "ArrowDown" });
+    await waitFor(() => expect(end).toHaveAttribute("aria-disabled", "false"));
+
+    expect(mocks.resize.mock.calls).toEqual([
+      [
+        expect.objectContaining({ _id: "t3" }),
+        { startDate: new Date(2026, 10, 17, 10, 15).toISOString() },
+      ],
+      [
+        expect.objectContaining({ _id: "t3" }),
+        { dueDate: new Date(2026, 10, 17, 11, 15).toISOString() },
+      ],
+    ]);
+    expect(mocks.move).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("task-details")).not.toBeInTheDocument();
   });
 
   it("reschedules a task to the dropped day and snapped minute", async () => {
@@ -336,6 +421,56 @@ describe("V2 calendar drag and drop", () => {
       toISOStringLocal(new Date(2026, 10, 12, 9, 0, 0)),
     );
   });
+
+  it.each(["Month", "Week detail", "Week agenda"])(
+    "reschedules a day panel card through the %s view",
+    async (view) => {
+      const user = userEvent.setup();
+      const { container } = renderWithProviders(<CalendarPage />, {
+        initialEntries: ["/v2/calendar"],
+      });
+      if (view !== "Month") {
+        await user.click(screen.getByRole("button", { name: "Week" }));
+        if (view === "Week agenda")
+          await user.click(screen.getByRole("button", { name: "Agenda" }));
+      }
+
+      let target: Element;
+      let expected: Date;
+      if (view === "Week detail") {
+        await user.click(
+          container.querySelectorAll(".v2-timeline-day-head")[2],
+        );
+        target = container.querySelectorAll(".v2-timeline-day")[3];
+        expected = new Date(2026, 10, 18, 8);
+      } else if (view === "Week agenda") {
+        await user.click(
+          screen.getByRole("button", { name: /November 17, 2026/ }),
+        );
+        target = container.querySelectorAll(".v2-calendar-week-col")[3];
+        expected = new Date(2026, 10, 18, 11);
+      } else {
+        await user.click(
+          screen.getByRole("button", { name: /November 17, 2026/ }),
+        );
+        target = screen
+          .getByRole("button", { name: /November 18, 2026/ })
+          .closest('[role="gridcell"]')!;
+        expected = new Date(2026, 10, 18, 11);
+      }
+      const panel = screen.getByRole("complementary", {
+        name: /November 17, 2026/,
+      });
+      const card = within(panel).getByRole("button", { name: /Plan week/ });
+      expect(card).toHaveAttribute("draggable", "true");
+      dropAt(target, dragBlock(card), 576);
+
+      expect(mocks.move).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ _id: "t3" }),
+        toISOStringLocal(expected),
+      );
+    },
+  );
 
   it("surfaces a move failure without losing the task", async () => {
     mocks.move.mockRejectedValueOnce(new Error("Server said no"));
