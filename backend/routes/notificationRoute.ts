@@ -7,11 +7,20 @@ import {
   markRead,
   markAllRead,
   deleteAll,
+  getPushConfig,
+  getCurrentPushSubscription,
+  upsertPushSubscription,
+  updatePushPreferences,
+  deletePushSubscription,
 } from "../controllers/notificationController.js";
 import {
   notificationQuerySchema,
   notificationParamsSchema,
   notificationBodySchema,
+  pushSubscriptionQuerySchema,
+  pushSubscriptionUpsertSchema,
+  pushSubscriptionUpdatePrefsSchema,
+  pushSubscriptionDeleteSchema,
 } from "../validations/notificationValidation.js";
 const router = express.Router();
 router.use((_req, res, next) => {
@@ -30,6 +39,27 @@ router.patch(
   "/read-all",
   validate({ body: notificationBodySchema }),
   markAllRead,
+);
+router.get("/push/config", getPushConfig);
+router.get(
+  "/push/subscriptions/current",
+  validate({ query: pushSubscriptionQuerySchema }),
+  getCurrentPushSubscription,
+);
+router.post(
+  "/push/subscriptions",
+  validate({ body: pushSubscriptionUpsertSchema }),
+  upsertPushSubscription,
+);
+router.patch(
+  "/push/subscriptions",
+  validate({ body: pushSubscriptionUpdatePrefsSchema }),
+  updatePushPreferences,
+);
+router.delete(
+  "/push/subscriptions",
+  validate({ body: pushSubscriptionDeleteSchema }),
+  deletePushSubscription,
 );
 router.patch(
   "/:id/read",

@@ -314,4 +314,37 @@ describe("TaskEditor", () => {
     window.dispatchEvent(dirty);
     expect(dirty.defaultPrevented).toBe(true);
   });
+
+  it("pre-fills default start and due dates without marking clean draft dirty", async () => {
+    const onSaved = vi.fn();
+    const onCancel = vi.fn();
+    renderWithProviders(
+      <TaskEditor
+        initialStartDate={new Date(2026, 10, 26, 0, 0, 0, 0)}
+        initialDueDate={new Date(2026, 10, 26, 23, 59, 59, 999)}
+        onSaved={onSaved}
+        onCancel={onCancel}
+      />,
+    );
+    await ready();
+
+    expect(screen.getByLabelText("Start date")).toHaveValue("2026-11-26T00:00");
+    expect(screen.getByLabelText("Due date")).toHaveValue("2026-11-26T23:59");
+
+    // Closing immediately without edits does not ask for discard confirmation.
+    await userEvent.keyboard("{Escape}");
+    expect(onCancel).toHaveBeenCalledOnce();
+
+    // Submitting sends both default startDate and dueDate.
+    await userEvent.type(screen.getByLabelText("Title"), "Full day task");
+    await userEvent.click(save());
+    await waitFor(() => expect(onSaved).toHaveBeenCalledOnce());
+    expect(taskService.createTask).toHaveBeenCalledWith({
+      title: "Full day task",
+      description: "",
+      priority: "Medium",
+      startDate: expect.stringMatching(/^2026-11-26T00:00:00[+-]\d{2}:\d{2}$/),
+      dueDate: expect.stringMatching(/^2026-11-26T23:59:00[+-]\d{2}:\d{2}$/),
+    });
+  });
 });

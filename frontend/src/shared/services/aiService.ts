@@ -19,6 +19,19 @@ export type ConversationSummary = {
   projectId?: string | null;
 };
 
+export type ConversationPage = {
+  items: ConversationSummary[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
+export type ListConversationsParams = {
+  cursor?: string | null;
+  limit?: number;
+  search?: string;
+  signal?: AbortSignal;
+};
+
 export const aiService = {
   getConversationCapabilities: async (): Promise<{
     taskProposals: boolean;
@@ -49,6 +62,36 @@ export const aiService = {
       data: ConversationSummary[];
     }>("/api/ai/conversations");
     return response.data.data;
+  },
+  listConversationsPage: async (
+    params: ListConversationsParams = {},
+  ): Promise<ConversationPage> => {
+    const query: Record<string, string | number> = {};
+    if (params.cursor) query.cursor = params.cursor;
+    if (typeof params.limit === "number") query.limit = params.limit;
+    const trimmedSearch = params.search?.trim();
+    if (trimmedSearch) query.search = trimmedSearch;
+
+    const response = await axiosInstance.get<{
+      data: ConversationSummary[];
+      pageInfo?: { nextCursor?: string | null; hasMore?: boolean };
+    }>("/api/ai/conversations", {
+      params: Object.keys(query).length ? query : undefined,
+      signal: params.signal,
+    });
+
+    const items = Array.isArray(response.data?.data) ? response.data.data : [];
+    const hasMore = Boolean(response.data?.pageInfo?.hasMore);
+    const nextCursor =
+      typeof response.data?.pageInfo?.nextCursor === "string"
+        ? response.data.pageInfo.nextCursor
+        : null;
+
+    return {
+      items,
+      nextCursor: hasMore ? nextCursor : null,
+      hasMore,
+    };
   },
   getConversation: async (
     id?: string,

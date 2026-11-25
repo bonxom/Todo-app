@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import V2Layout from "../layouts/V2Layout";
@@ -183,36 +183,59 @@ describe("V2Layout shell", () => {
     ).toBeInTheDocument();
   });
 
-  it("collapses and expands the desktop sidebar and persists state in localStorage", async () => {
-    const user = userEvent.setup();
+  it("defaults desktop sidebar to collapsed and expands on hover / collapses on leave like V1", () => {
     renderLayout();
 
-    const toggleBtn = screen.getByTestId("v2-sidebar-toggle");
-    const desktopSidebar = toggleBtn.closest(".v2-sidebar-desktop");
-    expect(toggleBtn).toHaveAttribute("aria-expanded", "true");
-    expect(desktopSidebar).toHaveAttribute("data-collapsed", "false");
-
-    await user.click(toggleBtn);
-
-    expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
+    const desktopSidebar = document.querySelector(
+      ".v2-sidebar-desktop",
+    ) as HTMLElement;
+    const aside = desktopSidebar.querySelector(
+      "aside.v2-navigation",
+    ) as HTMLElement;
     expect(desktopSidebar).toHaveAttribute("data-collapsed", "true");
-    expect(localStorage.getItem("orbit.v2-sidebar-collapsed")).toBe("true");
+    expect(aside).toHaveAttribute("data-collapsed", "true");
     // Navigation links remain accessible by name even while collapsed
     expect(screen.getByRole("link", { name: "Dashboard" })).toBeInTheDocument();
 
-    await user.click(toggleBtn);
-    expect(toggleBtn).toHaveAttribute("aria-expanded", "true");
+    // Touch pointer enter must not stick expanded (emulate native pointerover/mouseover with pointerType="touch")
+    const touchEnter = new MouseEvent("pointerover", { bubbles: true });
+    Object.defineProperty(touchEnter, "pointerType", { value: "touch" });
+    aside.dispatchEvent(touchEnter);
+    expect(desktopSidebar).toHaveAttribute("data-collapsed", "true");
+
+    // Mouse hover expands sidebar
+    fireEvent.pointerEnter(aside, { pointerType: "mouse" });
     expect(desktopSidebar).toHaveAttribute("data-collapsed", "false");
-    expect(localStorage.getItem("orbit.v2-sidebar-collapsed")).toBe("false");
+    expect(aside).toHaveAttribute("data-collapsed", "false");
+
+    // Leaving sidebar collapses it back
+    fireEvent.pointerLeave(aside);
+    expect(desktopSidebar).toHaveAttribute("data-collapsed", "true");
+    expect(aside).toHaveAttribute("data-collapsed", "true");
   });
 
-  it("restores collapsed desktop sidebar preference from localStorage on mount", () => {
-    localStorage.setItem("orbit.v2-sidebar-collapsed", "true");
+  it("expands desktop sidebar on keyboard focus-visible and collapses on blur outside", async () => {
+    const user = userEvent.setup();
     renderLayout();
 
-    const toggleBtn = screen.getByTestId("v2-sidebar-toggle");
-    const desktopSidebar = toggleBtn.closest(".v2-sidebar-desktop");
-    expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
+    const desktopSidebar = document.querySelector(
+      ".v2-sidebar-desktop",
+    ) as HTMLElement;
+    const aside = desktopSidebar.querySelector(
+      "aside.v2-navigation",
+    ) as HTMLElement;
+    expect(desktopSidebar).toHaveAttribute("data-collapsed", "true");
+
+    const dashboardLink = aside.querySelector(
+      'a[href="/v2/dashboard"]',
+    ) as HTMLElement;
+    // Move focus via keyboard so :focus-visible matches
+    await user.tab();
+    dashboardLink.focus();
+    fireEvent.focus(dashboardLink);
+    expect(desktopSidebar).toHaveAttribute("data-collapsed", "false");
+
+    fireEvent.blur(aside, { relatedTarget: document.body });
     expect(desktopSidebar).toHaveAttribute("data-collapsed", "true");
   });
 });

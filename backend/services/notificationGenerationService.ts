@@ -1,5 +1,6 @@
 import { notificationRepository } from "../repositories/notificationRepository.js";
 import { notificationTaskRepository } from "../repositories/notificationTaskRepository.js";
+import { pushDispatchService } from "./pushDispatchService.js";
 import type { NotificationType } from "../types/INotification.js";
 export const classifyDeadline = (
   status: string,
@@ -37,8 +38,19 @@ export async function generateNotifications(now = new Date()) {
             dueAt: task.dueAt,
             taskTitle: task.title,
           })
-        )
+        ) {
           inserted++;
+          try {
+            await pushDispatchService.notifyDeadline({
+              recipientId: String(recipientId),
+              taskId: String(task.taskId),
+              type,
+              taskTitle: task.title,
+            });
+          } catch {
+            // Best-effort push delivery must never fail deadline generation.
+          }
+        }
       }
     }
     afterId = ids.at(-1);

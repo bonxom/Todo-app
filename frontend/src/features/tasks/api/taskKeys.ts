@@ -51,6 +51,8 @@ export const taskKeys = {
         endDate: range.endDate,
       },
     ] as const,
+  timeline: (startIso: string) =>
+    [...taskKeys.all, "timeline", { startIso }] as const,
   todayDeadlinesRoot: () => [...taskKeys.all, "today-deadlines"] as const,
   todayDeadlines: (params?: PagingParams) => {
     const normalized = normalizeFilters(params as Record<string, unknown>);

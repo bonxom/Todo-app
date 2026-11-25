@@ -1,9 +1,25 @@
 import { getLocale } from "@/shared/i18n";
 import { useTranslation } from "react-i18next";
 import i18n from "@/shared/i18n";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
-import { aiService } from "@/shared/services/aiService";
+import {
+  CONVERSATION_PAGE_SIZE,
+  fetchConversationPage,
+  useDebouncedValue,
+  useScrollSentinel,
+} from "@/features/agent/useInfiniteConversations";
+
+function mergeConversationPages(existing, incoming) {
+  const seen = new Set(existing.map((item) => item.id));
+  const merged = [...existing];
+  for (const item of incoming) {
+    if (!item?.id || seen.has(item.id)) continue;
+    seen.add(item.id);
+    merged.push(item);
+  }
+  return merged;
+}
 
 function relativeTime(value) {
   const minutes = Math.max(
@@ -29,13 +45,31 @@ export default function RecentConversations({
   const { t } = useTranslation("agent");
 
   const [conversations, setConversations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [hasMoreUnfiltered, setHasMoreUnfiltered] = useState(false);
+  const [activeServerSearch, setActiveServerSearch] = useState("");
+  const [loadedKey, setLoadedKey] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [showAll, setShowAll] = useState(expanded);
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query.trim(), 250);
+  const serverSearch =
+    debouncedQuery && (hasMoreUnfiltered || activeServerSearch !== "")
+      ? debouncedQuery
+      : "";
+  const fetchKey = `${attempt}:${serverSearch}`;
+  const loading = loadedKey !== fetchKey && !error;
+
   const viewAllRef = useRef(null);
   const searchRef = useRef(null);
+  const listRef = useRef(null);
+  const sentinelRef = useRef(null);
+  const loadingMoreRef = useRef(false);
+  const activeQueryRef = useRef("");
   const closeHistory = () => {
     if (expanded) {
       onClose?.();
@@ -50,22 +84,85 @@ export default function RecentConversations({
   }, [showAll, loading]);
 
   useEffect(() => {
+    activeQueryRef.current = activeServerSearch;
+  }, [activeServerSearch]);
+
+  useEffect(() => {
     let active = true;
-    aiService
-      .listConversations()
-      .then((items) => {
-        if (active) setConversations(items);
+    const controller = new AbortController();
+
+    fetchConversationPage({
+      cursor: null,
+      limit: CONVERSATION_PAGE_SIZE,
+      search: serverSearch,
+      signal: controller.signal,
+    })
+      .then((page) => {
+        if (!active) return;
+        const hasNext = Boolean(page.hasMore && page.nextCursor);
+        activeQueryRef.current = serverSearch;
+        setConversations(page.items ?? []);
+        setNextCursor(page.nextCursor ?? null);
+        setHasMore(hasNext);
+        setError(false);
+        setLoadMoreError(false);
+        setActiveServerSearch(serverSearch);
+        if (serverSearch === "") {
+          setHasMoreUnfiltered(hasNext);
+        }
+        setLoadedKey(fetchKey);
       })
       .catch(() => {
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+        if (active && !controller.signal.aborted) {
+          setError(true);
+          setLoadedKey(fetchKey);
+        }
       });
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [attempt]);
+  }, [fetchKey, serverSearch]);
+
+  const handleLoadMore = useCallback(() => {
+    if (!hasMore || !nextCursor || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    setLoadMoreError(false);
+
+    const requestQuery = activeQueryRef.current;
+    fetchConversationPage({
+      cursor: nextCursor,
+      limit: CONVERSATION_PAGE_SIZE,
+      search: requestQuery,
+    })
+      .then((page) => {
+        if (requestQuery !== activeQueryRef.current) return;
+        setConversations((prev) =>
+          mergeConversationPages(prev, page.items ?? []),
+        );
+        setNextCursor(page.nextCursor ?? null);
+        setHasMore(Boolean(page.hasMore && page.nextCursor));
+      })
+      .catch(() => {
+        if (requestQuery === activeQueryRef.current) setLoadMoreError(true);
+      })
+      .finally(() => {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      });
+  }, [hasMore, nextCursor]);
+
+  useScrollSentinel({
+    containerRef: listRef,
+    sentinelRef,
+    enabled: showAll && !loading && !error,
+    hasMore,
+    isFetching: loadingMore,
+    isError: loadMoreError,
+    onLoadMore: handleLoadMore,
+    itemCount: conversations.length,
+  });
 
   if (loading)
     return (
@@ -82,7 +179,6 @@ export default function RecentConversations({
           className="ui-focus-ring rounded text-[var(--color-accent)]"
           onClick={() => {
             setError(false);
-            setLoading(true);
             setAttempt((value) => value + 1);
           }}
         >
@@ -90,17 +186,25 @@ export default function RecentConversations({
         </button>
       </div>
     );
-  if (!conversations.length)
+  if (!conversations.length && !activeServerSearch && !debouncedQuery)
     return expanded ? (
       <div className="flex h-full items-center justify-center text-sm text-[var(--color-text-muted)]">
         {t("noConversationsYetLabel")}
       </div>
     ) : null;
 
+  const filteredConversations = showAll
+    ? conversations.filter((item) =>
+        item.title
+          .toLocaleLowerCase()
+          .includes(query.trim().toLocaleLowerCase()),
+      )
+    : conversations.slice(0, 3);
+
   return (
     <section
       aria-label={t("recentConversations")}
-      className={`flex min-h-0 flex-col py-2 ${expanded ? "flex-1" : "chat-recent mt-[24px] [border-top:1px_solid_var(--color-line)] pt-[16px]"}`}
+      className={`flex min-h-0 flex-col py-2 ${expanded ? "flex-1" : `${showAll ? "flex-1 " : ""}chat-recent mt-[24px] [border-top:1px_solid_var(--color-line)] pt-[16px]`}`}
       onKeyDown={(event) => {
         if (showAll && event.key === "Escape") {
           event.stopPropagation();
@@ -152,20 +256,14 @@ export default function RecentConversations({
           </>
         )}
         <ul
+          ref={listRef}
           className={
             showAll
-              ? "min-h-0 space-y-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]"
+              ? "min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]"
               : "space-y-1"
           }
         >
-          {(showAll
-            ? conversations.filter((item) =>
-                item.title
-                  .toLocaleLowerCase()
-                  .includes(query.trim().toLocaleLowerCase()),
-              )
-            : conversations.slice(0, 3)
-          ).map((conversation) => (
+          {filteredConversations.map((conversation) => (
             <li key={conversation.id}>
               <button
                 type="button"
@@ -192,30 +290,55 @@ export default function RecentConversations({
               </button>
             </li>
           ))}
-        </ul>
-        {showAll &&
-          !conversations.some((item) =>
-            item.title
-              .toLocaleLowerCase()
-              .includes(query.trim().toLocaleLowerCase()),
-          ) && (
-            <p
-              role="status"
-              className="px-3 py-6 text-center text-sm text-[var(--color-text-muted)]"
+          {showAll && loadMoreError && (
+            <li
+              role="alert"
+              className="flex items-center justify-between gap-2 px-2 py-2 text-xs text-[var(--color-text-muted)]"
             >
-              {t("noConversationsFound")}
-            </p>
+              <span>{t("unableToLoadMoreConversations")}</span>
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                className="ui-focus-ring rounded px-2 py-1 font-medium text-[var(--color-accent)]"
+              >
+                {t("tryAgain")}
+              </button>
+            </li>
           )}
+          {showAll && loadingMore && (
+            <li
+              role="status"
+              className="px-2 py-2 text-center text-xs text-[var(--color-text-muted)]"
+            >
+              {t("loadingMoreConversations")}
+            </li>
+          )}
+          {showAll && hasMore && !loadingMore && !loadMoreError && (
+            <li ref={sentinelRef} aria-hidden="true" className="h-1 w-full" />
+          )}
+        </ul>
+        {showAll && filteredConversations.length === 0 && (
+          <p
+            role="status"
+            className="px-3 py-6 text-center text-sm text-[var(--color-text-muted)]"
+          >
+            {t("noConversationsFound")}
+          </p>
+        )}
       </div>
-      {!showAll && conversations.length > 3 && (
+      {!showAll && (conversations.length > 3 || hasMore) && (
         <button
           ref={viewAllRef}
-          aria-label={t("viewAll", { count: conversations.length })}
+          aria-label={t(hasMore ? "viewAllPlus" : "viewAll", {
+            count: conversations.length,
+          })}
           type="button"
           className="ui-chat-history-label p-[0_0.5rem] [border:0] [background:transparent] text-left ui-focus-ring mt-2 self-start"
           onClick={() => setShowAll(true)}
         >
-          {t("viewAll", { count: conversations.length })}
+          {t(hasMore ? "viewAllPlus" : "viewAll", {
+            count: conversations.length,
+          })}
         </button>
       )}
     </section>

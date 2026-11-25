@@ -59,9 +59,7 @@ describe("SkillsPage", () => {
     renderSkillsPage();
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/No personal skills yet/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/No personal skills yet/i)).toBeInTheDocument();
     });
     expect(screen.getAllByText(/Create skill/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Add from template/i).length).toBeGreaterThan(0);

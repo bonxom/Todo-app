@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ChevronRight,
@@ -8,6 +8,7 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import { useScrollSentinel } from "@/features/agent/useInfiniteConversations";
 import type { ConversationSummary } from "@/shared/services/aiService";
 import type { Project } from "@/shared/types/domain";
 import { getProjectColor } from "@/shared/utils/projectColor";
@@ -27,6 +28,12 @@ interface AgentProjectSidebarProps {
   onAllProjects: () => void;
   onCreateProject: () => void;
   disabled: boolean;
+  hasMoreConversations?: boolean;
+  isFetchingMoreConversations?: boolean;
+  moreConversationsError?: boolean;
+  onLoadMoreConversations?: () => void;
+  search?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 export default function AgentProjectSidebar({
@@ -44,14 +51,29 @@ export default function AgentProjectSidebar({
   onAllProjects,
   onCreateProject,
   disabled,
+  hasMoreConversations = false,
+  isFetchingMoreConversations = false,
+  moreConversationsError = false,
+  onLoadMoreConversations,
+  search: controlledSearch,
+  onSearchChange,
 }: AgentProjectSidebarProps) {
   const { t } = useTranslation("agent");
   const { t: tWorkspace } = useTranslation("workspace");
   const [view, setView] = useState<"recent" | "projects">(
     activeProjectId ? "projects" : "recent",
   );
-  const [search, setSearch] = useState("");
+  const [internalSearch, setInternalSearch] = useState("");
+  const search = controlledSearch ?? internalSearch;
+  const setSearch = (value: string) => {
+    onSearchChange?.(value);
+    if (controlledSearch === undefined) {
+      setInternalSearch(value);
+    }
+  };
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const id = useId();
   const showProjects = view === "projects";
   const listStatus = showProjects ? projectStatus : conversationStatus;
@@ -60,6 +82,18 @@ export default function AgentProjectSidebar({
     conversationStatus === "error" &&
     (!showProjects || projectStatus === "success");
   const query = search.trim().toLocaleLowerCase();
+
+  useScrollSentinel({
+    containerRef: scrollContainerRef,
+    sentinelRef,
+    enabled:
+      Boolean(onLoadMoreConversations) && conversationStatus === "success",
+    hasMore: hasMoreConversations,
+    isFetching: isFetchingMoreConversations,
+    isError: moreConversationsError,
+    onLoadMore: () => onLoadMoreConversations?.(),
+    itemCount: conversations.length,
+  });
   const matches = (text: string) => text.toLocaleLowerCase().includes(query);
   const filtered = conversations.filter((item) =>
     matches(item.title || t("newConversation")),
@@ -150,7 +184,10 @@ export default function AgentProjectSidebar({
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
+      <div
+        ref={scrollContainerRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]"
+      >
         {view === "projects" && (
           <div className="mb-1.5 flex items-center justify-between gap-2 px-2">
             <h2 className="text-[11px] font-semibold tracking-wider text-[var(--v2-muted)] uppercase">
@@ -300,6 +337,34 @@ export default function AgentProjectSidebar({
             {tWorkspace(query ? "noMatchingProjects" : "noProjectsAvailable")}
           </p>
         )}
+        {conversationStatus === "success" && moreConversationsError ? (
+          <div
+            role="alert"
+            className="space-y-2 px-2.5 py-2.5 text-xs text-[var(--v2-muted)]"
+          >
+            <p>{t("unableToLoadMoreConversations")}</p>
+            <button
+              type="button"
+              className="v2-btn v2-glass-pill ui-focus-ring"
+              onClick={() => onLoadMoreConversations?.()}
+            >
+              {t("tryAgain")}
+            </button>
+          </div>
+        ) : conversationStatus === "success" && isFetchingMoreConversations ? (
+          <p
+            role="status"
+            className="px-2.5 py-2 text-xs text-[var(--v2-muted)]"
+          >
+            {t("loadingMoreConversations")}
+          </p>
+        ) : conversationStatus === "success" && hasMoreConversations ? (
+          <div
+            ref={sentinelRef}
+            aria-hidden="true"
+            className="h-1 w-full shrink-0"
+          />
+        ) : null}
       </div>
 
       <button

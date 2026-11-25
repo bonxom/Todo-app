@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { toISOStringLocal } from "@/shared/utils/dateTime";
+import { taskService } from "@/shared/services/taskService";
 import userEvent from "@testing-library/user-event";
 import CalendarPage from "../pages/CalendarPage";
 import { renderWithProviders, resetTestSession } from "./testSupport";
@@ -30,6 +31,7 @@ const mocks = vi.hoisted(() => {
     refetch: vi.fn(),
     query: vi.fn(),
     move: vi.fn(),
+    resize: vi.fn(),
     start: vi.fn(),
     finish: vi.fn(),
     giveUp: vi.fn(),
@@ -40,13 +42,22 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@/features/tasks/api/taskMutations", () => ({
   useStartTaskMutation: () => ({ mutateAsync: mocks.start, isPending: false }),
-  useFinishTaskMutation: () => ({ mutateAsync: mocks.finish, isPending: false }),
-  useGiveUpTaskMutation: () => ({ mutateAsync: mocks.giveUp, isPending: false }),
+  useFinishTaskMutation: () => ({
+    mutateAsync: mocks.finish,
+    isPending: false,
+  }),
+  useGiveUpTaskMutation: () => ({
+    mutateAsync: mocks.giveUp,
+    isPending: false,
+  }),
   useRestoreTaskMutation: () => ({
     mutateAsync: mocks.restore,
     isPending: false,
   }),
-  useDeleteTaskMutation: () => ({ mutateAsync: mocks.remove, isPending: false }),
+  useDeleteTaskMutation: () => ({
+    mutateAsync: mocks.remove,
+    isPending: false,
+  }),
   useCreateTaskMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateTaskMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
@@ -54,7 +65,7 @@ vi.mock("@/features/tasks/api/taskMutations", () => ({
 vi.mock("@/features/calendar/api/useCalendarMutations", () => ({
   useCalendarMutations: () => ({
     changeTaskDueDate: mocks.move,
-    changeTaskDates: vi.fn(),
+    changeTaskDates: mocks.resize,
     isMutating: false,
   }),
 }));
@@ -84,8 +95,28 @@ vi.mock("../components/TaskDetailsDialog", () => ({
 }));
 
 vi.mock("../components/TaskEditor", () => ({
-  default: ({ onCancel }: { onCancel: () => void }) => (
-    <div data-testid="task-editor">
+  default: ({
+    onCancel,
+    initialStartDate,
+    initialDueDate,
+  }: {
+    onCancel: () => void;
+    initialStartDate?: Date | string;
+    initialDueDate?: Date | string;
+  }) => (
+    <div
+      data-testid="task-editor"
+      data-start={
+        initialStartDate instanceof Date
+          ? `${initialStartDate.getFullYear()}-${String(initialStartDate.getMonth() + 1).padStart(2, "0")}-${String(initialStartDate.getDate()).padStart(2, "0")}T${String(initialStartDate.getHours()).padStart(2, "0")}:${String(initialStartDate.getMinutes()).padStart(2, "0")}`
+          : (initialStartDate ?? "")
+      }
+      data-due={
+        initialDueDate instanceof Date
+          ? `${initialDueDate.getFullYear()}-${String(initialDueDate.getMonth() + 1).padStart(2, "0")}-${String(initialDueDate.getDate()).padStart(2, "0")}T${String(initialDueDate.getHours()).padStart(2, "0")}:${String(initialDueDate.getMinutes()).padStart(2, "0")}`
+          : (initialDueDate ?? "")
+      }
+    >
       <button type="button" onClick={onCancel}>
         cancel editor
       </button>
@@ -113,6 +144,57 @@ describe("V2 calendar", () => {
     expect(screen.getByText("Review spec")).toBeInTheDocument();
     expect(screen.getByText("Plan week")).toBeInTheDocument();
     expect(screen.queryByText(/^\+\d+$/)).not.toBeInTheDocument();
+  });
+
+  it("exposes completed and given-up statuses on month, week, and day task cards", async () => {
+    const original = mocks.tasks;
+    (mocks as { tasks: unknown[] }).tasks = [
+      { ...mocks.makeTask("done", "Send report", 17, 9), status: "completed" },
+      {
+        ...mocks.makeTask("skipped", "Review notes", 17, 14),
+        status: "given-up",
+      },
+    ];
+    try {
+      const user = userEvent.setup();
+      renderWithProviders(<CalendarPage />, {
+        initialEntries: ["/v2/calendar"],
+      });
+      const getCompleted = () =>
+        screen.getByRole("button", { name: /Send report.*Completed/ });
+      const getGivenUp = () =>
+        screen.getByRole("button", { name: /Review notes.*Given up/ });
+
+      expect(getCompleted()).toHaveClass("v2-calendar-chip");
+      expect(getGivenUp()).toHaveClass("v2-calendar-chip");
+
+      await user.click(screen.getByRole("button", { name: "Week" }));
+      expect(getCompleted()).toHaveClass("v2-timeline-block");
+      expect(getGivenUp()).toHaveClass("v2-timeline-block");
+
+      await user.click(screen.getByRole("button", { name: "Agenda" }));
+      expect(within(getCompleted()).getByText("Completed")).not.toHaveClass(
+        "sr-only",
+      );
+      expect(within(getGivenUp()).getByText("Given up")).not.toHaveClass(
+        "sr-only",
+      );
+
+      await user.click(
+        screen.getByRole("button", { name: /November 17, 2026/ }),
+      );
+      const day = screen.getByRole("complementary", {
+        name: /November 17, 2026/,
+      });
+      expect(
+        within(day).getByRole("button", { name: /Send report.*Completed/ }),
+      ).toHaveClass("v2-calendar-day-task");
+      expect(
+        within(day).getByRole("button", { name: /Review notes.*Given up/ }),
+      ).toHaveClass("v2-calendar-day-task");
+    } finally {
+      mocks.tasks = original;
+    }
   });
 
   it("opens the week detail timeline and can switch to the agenda", async () => {
@@ -143,7 +225,7 @@ describe("V2 calendar", () => {
 
     await user.click(screen.getByRole("button", { name: "Week" }));
 
-    const block = container.querySelector<HTMLElement>(".v2-timeline-block");
+    const block = container.querySelector<HTMLElement>(".v2-timeline-event");
     // t3 is due at 11:00: 660 minutes * 1.2px/min - one 36px slot.
     expect(block).toHaveStyle({ top: "756px", height: "36px" });
   });
@@ -162,7 +244,7 @@ describe("V2 calendar", () => {
     });
     await user.click(screen.getByRole("button", { name: "Week" }));
 
-    const block = container.querySelector<HTMLElement>(".v2-timeline-block");
+    const block = container.querySelector<HTMLElement>(".v2-timeline-event");
     expect(block).toHaveStyle({ top: "756px", height: "36px" });
 
     (mocks as { tasks: unknown[] }).tasks = original;
@@ -222,8 +304,147 @@ describe("V2 calendar", () => {
 
     await user.click(screen.getByRole("button", { name: "New task" }));
     expect(screen.getByTestId("task-editor")).toBeInTheDocument();
+    expect(screen.getByTestId("task-editor")).toHaveAttribute(
+      "data-start",
+      "2026-11-10T00:00",
+    );
+    expect(screen.getByTestId("task-editor")).toHaveAttribute(
+      "data-due",
+      "2026-11-10T23:59",
+    );
     await user.click(screen.getByRole("button", { name: "cancel editor" }));
     expect(screen.queryByTestId("task-editor")).not.toBeInTheDocument();
+  });
+
+  it("leaves default start and due empty when no calendar cell is selected, and selects day when clicking cell container", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CalendarPage />, { initialEntries: ["/v2/calendar"] });
+
+    await user.click(screen.getByRole("button", { name: "New task" }));
+    expect(screen.getByTestId("task-editor")).toHaveAttribute("data-start", "");
+    expect(screen.getByTestId("task-editor")).toHaveAttribute("data-due", "");
+    await user.click(screen.getByRole("button", { name: "cancel editor" }));
+
+    const cellButton = screen.getByRole("button", {
+      name: /November 18, 2026/i,
+    });
+    const gridCell = cellButton.closest('[role="gridcell"]')!;
+    await user.click(gridCell);
+
+    await user.click(screen.getByRole("button", { name: "New task" }));
+    expect(screen.getByTestId("task-editor")).toHaveAttribute(
+      "data-start",
+      "2026-11-18T00:00",
+    );
+    expect(screen.getByTestId("task-editor")).toHaveAttribute(
+      "data-due",
+      "2026-11-18T23:59",
+    );
+  });
+
+  it("switches to Timeline starting today, preserves browsed period, and refreshes anchor after midnight", async () => {
+    const getAllTasksSpy = vi
+      .spyOn(taskService, "getAllTasks")
+      .mockImplementation(async (params) => {
+        const start = params?.startDate ? new Date(params.startDate) : null;
+        const isNov15Window =
+          start &&
+          start.getFullYear() === 2026 &&
+          start.getMonth() === 10 &&
+          start.getDate() === 15;
+        const isNov16Window =
+          start &&
+          start.getFullYear() === 2026 &&
+          start.getMonth() === 10 &&
+          start.getDate() === 16;
+
+        const data = (
+          isNov15Window
+            ? [
+                mocks.makeTask("tl-15", "Today deadline", 15, 9),
+                mocks.makeTask("tl-16", "Tomorrow deadline", 16, 14),
+              ]
+            : isNov16Window
+              ? [
+                  mocks.makeTask(
+                    "tl-16-next",
+                    "Midnight refreshed task",
+                    16,
+                    14,
+                  ),
+                ]
+              : []
+        ).map((task) => ({ ...task, startDate: "" }));
+
+        return {
+          data,
+          pageInfo: {
+            pageNo: 1,
+            pageSize: 100,
+            totalCount: data.length,
+            totalPage: 1,
+          },
+        };
+      });
+
+    const scrollIntoViewMock = vi.fn();
+    const originalScrollIntoView = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrollIntoViewMock;
+
+    try {
+      const user = userEvent.setup();
+      renderWithProviders(<CalendarPage />, {
+        initialEntries: ["/v2/calendar"],
+      });
+
+      // Navigate Month view to December 2026 before entering Timeline.
+      await user.click(screen.getByRole("button", { name: "Next period" }));
+      const browsedHeading = screen.getByRole("heading", {
+        level: 2,
+      }).textContent;
+      expect(browsedHeading).toMatch(/December 2026/i);
+
+      await user.click(screen.getByRole("button", { name: "Timeline" }));
+
+      expect(
+        screen.queryByRole("button", { name: "Previous period" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Next period" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Today" })).toBeInTheDocument();
+
+      await waitFor(() => {
+        expect(screen.getByText("Today deadline")).toBeInTheDocument();
+      });
+      expect(screen.getByText("Tomorrow deadline")).toBeInTheDocument();
+
+      // Same-day Today action scrolls to top without refetching a new anchor.
+      const callsBeforeToday = getAllTasksSpy.mock.calls.length;
+      await user.click(screen.getByRole("button", { name: "Today" }));
+      expect(scrollIntoViewMock).toHaveBeenCalled();
+      expect(getAllTasksSpy.mock.calls.length).toBe(callsBeforeToday);
+
+      // Advance local clock past midnight and click Today to move the query anchor.
+      vi.setSystemTime(new Date(2026, 10, 16, 0, 5, 0));
+      await user.click(screen.getByRole("button", { name: "Today" }));
+
+      await waitFor(() => {
+        expect(screen.getByText("Midnight refreshed task")).toBeInTheDocument();
+      });
+
+      // Switching back to Month preserves the previously browsed December 2026 period.
+      await user.click(screen.getByRole("button", { name: "Month" }));
+      expect(screen.getByRole("heading", { level: 2 }).textContent).toBe(
+        browsedHeading,
+      );
+      expect(
+        screen.getByRole("button", { name: "Previous period" }),
+      ).toBeInTheDocument();
+    } finally {
+      Element.prototype.scrollIntoView = originalScrollIntoView;
+      getAllTasksSpy.mockRestore();
+    }
   });
 });
 
@@ -260,7 +481,11 @@ const dragBlock = (element: Element) => {
   return dataTransfer;
 };
 
-const dropAt = (element: Element, dataTransfer: TestDataTransfer, clientY: number) => {
+const dropAt = (
+  element: Element,
+  dataTransfer: TestDataTransfer,
+  clientY: number,
+) => {
   fireDrag(element, "dragover", dataTransfer, clientY);
   fireDrag(element, "drop", dataTransfer, clientY);
 };
@@ -271,6 +496,39 @@ describe("V2 calendar drag and drop", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date(2026, 10, 15, 10, 0, 0));
     mocks.move.mockReset().mockResolvedValue({});
+    mocks.resize.mockReset().mockResolvedValue({});
+  });
+
+  it("updates only the selected endpoint when adjusting a Week Detail handle", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CalendarPage />, { initialEntries: ["/v2/calendar"] });
+    await user.click(screen.getByRole("button", { name: "Week" }));
+    const start = screen.getByRole("slider", {
+      name: "Adjust start time of Plan week",
+    });
+    const end = screen.getByRole("slider", {
+      name: "Adjust end time of Plan week",
+    });
+
+    fireEvent.keyDown(start, { key: "ArrowUp" });
+    await waitFor(() =>
+      expect(start).toHaveAttribute("aria-disabled", "false"),
+    );
+    fireEvent.keyDown(end, { key: "ArrowDown" });
+    await waitFor(() => expect(end).toHaveAttribute("aria-disabled", "false"));
+
+    expect(mocks.resize.mock.calls).toEqual([
+      [
+        expect.objectContaining({ _id: "t3" }),
+        { startDate: new Date(2026, 10, 17, 10, 15).toISOString() },
+      ],
+      [
+        expect.objectContaining({ _id: "t3" }),
+        { dueDate: new Date(2026, 10, 17, 11, 15).toISOString() },
+      ],
+    ]);
+    expect(mocks.move).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("task-details")).not.toBeInTheDocument();
   });
 
   it("reschedules a task to the dropped day and snapped minute", async () => {
@@ -324,6 +582,56 @@ describe("V2 calendar drag and drop", () => {
     );
   });
 
+  it.each(["Month", "Week detail", "Week agenda"])(
+    "reschedules a day panel card through the %s view",
+    async (view) => {
+      const user = userEvent.setup();
+      const { container } = renderWithProviders(<CalendarPage />, {
+        initialEntries: ["/v2/calendar"],
+      });
+      if (view !== "Month") {
+        await user.click(screen.getByRole("button", { name: "Week" }));
+        if (view === "Week agenda")
+          await user.click(screen.getByRole("button", { name: "Agenda" }));
+      }
+
+      let target: Element;
+      let expected: Date;
+      if (view === "Week detail") {
+        await user.click(
+          container.querySelectorAll(".v2-timeline-day-head")[2],
+        );
+        target = container.querySelectorAll(".v2-timeline-day")[3];
+        expected = new Date(2026, 10, 18, 8);
+      } else if (view === "Week agenda") {
+        await user.click(
+          screen.getByRole("button", { name: /November 17, 2026/ }),
+        );
+        target = container.querySelectorAll(".v2-calendar-week-col")[3];
+        expected = new Date(2026, 10, 18, 11);
+      } else {
+        await user.click(
+          screen.getByRole("button", { name: /November 17, 2026/ }),
+        );
+        target = screen
+          .getByRole("button", { name: /November 18, 2026/ })
+          .closest('[role="gridcell"]')!;
+        expected = new Date(2026, 10, 18, 11);
+      }
+      const panel = screen.getByRole("complementary", {
+        name: /November 17, 2026/,
+      });
+      const card = within(panel).getByRole("button", { name: /Plan week/ });
+      expect(card).toHaveAttribute("draggable", "true");
+      dropAt(target, dragBlock(card), 576);
+
+      expect(mocks.move).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ _id: "t3" }),
+        toISOStringLocal(expected),
+      );
+    },
+  );
+
   it("surfaces a move failure without losing the task", async () => {
     mocks.move.mockRejectedValueOnce(new Error("Server said no"));
     const user = userEvent.setup();
@@ -336,7 +644,9 @@ describe("V2 calendar drag and drop", () => {
     const columns = container.querySelectorAll(".v2-timeline-day");
     dropAt(columns[1], dragBlock(block!), 576);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Server said no");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Server said no",
+    );
     expect(screen.getByText("Plan week")).toBeInTheDocument();
   });
 });
@@ -346,7 +656,13 @@ describe("V2 calendar task actions", () => {
     resetTestSession();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date(2026, 10, 15, 10, 0, 0));
-    for (const fn of [mocks.start, mocks.finish, mocks.giveUp, mocks.restore, mocks.remove]) {
+    for (const fn of [
+      mocks.start,
+      mocks.finish,
+      mocks.giveUp,
+      mocks.restore,
+      mocks.remove,
+    ]) {
       fn.mockReset().mockResolvedValue({});
     }
   });
@@ -354,9 +670,7 @@ describe("V2 calendar task actions", () => {
   const openDayPanel = async () => {
     const user = userEvent.setup();
     renderWithProviders(<CalendarPage />, { initialEntries: ["/v2/calendar"] });
-    await user.click(
-      screen.getByRole("button", { name: /November 10, 2026/ }),
-    );
+    await user.click(screen.getByRole("button", { name: /November 10, 2026/ }));
     return user;
   };
 
@@ -401,7 +715,9 @@ describe("V2 calendar task actions", () => {
 
     await user.click(screen.getAllByRole("button", { name: "Delete task" })[0]);
     const dialog = await screen.findByRole("dialog");
-    await user.click(within(dialog).getByRole("button", { name: "Delete task" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Delete task" }),
+    );
 
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith("t1"));
   });

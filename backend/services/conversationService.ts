@@ -3,8 +3,15 @@ import { attachmentService } from "./attachmentService.js";
 import type { McpContext } from "../mcp/context.js";
 import type { AgentMode } from "../types/IAgent.js";
 import type { InteractionSelection } from "../types/IChatTurn.js";
-import type { ProposalIntent } from "../types/A2UI/ITaskProposal.js";
-import { conversationRepository as repository } from "../repositories/conversationRepository.js";
+import type { ClientSession } from "mongoose";
+import type {
+  ProposalIntent,
+  ProposalView,
+} from "../types/A2UI/ITaskProposal.js";
+import {
+  conversationRepository as repository,
+  decodeConversationCursor,
+} from "../repositories/conversationRepository.js";
 import { chatTurnRepository } from "../repositories/chatTurnRepository.js";
 import { taskProposalRepository } from "../repositories/A2UI/taskProposalRepository.js";
 import { toProposalView } from "./A2UI/taskProposalGenerationService.js";
@@ -30,9 +37,20 @@ import { chatStreamRepository } from "../repositories/chatStreamRepository.js";
 import type { TurnSnapshot } from "../types/IChatStream.js";
 import type { ChatTurn } from "../types/IChatTurn.js";
 import { requireOwnedProject } from "./conversationContextService.js";
+import { findProposalToolCall } from "../utils/agentMessages.js";
 
 export const conversationService = {
-  list: (userId: string) => repository.list(userId),
+  list: (
+    userId: string,
+    options?: { cursor?: string; limit?: number; search?: string },
+  ) =>
+    repository.list(userId, {
+      limit: options?.limit,
+      search: options?.search,
+      cursor: options?.cursor
+        ? decodeConversationCursor(options.cursor)
+        : undefined,
+    }),
   async create(userId: string, id: string, projectId?: string) {
     if (projectId) await requireOwnedProject(userId, projectId);
     return repository.create(userId, id, projectId);
@@ -146,6 +164,7 @@ export const conversationService = {
       }),
       pending:
         activeTurn?.status === "processing" &&
+        !activeTurn.proposalResolution &&
         activeTurn.expiresAt.getTime() > Date.now()
           ? [
               {
@@ -208,6 +227,46 @@ export const conversationService = {
         ),
       input.timeZone,
     );
+  },
+
+  async claimProposalContinuation(
+    userId: string,
+    view: ProposalView,
+    actionRequestId: string,
+    session: ClientSession,
+  ) {
+    if (view.status === "draft") return;
+    const source = await chatTurnRepository.active(
+      userId,
+      view.conversationId,
+      view.turnId,
+    );
+    const toolCallId = source && findProposalToolCall(source.messages);
+    if (!source || !toolCallId) return;
+    const { turn, claimed } = await chatTurnRepository.claim(
+      userId,
+      view.conversationId,
+      `proposal:${actionRequestId}`,
+      source.userInput,
+      source.mode,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      source.timeContext?.timeZone,
+      {
+        session,
+        resolution: {
+          proposalId: view.id,
+          sourceTurnId: view.turnId,
+          toolCallId,
+          status: view.status,
+          createdTasks: view.createdTasks,
+        },
+      },
+    );
+    return { turn: turn.toObject(), claimed };
   },
 
   async startStreamTurn(

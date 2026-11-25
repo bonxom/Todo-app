@@ -25,6 +25,7 @@ import type {
   ITaskProposal,
   ProposalItem,
   ProposalIntent,
+  ProposalResolution,
 } from "../types/A2UI/ITaskProposal.js";
 import type { StoredUiSurface } from "../types/A2UI/IUiSurface.js";
 
@@ -88,6 +89,10 @@ export const chatTurnRepository = {
       session: mongoose.ClientSession,
     ) => Promise<AttachmentView[]> = async () => [],
     timeZone?: string,
+    continuation?: {
+      session: mongoose.ClientSession;
+      resolution: ProposalResolution;
+    },
   ) {
     await Promise.all([
       ChatTurn.init(),
@@ -96,193 +101,195 @@ export const chatTurnRepository = {
     ]);
     const id = turnId(userId, requestId);
     // Retry a duplicate-key race after the winning transaction commits.
-    const attempt = () =>
-      mongoose.connection.transaction(async (session) => {
-        const previous = await ChatTurn.findById(id).session(session);
-        if (previous) {
-          if (
-            previous.conversationId !== conversationId ||
-            previous.userInput !== userInput ||
-            (previous.mode ?? "auto") !== mode ||
-            (previous.requestIntent === undefined
-              ? previous.intent
-              : (previous.requestIntent ?? undefined)) !== intent ||
-            selectionKey(previous.selection) !== selectionKey(selection) ||
-            JSON.stringify(
-              (previous.attachments ?? []).map((file) => file.id),
-            ) !== JSON.stringify(attachmentIds)
-          ) {
-            throw new AppError(AI_ERROR.CHAT_REQUEST_CONFLICT);
-          }
-          return { turn: previous, claimed: false };
+    const claimInSession = async (session: mongoose.ClientSession) => {
+      const previous = await ChatTurn.findById(id).session(session);
+      if (previous) {
+        if (
+          previous.conversationId !== conversationId ||
+          previous.userInput !== userInput ||
+          (previous.mode ?? "auto") !== mode ||
+          (previous.requestIntent === undefined
+            ? previous.intent
+            : (previous.requestIntent ?? undefined)) !== intent ||
+          selectionKey(previous.selection) !== selectionKey(selection) ||
+          JSON.stringify(
+            (previous.attachments ?? []).map((file) => file.id),
+          ) !== JSON.stringify(attachmentIds)
+        ) {
+          throw new AppError(AI_ERROR.CHAT_REQUEST_CONFLICT);
         }
-        const pendingTurn = await pendingMenuQuery(
-          userId,
-          conversationId,
-        ).session(session);
-        // Compatibility for menus saved by the previous pause/resume implementation.
-        if (pendingTurn?.status === "awaiting_user") {
-          await Conversation.updateOne(
-            {
-              _id: conversationId,
-              userId,
-              activeTurn: pendingTurn._id,
-              busyUntil: null,
-            },
-            { $set: { activeTurn: null, busyUntil: null } },
+        return { turn: previous, claimed: false };
+      }
+      const pendingTurn = continuation
+        ? null
+        : await pendingMenuQuery(userId, conversationId).session(session);
+      // Compatibility for menus saved by the previous pause/resume implementation.
+      if (pendingTurn?.status === "awaiting_user") {
+        await Conversation.updateOne(
+          {
+            _id: conversationId,
+            userId,
+            activeTurn: pendingTurn._id,
+            busyUntil: null,
+          },
+          { $set: { activeTurn: null, busyUntil: null } },
+          { session },
+        );
+      }
+      const effectiveIntent: ProposalIntent | undefined =
+        selection && pendingTurn?.intent === "task_proposal"
+          ? "task_proposal"
+          : intent;
+      if (effectiveIntent === "task_proposal" && !isTaskProposalsEnabled())
+        throw new AppError(TASK_PROPOSAL_ERROR.DISABLED);
+
+      // Admission control: Maximum 3 active runs per user account
+      const userSlots = await ChatRunSlot.find({ userId }).session(session);
+      if (userSlots.length > 0) {
+        const turnIds = userSlots.map((s) => s.turnId);
+        const activeTurns = await ChatTurn.find({
+          _id: { $in: turnIds },
+          status: { $in: ["processing", "stopping"] },
+          expiresAt: { $gt: new Date() },
+        })
+          .select({ _id: 1 })
+          .session(session);
+        const activeTurnIds = new Set(activeTurns.map((t) => t._id));
+        const staleTurnIds = turnIds.filter((tid) => !activeTurnIds.has(tid));
+        if (staleTurnIds.length > 0) {
+          await ChatRunSlot.deleteMany(
+            { userId, turnId: { $in: staleTurnIds } },
             { session },
           );
         }
-        const effectiveIntent: ProposalIntent | undefined =
-          selection && pendingTurn?.intent === "task_proposal"
-            ? "task_proposal"
-            : intent;
-        if (effectiveIntent === "task_proposal" && !isTaskProposalsEnabled())
-          throw new AppError(TASK_PROPOSAL_ERROR.DISABLED);
+      }
 
-        // Admission control: Maximum 3 active runs per user account
-        const userSlots = await ChatRunSlot.find({ userId }).session(session);
-        if (userSlots.length > 0) {
-          const turnIds = userSlots.map((s) => s.turnId);
-          const activeTurns = await ChatTurn.find({
-            _id: { $in: turnIds },
-            status: { $in: ["processing", "stopping"] },
-            expiresAt: { $gt: new Date() },
-          })
-            .select({ _id: 1 })
-            .session(session);
-          const activeTurnIds = new Set(activeTurns.map((t) => t._id));
-          const staleTurnIds = turnIds.filter((tid) => !activeTurnIds.has(tid));
-          if (staleTurnIds.length > 0) {
-            await ChatRunSlot.deleteMany(
-              { userId, turnId: { $in: staleTurnIds } },
-              { session },
-            );
-          }
-        }
+      const refreshedSlots = await ChatRunSlot.find({ userId }).session(
+        session,
+      );
+      const occupied = new Set(refreshedSlots.map((s) => s.slot));
+      const availableSlot = [0, 1, 2].find((s) => !occupied.has(s));
+      if (availableSlot === undefined) {
+        throw new AppError(AI_ERROR.CHAT_CONCURRENCY_LIMIT);
+      }
 
-        const refreshedSlots = await ChatRunSlot.find({ userId }).session(
-          session,
-        );
-        const occupied = new Set(refreshedSlots.map((s) => s.slot));
-        const availableSlot = [0, 1, 2].find((s) => !occupied.has(s));
-        if (availableSlot === undefined) {
-          throw new AppError(AI_ERROR.CHAT_CONCURRENCY_LIMIT);
-        }
+      const deadlineAt = new Date(Date.now() + 5 * 60_000);
+      const expiresAt = new Date(deadlineAt.getTime() + 30_000);
+      const executionToken = randomUUID();
 
-        const deadlineAt = new Date(Date.now() + 5 * 60_000);
-        const expiresAt = new Date(deadlineAt.getTime() + 30_000);
-        const executionToken = randomUUID();
-
-        const conversation = await Conversation.findOneAndUpdate(
-          {
-            _id: conversationId,
-            userId,
-            $or: [
-              { activeTurn: null },
-              { busyUntil: { $type: "date", $lt: new Date() } },
-            ],
+      const conversation = await Conversation.findOneAndUpdate(
+        {
+          _id: conversationId,
+          userId,
+          $or: [
+            { activeTurn: null },
+            { busyUntil: { $type: "date", $lt: new Date() } },
+          ],
+        },
+        {
+          $set: {
+            activeTurn: id,
+            busyUntil: expiresAt,
+            ...(!continuation ? { mode, title: userInput.slice(0, 100) } : {}),
           },
+          $inc: { sequence: 1 },
+        },
+        { new: true, session },
+      );
+      if (!conversation) {
+        const exists = await Conversation.exists({
+          _id: conversationId,
+          userId,
+        }).session(session);
+        throw new AppError(
+          exists ? AI_ERROR.CONVERSATION_BUSY : AI_ERROR.CONVERSATION_NOT_FOUND,
+        );
+      }
+      const pendingInteraction = pendingTurn?.interactions.find(
+        (i) => i.status === "pending",
+      );
+      const selectedInteraction = resolveSelection(pendingInteraction);
+      if (pendingTurn && selectedInteraction) {
+        pendingTurn.interactions = pendingTurn.interactions.map((item) =>
+          item.id === selectedInteraction.id ? selectedInteraction : item,
+        );
+        if (pendingTurn.status === "awaiting_user") {
+          pendingTurn.messages = completeMenuMessages(
+            pendingTurn.messages,
+            selectedInteraction,
+          );
+          pendingTurn.response = selectedInteraction.question;
+          pendingTurn.status = "completed";
+        }
+        pendingTurn.markModified("interactions");
+        await pendingTurn.save({ session });
+      }
+      const attachments = await bindAttachments(session);
+
+      await ChatRunSlot.create(
+        [
           {
-            $set: {
-              activeTurn: id,
-              busyUntil: expiresAt,
-              mode,
-              title: userInput.slice(0, 100),
-            },
-            $inc: { sequence: 1 },
-          },
-          { new: true, session },
-        );
-        if (!conversation) {
-          const exists = await Conversation.exists({
-            _id: conversationId,
             userId,
-          }).session(session);
-          throw new AppError(
-            exists
-              ? AI_ERROR.CONVERSATION_BUSY
-              : AI_ERROR.CONVERSATION_NOT_FOUND,
-          );
-        }
-        const pendingInteraction = pendingTurn?.interactions.find(
-          (i) => i.status === "pending",
-        );
-        const selectedInteraction = resolveSelection(pendingInteraction);
-        if (pendingTurn && selectedInteraction) {
-          pendingTurn.interactions = pendingTurn.interactions.map((item) =>
-            item.id === selectedInteraction.id ? selectedInteraction : item,
-          );
-          if (pendingTurn.status === "awaiting_user") {
-            pendingTurn.messages = completeMenuMessages(
-              pendingTurn.messages,
-              selectedInteraction,
-            );
-            pendingTurn.response = selectedInteraction.question;
-            pendingTurn.status = "completed";
-          }
-          pendingTurn.markModified("interactions");
-          await pendingTurn.save({ session });
-        }
-        const attachments = await bindAttachments(session);
+            slot: availableSlot,
+            turnId: id,
+            executionToken,
+          },
+        ],
+        { session },
+      );
 
-        await ChatRunSlot.create(
-          [
-            {
-              userId,
-              slot: availableSlot,
-              turnId: id,
-              executionToken,
-            },
-          ],
-          { session },
-        );
+      await ChatTurnEvent.create(
+        [
+          {
+            turnId: id,
+            userId,
+            conversationId,
+            seq: 1,
+            type: "turn.started",
+            payload: { deadlineAt: deadlineAt.toISOString() },
+            createdAt: new Date(),
+          },
+        ],
+        { session },
+      );
 
-        await ChatTurnEvent.create(
-          [
-            {
-              turnId: id,
-              userId,
-              conversationId,
-              seq: 1,
-              type: "turn.started",
-              payload: { deadlineAt: deadlineAt.toISOString() },
-              createdAt: new Date(),
-            },
-          ],
-          { session },
-        );
-
-        const [turn] = await ChatTurn.create(
-          [
-            {
-              _id: id,
-              userId,
-              conversationId,
-              requestId,
-              userInput,
-              selection,
-              attachments,
-              sequence: conversation.sequence,
-              deadlineAt,
-              expiresAt,
-              lastEventSeq: 1,
-              partialResponse: "",
-              toolProgress: [],
-              status: "processing",
-              mode,
-              intent: effectiveIntent,
-              requestIntent: intent ?? null,
-              executionToken,
-              messages: [{ role: "user", content: userInput }],
-              contextProjectId: conversation.contextProjectId ?? null,
-              timeContext: createAgentTimeContext(new Date(), timeZone),
-            },
-          ],
-          { session },
-        );
-        return { turn, claimed: true, selectedInteraction };
-      });
+      const [turn] = await ChatTurn.create(
+        [
+          {
+            _id: id,
+            userId,
+            conversationId,
+            requestId,
+            userInput,
+            ...(continuation
+              ? { proposalResolution: continuation.resolution }
+              : {}),
+            selection,
+            attachments,
+            sequence: conversation.sequence,
+            deadlineAt,
+            expiresAt,
+            lastEventSeq: 1,
+            partialResponse: "",
+            toolProgress: [],
+            status: "processing",
+            mode,
+            intent: effectiveIntent,
+            requestIntent: intent ?? null,
+            executionToken,
+            messages: continuation
+              ? []
+              : [{ role: "user", content: userInput }],
+            contextProjectId: conversation.contextProjectId ?? null,
+            timeContext: createAgentTimeContext(new Date(), timeZone),
+          },
+        ],
+        { session },
+      );
+      return { turn, claimed: true, selectedInteraction };
+    };
+    if (continuation) return claimInSession(continuation.session);
+    const attempt = () => mongoose.connection.transaction(claimInSession);
     try {
       return await attempt();
     } catch (error) {

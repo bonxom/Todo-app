@@ -8,6 +8,8 @@ import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
 import { deduplicateActivities } from "../utils/agentActivity.js";
 import { chatStreamBus } from "../services/chatStreamBus.js";
+import { getWebPushConfig } from "../config/webPush.js";
+import { pushDispatchService } from "../services/pushDispatchService.js";
 import type {
   ChatEventInput,
   ChatStreamEvent,
@@ -22,6 +24,35 @@ let limits = {
   maxPayloadBytes: 16 * 1024,
   maxEventCount: 20000,
 };
+
+const dispatchedPushTurns = new Set<string>();
+const MAX_PUSH_DEDUP_ENTRIES = 2000;
+
+function trackCompletedPushTurn(turnId: string): boolean {
+  if (dispatchedPushTurns.has(turnId)) return false;
+  if (dispatchedPushTurns.size >= MAX_PUSH_DEDUP_ENTRIES) {
+    const oldest = dispatchedPushTurns.values().next().value;
+    if (oldest !== undefined) dispatchedPushTurns.delete(oldest);
+  }
+  dispatchedPushTurns.add(turnId);
+  return true;
+}
+
+async function dispatchAgentReplyPush(conversationId: string): Promise<void> {
+  try {
+    const conversation = await Conversation.findById(conversationId)
+      .select("userId title")
+      .lean();
+    if (!conversation?.userId) return;
+    await pushDispatchService.notifyAgentReply({
+      userId: String(conversation.userId),
+      conversationId,
+      conversationTitle: conversation.title ?? null,
+    });
+  } catch {
+    // Best-effort push delivery must never disrupt stream finalization.
+  }
+}
 
 export const _setChatStreamLimitsForTest = (
   overrides?: Partial<typeof limits>,
@@ -90,6 +121,9 @@ export function toSnapshot(turn: IChatTurn): TurnSnapshot {
 }
 
 export const chatStreamRepository = {
+  _resetPushDedupForTest() {
+    dispatchedPushTurns.clear();
+  },
   toSnapshot,
 
   async getSnapshot(
@@ -441,6 +475,15 @@ export const chatStreamRepository = {
       chatStreamBus.scheduleCleanup(turnId, 60_000);
     } else {
       chatStreamBus.publish(turnId);
+    }
+
+    if (
+      outcome.status === "completed" &&
+      snapshot.status === "completed" &&
+      getWebPushConfig().supported &&
+      trackCompletedPushTurn(turnId)
+    ) {
+      void dispatchAgentReplyPush(snapshot.conversationId);
     }
   },
 

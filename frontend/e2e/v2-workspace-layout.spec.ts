@@ -8,6 +8,11 @@ for (const theme of ["light", "dark"] as const) {
     await installV2Fixture(page, { preferredVersion: "v2", theme });
     await page.goto("/v2/dashboard");
     const sidebar = page.locator(".v2-sidebar-desktop");
+    const collapsedBounds = (await sidebar.boundingBox())!;
+    expect(collapsedBounds.width).toBeLessThanOrEqual(84);
+    await sidebar.hover();
+    await expect(sidebar).toHaveAttribute("data-collapsed", "false");
+    await page.waitForTimeout(300);
     const bounds = (await sidebar.boundingBox())!;
     expect(bounds.width).toBeGreaterThanOrEqual(220);
     expect(bounds.width).toBeLessThanOrEqual(240);

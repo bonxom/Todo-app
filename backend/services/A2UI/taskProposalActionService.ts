@@ -57,6 +57,10 @@ export const taskProposalActionService = {
     conversationId: string,
     proposalId: string,
     action: ProposalAction,
+    onResolved?: (
+      view: ProposalView,
+      session: mongoose.ClientSession,
+    ) => Promise<void>,
   ): Promise<ProposalView> {
     if (!isTaskProposalsEnabled()) {
       throw new AppError(TASK_PROPOSAL_ERROR.DISABLED);
@@ -64,7 +68,7 @@ export const taskProposalActionService = {
 
     await taskProposalRepository.initIndexes();
     try {
-      return await writeRepository.transaction(userId, async () => {
+      return await writeRepository.transaction(userId, async (session) => {
         // 1. Replay check via receipt
         const receipt = await taskProposalRepository.findReceipt(
           userId,
@@ -78,6 +82,8 @@ export const taskProposalActionService = {
 
         if (receipt) {
           if (receipt.payloadFingerprint === fingerprint) {
+            if (receipt.responseView.status !== "draft")
+              await onResolved?.(receipt.responseView, session);
             return receipt.responseView;
           }
           throw new AppError(TASK_PROPOSAL_ERROR.REQUEST_CONFLICT);
@@ -121,6 +127,7 @@ export const taskProposalActionService = {
             payloadFingerprint: fingerprint,
             responseView,
           });
+          await onResolved?.(responseView, session);
 
           return responseView;
         }
@@ -236,6 +243,7 @@ export const taskProposalActionService = {
           payloadFingerprint: fingerprint,
           responseView,
         });
+        await onResolved?.(responseView, session);
 
         return responseView;
       });

@@ -14,16 +14,27 @@ export function useTaskStatusEffect(task) {
   const transition = useRef(null);
 
   useEffect(() => {
-    const changed = previous.current.id === id && previous.current.status !== task.status;
+    const changed =
+      previous.current.id === id && previous.current.status !== task.status;
     previous.current = { id, status: task.status };
     const color = STATUS_COLORS[task.status];
-    if (changed) transition.current = { id, status: task.status, startedAt: null };
+    if (changed)
+      transition.current = { id, status: task.status, startedAt: null };
     const current = transition.current;
-    if (!current || current.id !== id || current.status !== task.status || !color || !ref.current?.animate) return;
+    if (
+      !current ||
+      current.id !== id ||
+      current.status !== task.status ||
+      !color ||
+      !ref.current?.animate
+    )
+      return;
 
     const highlighted = `inset 0 0 0 2px ${color}`;
     const clear = "inset 0 0 0 2px transparent";
-    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     const frames = reducedMotion
       ? [{ boxShadow: highlighted }, { boxShadow: highlighted }]
       : Array.from({ length: 9 }, (_, index) => ({
@@ -35,7 +46,10 @@ export function useTaskStatusEffect(task) {
       current.startedAt ??= performance.now();
       const elapsed = performance.now() - current.startedAt;
       if (elapsed >= 2000) return;
-      animation = ref.current?.animate(frames, { duration: 2000, easing: "linear" });
+      animation = ref.current?.animate(frames, {
+        duration: 2000,
+        easing: "linear",
+      });
       if (animation) {
         animation.currentTime = elapsed;
         animation.onfinish = () => {

@@ -32,14 +32,17 @@ import V2Dialog from "./V2Dialog";
 import CustomSelect from "@/shared/components/CustomSelect";
 const referenceId = (value: Task["categoryId"] | Task["projectId"]) =>
   typeof value === "string" ? value : (value?._id ?? "");
-const initialDraft = (task?: Task) => ({
+const initialDraft = (
+  task?: Task,
+  defaults?: { startDate?: Date | string; dueDate?: Date | string },
+) => ({
   title: task?.title ?? "",
   description: task?.description ?? "",
   priority: task?.priority ?? ("Medium" as TaskPriority),
   categoryId: referenceId(task?.categoryId ?? null),
   projectId: referenceId(task?.projectId ?? null),
-  startDate: toDateTimeInputValue(task?.startDate),
-  dueDate: toDateTimeInputValue(task?.dueDate),
+  startDate: toDateTimeInputValue(task ? task.startDate : defaults?.startDate),
+  dueDate: toDateTimeInputValue(task ? task.dueDate : defaults?.dueDate),
 });
 function NavigationGuard({
   dirty,
@@ -76,10 +79,14 @@ function NavigationGuard({
 }
 export default function TaskEditor({
   task,
+  initialStartDate,
+  initialDueDate,
   onSaved,
   onCancel,
 }: {
   task?: Task;
+  initialStartDate?: Date | string;
+  initialDueDate?: Date | string;
   onSaved: () => void;
   onCancel: () => void;
 }) {
@@ -87,7 +94,12 @@ export default function TaskEditor({
   const id = useId();
   const dataRouter = useContext(UNSAFE_DataRouterContext);
   // Snapshot once: query refetches must not replace an open draft.
-  const [original] = useState(() => initialDraft(task));
+  const [original] = useState(() =>
+    initialDraft(task, {
+      startDate: initialStartDate,
+      dueDate: initialDueDate,
+    }),
+  );
   const [draft, setDraft] = useState(original);
   const [error, setError] = useState("");
   const [discard, setDiscard] = useState(false);

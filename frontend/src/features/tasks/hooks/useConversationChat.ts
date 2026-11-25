@@ -42,6 +42,17 @@ export function useConversationChat(options?: ConversationChatOptions) {
     }
   }, []);
 
+  const observeProposalContinuation = useCallback((snapshot: TurnSnapshot) => {
+    const current = sessionRef.current;
+    if (
+      current.conversationId !== snapshot.conversationId ||
+      (snapshot.status !== "processing" && snapshot.status !== "stopping")
+    )
+      return false;
+    current.setActiveRun(snapshot);
+    return true;
+  }, []);
+
   const runStream = useChatRunStream({
     conversationId: session.conversationId,
     snapshot: session.activeRun,
@@ -368,6 +379,7 @@ export function useConversationChat(options?: ConversationChatOptions) {
     messages: displayMessages,
     rawMessages: session.messages,
     activeRun: session.activeRun,
+    observeProposalContinuation,
     runStream,
     isStreaming: runStream.isStreaming,
     stop: runStream.stop,

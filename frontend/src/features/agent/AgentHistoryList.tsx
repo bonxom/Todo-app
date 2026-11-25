@@ -1,13 +1,11 @@
 import { useTranslation } from "react-i18next";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageSquare, Plus, Search, Loader2 } from "lucide-react";
-import { aiService } from "@/shared/services/aiService";
-
-interface ConversationItem {
-  id: string;
-  title: string;
-  updatedAt: string;
-}
+import {
+  useDebouncedValue,
+  useInfiniteConversations,
+  useScrollSentinel,
+} from "./useInfiniteConversations";
 
 interface AgentHistoryListProps {
   activeConversationId?: string;
@@ -24,38 +22,53 @@ export function AgentHistoryList({
 }: AgentHistoryListProps) {
   const { t } = useTranslation("agent");
 
-  const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [failedFor, setFailedFor] = useState<string | null>(null);
-  const [attempt, setAttempt] = useState(0);
-  const [loadedFor, setLoadedFor] = useState<string | null>(null);
-  const loading = loadedFor !== (activeConversationId ?? "latest");
+  const debouncedSearch = useDebouncedValue(searchQuery.trim(), 250);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const lastRefreshedConversationRef = useRef<string | undefined>(undefined);
+
+  const {
+    conversations,
+    hasMore,
+    isPending,
+    isError,
+    isFetchNextPageError,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch,
+  } = useInfiniteConversations({ search: debouncedSearch });
 
   useEffect(() => {
-    let active = true;
-    aiService
-      .listConversations()
-      .then((items) => {
-        if (active) {
-          setConversations(items || []);
-          setFailedFor(null);
-        }
-      })
-      .catch(() => {
-        if (active) setFailedFor(activeConversationId ?? "latest");
-      })
-      .finally(() => {
-        if (active) setLoadedFor(activeConversationId ?? "latest");
-      });
-    return () => {
-      active = false;
-    };
-  }, [activeConversationId, attempt]);
+    if (
+      activeConversationId &&
+      activeConversationId !== lastRefreshedConversationRef.current &&
+      !isPending &&
+      !conversations.some((item) => item.id === activeConversationId)
+    ) {
+      lastRefreshedConversationRef.current = activeConversationId;
+      void refetch();
+    }
+  }, [activeConversationId, conversations, isPending, refetch]);
 
+  useScrollSentinel({
+    containerRef: scrollContainerRef,
+    sentinelRef,
+    enabled: !isPending && !isError,
+    hasMore,
+    isFetching: isFetchingNextPage,
+    isError: isFetchNextPageError,
+    onLoadMore: () => {
+      void fetchNextPage();
+    },
+    itemCount: conversations.length,
+  });
+
+  const loading = isPending && conversations.length === 0;
   const filtered = conversations.filter((c) =>
     (c.title || t("newConversation"))
       .toLowerCase()
-      .includes(searchQuery.toLowerCase()),
+      .includes(searchQuery.trim().toLowerCase()),
   );
 
   return (
@@ -86,8 +99,11 @@ export function AgentHistoryList({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 pb-3">
-        {loading && conversations.length === 0 ? (
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto px-2 pb-3"
+      >
+        {loading ? (
           <div
             role="status"
             aria-label={t("loadingConversations")}
@@ -95,7 +111,7 @@ export function AgentHistoryList({
           >
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
-        ) : failedFor === (activeConversationId ?? "latest") ? (
+        ) : isError && conversations.length === 0 ? (
           <div
             role="alert"
             className="agent-history-error space-y-3 px-2 py-4 text-xs text-[var(--color-text-muted)]"
@@ -106,8 +122,7 @@ export function AgentHistoryList({
               className="ui-btn-secondary"
               disabled={loading}
               onClick={() => {
-                setLoadedFor(null);
-                setAttempt((value) => value + 1);
+                void refetch();
               }}
             >
               {t("tryAgain")}
@@ -142,6 +157,38 @@ export function AgentHistoryList({
                 </button>
               );
             })}
+            {isFetchNextPageError ? (
+              <div
+                role="alert"
+                className="space-y-2 px-2.5 py-3 text-xs text-[var(--color-text-muted)]"
+              >
+                <p>{t("unableToLoadMoreConversations")}</p>
+                <button
+                  type="button"
+                  className="ui-btn-secondary"
+                  onClick={() => {
+                    void fetchNextPage();
+                  }}
+                >
+                  {t("tryAgain")}
+                </button>
+              </div>
+            ) : isFetchingNextPage ? (
+              <div
+                role="status"
+                aria-label={t("loadingMoreConversations")}
+                className="flex items-center justify-center gap-2 px-2.5 py-3 text-xs text-[var(--color-text-muted)]"
+              >
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span>{t("loadingMoreConversations")}</span>
+              </div>
+            ) : hasMore ? (
+              <div
+                ref={sentinelRef}
+                aria-hidden="true"
+                className="h-1 w-full"
+              />
+            ) : null}
           </div>
         )}
       </div>

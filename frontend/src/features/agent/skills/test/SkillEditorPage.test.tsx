@@ -56,7 +56,10 @@ describe("SkillEditorPage", () => {
     await user.type(instructionsInput, "Do something useful");
 
     expect(saveButton).toBeDisabled();
-    await user.type(screen.getByLabelText(/Skill description/i), "When writing");
+    await user.type(
+      screen.getByLabelText(/Skill description/i),
+      "When writing",
+    );
     expect(saveButton).not.toBeDisabled();
   });
 
@@ -76,7 +79,10 @@ describe("SkillEditorPage", () => {
     renderEditor(["/agent/skills/new"]);
 
     await user.type(screen.getByLabelText(/Skill name/i), "Vocabulary Helper");
-    await user.type(screen.getByLabelText(/Skill description/i), "Suggests words");
+    await user.type(
+      screen.getByLabelText(/Skill description/i),
+      "Suggests words",
+    );
     await user.type(
       screen.getByLabelText(/Instructions/i),
       "Always suggest 3 C1 words",
@@ -196,9 +202,7 @@ describe("SkillEditorPage", () => {
     expect(input).toHaveValue("Unsaved draft");
     await router.navigate("/agent/skills");
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    await user.click(
-      screen.getByRole("button", { name: "Keep editing" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Keep editing" }));
     expect(input).toHaveValue("Unsaved draft");
     await user.click(screen.getByRole("button", { name: "Save changes" }));
     expect(skillService.update).toHaveBeenCalledWith(

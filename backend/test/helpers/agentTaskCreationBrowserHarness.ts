@@ -206,6 +206,45 @@ export async function startBrowserHarness(): Promise<HarnessState> {
 
       const lastCalledTool = calledTools[calledTools.length - 1];
 
+      if (systemMessage.includes("The latest propose_tasks tool result")) {
+        const proposalCall = messagesInCurrentTurn
+          .flatMap((message) => message.tool_calls ?? [])
+          .find((call) => call.function.name === "propose_tasks");
+        const result = messages.find(
+          (message) => message.tool_call_id === proposalCall?.id,
+        );
+        const outcome = JSON.parse(result?.content ?? "{}");
+        if (
+          outcome.status === "cancelled" &&
+          outcome.createdTasks?.length === 0
+        ) {
+          return sendContent(
+            "I received the cancellation. No tasks were created.",
+          );
+        }
+        const task = outcome.createdTasks?.find(
+          (entry: { title: string }) =>
+            entry.title === "Khảo sát yêu cầu khách hàng",
+        );
+        if (!task || outcome.createdTasks?.length !== 2)
+          return sendContent(
+            "Missing the committed subset in the tool result.",
+          );
+        if (lastCalledTool === "orbit_update_task") {
+          const reply = JSON.parse(messages.at(-1)?.content ?? "{}");
+          return sendContent(
+            JSON.stringify(reply).includes('"completed"')
+              ? "I created the selected tasks and marked the survey complete."
+              : "The update did not complete the survey.",
+          );
+        }
+        return sendToolCall("orbit_update_task", {
+          idempotencyKey: randomUUID(),
+          taskId: task.taskId,
+          changes: { status: "completed" },
+        });
+      }
+
       // If a business tool was called in this turn, return its completion text
       if (lastCalledTool === "orbit_create_task") {
         return sendContent("Đã tạo công việc thành công.");

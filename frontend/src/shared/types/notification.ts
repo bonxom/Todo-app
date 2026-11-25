@@ -12,3 +12,28 @@ export interface NotificationListParams {
   pageSize: number;
   filter: "all" | "unread";
 }
+
+export interface PushPreferences {
+  taskDeadlines: boolean;
+  agentReplies: boolean;
+}
+
+export interface PushConfigResponse {
+  supported: boolean;
+  publicKey: string | null;
+}
+
+export interface PushSubscriptionStatusResponse {
+  subscribed: boolean;
+  prefs: PushPreferences | null;
+}
+
+export interface PushSubscriptionUpsertPayload {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+  prefs?: Partial<PushPreferences>;
+  userAgent?: string;
+}

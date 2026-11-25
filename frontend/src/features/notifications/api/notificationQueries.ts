@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { notificationService } from "@/shared/services/notificationService";
@@ -12,6 +13,36 @@ export function useNotificationSession() {
 export function useUnreadCountQuery() {
   const { userId, enabled } = useNotificationSession();
   const autoRefresh = useSettingsStore((s) => s.notifications.autoRefresh);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (
+      !enabled ||
+      typeof navigator === "undefined" ||
+      !("serviceWorker" in navigator) ||
+      typeof navigator.serviceWorker?.addEventListener !== "function"
+    ) {
+      return;
+    }
+
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; kind?: string } | null;
+      if (
+        data?.type === "ORBIT_PUSH_RECEIVED" &&
+        (data.kind === "due_soon" || data.kind === "overdue")
+      ) {
+        void queryClient.invalidateQueries({
+          queryKey: notificationKeys.all(userId),
+        });
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", onMessage);
+    };
+  }, [enabled, queryClient, userId]);
+
   return useQuery({
     queryKey: notificationKeys.count(userId),
     queryFn: ({ signal }) => notificationService.unreadCount({ signal }),
