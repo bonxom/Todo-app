@@ -7,7 +7,11 @@ export function notifyTaskStatus(id: EntityId, status: TaskStatus) {
   listeners.forEach((listener) => listener({ id, status }));
 }
 
-export function subscribeTaskStatus(listener: (transition: Transition) => void) {
+export function subscribeTaskStatus(
+  listener: (transition: Transition) => void,
+) {
   listeners.add(listener);
-  return () => { listeners.delete(listener); };
+  return () => {
+    listeners.delete(listener);
+  };
 }

@@ -40,13 +40,22 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@/features/tasks/api/taskMutations", () => ({
   useStartTaskMutation: () => ({ mutateAsync: mocks.start, isPending: false }),
-  useFinishTaskMutation: () => ({ mutateAsync: mocks.finish, isPending: false }),
-  useGiveUpTaskMutation: () => ({ mutateAsync: mocks.giveUp, isPending: false }),
+  useFinishTaskMutation: () => ({
+    mutateAsync: mocks.finish,
+    isPending: false,
+  }),
+  useGiveUpTaskMutation: () => ({
+    mutateAsync: mocks.giveUp,
+    isPending: false,
+  }),
   useRestoreTaskMutation: () => ({
     mutateAsync: mocks.restore,
     isPending: false,
   }),
-  useDeleteTaskMutation: () => ({ mutateAsync: mocks.remove, isPending: false }),
+  useDeleteTaskMutation: () => ({
+    mutateAsync: mocks.remove,
+    isPending: false,
+  }),
   useCreateTaskMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateTaskMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
@@ -260,7 +269,11 @@ const dragBlock = (element: Element) => {
   return dataTransfer;
 };
 
-const dropAt = (element: Element, dataTransfer: TestDataTransfer, clientY: number) => {
+const dropAt = (
+  element: Element,
+  dataTransfer: TestDataTransfer,
+  clientY: number,
+) => {
   fireDrag(element, "dragover", dataTransfer, clientY);
   fireDrag(element, "drop", dataTransfer, clientY);
 };
@@ -336,7 +349,9 @@ describe("V2 calendar drag and drop", () => {
     const columns = container.querySelectorAll(".v2-timeline-day");
     dropAt(columns[1], dragBlock(block!), 576);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Server said no");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Server said no",
+    );
     expect(screen.getByText("Plan week")).toBeInTheDocument();
   });
 });
@@ -346,7 +361,13 @@ describe("V2 calendar task actions", () => {
     resetTestSession();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date(2026, 10, 15, 10, 0, 0));
-    for (const fn of [mocks.start, mocks.finish, mocks.giveUp, mocks.restore, mocks.remove]) {
+    for (const fn of [
+      mocks.start,
+      mocks.finish,
+      mocks.giveUp,
+      mocks.restore,
+      mocks.remove,
+    ]) {
       fn.mockReset().mockResolvedValue({});
     }
   });
@@ -354,9 +375,7 @@ describe("V2 calendar task actions", () => {
   const openDayPanel = async () => {
     const user = userEvent.setup();
     renderWithProviders(<CalendarPage />, { initialEntries: ["/v2/calendar"] });
-    await user.click(
-      screen.getByRole("button", { name: /November 10, 2026/ }),
-    );
+    await user.click(screen.getByRole("button", { name: /November 10, 2026/ }));
     return user;
   };
 
@@ -401,7 +420,9 @@ describe("V2 calendar task actions", () => {
 
     await user.click(screen.getAllByRole("button", { name: "Delete task" })[0]);
     const dialog = await screen.findByRole("dialog");
-    await user.click(within(dialog).getByRole("button", { name: "Delete task" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Delete task" }),
+    );
 
     await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith("t1"));
   });

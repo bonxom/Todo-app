@@ -97,7 +97,9 @@ describe("SkillReadBadge", () => {
 
     await user.hover(badge);
     await waitFor(() => {
-      expect(screen.getByText(/Skill is no longer available/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Skill is no longer available/i),
+      ).toBeInTheDocument();
     });
   });
 });

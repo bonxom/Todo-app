@@ -27,7 +27,10 @@ export function createMcpRoute(): Router {
       const registry = await getSkillRegistry();
       // The connection may close while registry initialization is pending.
       if (closed) return;
-      server = createOrbitMcpServer(res.locals.mcpContext as McpContext, registry);
+      server = createOrbitMcpServer(
+        res.locals.mcpContext as McpContext,
+        registry,
+      );
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,

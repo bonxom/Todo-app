@@ -110,7 +110,9 @@ describe("V2 skills library", () => {
 
   it("lists skills, filters by search and toggles availability", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<SkillsPage />, { initialEntries: ["/v2/agents/skills"] });
+    renderWithProviders(<SkillsPage />, {
+      initialEntries: ["/v2/agents/skills"],
+    });
 
     expect(screen.getByText("Writing Guide")).toBeInTheDocument();
     expect(screen.getByText("Standup")).toBeInTheDocument();
@@ -131,14 +133,16 @@ describe("V2 skills library", () => {
   });
 
   it("links the active tab and the create action", () => {
-    renderWithProviders(<SkillsPage />, { initialEntries: ["/v2/agents/skills"] });
+    renderWithProviders(<SkillsPage />, {
+      initialEntries: ["/v2/agents/skills"],
+    });
 
     expect(
       screen.getByRole("link", { name: /Skills/i, current: "page" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /Chat/i }),
-    ).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: /Chat/i })).not.toHaveAttribute(
+      "aria-current",
+    );
     expect(screen.getByRole("link", { name: /Create skill/i })).toHaveAttribute(
       "href",
       "/v2/agents/skills/new",
@@ -167,7 +171,10 @@ describe("V2 skill editor", () => {
     await user.type(screen.getByLabelText("Skill name"), "Interview prep");
     expect(save).toBeDisabled();
 
-    await user.type(screen.getByLabelText("Description"), "Questions to rehearse");
+    await user.type(
+      screen.getByLabelText("Description"),
+      "Questions to rehearse",
+    );
     await user.type(
       screen.getByLabelText("Instructions"),
       "Ask one question at a time.",
@@ -227,9 +234,7 @@ describe("V2 skill editor", () => {
     expect(screen.getByLabelText("Instructions")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Preview" }));
 
-    expect(
-      screen.queryByLabelText("Instructions"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Instructions")).not.toBeInTheDocument();
     expect(screen.getByText(/Write clearly and briefly/)).toBeInTheDocument();
   });
 });

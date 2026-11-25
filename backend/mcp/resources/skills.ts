@@ -11,17 +11,24 @@ export function registerSkillResources(
     server.registerResource(
       `${document.skillId}/${document.document}`,
       document.uri,
-      { mimeType: "text/markdown", description: `${document.skillId}: ${document.document}` },
+      {
+        mimeType: "text/markdown",
+        description: `${document.skillId}: ${document.document}`,
+      },
       async () => ({
-        contents: [{
-          uri: document.uri,
-          mimeType: "text/markdown",
-          text: document.text,
-          _meta: {
-            "orbit/skillVersion": document.version,
-            "orbit/contentHash": createHash("sha256").update(document.text, "utf8").digest("hex"),
+        contents: [
+          {
+            uri: document.uri,
+            mimeType: "text/markdown",
+            text: document.text,
+            _meta: {
+              "orbit/skillVersion": document.version,
+              "orbit/contentHash": createHash("sha256")
+                .update(document.text, "utf8")
+                .digest("hex"),
+            },
           },
-        }],
+        ],
       }),
     );
   }

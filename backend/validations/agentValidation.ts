@@ -18,4 +18,3 @@ export const grillUserSchema = z.strictObject({
     ),
   allowCustomAnswer: z.boolean().default(false),
 });
-
