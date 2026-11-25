@@ -91,7 +91,7 @@ test("History failure is actionable and preserves the active conversation", asyn
 }) => {
   await agentWorkspaceFixture(page);
   let fail = true;
-  await page.route("**/api/ai/conversations", (route) =>
+  await page.route("**/api/ai/conversations*", (route) =>
     route.request().method() === "GET" && fail
       ? route.fulfill({ status: 500, json: { message: "History unavailable" } })
       : route.fallback(),

@@ -8,7 +8,10 @@ import type {
   ProposalIntent,
   ProposalView,
 } from "../types/A2UI/ITaskProposal.js";
-import { conversationRepository as repository } from "../repositories/conversationRepository.js";
+import {
+  conversationRepository as repository,
+  decodeConversationCursor,
+} from "../repositories/conversationRepository.js";
 import { chatTurnRepository } from "../repositories/chatTurnRepository.js";
 import { taskProposalRepository } from "../repositories/A2UI/taskProposalRepository.js";
 import { toProposalView } from "./A2UI/taskProposalGenerationService.js";
@@ -37,7 +40,17 @@ import { requireOwnedProject } from "./conversationContextService.js";
 import { findProposalToolCall } from "../utils/agentMessages.js";
 
 export const conversationService = {
-  list: (userId: string) => repository.list(userId),
+  list: (
+    userId: string,
+    options?: { cursor?: string; limit?: number; search?: string },
+  ) =>
+    repository.list(userId, {
+      limit: options?.limit,
+      search: options?.search,
+      cursor: options?.cursor
+        ? decodeConversationCursor(options.cursor)
+        : undefined,
+    }),
   async create(userId: string, id: string, projectId?: string) {
     if (projectId) await requireOwnedProject(userId, projectId);
     return repository.create(userId, id, projectId);

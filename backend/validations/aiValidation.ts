@@ -76,6 +76,12 @@ export const conversationQuerySchema = z.object({
   before: z.coerce.number().int().positive().optional(),
 });
 
+export const listConversationsQuerySchema = z.object({
+  cursor: z.string().trim().min(1).max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  search: z.string().trim().max(100).optional(),
+});
+
 export const conversationContextSchema = z.strictObject({
   projectId: projectIdSchema.nullable(),
 });

@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   CalendarDays,
@@ -12,11 +11,14 @@ import {
 } from "lucide-react";
 import { useAgentSession } from "@/features/agent/agentSessionContext";
 import { useAgentNavigation } from "@/features/agent/useAgentNavigation";
+import {
+  useDebouncedValue,
+  useInfiniteConversations,
+} from "@/features/agent/useInfiniteConversations";
 import { AgentDiscardDialog } from "@/features/agent/AgentDiscardDialog";
 import { useProjectsQuery } from "@/features/tasks/api/projectQueries";
 import ChatField from "@/features/tasks/components/chat/ChatField";
 import AddProjectForm from "@/features/tasks/components/Form/AddProjectForm";
-import { aiService } from "@/shared/services/aiService";
 import type { Project } from "@/shared/types/domain";
 import AgentProjectSidebar from "../components/AgentProjectSidebar";
 import V2AgentTabs from "../components/V2AgentTabs";
@@ -27,8 +29,6 @@ const STARTERS = [
   [ListTree, "breakDownTasks"],
   [ListChecks, "reviewPriorityTasks"],
 ] as const;
-
-const CONVERSATIONS_QUERY_KEY = ["agent", "conversations"] as const;
 
 export default function AgentsPage() {
   const { t } = useTranslation("v2");
@@ -51,6 +51,8 @@ export default function AgentsPage() {
     null,
   );
   const [showCreateProject, setShowCreateProject] = useState(false);
+  const [conversationSearch, setConversationSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(conversationSearch.trim(), 250);
   const workspace = useRef<HTMLDivElement>(null);
   const center = useRef<HTMLElement>(null);
   const historyToggle = useRef<HTMLButtonElement>(null);
@@ -68,10 +70,11 @@ export default function AgentsPage() {
   }, []);
 
   const projects = useProjectsQuery();
-  const { refetch: refetchConversations, ...conversations } = useQuery({
-    queryKey: CONVERSATIONS_QUERY_KEY,
-    queryFn: aiService.listConversations,
-  });
+  const {
+    refetch: refetchConversations,
+    fetchNextPage: fetchMoreConversations,
+    ...conversations
+  } = useInfiniteConversations({ search: debouncedSearch });
   const historyVersion = chat.rawMessages?.length ?? chat.messages.length;
   const previousHistoryVersion = useRef(historyVersion);
   useEffect(() => {
@@ -82,7 +85,7 @@ export default function AgentsPage() {
   }, [chat.sending, historyVersion, refetchConversations]);
 
   const project = projects.data?.find((item) => item._id === activeProjectId);
-  const conversation = conversations.data?.find(
+  const conversation = conversations.conversations.find(
     (item) => item.id === activeConversationId,
   );
   const busy =
@@ -205,13 +208,21 @@ export default function AgentsPage() {
         >
           <AgentProjectSidebar
             projects={projects.data ?? []}
-            conversations={conversations.data ?? []}
+            conversations={conversations.conversations}
             activeConversationId={activeConversationId}
             activeProjectId={activeProjectId}
             projectStatus={projects.status}
             conversationStatus={conversations.status}
             retryProjects={() => void projects.refetch()}
             retryConversations={() => void refetchConversations()}
+            hasMoreConversations={conversations.hasMore}
+            isFetchingMoreConversations={conversations.isFetchingNextPage}
+            moreConversationsError={conversations.isFetchNextPageError}
+            onLoadMoreConversations={() => {
+              void fetchMoreConversations();
+            }}
+            search={conversationSearch}
+            onSearchChange={setConversationSearch}
             onSelectProject={selectProject}
             onSelectConversation={(id) => {
               selectConversation(id);

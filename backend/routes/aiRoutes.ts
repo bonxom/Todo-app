@@ -28,6 +28,7 @@ import {
   conversationParamsSchema,
   conversationQuerySchema,
   conversationContextSchema,
+  listConversationsQuerySchema,
 } from "../validations/aiValidation.js";
 import {
   startChatTurnParamsSchema,
@@ -81,7 +82,12 @@ router.patch(
 );
 router.get("/conversations/capabilities", protect, getConversationCapabilities);
 router.get("/conversations/latest", protect, getConversation);
-router.get("/conversations", protect, listConversations);
+router.get(
+  "/conversations",
+  protect,
+  validate({ query: listConversationsQuerySchema }),
+  listConversations,
+);
 router.get(
   "/conversations/:conversationId",
   protect,

@@ -6920,7 +6920,7 @@ body:has(.calendar-timeline-event[data-resizing="true"])
 }
 
 .v2-assistant-history {
-  @apply shrink-0 max-h-[40%] p-[10px_16px] [background:var(--v2-shell-fill)];
+  @apply flex flex-col shrink-0 max-h-[45%] overflow-y-auto p-[10px_16px] [background:var(--v2-shell-fill)];
 }
 
 .v2-assistant-resize {

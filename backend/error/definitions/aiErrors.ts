@@ -85,4 +85,9 @@ export const AI_ERROR = {
     message: "Không tìm thấy lượt chat",
     statusCode: 404,
   },
+  CONVERSATION_CURSOR_INVALID: {
+    code: "AI_0017",
+    message: "Invalid conversation cursor",
+    statusCode: 400,
+  },
 } as const satisfies Record<string, ErrorDefinition>;

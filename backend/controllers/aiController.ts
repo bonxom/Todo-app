@@ -93,14 +93,26 @@ export const listConversations = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const conversations = await conversationService.list(String(req.user!._id));
+  const query = (req.validatedQuery ?? {}) as {
+    cursor?: string;
+    limit?: number;
+    search?: string;
+  };
+  const { items, nextCursor, hasMore } = await conversationService.list(
+    String(req.user!._id),
+    query,
+  );
   res.json({
-    data: conversations.map(({ _id, title, updatedAt, contextProjectId }) => ({
+    data: items.map(({ _id, title, updatedAt, contextProjectId }) => ({
       id: _id,
       title,
       updatedAt,
       projectId: contextProjectId ? String(contextProjectId) : null,
     })),
+    pageInfo: {
+      nextCursor,
+      hasMore,
+    },
   });
 };
 

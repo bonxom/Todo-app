@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { aiService } from "@/shared/services/aiService";
 import {
   AgentSessionContext,
   type AgentSessionContextValue,
@@ -45,7 +46,14 @@ vi.mock("@/features/tasks/api/projectQueries", () => ({
 }));
 
 vi.mock("@/shared/services/aiService", () => ({
-  aiService: { listConversations: vi.fn().mockResolvedValue([]) },
+  aiService: {
+    listConversations: vi.fn().mockResolvedValue([]),
+    listConversationsPage: vi.fn().mockResolvedValue({
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    }),
+  },
 }));
 
 vi.mock("@/features/agent/AgentDiscardDialog", () => ({
@@ -148,6 +156,94 @@ describe("V2 Agents page", () => {
     const center = screen.getByRole("region", { name: "Agent conversation" });
     expect(center).toHaveAttribute("data-chat-stage", "active");
   });
+
+  it("lazy loads more conversations on scroll and retries continuation failures", async () => {
+    class MockObserver {
+      static instances: MockObserver[] = [];
+      callback: IntersectionObserverCallback;
+      elements: Element[] = [];
+      constructor(callback: IntersectionObserverCallback) {
+        this.callback = callback;
+        MockObserver.instances.push(this);
+      }
+      observe = (el: Element) => {
+        this.elements.push(el);
+      };
+      disconnect = () => {
+        this.elements = [];
+      };
+      trigger(isIntersecting: boolean) {
+        if (this.elements.length === 0) return;
+        this.callback(
+          [
+            { isIntersecting, target: this.elements[0] },
+          ] as IntersectionObserverEntry[],
+          this as unknown as IntersectionObserver,
+        );
+      }
+    }
+    vi.stubGlobal("IntersectionObserver", MockObserver);
+
+    vi.mocked(aiService.listConversationsPage)
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: "conv-1",
+            title: "First batch chat",
+            updatedAt: "2026-11-25T10:00:00.000Z",
+            projectId: null,
+          },
+        ],
+        nextCursor: "next-cursor-1",
+        hasMore: true,
+      })
+      .mockRejectedValueOnce(new Error("Network glitch"))
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: "conv-2",
+            title: "Second batch chat",
+            updatedAt: "2026-11-24T10:00:00.000Z",
+            projectId: null,
+          },
+        ],
+        nextCursor: null,
+        hasMore: false,
+      });
+
+    try {
+      const user = userEvent.setup();
+      renderWithSession(<AgentsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText("First batch chat")).toBeInTheDocument();
+      });
+
+      const observer = MockObserver.instances.at(-1)!;
+      act(() => {
+        observer.trigger(true);
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: "Try again" }),
+        ).toBeInTheDocument();
+      });
+      expect(screen.getByText("First batch chat")).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Try again" }));
+
+      await waitFor(() => {
+        expect(screen.getByText("Second batch chat")).toBeInTheDocument();
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("V2 assistant bubble", () => {
