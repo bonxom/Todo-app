@@ -8,8 +8,6 @@ import {
   LayoutDashboard,
   LogOut,
   Orbit,
-  PanelLeftClose,
-  PanelLeftOpen,
 } from "lucide-react";
 import { useLogoutMutation } from "@/features/auth/api/authMutations";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -18,7 +16,8 @@ export interface V2SidebarProps {
   onNavigate?: () => void;
   className?: string;
   collapsed?: boolean;
-  onToggleCollapse?: () => void;
+  onHoverChange?: (hovered: boolean) => void;
+  onFocusChange?: (focused: boolean) => void;
 }
 
 const NAV_ITEMS = [
@@ -32,7 +31,8 @@ export default function V2Sidebar({
   onNavigate,
   className = "",
   collapsed = false,
-  onToggleCollapse,
+  onHoverChange,
+  onFocusChange,
 }: V2SidebarProps) {
   const { t } = useTranslation("v2");
   const navigate = useNavigate();
@@ -70,12 +70,35 @@ export default function V2Sidebar({
   return (
     <aside
       data-collapsed={collapsed ? "true" : "false"}
+      onPointerEnter={(event) => {
+        if (event.pointerType !== "touch") onHoverChange?.(true);
+      }}
+      onPointerLeave={() => {
+        onHoverChange?.(false);
+      }}
+      onFocusCapture={(event) => {
+        try {
+          if (
+            event.target instanceof Element &&
+            event.target.matches(":focus-visible")
+          ) {
+            onFocusChange?.(true);
+          }
+        } catch {
+          onFocusChange?.(true);
+        }
+      }}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          onFocusChange?.(false);
+        }
+      }}
       className={`v2-navigation [border:1px_solid_var(--v2-glass-border)] rounded-[var(--v2-radius-card)] flex flex-col relative isolate [@media(forced-colors:active)]:[border:1px_solid_ButtonBorder] [@media(forced-colors:active)]:text-[CanvasText] [&::before]:absolute [&::before]:inset-[3px] [&::before]:rounded-[21px] [&::before]:pointer-events-none [&::before]:z-[-1] [&_nav]:gap-[6px] ${className}`}
       aria-label="Orbit"
     >
       <div
-        className={`flex items-center gap-2 ${
-          collapsed ? "flex-col justify-center" : "justify-between"
+        className={`flex items-center ${
+          collapsed ? "justify-center" : "justify-start"
         }`}
       >
         <Link
@@ -93,29 +116,15 @@ export default function V2Sidebar({
           >
             <Orbit size={28} strokeWidth={1.5} />
           </span>
-          <span className={collapsed ? "sr-only" : undefined}>
+          <span
+            className={
+              collapsed ? "sr-only" : "whitespace-nowrap overflow-hidden"
+            }
+          >
             orbit
             <span className="v2-brand-dot text-[var(--v2-accent)]">.</span>
           </span>
         </Link>
-
-        {onToggleCollapse && (
-          <button
-            type="button"
-            data-testid="v2-sidebar-toggle"
-            aria-expanded={!collapsed}
-            aria-label={t(collapsed ? "expandSidebar" : "collapseSidebar")}
-            title={t(collapsed ? "expandSidebar" : "collapseSidebar")}
-            onClick={onToggleCollapse}
-            className="v2-sidebar-collapse-btn flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-transparent text-[var(--v2-muted)] transition-[background-color,color,border-color,box-shadow] duration-150 hover:border-[var(--v2-glass-border)] hover:bg-[var(--v2-shell-fill)] hover:text-[var(--v2-ink)] cursor-pointer"
-          >
-            {collapsed ? (
-              <PanelLeftOpen size={18} strokeWidth={1.75} aria-hidden="true" />
-            ) : (
-              <PanelLeftClose size={18} strokeWidth={1.75} aria-hidden="true" />
-            )}
-          </button>
-        )}
       </div>
 
       <nav aria-label={t("dashboard")}>
@@ -135,7 +144,7 @@ export default function V2Sidebar({
               aria-current={isActive ? "page" : undefined}
             >
               <Icon size={21} strokeWidth={1.7} aria-hidden="true" />
-              <span className={collapsed ? "sr-only" : undefined}>
+              <span className={collapsed ? "sr-only" : "whitespace-nowrap"}>
                 {labelText}
               </span>
             </Link>

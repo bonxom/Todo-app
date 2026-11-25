@@ -6293,7 +6293,7 @@ body:has(.calendar-timeline-event[data-resizing="true"])
 }
 
 .v2-navigation {
-  @apply min-h-[calc(100dvh_-_32px)] p-[24px_14px_14px] gap-[32px];
+  @apply min-h-[calc(100dvh_-_32px)] p-[24px_14px_14px] gap-[32px] overflow-x-hidden;
 }
 
 .v2-navigation[data-collapsed="true"] {

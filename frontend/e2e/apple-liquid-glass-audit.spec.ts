@@ -99,15 +99,9 @@ test("V2 collapsible sidebar & full Apple Liquid Glass consistency across all 9 
   );
   expect(cursorDotBg).toBe("#f6c453");
 
-  // Verify sidebar expanded width -> collapse -> collapsed width -> expand
+  // Verify sidebar defaults to collapsed -> hover expands -> leaving collapses
   const sidebar = page.locator(".v2-sidebar-desktop");
-  const expandedBox = (await sidebar.boundingBox())!;
-  expect(expandedBox.width).toBeGreaterThanOrEqual(220);
-
-  const toggleBtn = page.getByTestId("v2-sidebar-toggle");
-  await toggleBtn.click();
   await expect(sidebar).toHaveAttribute("data-collapsed", "true");
-  await page.waitForTimeout(300);
   const collapsedBox = (await sidebar.boundingBox())!;
   expect(collapsedBox.width).toBeLessThanOrEqual(84);
 
@@ -116,9 +110,14 @@ test("V2 collapsible sidebar & full Apple Liquid Glass consistency across all 9 
     fullPage: true,
   });
 
-  // Expand sidebar back
-  await toggleBtn.click();
+  await sidebar.hover();
   await expect(sidebar).toHaveAttribute("data-collapsed", "false");
+  await page.waitForTimeout(300);
+  const expandedBox = (await sidebar.boundingBox())!;
+  expect(expandedBox.width).toBeGreaterThanOrEqual(220);
+
+  await page.getByTestId("v2-dashboard-page").hover();
+  await expect(sidebar).toHaveAttribute("data-collapsed", "true");
   await page.waitForTimeout(300);
 
   // 2. Add project dialog (verify V2 Liquid Glass token bridge, no V1 cyan!)

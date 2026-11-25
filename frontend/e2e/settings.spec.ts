@@ -266,6 +266,11 @@ test.describe("Settings Page & V2 Ocean Palette", () => {
 
     await page.goto("/v2/dashboard");
 
+    const sidebar = page.locator(".v2-sidebar-desktop");
+    await sidebar.hover();
+    await expect(sidebar).toHaveAttribute("data-collapsed", "false");
+    await page.waitForTimeout(300);
+
     const footer = page.getByTestId("v2-sidebar-footer");
     await expect(footer).toBeVisible();
 

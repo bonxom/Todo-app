@@ -1,4 +1,4 @@
-import { useCallback, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import RoutePendingIndicator from "@/app/RoutePendingIndicator";
@@ -9,22 +9,13 @@ import V2Topbar from "../components/V2Topbar";
 import V2Dialog from "../components/V2Dialog";
 import V2AgentChatBubble from "../components/V2AgentChatBubble";
 
-const SIDEBAR_COLLAPSED_STORAGE_KEY = "orbit.v2-sidebar-collapsed";
-
-function readInitialSidebarCollapsed(): boolean {
-  try {
-    return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
+const DESKTOP_MEDIA_QUERY = "(min-width: 1024px)";
 
 export default function V2Layout() {
   const { t } = useTranslation("v2");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(
-    readInitialSidebarCollapsed,
-  );
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const [assistantTarget, setAssistantTarget] = useState<HTMLDivElement | null>(
     null,
   );
@@ -36,17 +27,29 @@ export default function V2Layout() {
     (open: boolean, width: number) => setDock({ open, width }),
     [],
   );
-  const toggleSidebarCollapsed = useCallback(() => {
-    setSidebarCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(next));
-      } catch {
-        /* Ignore storage errors in restricted contexts. */
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return undefined;
+    }
+    const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY);
+    const syncViewport = (event: MediaQueryListEvent | MediaQueryList) => {
+      setIsSidebarHovered(false);
+      setIsSidebarFocused(false);
+      if (event.matches) {
+        setIsDrawerOpen(false);
       }
-      return next;
-    });
+    };
+    mediaQuery.addEventListener("change", syncViewport);
+    return () => {
+      mediaQuery.removeEventListener("change", syncViewport);
+    };
   }, []);
+
+  const sidebarCollapsed = !(isSidebarHovered || isSidebarFocused);
   const isDockActive = showFloatingBubble && dock.open;
 
   return (
@@ -74,7 +77,8 @@ export default function V2Layout() {
           >
             <V2Sidebar
               collapsed={sidebarCollapsed}
-              onToggleCollapse={toggleSidebarCollapsed}
+              onHoverChange={setIsSidebarHovered}
+              onFocusChange={setIsSidebarFocused}
             />
           </div>
 
