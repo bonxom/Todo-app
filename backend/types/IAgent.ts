@@ -1,6 +1,9 @@
 import type { AgentBudget } from "../utils/agentBudget.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
-import type { ProposalIntent } from "./A2UI/ITaskProposal.js";
+import type {
+  ProposalIntent,
+  ProposalResolution,
+} from "./A2UI/ITaskProposal.js";
 import type { AgentTimeContext } from "./IAgentTimeContext.js";
 
 export type AgentMode = "auto" | "ask";
@@ -64,6 +67,7 @@ export interface AgentMemory {
   timeContext?: AgentTimeContext;
   confirmedProposals?: ConfirmedProposalContext[];
   cancelledProposals?: CancelledProposalContext[];
+  proposalResolution?: ProposalResolution;
   history?: ChatCompletionMessageParam[];
   personalSnapshot?: PersonalSkillSnapshot;
   stream?: AgentStreamHooks;

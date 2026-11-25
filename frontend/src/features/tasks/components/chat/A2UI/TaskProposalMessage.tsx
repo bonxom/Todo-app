@@ -24,12 +24,21 @@ export function TaskProposalMessage({
 
   const session = useContext(AgentSessionContext);
   const reloadConversation = session?.chat.reload;
+  const observeProposalContinuation = session?.chat.observeProposalContinuation;
   const setProposalDraft = session?.setProposalDraft;
   const id = initialEnvelope.proposal.id;
-  const onSuccess = useCallback(() => {
-    setProposalDraft?.(id, null);
-    void reloadConversation?.();
-  }, [setProposalDraft, id, reloadConversation]);
+  const onSuccess = useCallback(
+    (result: ProposalEnvelope) => {
+      setProposalDraft?.(id, null);
+      if (
+        result.continuation &&
+        observeProposalContinuation?.(result.continuation)
+      )
+        return;
+      void reloadConversation?.();
+    },
+    [setProposalDraft, id, reloadConversation, observeProposalContinuation],
+  );
   const proposal = useTaskProposal({
     onSuccess,
     conversationId: initialEnvelope.proposal.conversationId,

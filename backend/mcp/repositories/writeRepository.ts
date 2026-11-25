@@ -40,7 +40,7 @@ const McpWriteLock = mongoose.model("McpWriteLock", lockSchema);
 export const writeRepository = {
   async transaction<T>(
     userId: string,
-    operation: () => Promise<T>,
+    operation: (session: mongoose.ClientSession) => Promise<T>,
   ): Promise<T> {
     // Provision outside the transaction; the unique _id handles concurrent first use.
     try {
@@ -53,12 +53,12 @@ export const writeRepository = {
       if ((error as { code?: number }).code !== 11000) throw error;
     }
     return mongoose.connection.transaction(
-      async () => {
+      async (session) => {
         await McpWriteLock.updateOne(
           { _id: userId },
           { $inc: { revision: 1 } },
         );
-        return operation();
+        return operation(session);
       },
       {
         readPreference: "primary",

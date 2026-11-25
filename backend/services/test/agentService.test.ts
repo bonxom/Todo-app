@@ -314,7 +314,7 @@ it("rechecks approval inside the write transaction and prevents mutation when st
     .mockImplementation(async (_user, run) => {
       inside = true;
       try {
-        return await run();
+        return await run({} as never);
       } finally {
         inside = false;
       }

@@ -13,7 +13,7 @@ import { interruptedReply } from "../utils/interruptedReply.js";
 import { AppError } from "../error/AppError.js";
 import { AI_ERROR } from "../error/definitions/aiErrors.js";
 import { TASK_PROPOSAL_ERROR } from "../error/definitions/A2UI/taskProposalErrors.js";
-import { prepareHistory } from "../utils/agentMessages.js";
+import { prepareHistory, resolveProposalTool } from "../utils/agentMessages.js";
 import { resultFor } from "../utils/conversationView.js";
 import {
   taskProposalGenerationService,
@@ -112,6 +112,28 @@ export async function runConversationTurn(
       turn.sequence,
       20,
     );
+    const resolution = turn.proposalResolution;
+    const source = resolution
+      ? (previous.find((entry) => entry._id === resolution.sourceTurnId) ??
+        (await repository.active(
+          String(context.user._id),
+          turn.conversationId,
+          resolution.sourceTurnId,
+        )))
+      : undefined;
+    const history =
+      source && resolution
+        ? prepareHistory(
+            [
+              {
+                ...source,
+                messages: resolveProposalTool(source.messages, resolution),
+              },
+              ...previous.filter((entry) => entry._id !== source._id),
+            ],
+            true,
+          )
+        : prepareHistory(previous);
     let projectContext: { id: string; name: string } | null = null;
     if (turn.contextProjectId) {
       const project = await projectRepository.findOwnedById(
@@ -181,7 +203,8 @@ export async function runConversationTurn(
           ),
         confirmedProposals,
         cancelledProposals,
-        history: prepareHistory(previous),
+        history,
+        proposalResolution: resolution,
         answeredClarification:
           selectedInteraction?.kind === "clarification" &&
           selectedInteraction.status === "answered"

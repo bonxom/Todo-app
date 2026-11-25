@@ -128,7 +128,7 @@ test.describe("Live Agent Task Creation & Clarification Smoke", () => {
     await modeBtn.click();
     await expect(page.locator("button.chat-mode-toggle--ask")).toBeVisible();
 
-    await composer.fill("Lên kế hoạch dự án");
+    await composer.fill("Lên kế hoạch dự án và đánh dấu khảo sát hoàn thành");
     await page.getByRole("button", { name: "Send message" }).click();
 
     // Proposal card should appear with tasks
@@ -167,6 +167,11 @@ test.describe("Live Agent Task Creation & Clarification Smoke", () => {
       exact: true,
     });
     await expect(confirmFeedback).toBeVisible();
+    const completionReply = chat.getByText(
+      "I created the selected tasks and marked the survey complete.",
+      { exact: true },
+    );
+    await expect(completionReply).toBeVisible();
 
     // 4. Follow-up: Ask which tasks were confirmed
     await composer.fill("Which tasks did I just confirm?");
@@ -201,6 +206,11 @@ test.describe("Live Agent Task Creation & Clarification Smoke", () => {
       { exact: true },
     );
     await expect(cancelFeedback).toBeVisible();
+    const cancellationReply = chat.getByText(
+      "I received the cancellation. No tasks were created.",
+      { exact: true },
+    );
+    await expect(cancellationReply).toBeVisible();
     await composer.fill("What happened to the cancelled proposal?");
     await chat.getByRole("button", { name: "Send message" }).click();
     await expect(
@@ -233,6 +243,8 @@ test.describe("Live Agent Task Creation & Clarification Smoke", () => {
     await expect(proposalIntro).toBeVisible();
     await expect(confirmFeedback).toBeVisible();
     await expect(cancelFeedback).toBeVisible();
+    await expect(completionReply).toBeVisible();
+    await expect(cancellationReply).toBeVisible();
     await expect(chartIntro).toBeVisible();
     await expect(chart).toBeVisible();
   });

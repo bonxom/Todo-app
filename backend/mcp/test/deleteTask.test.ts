@@ -25,7 +25,7 @@ const context = {
 const args = { taskId: String(id), idempotencyKey: "delete-intent-00001" };
 beforeEach(() => {
   vi.spyOn(writeRepository, "transaction").mockImplementation(
-    async (_id, run) => run(),
+    async (_id, run) => run({} as never),
   );
   vi.spyOn(writeRepository, "findReceipt").mockResolvedValue(null);
   vi.spyOn(writeRepository, "saveReceipt").mockResolvedValue({} as never);

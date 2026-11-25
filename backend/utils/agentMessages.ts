@@ -1,5 +1,46 @@
 import type { AgentInteraction } from "../types/IAgent.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
+import type { ProposalResolution } from "../types/A2UI/ITaskProposal.js";
+
+export function findProposalToolCall(messages: ChatCompletionMessageParam[]) {
+  const proposalCalls = new Set(
+    messages.flatMap((message) =>
+      message.role === "assistant"
+        ? (message.tool_calls ?? [])
+            .filter(
+              (call) =>
+                call.type === "function" &&
+                call.function.name === "propose_tasks",
+            )
+            .map((call) => call.id)
+        : [],
+    ),
+  );
+  const proposed = [...messages]
+    .reverse()
+    .find(
+      (message) =>
+        message.role === "tool" &&
+        proposalCalls.has(message.tool_call_id) &&
+        typeof message.content === "string" &&
+        message.content.startsWith('{"status":"proposed",'),
+    );
+  return proposed?.role === "tool" ? proposed.tool_call_id : undefined;
+}
+
+export function resolveProposalTool(
+  messages: ChatCompletionMessageParam[],
+  { proposalId, status, createdTasks, toolCallId }: ProposalResolution,
+): ChatCompletionMessageParam[] {
+  return messages.map((message) =>
+    message.role === "tool" && message.tool_call_id === toolCallId
+      ? {
+          ...message,
+          content: JSON.stringify({ status, proposalId, createdTasks }),
+        }
+      : message,
+  );
+}
 
 export function pendingCalls(messages: ChatCompletionMessageParam[]) {
   const answered = new Set(
@@ -46,6 +87,7 @@ export function prepareHistory(
     status?: string;
     response?: string;
   }>,
+  preserveNewest = false,
 ) {
   const history: ChatCompletionMessageParam[] = [];
   let size = 0;
@@ -137,7 +179,7 @@ export function prepareHistory(
       messages.push({ role: "assistant", content: turn.response });
     }
     const length = JSON.stringify(messages).length;
-    if (size + length > 60000) break;
+    if (size + length > 60000 && !(preserveNewest && size === 0)) break;
     history.unshift(...messages);
     size += length;
   }

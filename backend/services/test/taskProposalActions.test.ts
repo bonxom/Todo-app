@@ -574,6 +574,7 @@ describe("POST /api/ai/conversations/:conversationId/proposals/:proposalId/actio
         revision: 1,
         requestId: actionReqId,
       }),
+      expect.any(Function),
     );
   });
 });

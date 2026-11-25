@@ -1,4 +1,5 @@
 import type { UiSurfaceEnvelope } from "./uiSurface";
+import type { TurnSnapshot } from "../chatStream";
 
 export type ProposalStatus = "draft" | "created" | "cancelled";
 export type ProposalIntent = "task_proposal";
@@ -51,6 +52,7 @@ export interface ProposalEnvelope {
   proposal: ProposalView;
   text: string;
   surface?: UiSurfaceEnvelope;
+  continuation?: TurnSnapshot;
   a2ui?: {
     protocolVersion: "v0.9";
     catalogId: string;

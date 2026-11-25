@@ -1,5 +1,6 @@
 import type mongoose from "mongoose";
 import type { UiSurfaceEnvelope } from "./IUiSurface.js";
+import type { TurnSnapshot } from "../IChatStream.js";
 
 export type ProposalIntent = "task_proposal";
 
@@ -20,6 +21,14 @@ export interface ProposalCreatedTask {
   itemId: string;
   taskId: string;
   title: string;
+}
+
+export interface ProposalResolution {
+  proposalId: string;
+  sourceTurnId: string;
+  toolCallId: string;
+  status: "created" | "cancelled";
+  createdTasks: ProposalCreatedTask[];
 }
 
 export interface ProposalView {
@@ -53,6 +62,7 @@ export interface ProposalEnvelope {
   proposal: ProposalView;
   text: string;
   surface?: UiSurfaceEnvelope;
+  continuation?: TurnSnapshot;
   a2ui?: {
     protocolVersion: "v0.9";
     catalogId: string;

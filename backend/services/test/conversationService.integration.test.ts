@@ -63,6 +63,9 @@ const patch = (path: string, body: object, user = 0) =>
 const answer = (content: string) => ({
   choices: [{ message: { role: "assistant", content } }],
 });
+async function* streamReply(content: string) {
+  yield { choices: [{ index: 0, delta: { content }, finish_reason: "stop" }] };
+}
 const tool = (name: string, args: object) => ({
   choices: [
     {
@@ -1607,14 +1610,34 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
       requestId: randomUUID(),
     };
     const path = `conversations/${conversationId}/proposals/${proposal.id}/actions`;
-    const callsBeforeCancel = completion.mock.calls.length;
+    let result: unknown;
+    completion.mockImplementationOnce(async ({ messages }) => {
+      result = JSON.parse(messages.at(-1).content);
+      return streamReply("You cancelled that proposal.");
+    });
     const cancelled = await post(path, action);
     expect(cancelled.status).toBe(200);
     expect(cancelled.body.data.proposal.status).toBe("cancelled");
     const replay = await post(path, action);
     expect(replay.status).toBe(200);
     expect(replay.body.data.proposal).toEqual(cancelled.body.data.proposal);
-    expect(completion).toHaveBeenCalledTimes(callsBeforeCancel);
+    expect(cancelled.body.data.continuation?.turnId).toBeDefined();
+    expect(replay.body.data.continuation.turnId).toBe(
+      cancelled.body.data.continuation.turnId,
+    );
+    await expect
+      .poll(async () => {
+        const { body } = await get(
+          `conversations/${conversationId}/turns/${cancelled.body.data.continuation.turnId}`,
+        );
+        return body.data?.status;
+      })
+      .toBe("completed");
+    expect(result).toEqual({
+      status: "cancelled",
+      proposalId: proposal.id,
+      createdTasks: [],
+    });
 
     completion.mockImplementationOnce(async ({ messages }) => {
       const system = messages.find(
@@ -1636,22 +1659,22 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     expect(next.body.data).toBe("You cancelled that proposal.");
   });
 
-  it("includes confirmed proposal results in the next model request and makes no provider call on confirm", async () => {
+  it("resumes the original proposal call with exactly the created tasks and reuses the run on replay", async () => {
     vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
     const conversationId = await create();
 
     // 1. Create a 5-item proposal through chat
-    completion.mockResolvedValueOnce(
-      tool("propose_tasks", {
-        items: [
-          { title: "Task 1", priority: "Low" },
-          { title: "Task 2", priority: "Medium" },
-          { title: "Task 3", priority: "High" },
-          { title: "Task 4", priority: "Medium" },
-          { title: "Task 5", priority: "Low" },
-        ],
-      }),
-    );
+    const proposed = tool("propose_tasks", {
+      items: [
+        { title: "Task 1", priority: "Low" },
+        { title: "Task 2", priority: "Medium" },
+        { title: "Task 3", priority: "High" },
+        { title: "Task 4", priority: "Medium" },
+        { title: "Task 5", priority: "Low" },
+      ],
+    });
+    const toolCallId = proposed.choices[0].message.tool_calls[0].id;
+    completion.mockResolvedValueOnce(proposed);
 
     const proposalTurn = await post("chat-mcp", {
       conversationId,
@@ -1682,6 +1705,14 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
       selectedItemIds: [item0.id, item1.id],
     };
 
+    let toolResult: unknown;
+    let resumedToolCallId: unknown;
+    completion.mockImplementationOnce(async ({ messages }) => {
+      const last = messages.at(-1);
+      resumedToolCallId = last.tool_call_id;
+      toolResult = JSON.parse(last.content);
+      return streamReply("The two selected tasks were created.");
+    });
     const confirmRes = await post(
       `conversations/${conversationId}/proposals/${proposal.id}/actions`,
       confirmPayload,
@@ -1697,8 +1728,37 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     );
     expect(replayRes.status).toBe(200);
 
-    // Confirm must make NO provider calls
-    expect(completion).toHaveBeenCalledTimes(providerCallsBeforeConfirm);
+    const continuationRun = confirmRes.body.data.continuation;
+    expect(continuationRun?.turnId).toBeDefined();
+    expect(replayRes.body.data.continuation.turnId).toBe(
+      continuationRun.turnId,
+    );
+    await expect
+      .poll(async () => {
+        const { body } = await get(
+          `conversations/${conversationId}/turns/${continuationRun.turnId}`,
+        );
+        return body.data?.status;
+      })
+      .toBe("completed");
+    expect(completion).toHaveBeenCalledTimes(providerCallsBeforeConfirm + 1);
+    expect(resumedToolCallId).toBe(toolCallId);
+    expect(toolResult).toEqual({
+      status: "created",
+      proposalId: proposal.id,
+      createdTasks: confirmRes.body.data.proposal.createdTasks,
+    });
+    const transcript = await get(`conversations/${conversationId}`);
+    expect(
+      transcript.body.data.messages.map(
+        (message: { text: string }) => message.text,
+      ),
+    ).toContain("The two selected tasks were created.");
+    expect(
+      transcript.body.data.messages.filter(
+        (message: { sender: string }) => message.sender === "user",
+      ),
+    ).toHaveLength(1);
 
     // 3. Inspect system message on the next chat request
     let nextSystemMessage = "";

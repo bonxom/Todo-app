@@ -19,7 +19,8 @@ The Confirm transaction is the source of truth for task creation via proposals. 
 - Records what was actually created at confirmation time, even if the user edited titles or selected only a subset of items.
 - The model treats titles as user data, uses exact IDs for subsequent reads/updates, and requires a new explicit user request before modifying those tasks.
 - The next model turn also receives up to 3 recently cancelled proposal IDs and timestamps for the same user and conversation. Committed outcomes supersede the draft state in earlier messages, and a partial confirmation closes the proposal.
-- Confirm and Cancel return the saved result in the API envelope. The chat shows a short acknowledgement from that result, including the created count or the cancellation. The response is available immediately and after reloading conversation history. A proposal action does not start a model turn.
+- Confirm and Cancel return the saved result and a continuation snapshot in the API envelope when the original proposal tool call is available. The proposal transaction also reserves the continuation. Replaying the same action returns the same turn.
+- The continuation replaces the draft tool output with the committed outcome using the original tool call ID and streams the model's reply without inserting another user message. On confirmation, the model can carry out requested start or completion steps on the created task IDs. Cancellation does not expose task writes. Older proposals without a recorded tool call still show their saved outcome.
 
 ## Skills and Execution Policy Gate
 

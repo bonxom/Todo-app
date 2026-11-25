@@ -98,23 +98,27 @@ export function turnMessages(
   const expired =
     turn.status === "processing" && turn.expiresAt.getTime() < Date.now();
   return [
-    {
-      id: `${turn._id}:user`,
-      sender: "user",
-      ...(turn.selection
-        ? { replyToInteractionId: turn.selection.interactionId }
-        : {}),
-      text: turn.userInput,
-      ...(turn.attachments?.length
-        ? {
-            attachments: turn.attachments.map((file) => ({
-              ...file,
-              name: decodeFilename(file.name),
-            })),
-          }
-        : {}),
-      timestamp: turn.createdAt.toISOString(),
-    },
+    ...(!turn.proposalResolution
+      ? [
+          {
+            id: `${turn._id}:user`,
+            sender: "user",
+            ...(turn.selection
+              ? { replyToInteractionId: turn.selection.interactionId }
+              : {}),
+            text: turn.userInput,
+            ...(turn.attachments?.length
+              ? {
+                  attachments: turn.attachments.map((file) => ({
+                    ...file,
+                    name: decodeFilename(file.name),
+                  })),
+                }
+              : {}),
+            timestamp: turn.createdAt.toISOString(),
+          },
+        ]
+      : []),
     ...(turn.interactions ?? []).map((i) => ({
       id: `${turn._id}:${i.id}`,
       sender: "bot",
