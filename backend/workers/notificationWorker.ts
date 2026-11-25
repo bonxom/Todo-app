@@ -2,6 +2,7 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import { connectDB } from "../config/db.js";
 import { notificationRepository } from "../repositories/notificationRepository.js";
+import { pushSubscriptionRepository } from "../repositories/pushSubscriptionRepository.js";
 import { generateNotifications } from "../services/notificationGenerationService.js";
 import { runNotificationLoop } from "./notificationWorkerLoop.js";
 const controller = new AbortController();
@@ -11,6 +12,7 @@ process.once("SIGINT", stop);
 try {
   await connectDB();
   await notificationRepository.initIndexes();
+  await pushSubscriptionRepository.initIndexes();
   await runNotificationLoop(async () => {
     console.log(await generateNotifications());
   }, controller.signal);

@@ -15,6 +15,19 @@ const mockUpdateProfile = vi.fn();
 const mockChangePassword = vi.fn();
 const mockCreateCategory = vi.fn();
 const mockDeleteCategory = vi.fn();
+const mockLoadBrowserPushState = vi.fn();
+const mockEnableBrowserPush = vi.fn();
+const mockUpdateBrowserPushPrefs = vi.fn();
+const mockDisableBrowserPush = vi.fn();
+
+vi.mock("@/features/notifications/lib/pushSubscription", () => ({
+  DEFAULT_PUSH_PREFS: { taskDeadlines: true, agentReplies: true },
+  loadBrowserPushState: () => mockLoadBrowserPushState(),
+  enableBrowserPush: (...args: unknown[]) => mockEnableBrowserPush(...args),
+  updateBrowserPushPrefs: (...args: unknown[]) =>
+    mockUpdateBrowserPushPrefs(...args),
+  disableBrowserPush: (...args: unknown[]) => mockDisableBrowserPush(...args),
+}));
 
 vi.mock("@/features/profile/api/userQueries", () => ({
   useCurrentUserQuery: () => ({
@@ -106,6 +119,14 @@ describe("SettingsWorkspace", () => {
   beforeEach(async () => {
     localStorage.clear();
     vi.clearAllMocks();
+    mockLoadBrowserPushState.mockResolvedValue({
+      status: "disabled",
+      permission: "default",
+      serverSupported: true,
+      subscribed: false,
+      endpoint: null,
+      prefs: { taskDeadlines: true, agentReplies: true },
+    });
     await i18n.changeLanguage("en");
     initializeV2Palette();
     useSettingsStore.getState().resetSettings();
@@ -209,5 +230,79 @@ describe("SettingsWorkspace", () => {
       screen.getByText(/New password and confirmation must match/i),
     ).toBeInTheDocument();
     expect(mockChangePassword).not.toHaveBeenCalled();
+  });
+
+  it("enables browser push, toggles deadline & agent reply categories, and disables push in Settings", async () => {
+    mockEnableBrowserPush.mockResolvedValueOnce({
+      endpoint: "https://push.example/dev-1",
+      prefs: { taskDeadlines: true, agentReplies: true },
+    });
+    mockUpdateBrowserPushPrefs.mockResolvedValueOnce({
+      subscribed: true,
+      prefs: { taskDeadlines: true, agentReplies: false },
+    });
+    mockDisableBrowserPush.mockResolvedValueOnce({
+      endpoint: "https://push.example/dev-1",
+      removed: true,
+    });
+
+    const user = userEvent.setup();
+    renderSettings("v2");
+
+    await user.click(screen.getByRole("button", { name: /Notifications/i }));
+
+    const masterSwitch = await screen.findByRole("switch", {
+      name: /Push notifications on this browser/i,
+    });
+    await waitFor(() => expect(masterSwitch).not.toBeDisabled());
+    expect(masterSwitch).toHaveAttribute("aria-checked", "false");
+
+    await user.click(masterSwitch);
+    await waitFor(() => {
+      expect(mockEnableBrowserPush).toHaveBeenCalledTimes(1);
+    });
+    expect(masterSwitch).toHaveAttribute("aria-checked", "true");
+
+    const agentRepliesSwitch = screen.getByRole("switch", {
+      name: /AI Agent reply completed/i,
+    });
+    await user.click(agentRepliesSwitch);
+    await waitFor(() => {
+      expect(mockUpdateBrowserPushPrefs).toHaveBeenCalledWith(
+        "https://push.example/dev-1",
+        { agentReplies: false },
+      );
+    });
+    expect(agentRepliesSwitch).toHaveAttribute("aria-checked", "false");
+
+    await user.click(masterSwitch);
+    await waitFor(() => {
+      expect(mockDisableBrowserPush).toHaveBeenCalledWith(
+        "https://push.example/dev-1",
+      );
+    });
+    expect(masterSwitch).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("shows localized Vietnamese push settings and blocked permission hint", async () => {
+    mockLoadBrowserPushState.mockResolvedValueOnce({
+      status: "denied",
+      permission: "denied",
+      serverSupported: true,
+      subscribed: false,
+      endpoint: null,
+      prefs: { taskDeadlines: true, agentReplies: true },
+    });
+    await i18n.changeLanguage("vi");
+
+    const user = userEvent.setup();
+    renderSettings("v1");
+
+    await user.click(screen.getByRole("button", { name: /Thông báo/i }));
+    const masterSwitch = await screen.findByRole("switch", {
+      name: /Thông báo đẩy trên trình duyệt này/i,
+    });
+    expect(masterSwitch).toBeDisabled();
+    expect(screen.getByText(/trình duyệt đang chặn/i)).toBeInTheDocument();
   });
 });

@@ -33,6 +33,7 @@ import mongoose from "mongoose";
 import { generateNotifications } from "../notificationGenerationService.js";
 import { notificationTaskRepository as tasks } from "../../repositories/notificationTaskRepository.js";
 import { notificationRepository as notifications } from "../../repositories/notificationRepository.js";
+import { pushDispatchService } from "../pushDispatchService.js";
 afterEach(() => vi.restoreAllMocks());
 it.each(["completed", "given-up", "deleted", "changed"] as const)(
   "rechecks %s tasks before inserting",
@@ -72,4 +73,57 @@ it("fails the scan on persistence errors so the worker can retry", async () => {
     new Error("database offline"),
   );
   await expect(generateNotifications(due)).rejects.toThrow("database offline");
+});
+
+it("dispatches deadline push only for newly inserted notifications and ignores push errors", async () => {
+  const taskId1 = new mongoose.Types.ObjectId();
+  const taskId2 = new mongoose.Types.ObjectId();
+  const user1 = new mongoose.Types.ObjectId();
+  const user2 = new mongoose.Types.ObjectId();
+
+  vi.spyOn(tasks, "findCandidateIds")
+    .mockResolvedValueOnce(["t1", "t2"])
+    .mockResolvedValue([]);
+  vi.spyOn(tasks, "findCurrentCandidate")
+    .mockResolvedValueOnce({
+      taskId: taskId1,
+      status: "pending",
+      dueAt: due,
+      title: "Submit thesis",
+      recipientIds: [user1, user2],
+    })
+    .mockResolvedValueOnce({
+      taskId: taskId2,
+      status: "in-progress",
+      dueAt: due,
+      title: "Already notified",
+      recipientIds: [user1],
+    });
+
+  vi.spyOn(notifications, "insertOnce")
+    .mockResolvedValueOnce(true)
+    .mockResolvedValueOnce(true)
+    .mockResolvedValueOnce(false);
+
+  const pushSpy = vi
+    .spyOn(pushDispatchService, "notifyDeadline")
+    .mockRejectedValueOnce(new Error("push transport error"))
+    .mockResolvedValueOnce({ sent: 1, removed: 0, failed: 0 });
+
+  const summary = await generateNotifications(due);
+
+  expect(summary).toEqual({ scanned: 2, inserted: 2 });
+  expect(pushSpy).toHaveBeenCalledTimes(2);
+  expect(pushSpy).toHaveBeenNthCalledWith(1, {
+    recipientId: user1.toString(),
+    taskId: taskId1.toString(),
+    type: "overdue",
+    taskTitle: "Submit thesis",
+  });
+  expect(pushSpy).toHaveBeenNthCalledWith(2, {
+    recipientId: user2.toString(),
+    taskId: taskId1.toString(),
+    type: "overdue",
+    taskTitle: "Submit thesis",
+  });
 });
