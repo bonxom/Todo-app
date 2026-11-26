@@ -20,6 +20,7 @@ import {
   toProposalView,
 } from "./A2UI/taskProposalGenerationService.js";
 import { uiPresentationService } from "./A2UI/uiPresentationService.js";
+import { uiActionService } from "./A2UI/uiActionService.js";
 import { projectPersistedProposal } from "../utils/agentActivity.js";
 import { taskProposalRepository } from "../repositories/A2UI/taskProposalRepository.js";
 import {
@@ -57,6 +58,7 @@ export async function runConversationTurn(
     const outcome: TurnOutcome = {
       status,
       result: {
+        turnId: turn._id,
         conversationId: turn.conversationId,
         status,
         response: interaction
@@ -66,6 +68,9 @@ export async function runConversationTurn(
             : undefined,
         ...(interaction ? { interaction: publicInteraction(interaction) } : {}),
         ...(envelope.surface ? { surface: envelope.surface } : {}),
+        ...(envelope.actionBindings
+          ? { actionBindings: envelope.actionBindings }
+          : {}),
         ...(envelope.companionText
           ? { companionText: envelope.companionText }
           : {}),
@@ -161,10 +166,12 @@ export async function runConversationTurn(
           turn.conversationId,
         )));
     const userId = String(context.user._id);
-    const [confirmedProposals, cancelledProposals] = await Promise.all([
-      taskProposalRepository.findRecentConfirmed(userId, turn.conversationId),
-      taskProposalRepository.findRecentCancelled(userId, turn.conversationId),
-    ]);
+    const [confirmedProposals, cancelledProposals, uiActionOutcomes] =
+      await Promise.all([
+        taskProposalRepository.findRecentConfirmed(userId, turn.conversationId),
+        taskProposalRepository.findRecentCancelled(userId, turn.conversationId),
+        uiActionService.recentOutcomes(userId, turn.conversationId),
+      ]);
     execution?.signal.throwIfAborted();
     const response = await agentService.chatWithMcp(
       turn.userInput,
@@ -203,6 +210,7 @@ export async function runConversationTurn(
           ),
         confirmedProposals,
         cancelledProposals,
+        uiActionOutcomes,
         history,
         proposalResolution: resolution,
         answeredClarification:
@@ -281,6 +289,35 @@ export async function runConversationTurn(
         const envelope = uiPresentationService.forTurn(completedTurn);
         return resultFor(completedTurn, {
           surface: envelope.surface,
+          text: envelope.text,
+          companionText: envelope.companionText,
+        });
+      }
+      if ("interactiveSurface" in response) {
+        const storedSurface = response.interactiveSurface;
+        const storedResponse =
+          response.companionText || storedSurface.spec.fallbackText;
+        await finish(
+          turn._id,
+          storedResponse,
+          "completed",
+          turn.executionToken,
+          undefined,
+          latestSkillsRead,
+          storedSurface,
+        );
+        const completedTurn: ChatTurn = {
+          ...turn,
+          activities: latestActivities,
+          status: "completed",
+          response: storedResponse,
+          skillsRead: latestSkillsRead,
+          uiSurface: storedSurface,
+        };
+        const envelope = uiPresentationService.forTurn(completedTurn);
+        return resultFor(completedTurn, {
+          surface: envelope.surface,
+          actionBindings: envelope.actionBindings,
           text: envelope.text,
           companionText: envelope.companionText,
         });

@@ -19,6 +19,10 @@ import { uiPresentationService } from "./A2UI/uiPresentationService.js";
 import { uiActionService } from "./A2UI/uiActionService.js";
 import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
 import {
+  isUiCompositionEnabled,
+  isUiInteractiveEnabled,
+} from "../config/A2UI/composition.js";
+import {
   deduplicateActivities,
   projectPersistedProposal,
 } from "../utils/agentActivity.js";
@@ -124,8 +128,13 @@ export const conversationService = {
       }
     }
 
+    const interactiveUi = isUiCompositionEnabled() && isUiInteractiveEnabled();
     return {
-      capabilities: { taskProposals: isTaskProposalsEnabled() },
+      capabilities: {
+        taskProposals: isTaskProposalsEnabled(),
+        interactiveUi,
+        uiActions: interactiveUi ? ["task.complete"] : [],
+      },
       conversationId: conversation._id,
       title: conversation.title,
       mode: conversation.mode ?? "auto",

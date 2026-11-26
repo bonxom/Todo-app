@@ -4,6 +4,7 @@ import { isTaskProposalsEnabled } from "../../config/A2UI/a2ui.js";
 import {
   UI_SKILL_IDS,
   isUiCompositionEnabled,
+  isUiInteractiveEnabled,
 } from "../../config/A2UI/composition.js";
 import { getSkillRegistry } from "../../skills/registry.js";
 import { SkillError, type SkillRegistry } from "../../skills/types.js";
@@ -11,7 +12,9 @@ import { createAgentSkillSession } from "../agentSkillService.js";
 import {
   buildUiSkillRequirements,
   formatDeveloperUiSkillContext,
+  parseInteractiveUiToolInput,
   parseUiToolInput,
+  presentInteractiveUiTool,
   presentUiTool,
   readUiCompanionText,
   resolveUiCapability,
@@ -27,12 +30,45 @@ describe("agentUiCapability", () => {
     vi.unstubAllEnvs();
   });
 
-  it("defaults A2UI_COMPOSITION_ENABLED and A2UI_TASK_PROPOSALS_ENABLED to true", () => {
+  it("defaults A2UI_COMPOSITION_ENABLED and A2UI_TASK_PROPOSALS_ENABLED to true and A2UI_INTERACTIVE_ENABLED to false", () => {
     vi.stubEnv("A2UI_COMPOSITION_ENABLED", undefined);
     vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", undefined);
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", undefined);
     expect(isUiCompositionEnabled()).toBe(true);
     expect(isTaskProposalsEnabled()).toBe(true);
+    expect(isUiInteractiveEnabled()).toBe(false);
     expect(UI_SKILL_IDS).toEqual(["ui-composition"]);
+  });
+
+  it("requires ui-composition skill for present_interactive_ui and excludes interactive guidance when disabled", async () => {
+    const registry = await getSkillRegistry();
+
+    vi.stubEnv("A2UI_COMPOSITION_ENABLED", "true");
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "false");
+    const capDisabled = resolveUiCapability(registry);
+    expect(formatDeveloperUiSkillContext(registry, capDisabled)).not.toContain(
+      "present_interactive_ui",
+    );
+
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "true");
+    const capEnabled = resolveUiCapability(registry);
+    const reqs = buildUiSkillRequirements(registry, capEnabled);
+    expect(reqs.get("present_interactive_ui")?.length).toBeGreaterThan(0);
+    expect(formatDeveloperUiSkillContext(registry, capEnabled)).toContain(
+      "present_interactive_ui",
+    );
+    expect(presentInteractiveUiTool.type).toBe("function");
+    if (presentInteractiveUiTool.type === "function") {
+      expect(presentInteractiveUiTool.function.name).toBe(
+        "present_interactive_ui",
+      );
+      const schemaStr = JSON.stringify(
+        presentInteractiveUiTool.function.parameters,
+      );
+      expect(schemaStr).toContain("Button");
+      expect(schemaStr).toContain("task.complete");
+      expect(schemaStr).toContain("actions");
+    }
   });
 
   it("evaluates all flag combinations independently", async () => {
@@ -182,7 +218,7 @@ describe("agentUiCapability", () => {
     const jsonBlocks = [
       ...skillDoc.text.matchAll(/```json\r?\n([\s\S]*?)```/g),
     ].map((m) => JSON.parse(m[1]));
-    expect(jsonBlocks).toHaveLength(3);
+    expect(jsonBlocks).toHaveLength(4);
     const { companionText, ...readOnlySpec } = jsonBlocks[0];
     expect(readUiCompanionText(companionText)).toBe(companionText);
     expect(() => parseUiToolInput(readOnlySpec, "readonly")).not.toThrow();
@@ -193,5 +229,11 @@ describe("agentUiCapability", () => {
     expect(() =>
       parseUiToolInput(jsonBlocks[2].presentation, "proposal"),
     ).not.toThrow();
+    const { companionText: interactiveCompanionText, ...interactiveSpec } =
+      jsonBlocks[3];
+    expect(readUiCompanionText(interactiveCompanionText)).toBe(
+      interactiveCompanionText,
+    );
+    expect(() => parseInteractiveUiToolInput(interactiveSpec)).not.toThrow();
   });
 });

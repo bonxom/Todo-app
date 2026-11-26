@@ -6,6 +6,10 @@ import { conversationService } from "../services/conversationService.js";
 import { conversationContextService } from "../services/conversationContextService.js";
 import { aiService } from "../services/aiService.js";
 import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
+import {
+  isUiCompositionEnabled,
+  isUiInteractiveEnabled,
+} from "../config/A2UI/composition.js";
 
 export const generateTasksWithRequirement = async (
   req: Request,
@@ -120,7 +124,12 @@ export const getConversationCapabilities = async (
   _req: Request,
   res: Response,
 ): Promise<void> => {
-  res.json({ taskProposals: isTaskProposalsEnabled() });
+  const interactiveUi = isUiCompositionEnabled() && isUiInteractiveEnabled();
+  res.json({
+    taskProposals: isTaskProposalsEnabled(),
+    interactiveUi,
+    uiActions: interactiveUi ? ["task.complete"] : [],
+  });
 };
 
 export const updateConversationContext = async (

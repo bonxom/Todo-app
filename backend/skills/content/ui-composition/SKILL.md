@@ -4,65 +4,70 @@ The versioned catalog schema defines the available A2UI components and permissio
 
 ## 1. Choose the response mode
 
-- **Plain text** suits brief answers, acknowledgements, and simple follow-ups.
-- **Read-only UI (`present_ui`)** suits informational plans, schedules, metrics, diagrams, and comparisons.
-- **Task proposal (`propose_tasks`)** suits actionable drafts the user intends to review or create. Omit `presentation` by default. Add it if a supporting visual helps the confirmation decision.
-- Use plain text or the standard proposal flow when UI composition is unavailable. Describe the actual result.
+- **Plain text:** brief answers, acknowledgements, and simple follow-ups.
+- **Read-only UI (`present_ui`):** informational plans, schedules, metrics, diagrams, and comparisons.
+- **Interactive task UI (`present_interactive_ui`):** existing owned tasks where a `Button` lets the user complete a task directly from chat (only when enabled). Never use during task proposals or proposal continuations.
+- **Task proposal (`propose_tasks`):** actionable drafts for review/creation. Omit `presentation` by default unless a visual materially helps confirmation.
+- Fall back to plain text or standard proposals when UI composition is unavailable.
 
 ## 2. Available components
 
-### Presentation (layout and read-only content)
+### Presentation
 
-- **`Column`** (`children: string[]`, `gap: "none" | "sm" | "md" | "lg"`): Vertical reading order; default root layout.
-- **`Row`** (`children: string[]`, `gap: "none" | "sm" | "md" | "lg"`): Place 2–3 peer `Stat`s or short `Card`s side by side; wraps on small screens.
-- **`Card`** (`children: string[]`, `title?: string`, `subtitle?: string`, `tone?: "default" | "accent" | "muted"`): Group related nodes into a themed section.
-- **`Text`** (`value: { literal: scalar } | { path: "/display/<key>" }`, `emphasis: "normal" | "muted" | "heading"`): Heading, insight, note, or summary. Plain text only.
-- **`Stat`** (`label: string`, `value: { literal: scalar } | { path: "/display/<key>" }`, `caption?: string`, `progress?: 0..100`, `tone?: "default" | "accent" | "success" | "warning" | "danger"`): KPI metric card with optional progress bar.
-- **`Table`** (`columns: { key: string; label: string }[]`, `rowsPath: "/display/<key>"`): Comparable records (1–12 unique columns, 0–50 rows).
-- **`Chart`** (`chartType: "bar" | "line" | "doughnut"`, `title?: string`, `rowsPath: "/display/<key>"`, `labelKey: string`, `series: { key: string; label: string }[]`): Numeric comparisons (`bar`), trends (`line`), or share of total (`doughnut`). 1–4 numeric series (`doughnut`: 1 non-negative series).
-- **`Diagram`** (`title?: string`, `value: { literal: string } | { path: "/display/<key>" }`): Mermaid diagram (`flowchart`, `sequenceDiagram`, `stateDiagram-v2`) up to 4,000 chars.
+- **`Column`** (`children: string[]`, `gap: "none" | "sm" | "md" | "lg"`): Vertical layout; default root.
+- **`Row`** (`children: string[]`, `gap: "none" | "sm" | "md" | "lg"`): 2–3 peer `Stat` or short `Card` nodes; wraps on narrow screens.
+- **`Card`** (`children: string[]`, `title?`, `subtitle?`, `tone?: "default" | "accent" | "muted"`): Group related nodes.
+- **`Text`** (`value: { literal: scalar } | { path: "/display/<key>" }`, `emphasis: "normal" | "muted" | "heading"`): Plain text insight or summary.
+- **`Stat`** (`label`, `value: { literal: scalar } | { path: "/display/<key>" }`, `caption?`, `progress?: 0..100`, `tone?: "default" | "accent" | "success" | "warning" | "danger"`): KPI metric card.
+- **`Table`** (`columns: { key, label }[]`, `rowsPath: "/display/<key>"`): 1–12 unique columns, 0–50 rows.
+- **`Chart`** (`chartType: "bar" | "line" | "doughnut"`, `title?`, `rowsPath: "/display/<key>"`, `labelKey`, `series: { key, label }[]`): 1–4 numeric series (`doughnut`: 1 non-negative series).
+- **`Diagram`** (`title?`, `value: { literal: string } | { path: "/display/<key>" }`): Mermaid (`flowchart`, `sequenceDiagram`, `stateDiagram-v2`), max 4,000 chars.
 
 `scalar = string | number | boolean | null`. Labels must be descriptive.
 
+### Interactive controls (`present_interactive_ui` only)
+
+- **`Button`** (`label` 1–120 chars, `actionKey`): Triggers `actions[actionKey]`.
+- Supported `actions` entry: **`{ "name": "task.complete", "taskId": "<24-hex ObjectId>" }`**.
+
 ### Domain (task proposal only)
 
-- **`TaskProposalForm`**: Complete task editor and save/confirm/cancel flow for simple proposals.
-- **`TaskList`**: Editable/selectable tasks within a composed proposal.
-- **`TaskProposalActions`**: Shared save/confirm/cancel controls for `TaskList` (include exactly one with `TaskList`).
+- **`TaskProposalForm`**: Full editor + save/confirm/cancel for simple proposals.
+- **`TaskList`** + **`TaskProposalActions`**: Selectable/editable tasks paired with shared save/confirm/cancel controls.
 
 ## 3. How to select components
 
-Choose for the user's information need, not for decoration.
+Choose for the user's information need, not decoration:
 
-- **`Text`:** Headings, insights, and concise explanations; avoid when multi-row data or metrics belong in `Stat`, `Chart`, or `Table`.
-- **`Column` / `Row`:** `Column` for top-to-bottom sections; `Row` to compare 2–3 `Stat` cards or short `Card`s at a glance.
-- **`Card`:** Group nodes belonging to one day, project, or section (`title`/`tone` add hierarchy); avoid boxing a single sentence or nesting deeply.
-- **`Stat`:** Highlight 1–4 key numbers, targets, or completion percentages (`progress`); avoid for long prose.
-- **`Chart`:** Visualize numeric distributions (`bar`), time trends (`line`), or proportions (`doughnut`); avoid when data is non-numeric or has fewer than 2 points.
-- **`Diagram`:** Show workflows, dependencies, state transitions, or roadmaps in Mermaid; avoid for simple linear lists.
-- **`Table`:** Compare multiple items sharing exact text and numeric attributes; avoid for narrative content.
-- **`TaskProposalForm` vs `TaskList` + `TaskProposalActions`:** Use the default form when tasks stand alone; split into `TaskList` + `TaskProposalActions` when supporting `Stat`, `Chart`, `Diagram`, `Card`, or `Table` nodes materially help review tasks.
+- **`Text`:** Headings and concise takeaways; avoid for multi-row metrics.
+- **`Column` / `Row`:** Vertical sections vs 2–3 peer `Stat`/`Card` comparison.
+- **`Card`:** Group one day, project, or task; avoid shallow boxing or deep nesting.
+- **`Stat`:** 1–4 key numbers or progress percentages.
+- **`Chart`:** Distributions (`bar`), trends (`line`), shares (`doughnut`) with >= 2 numeric points.
+- **`Diagram`:** Workflows, dependencies, or states in Mermaid.
+- **`Table`:** Multi-item comparison across exact columns.
+- **`TaskProposalForm` vs `TaskList` + `TaskProposalActions`:** Split only when supporting visuals aid review.
 
 ### Common patterns
 
-- **Simple fact:** plain text. **KPI summary:** `Row` of 2–3 `Stat` nodes above a `Card` or `Chart`.
-- **Visual breakdown:** `Column` with `Row` of `Stat`s + `Chart` (`bar` or `doughnut`) + `Table`.
-- **Roadmap / workflow:** `Card` pairing a `Diagram` (`flowchart LR`) with key `Text` or `Table` milestones.
-- **Simple tasks:** `propose_tasks` without `presentation`. **Rich tasks:** supporting `Stat`/`Chart`/`Diagram`/`Table` with `TaskList` and `TaskProposalActions`.
+- **Simple fact:** plain text. **KPI summary:** `Row` of `Stat`s + `Card`/`Chart`.
+- **Breakdown:** `Column` of `Stat` `Row` + `Chart` + `Table`.
+- **Workflow:** `Card` with `Diagram` (`flowchart LR`) + milestones.
+- **Simple tasks:** `propose_tasks` without `presentation`. **Rich tasks:** visuals + `TaskList` + `TaskProposalActions`.
+- **Interactive task card:** `Card` with summary `Text` + `Button` (`task.complete`).
 
 ## 4. Authoring contract and safety
 
-Both tools take top-level `companionText` (1–600 characters). Answer or explain the suggestions in one or two sentences in the user's language. This text appears above the UI.
-
-`present_ui` adds `companionText` to the `SurfaceSpec` fields. `propose_tasks` takes `companionText`, `items`, and optional `presentation: SurfaceSpec`. A stored or nested `SurfaceSpec` has `fallbackText` (1–8,000 chars), `components`, and `displayData`.
+UI tools take top-level `companionText` (1–600 chars) in the user's language. `SurfaceSpec`: `fallbackText` (1–8,000 chars), `components`, `displayData`.
 
 ### Graph and binding constraints
 
-- One `root`; every other node has one parent and is reachable. No cycles, duplicate IDs, or missing references.
-- IDs and keys: `[A-Za-z][A-Za-z0-9_]{0,63}`; no reserved/prototype names. Max **100 nodes**, **depth 10** (root = 1).
-- Bind only `/display/<key>` in `displayData`. `Text`/`Stat`: scalar. `Diagram`: non-empty string (`<= 4000` chars). `Table`: 0–50 rows matching 1–12 unique column keys. `Chart`: 0–50 rows with non-null `labelKey` and finite numeric values for every declared `series` key (`doughnut`: 1 series, values `>= 0`).
-- Read-only `present_ui`: **no task nodes or write actions**. Proposal presentation: **one `TaskProposalForm`** OR **one `TaskList` and one `TaskProposalActions`**.
-- Server injects proposal state and `save`/`confirm`/`cancel` actions. Never author ownership, IDs, revisions, handlers, API endpoints, or executable HTML/CSS/JS. Ground user data in verified tools; label estimates as suggestions. Limits: **128 KiB** envelope and **16 A2UI messages**.
+- One `root`; every other node has one parent and is reachable; no cycles/duplicates/dangling refs.
+- Keys: `[A-Za-z][A-Za-z0-9_]{0,63}`; no reserved/prototype names. Max **100 nodes**, **depth 10**.
+- Bind only `/display/<key>` in `displayData`: `Text`/`Stat` scalar, `Diagram` non-empty `<= 4000` chars, `Table` 0–50 rows matching columns, `Chart` 0–50 rows with finite series values.
+- `present_ui`: **no task/Button nodes or actions**. Proposal presentation: **one `TaskProposalForm`** OR **one `TaskList` + one `TaskProposalActions`**.
+- `present_interactive_ui`: **no proposal nodes**, **1–10 `actions`**, every `Button.actionKey` matches `actions`, and every `taskId` comes from a verified read tool. **Never call write tools (e.g., `orbit_update_task`) merely to render an interactive surface.**
+- Server injects proposal state/actions or interactive `actionBindings` + `/actionState/<key>`. Never author ownership, IDs, revisions, handlers, endpoints, or HTML/CSS/JS. Limits: **128 KiB** envelope, **16 A2UI messages**.
 
 ## 5. Examples
 
@@ -90,7 +95,7 @@ Both tools take top-level `companionText` (1–600 characters). Answer or explai
       "component": "Stat",
       "label": "Weekly Load",
       "value": { "literal": "5.5h" },
-      "caption": "2 combined sessions",
+      "caption": "2 sessions",
       "progress": 70,
       "tone": "accent"
     },
@@ -107,7 +112,7 @@ Both tools take top-level `companionText` (1–600 characters). Answer or explai
       "id": "chartCard",
       "component": "Card",
       "title": "Hours by Activity",
-      "subtitle": "Illustrative weekly split",
+      "subtitle": "Weekly split",
       "tone": "default",
       "children": ["hoursChart"]
     },
@@ -191,8 +196,46 @@ Both tools take top-level `companionText` (1–600 characters). Answer or explai
       { "id": "editor", "component": "TaskList" },
       { "id": "actions", "component": "TaskProposalActions" }
     ],
-    "displayData": {
-      "rationale": "These are suggestions. Choose and adjust tasks before confirming."
+    "displayData": { "rationale": "Choose and adjust tasks before confirming." }
+  }
+}
+```
+
+### D. Interactive task completion card (`present_interactive_ui`)
+
+```json
+{
+  "companionText": "Click Complete when you finish preparing the slide deck.",
+  "fallbackText": "Prepare demo slides — Pending action: Mark completed.",
+  "components": [
+    {
+      "id": "root",
+      "component": "Card",
+      "title": "Prepare demo slides",
+      "subtitle": "In progress",
+      "tone": "accent",
+      "children": ["summaryText", "completeBtn"]
+    },
+    {
+      "id": "summaryText",
+      "component": "Text",
+      "value": { "path": "/display/summary" },
+      "emphasis": "normal"
+    },
+    {
+      "id": "completeBtn",
+      "component": "Button",
+      "label": "Mark completed",
+      "actionKey": "completeDemoSlides"
+    }
+  ],
+  "displayData": {
+    "summary": "This task is ready to mark completed from chat."
+  },
+  "actions": {
+    "completeDemoSlides": {
+      "name": "task.complete",
+      "taskId": "0123456789abcdef01234567"
     }
   }
 }
@@ -200,4 +243,4 @@ Both tools take top-level `companionText` (1–600 characters). Answer or explai
 
 ## 6. Before submitting a UI tool call
 
-Check that UI is better than text; mode matches user intent; components are minimal and connected; data paths and table/chart keys resolve; user-specific claims are grounded; task proposals include their required nodes; and fallback text is meaningful. If optional proposal presentation fails validation or authorization, **keep valid proposed tasks** and use the standard form instead.
+Check that UI is better than text; mode matches user intent; components are minimal and connected; data paths and keys resolve; claims are grounded; proposal/interactive rules hold; and fallback text is clear.

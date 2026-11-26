@@ -49,12 +49,40 @@ describe("Task Proposal Capability", () => {
     );
 
     vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "true");
+    vi.stubEnv("A2UI_COMPOSITION_ENABLED", "true");
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "false");
     const res = await request(app)
       .get("/api/ai/conversations/capabilities")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ taskProposals: true });
+    expect(res.body).toEqual({
+      taskProposals: true,
+      interactiveUi: false,
+      uiActions: [],
+    });
+
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "true");
+    const interactiveRes = await request(app)
+      .get("/api/ai/conversations/capabilities")
+      .set("Authorization", `Bearer ${token}`);
+    expect(interactiveRes.status).toBe(200);
+    expect(interactiveRes.body).toEqual({
+      taskProposals: true,
+      interactiveUi: true,
+      uiActions: ["task.complete"],
+    });
+
+    vi.stubEnv("A2UI_COMPOSITION_ENABLED", "false");
+    const noCompRes = await request(app)
+      .get("/api/ai/conversations/capabilities")
+      .set("Authorization", `Bearer ${token}`);
+    expect(noCompRes.status).toBe(200);
+    expect(noCompRes.body).toEqual({
+      taskProposals: true,
+      interactiveUi: false,
+      uiActions: [],
+    });
   });
 
   it("requires authentication for capabilities endpoint", async () => {

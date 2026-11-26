@@ -120,6 +120,7 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
   });
   afterEach(() => {
     vi.stubEnv("A2UI_TASK_PROPOSALS_ENABLED", "false");
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "false");
     completion.mockReset();
     vi.restoreAllMocks();
   });
@@ -1873,5 +1874,249 @@ describe.skipIf(!uri)("persistent conversations HTTP + MCP + MongoDB", () => {
     expect(continuationContext).toContain(
       "Use confirmed tasks as existing work when drafting follow-up plans",
     );
+  });
+
+  it("persists interactive surfaces, injects up to 3 scoped action receipts into later turns, and handles runtime flag-off fallback", async () => {
+    vi.stubEnv("A2UI_COMPOSITION_ENABLED", "true");
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "true");
+    const conversationId = await create();
+    const otherConversationId = await create();
+    const foreignConversationId = randomUUID();
+    expect(
+      (
+        await post(
+          "conversations",
+          { conversationId: foreignConversationId },
+          1,
+        )
+      ).status,
+    ).toBe(201);
+
+    const [user0Category, user1Category] = await Promise.all([
+      Category.findOne({ userId: users[0], name: "Uncategorized" }).lean(),
+      Category.findOne({ userId: users[1], name: "Uncategorized" }).lean(),
+    ]);
+    expect(user0Category?._id).toBeTruthy();
+    expect(user1Category?._id).toBeTruthy();
+
+    const ownedTasks = await Task.create([
+      {
+        categoryId: user0Category!._id,
+        title: "First milestone task",
+        status: "in-progress",
+        priority: "High",
+      },
+      {
+        categoryId: user0Category!._id,
+        title: "Second milestone task",
+        status: "in-progress",
+        priority: "Medium",
+      },
+      {
+        categoryId: user0Category!._id,
+        title: "Third milestone task",
+        status: "in-progress",
+        priority: "Low",
+      },
+      {
+        categoryId: user0Category!._id,
+        title: "Fourth milestone task",
+        status: "in-progress",
+        priority: "Low",
+      },
+      {
+        categoryId: user0Category!._id,
+        title: "Other conversation task",
+        status: "in-progress",
+        priority: "Low",
+      },
+      {
+        categoryId: user1Category!._id,
+        title: "Foreign user secret task",
+        status: "in-progress",
+        priority: "Low",
+      },
+    ]);
+
+    const makeInteractiveSpec = (taskIds: string[], fallbackText: string) => ({
+      companionText: "Tap below when done.",
+      fallbackText,
+      components: [
+        {
+          id: "root",
+          component: "Column",
+          children: taskIds.map((_, idx) => `btn_${idx}`),
+          gap: "sm",
+        },
+        ...taskIds.map((_, idx) => ({
+          id: `btn_${idx}`,
+          component: "Button",
+          label: `Complete ${idx}`,
+          actionKey: `act_${idx}`,
+        })),
+      ],
+      displayData: {},
+      actions: Object.fromEntries(
+        taskIds.map((id, idx) => [
+          `act_${idx}`,
+          { name: "task.complete", taskId: id },
+        ]),
+      ),
+    });
+
+    // 1. Present 4 actions in primary conversation, 1 in other conversation, 1 in foreign user's conversation
+    completion
+      .mockResolvedValueOnce(tool("load_skill", { skillId: "ui-composition" }))
+      .mockResolvedValueOnce(
+        tool(
+          "present_interactive_ui",
+          makeInteractiveSpec(
+            ownedTasks.slice(0, 4).map((t) => String(t._id)),
+            "Fallback interactive summary",
+          ),
+        ),
+      );
+    const turnRes = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "Show my four milestone tasks",
+      mode: "auto",
+    });
+    expect(turnRes.status).toBe(200);
+    expect(turnRes.body.turnId).toBeTruthy();
+    expect(turnRes.body.surface?.a2ui?.catalogId).toBe(
+      "urn:orbit:a2ui:interactive:v1",
+    );
+    expect(turnRes.body.actionBindings).toHaveLength(4);
+
+    // Other conversation for same user
+    completion
+      .mockResolvedValueOnce(tool("load_skill", { skillId: "ui-composition" }))
+      .mockResolvedValueOnce(
+        tool(
+          "present_interactive_ui",
+          makeInteractiveSpec(
+            [String(ownedTasks[4]._id)],
+            "Other conversation fallback",
+          ),
+        ),
+      );
+    const otherTurnRes = await post("chat-mcp", {
+      conversationId: otherConversationId,
+      requestId: randomUUID(),
+      userInput: "Show other conversation task",
+      mode: "auto",
+    });
+    expect(otherTurnRes.status).toBe(200);
+
+    // Foreign user conversation
+    completion
+      .mockResolvedValueOnce(tool("load_skill", { skillId: "ui-composition" }))
+      .mockResolvedValueOnce(
+        tool(
+          "present_interactive_ui",
+          makeInteractiveSpec(
+            [String(ownedTasks[5]._id)],
+            "Foreign user fallback",
+          ),
+        ),
+      );
+    const foreignTurnRes = await post(
+      "chat-mcp",
+      {
+        conversationId: foreignConversationId,
+        requestId: randomUUID(),
+        userInput: "Show foreign task",
+        mode: "auto",
+      },
+      1,
+    );
+    expect(foreignTurnRes.status).toBe(200);
+
+    // 2. Commit 4 actions in primary conversation, 1 in other conversation, 1 in foreign conversation, plus 1 invalid/uncommitted attempt
+    for (const binding of turnRes.body.actionBindings) {
+      const actRes = await post(
+        `conversations/${conversationId}/turns/${turnRes.body.turnId}/surfaces/${turnRes.body.surface.a2ui.surfaceId}/actions`,
+        { requestId: randomUUID(), actionId: binding.id },
+      );
+      expect(actRes.status).toBe(200);
+    }
+    const uncommittedRes = await post(
+      `conversations/${conversationId}/turns/${turnRes.body.turnId}/surfaces/${turnRes.body.surface.a2ui.surfaceId}/actions`,
+      { requestId: randomUUID(), actionId: randomUUID() },
+    );
+    expect(uncommittedRes.status).toBe(404);
+
+    await post(
+      `conversations/${otherConversationId}/turns/${otherTurnRes.body.turnId}/surfaces/${otherTurnRes.body.surface.a2ui.surfaceId}/actions`,
+      {
+        requestId: randomUUID(),
+        actionId: otherTurnRes.body.actionBindings[0].id,
+      },
+    );
+    await post(
+      `conversations/${foreignConversationId}/turns/${foreignTurnRes.body.turnId}/surfaces/${foreignTurnRes.body.surface.a2ui.surfaceId}/actions`,
+      {
+        requestId: randomUUID(),
+        actionId: foreignTurnRes.body.actionBindings[0].id,
+      },
+      1,
+    );
+
+    // 3. Reload conversation: capabilities include interactiveUi and uiActions; bounded outcomes attached
+    const reloadRes = await get(`conversations/${conversationId}`);
+    expect(reloadRes.status).toBe(200);
+    expect(reloadRes.body.data.capabilities).toEqual({
+      taskProposals: false,
+      interactiveUi: true,
+      uiActions: ["task.complete"],
+    });
+    expect(reloadRes.body.data.messages[1].uiActionOutcomes).toHaveLength(3);
+
+    // 4. Next turn in primary conversation: provider system prompt contains the latest 3 receipts ONLY, title labelled as data, and requires fresh reads
+    let nextSystemMessage = "";
+    completion.mockImplementationOnce(async ({ messages }) => {
+      nextSystemMessage =
+        messages.find((m: { role: string }) => m.role === "system")?.content ??
+        "";
+      return answer("Acknowledged completed actions.");
+    });
+    const nextTurnRes = await post("chat-mcp", {
+      conversationId,
+      requestId: randomUUID(),
+      userInput: "What tasks were just completed?",
+      mode: "auto",
+    });
+    expect(nextTurnRes.status).toBe(200);
+    expect(nextSystemMessage).toContain(
+      "Recent UI action outcomes (server data",
+    );
+    expect(nextSystemMessage).toContain("Fourth milestone task");
+    expect(nextSystemMessage).toContain("Third milestone task");
+    expect(nextSystemMessage).toContain("Second milestone task");
+    expect(nextSystemMessage).not.toContain("First milestone task");
+    expect(nextSystemMessage).not.toContain("Other conversation task");
+    expect(nextSystemMessage).not.toContain("Foreign user secret task");
+    expect(nextSystemMessage).toContain("fresh");
+
+    // 5. Runtime flag-off: reload falls back to text and mutation rejects with 409
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "false");
+    const flagOffReload = await get(`conversations/${conversationId}`);
+    expect(flagOffReload.status).toBe(200);
+    expect(flagOffReload.body.data.capabilities.interactiveUi).toBe(false);
+    expect(flagOffReload.body.data.capabilities.uiActions).toEqual([]);
+    expect(flagOffReload.body.data.messages[1].surface).toBeUndefined();
+    expect(flagOffReload.body.data.messages[1].text).toBe(
+      "Tap below when done.",
+    );
+
+    const flagOffAction = await post(
+      `conversations/${conversationId}/turns/${turnRes.body.turnId}/surfaces/${turnRes.body.surface.a2ui.surfaceId}/actions`,
+      {
+        requestId: randomUUID(),
+        actionId: turnRes.body.actionBindings[0].id,
+      },
+    );
+    expect(flagOffAction.status).toBe(409);
   });
 });

@@ -86,6 +86,7 @@ describe("in-memory MCP chat", () => {
 });
 
 import { taskWriteService } from "../../mcp/services/taskWriteService.js";
+import { taskCommandService } from "../taskCommandService.js";
 import { completeMenuMessages } from "../../utils/agentMessages.js";
 import { grillUserSchema } from "../../validations/agentValidation.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions.js";
@@ -554,5 +555,58 @@ describe("Automatic task proposal selection", () => {
     ).resolves.toEqual({
       proposalItems: [{ title: "Legacy task" }],
     });
+  });
+
+  it("keeps orbit_update_task exposed and usable for direct completion requests when A2UI_INTERACTIVE_ENABLED is true", async () => {
+    vi.stubEnv("A2UI_COMPOSITION_ENABLED", "true");
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "true");
+    const updateTask = vi
+      .spyOn(taskCommandService, "update")
+      .mockResolvedValueOnce({
+        task: {
+          id: "507f1f77bcf86cd799439022",
+          title: "Submit report",
+          description: null,
+          status: "completed",
+          priority: "Medium",
+          startDate: null,
+          dueDate: null,
+          completedAt: "2026-11-27T00:00:00.000Z",
+          categoryId: null,
+          projectId: null,
+          createdAt: "2026-11-26T00:00:00.000Z",
+          updatedAt: "2026-11-27T00:00:00.000Z",
+        },
+      });
+
+    completionCreate
+      .mockResolvedValueOnce(
+        response(
+          call("complete-1", "orbit_update_task", {
+            idempotencyKey: "complete-request-123456",
+            taskId: "507f1f77bcf86cd799439022",
+            changes: { status: "completed" },
+          }),
+        ),
+      )
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: "Marked Submit report as completed.",
+            },
+          },
+        ],
+      });
+
+    await expect(
+      agentService.chatWithMcp("Mark task Submit report completed", askContext),
+    ).resolves.toBe("Marked Submit report as completed.");
+    const exposedTools = completionCreate.mock.calls[0][0].tools.map(
+      (tool: { function: { name: string } }) => tool.function.name,
+    );
+    expect(exposedTools).toContain("orbit_update_task");
+    expect(updateTask).toHaveBeenCalledOnce();
   });
 });

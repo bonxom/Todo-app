@@ -18,6 +18,9 @@ vi.mock("../../config/env.js", () => ({
 import { agentService } from "../agentService.js";
 import { categoryService } from "../categoryService.js";
 import { personalSkillService } from "../personalSkillService.js";
+import { taskCommandService } from "../taskCommandService.js";
+import { taskService } from "../taskService.js";
+import { taskWriteService } from "../../mcp/services/taskWriteService.js";
 import type { McpContext } from "../../mcp/context.js";
 
 const fixturePath = resolve(
@@ -25,6 +28,13 @@ const fixturePath = resolve(
   "../frontend/src/test/fixtures/ui-composition-spec.json",
 );
 const fixture = JSON.parse(readFileSync(fixturePath, "utf-8"));
+const interactiveFixturePath = resolve(
+  process.cwd(),
+  "../frontend/src/test/fixtures/a2ui-interactive-v09.json",
+);
+const interactiveFixture = JSON.parse(
+  readFileSync(interactiveFixturePath, "utf-8"),
+);
 
 const context = {
   user: { _id: "507f1f77bcf86cd799439011", role: "USER" },
@@ -546,5 +556,186 @@ describe("agentUiRuntime", () => {
         tool.function.name === "propose_tasks",
     );
     expect(tool.function.parameters.required).toContain("companionText");
+  });
+
+  it("hides and rejects present_interactive_ui when A2UI_INTERACTIVE_ENABLED is false", async () => {
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "false");
+    completionCreate
+      .mockResolvedValueOnce(
+        response(call("load-1", "load_skill", { skillId: "ui-composition" })),
+      )
+      .mockImplementationOnce(async (payload) => {
+        expect(toolNames(payload)).not.toContain("present_interactive_ui");
+        return response(
+          call("interactive-1", "present_interactive_ui", {
+            ...interactiveFixture.spec,
+            companionText: "Complete your slide demo.",
+          }),
+        );
+      })
+      .mockImplementationOnce(async (payload) => {
+        expect(toolResults(payload.messages).at(-1)).toMatchObject({
+          isError: true,
+          code: "TOOL_NOT_ALLOWED",
+          executed: false,
+        });
+        return {
+          choices: [{ message: { role: "assistant", content: "Plain reply" } }],
+        };
+      });
+
+    await expect(
+      agentService.chatWithMcp("Show slide demo task", context),
+    ).resolves.toBe("Plain reply");
+  });
+
+  it("resolves an existing task, prepares interactive surface without calling taskCommandService.update, and enforces SKILL_REQUIRED", async () => {
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "true");
+    const updateCommandSpy = vi.spyOn(taskCommandService, "update");
+    const writeSpy = vi.spyOn(taskWriteService, "update");
+    const readableSpy = vi
+      .spyOn(taskService, "getReadableById")
+      .mockResolvedValue({
+        _id: interactiveFixture.taskId,
+        title: "Chuẩn bị slide demo",
+        status: "in-progress",
+      } as never);
+
+    completionCreate
+      .mockResolvedValueOnce(
+        response(
+          call("early-interactive", "present_interactive_ui", {
+            ...interactiveFixture.spec,
+            companionText: "Finish when ready.",
+          }),
+        ),
+      )
+      .mockImplementationOnce(async (payload) => {
+        expect(toolNames(payload)).not.toContain("present_interactive_ui");
+        expect(toolResults(payload.messages).at(-1)).toMatchObject({
+          isError: true,
+          code: "SKILL_REQUIRED",
+          executed: false,
+        });
+        return response(
+          call("load-1", "load_skill", { skillId: "ui-composition" }),
+        );
+      })
+      .mockImplementationOnce(async (payload) => {
+        expect(toolNames(payload)).toContain("present_interactive_ui");
+        return response(
+          call("interactive-1", "present_interactive_ui", {
+            ...interactiveFixture.spec,
+            companionText: "Here is your task card.",
+          }),
+        );
+      });
+
+    const result = await agentService.chatWithMcp(
+      "Show me the slide demo card so I can finish it",
+      context,
+    );
+    expect(readableSpy).toHaveBeenCalledWith(
+      interactiveFixture.taskId,
+      context.user,
+    );
+    expect(updateCommandSpy).not.toHaveBeenCalled();
+    expect(writeSpy).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      companionText: "Here is your task card.",
+      interactiveSurface: {
+        catalogId: "urn:orbit:a2ui:interactive:v1",
+        spec: interactiveFixture.spec,
+        actionBindings: [
+          expect.objectContaining({
+            key: "finishTask",
+            name: "task.complete",
+            taskId: interactiveFixture.taskId,
+          }),
+        ],
+      },
+    });
+  });
+
+  it("hides and rejects present_interactive_ui during explicit task proposals and continuations", async () => {
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "true");
+    completionCreate
+      .mockResolvedValueOnce(
+        response(call("load-1", "load_skill", { skillId: "ui-composition" })),
+      )
+      .mockImplementationOnce(async (payload) => {
+        expect(toolNames(payload)).not.toContain("present_interactive_ui");
+        return response(
+          call("interactive-in-proposal", "present_interactive_ui", {
+            ...interactiveFixture.spec,
+            companionText: "Try action during proposal",
+          }),
+        );
+      })
+      .mockImplementationOnce(async (payload) => {
+        expect(toolResults(payload.messages).at(-1)).toMatchObject({
+          isError: true,
+          code: "TOOL_NOT_ALLOWED",
+          executed: false,
+        });
+        return response(
+          call("prop-1", "propose_tasks", {
+            companionText: "Proposed instead.",
+            items: [{ title: "Slide demo" }],
+          }),
+        );
+      });
+
+    const proposalRes = await agentService.chatWithMcp("Plan tasks", context, {
+      intent: "task_proposal",
+    });
+    expect(proposalRes).toMatchObject({
+      proposalItems: [{ title: "Slide demo" }],
+    });
+
+    completionCreate.mockReset();
+    completionCreate
+      .mockResolvedValueOnce(
+        response(call("load-2", "load_skill", { skillId: "ui-composition" })),
+      )
+      .mockImplementationOnce(async (payload) => {
+        expect(toolNames(payload)).not.toContain("present_interactive_ui");
+        return response(
+          call("interactive-in-cont", "present_interactive_ui", {
+            ...interactiveFixture.spec,
+            companionText: "Try action during continuation",
+          }),
+        );
+      })
+      .mockImplementationOnce(async (payload) => {
+        expect(toolResults(payload.messages).at(-1)).toMatchObject({
+          isError: true,
+          executed: false,
+        });
+        return {
+          choices: [
+            {
+              message: { role: "assistant", content: "Created your tasks." },
+            },
+          ],
+        };
+      });
+
+    const contRes = await agentService.chatWithMcp("Continue", context, {
+      proposalResolution: {
+        sourceTurnId: "turn-source",
+        proposalId: "prop-source",
+        toolCallId: "call-prop-source",
+        status: "created",
+        createdTasks: [
+          {
+            itemId: "item-1",
+            taskId: interactiveFixture.taskId,
+            title: "Created task",
+          },
+        ],
+      },
+    });
+    expect(contRes).toBe("Created your tasks.");
   });
 });

@@ -28,6 +28,7 @@ export type AgentInteraction = {
 };
 
 import type { AgentActivity } from "./IAgentActivity.js";
+import type { UiActionOutcome } from "./A2UI/IUiAction.js";
 import type { SkillReadMetadata } from "./IChatTurn.js";
 import type { PersonalSkillSnapshot } from "../services/agentPersonalSkillService.js";
 import type { ChatEventInput } from "./IChatStream.js";
@@ -67,6 +68,7 @@ export interface AgentMemory {
   timeContext?: AgentTimeContext;
   confirmedProposals?: ConfirmedProposalContext[];
   cancelledProposals?: CancelledProposalContext[];
+  uiActionOutcomes?: UiActionOutcome[];
   proposalResolution?: ProposalResolution;
   history?: ChatCompletionMessageParam[];
   personalSnapshot?: PersonalSkillSnapshot;
