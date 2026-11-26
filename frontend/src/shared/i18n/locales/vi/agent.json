@@ -185,6 +185,17 @@
   "confirm": "Xác nhận (",
   "unableToOpenTask": "Không thể mở công việc.",
   "retryRequest": "Thử lại yêu cầu",
+  "uiActionCompletedByAction": "Đã hoàn thành qua thao tác này.",
+  "uiActionCompletedTask": "Công việc \"{{title}}\" đã hoàn thành.",
+  "uiActionAlreadyCompleted": "Công việc này đã hoàn thành trước đó.",
+  "uiActionTaskNotStarted": "Hãy bắt đầu công việc trước khi hoàn thành.",
+  "uiActionTaskGivenUp": "Công việc này đã bỏ cuộc và không thể hoàn thành.",
+  "uiActionTargetUnavailable": "Công việc hoặc thao tác này không còn khả dụng.",
+  "uiActionLoadFailed": "Không thể kiểm tra trạng thái công việc hiện tại.",
+  "uiActionUncertain": "Chưa xác nhận được kết quả hoàn thành. Bạn có thể thử lại chính yêu cầu này.",
+  "uiActionConflict": "Trạng thái thao tác đã thay đổi. Đang cập nhật lại trạng thái hiện tại.",
+  "uiActionPending": "Đang hoàn thành công việc…",
+  "uiActionRetry": "Thử lại",
   "reloadProposal": "Tải lại đề xuất",
   "discardUnsavedChanges": "Bỏ thay đổi chưa lưu?",
   "reloadingWillDiscardUnsavedChanges": "Tải lại sẽ bỏ các thay đổi chưa lưu.",
@@ -486,6 +497,11 @@
       "running": "Đang chuẩn bị giao diện hiển thị",
       "succeeded": "Đã hiển thị giao diện",
       "failed": "Hiển thị giao diện không thành công"
+    },
+    "present_interactive_ui": {
+      "running": "Đang chuẩn bị nút thao tác",
+      "succeeded": "Đã chuẩn bị nút thao tác",
+      "failed": "Chuẩn bị nút thao tác không thành công"
     },
     "analyze_image": {
       "running": "Đang phân tích hình ảnh",

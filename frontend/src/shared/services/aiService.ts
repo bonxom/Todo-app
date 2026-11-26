@@ -36,10 +36,14 @@ export const aiService = {
   getConversationCapabilities: async (): Promise<{
     taskProposals: boolean;
     uiComposition?: boolean;
+    interactiveUi?: boolean;
+    uiActions?: string[];
   }> => {
     const response = await axiosInstance.get<{
       taskProposals: boolean;
       uiComposition?: boolean;
+      interactiveUi?: boolean;
+      uiActions?: string[];
     }>("/api/ai/conversations/capabilities");
     return response.data;
   },

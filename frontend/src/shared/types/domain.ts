@@ -167,6 +167,7 @@ export interface ChatAttachment {
   size: number;
 }
 import type { ProposalEnvelope, ProposalView } from "./A2UI/taskProposal";
+import type { UiActionBinding, UiActionOutcome } from "./A2UI/uiAction";
 import type { UiSurfaceEnvelope } from "./A2UI/uiSurface";
 
 export interface ChatPayload {
@@ -231,6 +232,7 @@ export interface AgentActivity {
 
 export type GenerateTasksResponse = ApiEnvelope<Task[]>;
 export interface ChatResponse extends ApiEnvelope<string> {
+  turnId?: string;
   companionText?: string;
   skillsRead?: SkillReadRecord[];
   status?: "processing" | "completed" | "failed" | "cancelled";
@@ -240,10 +242,13 @@ export interface ChatResponse extends ApiEnvelope<string> {
   proposal?: ProposalView;
   a2ui?: ProposalEnvelope["a2ui"];
   surface?: UiSurfaceEnvelope;
+  actionBindings?: UiActionBinding[];
+  uiActionOutcomes?: UiActionOutcome[];
   activities?: AgentActivity[];
 }
 
 export interface ConversationMessage {
+  turnId?: string;
   turnStatus?: "failed" | "cancelled" | "timed_out" | "interrupted";
   toolProgress?: ToolProgress[];
   reasoningBlocks?: ReasoningBlock[];
@@ -254,6 +259,8 @@ export interface ConversationMessage {
   proposal?: ProposalView;
   a2ui?: ProposalEnvelope["a2ui"];
   surface?: UiSurfaceEnvelope;
+  actionBindings?: UiActionBinding[];
+  uiActionOutcomes?: UiActionOutcome[];
   id: string;
   sender: string;
   text: string;
@@ -272,9 +279,12 @@ export interface ConversationSnapshot {
     available: boolean;
   };
   activities?: AgentActivity[];
+  uiActionOutcomes?: UiActionOutcome[];
   capabilities?: {
     taskProposals?: boolean;
     uiComposition?: boolean;
+    interactiveUi?: boolean;
+    uiActions?: string[];
   };
   activeRun?: TurnSnapshot | null;
   pending: Array<{

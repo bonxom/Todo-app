@@ -166,6 +166,10 @@ const ChatMessageItem = memo(function ChatMessageItem({
               <UiSurfaceMessage
                 key={`${conversationId}:${message.proposal?.id ?? message.surface.a2ui?.surfaceId ?? message.id}`}
                 surface={message.surface}
+                conversationId={conversationId}
+                turnId={message.turnId}
+                actionBindings={message.actionBindings}
+                uiActionOutcomes={message.uiActionOutcomes}
                 proposalEnvelope={
                   message.proposal
                     ? {

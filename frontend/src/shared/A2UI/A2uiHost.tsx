@@ -10,9 +10,11 @@ import type { CatalogRegistry, SurfacePayload } from "./catalogRegistry";
 type Props = {
   payload: SurfacePayload;
   registry: CatalogRegistry;
+  dataPatches?: Record<string, unknown>;
   onAction: (action: ActionPayload) => Promise<void>;
   fallback: ReactNode;
 };
+
 // The host owns processor lifetime and catches errors in custom component renders
 // and effects as well as message processing. Domain code supplies the catalog.
 export class A2uiHost extends Component<
@@ -33,11 +35,24 @@ export class A2uiHost extends Component<
     if (
       previous.payload !== this.props.payload ||
       previous.registry !== this.props.registry
-    )
+    ) {
       this.load();
+      return;
+    }
+    if (previous.dataPatches !== this.props.dataPatches && this.state.surface) {
+      this.applyDataPatches(this.state.surface);
+    }
   }
   componentWillUnmount() {
     this.processor?.dispose();
+  }
+  private applyDataPatches(surface: SurfaceModel<ReactCatalogComponent>) {
+    if (!this.props.dataPatches) return;
+    for (const [path, value] of Object.entries(this.props.dataPatches)) {
+      if (value !== undefined) {
+        surface.dataModel.set(path, value);
+      }
+    }
   }
   private load() {
     this.processor?.dispose();
@@ -46,8 +61,14 @@ export class A2uiHost extends Component<
         this.props.payload,
         (action) => this.props.onAction(action),
       );
+      const surface = this.processor
+        .getSurfaces()
+        .get(this.props.payload.surfaceId);
+      if (surface) {
+        this.applyDataPatches(surface);
+      }
       this.setState({
-        surface: this.processor.getSurfaces().get(this.props.payload.surfaceId),
+        surface,
         failed: false,
       });
     } catch {

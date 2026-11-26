@@ -217,7 +217,7 @@ export const taskProposalActionsPropertiesSchema = z
   })
   .strict();
 
-const compiledComponentSchema = z.discriminatedUnion("component", [
+export const compiledPresentationComponentSchemas = [
   columnPropertiesSchema.extend({
     id: keySchema,
     component: z.literal("Column"),
@@ -250,6 +250,10 @@ const compiledComponentSchema = z.discriminatedUnion("component", [
     id: keySchema,
     component: z.literal("Diagram"),
   }),
+] as const;
+
+const compiledComponentSchema = z.discriminatedUnion("component", [
+  ...compiledPresentationComponentSchemas,
   taskProposalFormPropertiesSchema.extend({
     id: keySchema,
     component: z.literal("TaskProposalForm"),
@@ -356,15 +360,231 @@ export const compositionDataModelSchema = z
   })
   .strict();
 
-function getChildrenIds(node: CompiledComponent): string[] {
+type TreeNodeLike = { id: string; component: string; children?: string[] };
+
+function getChildrenIds(node: TreeNodeLike): string[] {
   if (
-    node.component === "Column" ||
-    node.component === "Row" ||
-    node.component === "Card"
+    (node.component === "Column" ||
+      node.component === "Row" ||
+      node.component === "Card") &&
+    Array.isArray(node.children)
   ) {
     return node.children;
   }
   return [];
+}
+
+export function validateSurfaceTree(
+  components: readonly TreeNodeLike[],
+): Map<string, TreeNodeLike> {
+  const nodeById = new Map<string, TreeNodeLike>();
+
+  for (const node of components) {
+    if (nodeById.has(node.id)) {
+      throw new Error(`Duplicate component ID '${node.id}'`);
+    }
+    nodeById.set(node.id, node);
+  }
+
+  if (!nodeById.has("root")) {
+    throw new Error("Missing root component");
+  }
+
+  const parentByChild = new Map<string, string>();
+  for (const node of components) {
+    const children = getChildrenIds(node);
+    const seenInParent = new Set<string>();
+    for (const childId of children) {
+      if (!nodeById.has(childId)) {
+        throw new Error(`Referenced child '${childId}' does not exist`);
+      }
+      if (childId === "root") {
+        throw new Error("Root component cannot be referenced as a child");
+      }
+      if (seenInParent.has(childId) || parentByChild.has(childId)) {
+        throw new Error(`Component '${childId}' has multiple parents`);
+      }
+      seenInParent.add(childId);
+      parentByChild.set(childId, node.id);
+    }
+  }
+
+  const visited = new Set<string>();
+  const activeAncestors = new Set<string>();
+  const stack: Array<{ id: string; depth: number; entering: boolean }> = [
+    { id: "root", depth: 1, entering: true },
+  ];
+
+  while (stack.length > 0) {
+    const frame = stack.pop()!;
+    if (!frame.entering) {
+      activeAncestors.delete(frame.id);
+      continue;
+    }
+    if (activeAncestors.has(frame.id)) {
+      throw new Error(`Cycle detected involving component '${frame.id}'`);
+    }
+    if (visited.has(frame.id)) {
+      continue;
+    }
+    visited.add(frame.id);
+    if (frame.depth > UI_COMPOSITION_LIMITS.MAX_DEPTH) {
+      throw new Error(
+        `Component tree exceeds maximum depth of ${UI_COMPOSITION_LIMITS.MAX_DEPTH}`,
+      );
+    }
+    const node = nodeById.get(frame.id);
+    if (!node) continue;
+    const children = getChildrenIds(node);
+    if (children.length > 0) {
+      activeAncestors.add(frame.id);
+      stack.push({ id: frame.id, depth: frame.depth, entering: false });
+      for (let i = children.length - 1; i >= 0; i--) {
+        stack.push({
+          id: children[i],
+          depth: frame.depth + 1,
+          entering: true,
+        });
+      }
+    }
+  }
+
+  if (visited.size !== nodeById.size) {
+    throw new Error("Unreachable component detected");
+  }
+
+  return nodeById;
+}
+
+export function validateDisplayBindings(
+  components: readonly TreeNodeLike[],
+  display: Record<string, DisplayScalar | Record<string, DisplayScalar>[]>,
+): void {
+  for (const rawNode of components) {
+    const node = rawNode as CompiledComponent;
+    if (
+      (node.component === "Text" || node.component === "Stat") &&
+      typeof node.value === "object" &&
+      node.value !== null &&
+      "path" in node.value
+    ) {
+      const key = extractDisplayKey(node.value.path);
+      if (!key || !Object.prototype.hasOwnProperty.call(display, key)) {
+        throw new Error(
+          `${node.component} binding '${node.value.path}' does not exist in display model`,
+        );
+      }
+      if (Array.isArray(display[key])) {
+        throw new Error(
+          `${node.component} component '${node.id}' must bind to a scalar display value`,
+        );
+      }
+    } else if (
+      node.component === "Diagram" &&
+      typeof node.value === "object" &&
+      node.value !== null &&
+      "path" in node.value
+    ) {
+      const key = extractDisplayKey(node.value.path);
+      if (!key || !Object.prototype.hasOwnProperty.call(display, key)) {
+        throw new Error(
+          `Diagram binding '${node.value.path}' does not exist in display model`,
+        );
+      }
+      const bound = display[key];
+      if (
+        typeof bound !== "string" ||
+        bound.trim().length === 0 ||
+        bound.length > UI_COMPOSITION_LIMITS.MAX_DIAGRAM_LENGTH
+      ) {
+        throw new Error(
+          `Diagram component '${node.id}' must bind to a non-empty string`,
+        );
+      }
+    } else if (node.component === "Table") {
+      const colKeys = new Set<string>();
+      for (const col of node.columns) {
+        if (colKeys.has(col.key)) {
+          throw new Error(`Duplicate table column key '${col.key}'`);
+        }
+        colKeys.add(col.key);
+      }
+      const key = extractDisplayKey(node.rows.path);
+      if (!key || !Object.prototype.hasOwnProperty.call(display, key)) {
+        throw new Error(
+          `Table rows path '${node.rows.path}' does not exist in display model`,
+        );
+      }
+      const rows = display[key];
+      if (!Array.isArray(rows)) {
+        throw new Error(`Table rows path '${node.rows.path}' must be an array`);
+      }
+      for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+        const row = rows[rIdx];
+        const rowKeys = Object.keys(row);
+        const missingKey = [...colKeys].find(
+          (colKey) => !Object.prototype.hasOwnProperty.call(row, colKey),
+        );
+        const extraKey = rowKeys.find((rowKey) => !colKeys.has(rowKey));
+        if (missingKey || extraKey || rowKeys.length !== colKeys.size) {
+          throw new Error(
+            `Table row ${rIdx} keys must match declared table columns`,
+          );
+        }
+      }
+    } else if (node.component === "Chart") {
+      if (node.chartType === "doughnut" && node.series.length !== 1) {
+        throw new Error("Doughnut chart must declare exactly 1 series");
+      }
+      const seriesKeys = new Set<string>();
+      for (const s of node.series) {
+        if (s.key === node.labelKey) {
+          throw new Error(
+            `Chart series key '${s.key}' must not equal labelKey`,
+          );
+        }
+        if (seriesKeys.has(s.key)) {
+          throw new Error(`Duplicate chart series key '${s.key}'`);
+        }
+        seriesKeys.add(s.key);
+      }
+      const key = extractDisplayKey(node.rows.path);
+      if (!key || !Object.prototype.hasOwnProperty.call(display, key)) {
+        throw new Error(
+          `Chart rows path '${node.rows.path}' does not exist in display model`,
+        );
+      }
+      const rows = display[key];
+      if (!Array.isArray(rows)) {
+        throw new Error(`Chart rows path '${node.rows.path}' must be an array`);
+      }
+      for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+        const row = rows[rIdx];
+        if (
+          !Object.prototype.hasOwnProperty.call(row, node.labelKey) ||
+          row[node.labelKey] === null ||
+          row[node.labelKey] === undefined
+        ) {
+          throw new Error(
+            `Chart row ${rIdx} is missing non-null labelKey '${node.labelKey}'`,
+          );
+        }
+        for (const sKey of seriesKeys) {
+          const val = row[sKey];
+          if (typeof val !== "number" || !Number.isFinite(val)) {
+            throw new Error(
+              `Chart row ${rIdx} series '${sKey}' must be a finite number`,
+            );
+          }
+          if (node.chartType === "doughnut" && val < 0) {
+            throw new Error(
+              `Doughnut chart row ${rIdx} series '${sKey}' must be >= 0`,
+            );
+          }
+        }
+      }
+    }
+  }
 }
 
 export function validateCompositionPayload(
@@ -440,27 +660,22 @@ export function validateCompositionPayload(
   const effectiveMode: UiSurfaceMode =
     mode ?? (dataModel.proposal ? "proposal" : "readonly");
 
-  const nodeById = new Map<string, CompiledComponent>();
   let formCount = 0;
   let listCount = 0;
   let actionsCount = 0;
 
   for (const node of components) {
-    if (nodeById.has(node.id)) {
-      throw new Error(`Duplicate component ID '${node.id}'`);
-    }
-    nodeById.set(node.id, node);
     if (node.component === "TaskProposalForm") formCount++;
     if (node.component === "TaskList") listCount++;
     if (node.component === "TaskProposalActions") actionsCount++;
   }
 
   if (effectiveMode === "readonly") {
-    if (dataModel.proposal !== undefined) {
-      throw new Error("Read-only surface cannot include proposal data");
-    }
     if (formCount > 0 || listCount > 0 || actionsCount > 0) {
       throw new Error("Read-only surface cannot include task components");
+    }
+    if (dataModel.proposal !== undefined) {
+      throw new Error("Read-only surface cannot include proposal data");
     }
   } else {
     if (!dataModel.proposal) {
@@ -477,207 +692,6 @@ export function validateCompositionPayload(
     }
   }
 
-  if (!nodeById.has("root")) {
-    throw new Error("Missing root component");
-  }
-
-  const parentByChild = new Map<string, string>();
-  for (const node of components) {
-    const children = getChildrenIds(node);
-    const seenInParent = new Set<string>();
-    for (const childId of children) {
-      if (!nodeById.has(childId)) {
-        throw new Error(`Referenced child '${childId}' does not exist`);
-      }
-      if (childId === "root") {
-        throw new Error("Root component cannot be referenced as a child");
-      }
-      if (seenInParent.has(childId) || parentByChild.has(childId)) {
-        throw new Error(`Component '${childId}' has multiple parents`);
-      }
-      seenInParent.add(childId);
-      parentByChild.set(childId, node.id);
-    }
-  }
-
-  const visited = new Set<string>();
-  const activeAncestors = new Set<string>();
-  const stack: Array<{ id: string; depth: number; entering: boolean }> = [
-    { id: "root", depth: 1, entering: true },
-  ];
-
-  while (stack.length > 0) {
-    const frame = stack.pop()!;
-    if (!frame.entering) {
-      activeAncestors.delete(frame.id);
-      continue;
-    }
-    if (activeAncestors.has(frame.id)) {
-      throw new Error(`Cycle detected involving component '${frame.id}'`);
-    }
-    if (visited.has(frame.id)) {
-      continue;
-    }
-    visited.add(frame.id);
-    if (frame.depth > UI_COMPOSITION_LIMITS.MAX_DEPTH) {
-      throw new Error(
-        `Component tree exceeds maximum depth of ${UI_COMPOSITION_LIMITS.MAX_DEPTH}`,
-      );
-    }
-    const node = nodeById.get(frame.id);
-    if (!node) continue;
-    const children = getChildrenIds(node);
-    if (children.length > 0) {
-      activeAncestors.add(frame.id);
-      stack.push({ id: frame.id, depth: frame.depth, entering: false });
-      for (let i = children.length - 1; i >= 0; i--) {
-        stack.push({
-          id: children[i],
-          depth: frame.depth + 1,
-          entering: true,
-        });
-      }
-    }
-  }
-
-  if (visited.size !== nodeById.size) {
-    throw new Error("Unreachable component detected");
-  }
-
-  for (const node of components) {
-    if (
-      (node.component === "Text" || node.component === "Stat") &&
-      typeof node.value === "object" &&
-      node.value !== null &&
-      "path" in node.value
-    ) {
-      const key = extractDisplayKey(node.value.path);
-      if (
-        !key ||
-        !Object.prototype.hasOwnProperty.call(dataModel.display, key)
-      ) {
-        throw new Error(
-          `${node.component} binding '${node.value.path}' does not exist in display model`,
-        );
-      }
-      if (Array.isArray(dataModel.display[key])) {
-        throw new Error(
-          `${node.component} component '${node.id}' must bind to a scalar display value`,
-        );
-      }
-    } else if (
-      node.component === "Diagram" &&
-      typeof node.value === "object" &&
-      node.value !== null &&
-      "path" in node.value
-    ) {
-      const key = extractDisplayKey(node.value.path);
-      if (
-        !key ||
-        !Object.prototype.hasOwnProperty.call(dataModel.display, key)
-      ) {
-        throw new Error(
-          `Diagram binding '${node.value.path}' does not exist in display model`,
-        );
-      }
-      const bound = dataModel.display[key];
-      if (
-        typeof bound !== "string" ||
-        bound.trim().length === 0 ||
-        bound.length > UI_COMPOSITION_LIMITS.MAX_DIAGRAM_LENGTH
-      ) {
-        throw new Error(
-          `Diagram component '${node.id}' must bind to a non-empty string`,
-        );
-      }
-    } else if (node.component === "Table") {
-      const colKeys = new Set<string>();
-      for (const col of node.columns) {
-        if (colKeys.has(col.key)) {
-          throw new Error(`Duplicate table column key '${col.key}'`);
-        }
-        colKeys.add(col.key);
-      }
-      const key = extractDisplayKey(node.rows.path);
-      if (
-        !key ||
-        !Object.prototype.hasOwnProperty.call(dataModel.display, key)
-      ) {
-        throw new Error(
-          `Table rows path '${node.rows.path}' does not exist in display model`,
-        );
-      }
-      const rows = dataModel.display[key];
-      if (!Array.isArray(rows)) {
-        throw new Error(`Table rows path '${node.rows.path}' must be an array`);
-      }
-      for (let rIdx = 0; rIdx < rows.length; rIdx++) {
-        const row = rows[rIdx];
-        const rowKeys = Object.keys(row);
-        const missingKey = [...colKeys].find(
-          (colKey) => !Object.prototype.hasOwnProperty.call(row, colKey),
-        );
-        const extraKey = rowKeys.find((rowKey) => !colKeys.has(rowKey));
-        if (missingKey || extraKey || rowKeys.length !== colKeys.size) {
-          throw new Error(
-            `Table row ${rIdx} keys must match declared table columns`,
-          );
-        }
-      }
-    } else if (node.component === "Chart") {
-      if (node.chartType === "doughnut" && node.series.length !== 1) {
-        throw new Error("Doughnut chart must declare exactly 1 series");
-      }
-      const seriesKeys = new Set<string>();
-      for (const s of node.series) {
-        if (s.key === node.labelKey) {
-          throw new Error(
-            `Chart series key '${s.key}' must not equal labelKey`,
-          );
-        }
-        if (seriesKeys.has(s.key)) {
-          throw new Error(`Duplicate chart series key '${s.key}'`);
-        }
-        seriesKeys.add(s.key);
-      }
-      const key = extractDisplayKey(node.rows.path);
-      if (
-        !key ||
-        !Object.prototype.hasOwnProperty.call(dataModel.display, key)
-      ) {
-        throw new Error(
-          `Chart rows path '${node.rows.path}' does not exist in display model`,
-        );
-      }
-      const rows = dataModel.display[key];
-      if (!Array.isArray(rows)) {
-        throw new Error(`Chart rows path '${node.rows.path}' must be an array`);
-      }
-      for (let rIdx = 0; rIdx < rows.length; rIdx++) {
-        const row = rows[rIdx];
-        if (
-          !Object.prototype.hasOwnProperty.call(row, node.labelKey) ||
-          row[node.labelKey] === null ||
-          row[node.labelKey] === undefined
-        ) {
-          throw new Error(
-            `Chart row ${rIdx} is missing non-null labelKey '${node.labelKey}'`,
-          );
-        }
-        for (const sKey of seriesKeys) {
-          const val = row[sKey];
-          if (typeof val !== "number" || !Number.isFinite(val)) {
-            throw new Error(
-              `Chart row ${rIdx} series '${sKey}' must be a finite number`,
-            );
-          }
-          if (node.chartType === "doughnut" && val < 0) {
-            throw new Error(
-              `Doughnut chart row ${rIdx} series '${sKey}' must be >= 0`,
-            );
-          }
-        }
-      }
-    }
-  }
+  validateSurfaceTree(components);
+  validateDisplayBindings(components, dataModel.display);
 }

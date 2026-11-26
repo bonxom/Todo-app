@@ -185,6 +185,17 @@
   "confirm": "Confirm (",
   "unableToOpenTask": "Unable to open task.",
   "retryRequest": "Retry request",
+  "uiActionCompletedByAction": "Completed via this action.",
+  "uiActionCompletedTask": "Task \"{{title}}\" is completed.",
+  "uiActionAlreadyCompleted": "This task is already completed.",
+  "uiActionTaskNotStarted": "Start this task before completing it.",
+  "uiActionTaskGivenUp": "This task was given up and cannot be completed.",
+  "uiActionTargetUnavailable": "This task or action is no longer available.",
+  "uiActionLoadFailed": "Unable to verify current task state.",
+  "uiActionUncertain": "Could not confirm whether the task was completed. Retry this exact request safely.",
+  "uiActionConflict": "The action state changed. Refreshing current task status.",
+  "uiActionPending": "Completing task…",
+  "uiActionRetry": "Retry",
   "reloadProposal": "Reload proposal",
   "discardUnsavedChanges": "Discard unsaved changes?",
   "reloadingWillDiscardUnsavedChanges": "Reloading will discard unsaved changes.",
@@ -486,6 +497,11 @@
       "running": "Preparing visual view",
       "succeeded": "Prepared visual view",
       "failed": "Failed to prepare visual view"
+    },
+    "present_interactive_ui": {
+      "running": "Preparing task action view",
+      "succeeded": "Prepared task action view",
+      "failed": "Failed to prepare task action view"
     },
     "analyze_image": {
       "running": "Analyzing image",

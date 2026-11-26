@@ -40,9 +40,13 @@ export function useConversationSession(options?: ConversationSessionOptions) {
   const [capabilities, setCapabilities] = useState<{
     taskProposals?: boolean;
     uiComposition?: boolean;
+    interactiveUi?: boolean;
+    uiActions?: string[];
   }>({
     taskProposals: false,
     uiComposition: false,
+    interactiveUi: false,
+    uiActions: [],
   });
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<ChatPayload | null>(null);
@@ -282,6 +286,7 @@ export function useConversationSession(options?: ConversationSessionOptions) {
         ...previous.filter((message) => message.id !== `${requestId}:bot`),
         {
           id: `${requestId}:bot`,
+          ...(result.turnId ? { turnId: result.turnId } : {}),
           sender: "bot",
           skillsRead: result.skillsRead ?? [],
           text: result.interaction?.question ?? result.data,
@@ -292,6 +297,12 @@ export function useConversationSession(options?: ConversationSessionOptions) {
           proposal: result.proposal,
           a2ui: result.a2ui,
           surface: result.surface,
+          ...(result.actionBindings
+            ? { actionBindings: result.actionBindings }
+            : {}),
+          ...(result.uiActionOutcomes
+            ? { uiActionOutcomes: result.uiActionOutcomes }
+            : {}),
           timestamp: new Date().toISOString(),
         },
       ]);

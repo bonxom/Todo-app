@@ -25,12 +25,15 @@ export type ChatRunAction =
   | { type: "EVENT"; event: ChatStreamEvent };
 
 interface ResultEnvelope {
+  turnId?: string;
   response?: string;
   data?: string;
   companionText?: string;
   interaction?: ConversationMessage["interaction"];
   proposal?: ConversationMessage["proposal"];
   surface?: ConversationMessage["surface"];
+  actionBindings?: ConversationMessage["actionBindings"];
+  uiActionOutcomes?: ConversationMessage["uiActionOutcomes"];
 }
 
 interface EventPayload {
@@ -66,6 +69,7 @@ export function projectMessage(
 
   const botMessage: ConversationMessage = {
     id: `${snapshot.turnId}:bot`,
+    turnId: res?.turnId ?? snapshot.turnId,
     sender: "bot",
     ...(["failed", "cancelled", "timed_out", "interrupted"].includes(
       snapshot.status,
@@ -84,6 +88,10 @@ export function projectMessage(
     ...(res?.interaction ? { interaction: res.interaction } : {}),
     ...(res?.proposal ? { proposal: res.proposal } : {}),
     ...(res?.surface ? { surface: res.surface } : {}),
+    ...(res?.actionBindings ? { actionBindings: res.actionBindings } : {}),
+    ...(res?.uiActionOutcomes
+      ? { uiActionOutcomes: res.uiActionOutcomes }
+      : {}),
   };
   return [botMessage];
 }
