@@ -1,59 +1,14 @@
-import type { ZodType } from "zod";
-import type { ITaskDocument } from "../../types/ITask.js";
-import { createHash } from "node:crypto";
-import { AppError } from "../../error/AppError.js";
-import { TASK_ERROR } from "../../error/definitions/taskErrors.js";
-import { COMMON_ERROR } from "../../error/definitions/commonErrors.js";
-import { taskService } from "../../services/taskService.js";
-import { statService } from "../../services/statService.js";
 import type { McpContext } from "../context.js";
-import { toTaskDto } from "../mapper/taskMapper.js";
-import { writeRepository } from "../repositories/writeRepository.js";
 import {
-  createTaskInputSchema,
-  deleteTaskInputSchema,
-  updateTaskInputSchema,
-} from "../models/TaskWrite.js";
-import { getStartOfToday } from "../../utils/dateTime.js";
+  taskCommandService,
+  WriteError,
+  type WriteOperation,
+} from "../../services/taskCommandService.js";
+import type { TaskCommandContext } from "../../types/ITaskCommand.js";
 
-export type WriteOperation = "create" | "update" | "delete";
-export class WriteError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string,
-  ) {
-    super(message);
-  }
-}
-const canonical = (value: unknown): string => {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    const record = value as Record<string, unknown>;
-    return `{${Object.keys(record)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value);
-};
-const hash = (value: string) =>
-  createHash("sha256").update(value).digest("hex");
-const checkDates = (start: unknown, due: unknown) => {
-  if (
-    start &&
-    due &&
-    new Date(start as string).getTime() > new Date(due as string).getTime()
-  ) {
-    throw new AppError(COMMON_ERROR.INVALID_PAYLOAD);
-  }
-};
+export { WriteError, type WriteOperation };
 
-async function executeWrite<T extends { idempotencyKey: string }>(
-  operation: WriteOperation,
-  raw: unknown,
-  schema: ZodType<T>,
-  context: McpContext,
-  mutate: (input: T) => Promise<ITaskDocument | null>,
-) {
+function assertWriteAccess(context: McpContext): TaskCommandContext {
   if (
     context.user.role !== "USER" ||
     !context.scopes?.includes("tasks:write")
@@ -63,111 +18,23 @@ async function executeWrite<T extends { idempotencyKey: string }>(
       "This session does not have tasks:write permission.",
     );
   }
-  const input = schema.parse(raw);
-  const userId = String(context.user._id);
-  const receiptId = hash(`${userId}:${input.idempotencyKey}`);
-  const fingerprint = hash(canonical({ operation, input }));
-  return writeRepository.transaction(userId, async () => {
-    const previous = await writeRepository.findReceipt(receiptId);
-    if (previous) {
-      if (previous.fingerprint !== fingerprint) {
-        throw new WriteError(
-          "IDEMPOTENCY_CONFLICT",
-          "This key was already used for different arguments. Use the original arguments for a retry.",
-        );
-      }
-      // A committed deletion receipt is the owned result: the task no longer exists.
-      if (operation !== "delete")
-        await taskService.getById(previous.taskId, context.user);
-      return previous.output;
-    }
-    await context.beforeWrite?.();
-    const task = await mutate(input);
-    if (!task) throw new AppError(TASK_ERROR.NOT_FOUND);
-    // Keep category totals accurate after content/category changes, too.
-    await statService.getStats(context.user);
-    const output = {
-      task: toTaskDto(task),
-      ...(operation === "delete" ? { deleted: true as const } : {}),
-    };
-    await writeRepository.saveReceipt({
-      _id: receiptId,
-      userId,
-      operation,
-      fingerprint,
-      requestId: context.requestId,
-      taskId: String(task._id),
-      output,
-    });
-    return output;
-  });
+  return {
+    user: context.user,
+    requestId: context.requestId,
+    beforeWrite: context.beforeWrite,
+  };
 }
 
 export const taskWriteService = {
-  delete(raw: unknown, context: McpContext) {
-    return executeWrite(
-      "delete",
-      raw,
-      deleteTaskInputSchema,
-      context,
-      async ({ taskId }) => {
-        const task = await taskService.getById(taskId, context.user);
-        await taskService.delete(taskId, context.user);
-        return task;
-      },
-    );
-  },
-  create(raw: unknown, context: McpContext) {
-    return executeWrite(
-      "create",
-      raw,
-      createTaskInputSchema,
-      context,
-      async (input) => {
-        const { idempotencyKey: _key, ...data } = input;
-        checkDates(
-          data.startDate === undefined ? getStartOfToday() : data.startDate,
-          data.dueDate,
-        );
-        return taskService.create(data, context.user._id, "pending");
-      },
-    );
+  async delete(raw: unknown, context: McpContext) {
+    return taskCommandService.delete(raw, assertWriteAccess(context));
   },
 
-  update(raw: unknown, context: McpContext) {
-    return executeWrite(
-      "update",
-      raw,
-      updateTaskInputSchema,
-      context,
-      async ({ taskId, changes }) => {
-        let task = await taskService.getById(taskId, context.user);
-        const { status, ...fields } = changes;
-        if (Object.keys(fields).length > 0) {
-          checkDates(
-            fields.startDate === undefined ? task.startDate : fields.startDate,
-            fields.dueDate === undefined ? task.dueDate : fields.dueDate,
-          );
-          const updated = await taskService.update(
-            taskId,
-            fields,
-            context.user,
-          );
-          if (!updated) throw new AppError(TASK_ERROR.NOT_FOUND);
-          task = updated;
-        }
-        // Use lifecycle services so guards, timestamps and stats remain correct.
-        // Both metadata and status changes are covered by executeWrite's transaction.
-        if (!status || task.status === status) return task;
-        switch (status) {
-          case "in-progress":
-            return taskService.start(taskId, context.user);
-          case "completed":
-            return taskService.finish(taskId, context.user);
-          case "given-up":
-            return taskService.giveUp(taskId, context.user);
-        }
-      },
-    );
+  async create(raw: unknown, context: McpContext) {
+    return taskCommandService.create(raw, assertWriteAccess(context));
+  },
+
+  async update(raw: unknown, context: McpContext) {
+    return taskCommandService.update(raw, assertWriteAccess(context));
   },
 };

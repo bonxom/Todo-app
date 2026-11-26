@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { id, pageShape, pageInfo, date } from "./common.js";
+import { id, pageShape, pageInfo } from "./common.js";
+import {
+  taskDtoSchema,
+  type TaskDto,
+} from "../../validations/taskDtoValidation.js";
+
+export { taskDtoSchema, type TaskDto };
 
 const status = z.enum(["pending", "in-progress", "completed", "given-up"]);
 
@@ -59,21 +65,6 @@ export const listTasksInputSchema = z
     }
   });
 
-export const taskDtoSchema = z.strictObject({
-  id,
-  title: z.string(),
-  description: z.string().nullable(),
-  status,
-  priority: z.enum(["Low", "Medium", "High"]),
-  categoryId: id.nullable(),
-  projectId: id.nullable(),
-  startDate: date.nullable(),
-  dueDate: date.nullable(),
-  completedAt: date.nullable(),
-  createdAt: date,
-  updatedAt: date,
-});
-
 export const taskPageOutputSchema = z.strictObject({
   pageInfo,
   data: z.array(taskDtoSchema),
@@ -81,5 +72,4 @@ export const taskPageOutputSchema = z.strictObject({
 
 export const getTaskOutputSchema = z.strictObject({ task: taskDtoSchema });
 
-export type TaskDto = z.infer<typeof taskDtoSchema>;
 export type ListTasksInput = z.infer<typeof listTasksInputSchema>;
