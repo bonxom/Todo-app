@@ -2,6 +2,10 @@ import type { AgentInteraction } from "../types/IAgent.js";
 import type { ChatTurn } from "../types/IChatTurn.js";
 import type { ProposalView } from "../types/A2UI/ITaskProposal.js";
 import type { UiSurfaceEnvelope } from "../types/A2UI/IUiSurface.js";
+import type {
+  UiActionBinding,
+  UiActionOutcome,
+} from "../types/A2UI/IUiAction.js";
 import type { AgentActivity } from "../types/IAgentActivity.js";
 import { interruptedReply } from "./interruptedReply.js";
 import { decodeFilename } from "./attachmentFile.js";
@@ -38,12 +42,15 @@ export function resultFor(
     | "interactions"
     | "expiresAt"
   > & {
+    _id?: string;
     messages?: ChatTurn["messages"];
     activities?: AgentActivity[];
     skillsRead?: ChatTurn["skillsRead"];
   },
   envelope?: {
     surface?: UiSurfaceEnvelope;
+    actionBindings?: UiActionBinding[];
+    uiActionOutcomes?: UiActionOutcome[];
     proposal?: ProposalView;
     a2ui?: unknown;
     text?: string;
@@ -54,6 +61,7 @@ export function resultFor(
     turn.status === "processing" && turn.expiresAt.getTime() <= Date.now();
   const interaction = turn.interactions?.find((i) => i.status === "pending");
   return {
+    ...(turn._id ? { turnId: turn._id } : {}),
     data: expired
       ? interruptedReply(turn.messages)
       : (envelope?.text ?? turn.response),
@@ -74,6 +82,12 @@ export function resultFor(
       ? { interaction: publicInteraction(interaction) }
       : {}),
     ...(envelope?.surface ? { surface: envelope.surface } : {}),
+    ...(envelope?.actionBindings
+      ? { actionBindings: envelope.actionBindings }
+      : {}),
+    ...(envelope?.uiActionOutcomes?.length
+      ? { uiActionOutcomes: envelope.uiActionOutcomes }
+      : {}),
     ...(envelope?.proposal ? { proposal: envelope.proposal } : {}),
     ...(envelope?.a2ui ? { a2ui: envelope.a2ui } : {}),
   };
@@ -83,6 +97,8 @@ export function turnMessages(
   turn: ChatTurn,
   envelope?: {
     surface?: UiSurfaceEnvelope;
+    actionBindings?: UiActionBinding[];
+    uiActionOutcomes?: UiActionOutcome[];
     proposal?: ProposalView;
     a2ui?: unknown;
     text?: string;
@@ -121,6 +137,7 @@ export function turnMessages(
       : []),
     ...(turn.interactions ?? []).map((i) => ({
       id: `${turn._id}:${i.id}`,
+      turnId: turn._id,
       sender: "bot",
       text: i.question,
       timestamp: turn.updatedAt.toISOString(),
@@ -135,6 +152,7 @@ export function turnMessages(
       ? [
           {
             id: `${turn._id}:bot`,
+            turnId: turn._id,
             sender: "bot",
             ...(incomplete ? { turnStatus: turn.status } : {}),
             text:
@@ -149,6 +167,12 @@ export function turnMessages(
               ? { reasoningBlocks: turn.reasoningBlocks }
               : {}),
             ...(envelope?.surface ? { surface: envelope.surface } : {}),
+            ...(envelope?.actionBindings
+              ? { actionBindings: envelope.actionBindings }
+              : {}),
+            ...(envelope?.uiActionOutcomes?.length
+              ? { uiActionOutcomes: envelope.uiActionOutcomes }
+              : {}),
             ...(envelope?.proposal ? { proposal: envelope.proposal } : {}),
             ...(envelope?.a2ui ? { a2ui: envelope.a2ui } : {}),
             ...(envelope?.companionText

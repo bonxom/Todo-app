@@ -79,7 +79,7 @@ const schema = new Schema<ChatTurn>(
     timeContext: { type: Schema.Types.Mixed },
     expiresAt: { type: Date, required: true },
   },
-  { timestamps: true },
+  { timestamps: true, minimize: false },
 );
 schema.index({ userId: 1, conversationId: 1, sequence: -1 });
 export default mongoose.model<ChatTurn>("ChatTurn", schema);

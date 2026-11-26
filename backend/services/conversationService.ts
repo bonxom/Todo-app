@@ -16,6 +16,7 @@ import { chatTurnRepository } from "../repositories/chatTurnRepository.js";
 import { taskProposalRepository } from "../repositories/A2UI/taskProposalRepository.js";
 import { toProposalView } from "./A2UI/taskProposalGenerationService.js";
 import { uiPresentationService } from "./A2UI/uiPresentationService.js";
+import { uiActionService } from "./A2UI/uiActionService.js";
 import { isTaskProposalsEnabled } from "../config/A2UI/a2ui.js";
 import {
   deduplicateActivities,
@@ -69,10 +70,10 @@ export const conversationService = {
     const hasMore = rows.length > 50;
     const visible = rows.slice(0, 50).reverse();
     const turnIds = visible.map((t) => t._id);
-    const proposals = await taskProposalRepository.findByTurnIds(
-      userId,
-      turnIds,
-    );
+    const [proposals, uiActionOutcomes] = await Promise.all([
+      taskProposalRepository.findByTurnIds(userId, turnIds),
+      uiActionService.recentOutcomes(userId, conversation._id),
+    ]);
     const proposalsByTurn = new Map(proposals.map((p) => [p.turnId, p]));
     const activeTurn = await chatTurnRepository.active(
       userId,
@@ -138,6 +139,7 @@ export const conversationService = {
             : []),
         ]),
       ),
+      uiActionOutcomes,
       ...(interaction ? { interaction: publicInteraction(interaction) } : {}),
       before: hasMore ? visible[0].sequence : null,
       messages: visible.flatMap((turn) => {
@@ -149,15 +151,26 @@ export const conversationService = {
                 proposal ? toProposalView(proposal) : undefined,
               )
             : undefined;
+        const turnOutcomes = uiActionOutcomes.filter(
+          (o) => o.turnId === turn._id,
+        );
         return turnMessages(
           turn,
-          envelope
+          envelope || turnOutcomes.length > 0
             ? {
-                surface: envelope.surface,
-                proposal: envelope.proposal,
-                a2ui: envelope.a2ui,
-                text: envelope.text,
-                companionText: envelope.companionText,
+                ...(envelope
+                  ? {
+                      surface: envelope.surface,
+                      actionBindings: envelope.actionBindings,
+                      proposal: envelope.proposal,
+                      a2ui: envelope.a2ui,
+                      text: envelope.text,
+                      companionText: envelope.companionText,
+                    }
+                  : {}),
+                ...(turnOutcomes.length > 0
+                  ? { uiActionOutcomes: turnOutcomes }
+                  : {}),
               }
             : undefined,
         );
@@ -355,9 +368,11 @@ export const conversationService = {
         envelope
           ? {
               surface: envelope.surface,
+              actionBindings: envelope.actionBindings,
               proposal: envelope.proposal,
               a2ui: envelope.a2ui,
               text: envelope.text,
+              companionText: envelope.companionText,
             }
           : undefined,
       );

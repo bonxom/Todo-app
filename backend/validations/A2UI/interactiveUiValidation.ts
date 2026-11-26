@@ -235,7 +235,9 @@ export const storedInteractiveSurfaceSchema: z.ZodType<StoredInteractiveSurface>
     .strictObject({
       catalogId: z.literal(UI_INTERACTIVE_CATALOG_ID),
       surfaceId: z.uuid(),
-      spec: interactiveSurfaceSpecBaseSchema,
+      spec: interactiveSurfaceSpecBaseSchema.extend({
+        displayData: displayDataSchema.default({}),
+      }),
       actionBindings: z
         .array(uiActionBindingSchema)
         .min(1)

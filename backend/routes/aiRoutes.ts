@@ -18,6 +18,7 @@ import {
   cancelChatTurn,
 } from "../controllers/chatStreamController.js";
 import { handleProposalAction } from "../controllers/A2UI/taskProposalController.js";
+import { handleUiAction } from "../controllers/A2UI/uiActionController.js";
 import { protect } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import {
@@ -41,6 +42,10 @@ import {
   proposalActionSchema,
   proposalParamsSchema,
 } from "../validations/A2UI/taskProposalValidation.js";
+import {
+  uiActionBodySchema,
+  uiActionParamsSchema,
+} from "../validations/A2UI/uiActionValidation.js";
 
 const router = express.Router();
 router.use((_req, res, next) => {
@@ -144,6 +149,17 @@ router.post(
     body: proposalActionSchema,
   }),
   handleProposalAction,
+);
+
+router.post(
+  "/conversations/:conversationId/turns/:turnId/surfaces/:surfaceId/actions",
+  protect,
+  express.json({ limit: "16kb" }),
+  validate({
+    params: uiActionParamsSchema,
+    body: uiActionBodySchema,
+  }),
+  handleUiAction,
 );
 
 export default router;

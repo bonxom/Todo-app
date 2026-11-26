@@ -2,6 +2,7 @@ import type { AgentActivity } from "./IAgentActivity.js";
 import type { AgentInteraction, AgentMode } from "./IAgent.js";
 import type { SkillReadMetadata } from "./IChatTurn.js";
 import type { StoredUiSurface } from "./A2UI/IUiSurface.js";
+import type { UiActionBinding, UiActionOutcome } from "./A2UI/IUiAction.js";
 
 export type TerminalStatus =
   "completed" | "failed" | "cancelled" | "timed_out" | "interrupted";
@@ -39,6 +40,8 @@ export interface PublicChatResult {
   skillsRead?: SkillReadMetadata[];
   uiSurface?: StoredUiSurface | null;
   surface?: unknown;
+  actionBindings?: UiActionBinding[];
+  uiActionOutcomes?: UiActionOutcome[];
   proposal?: unknown;
   proposalId?: string;
   terminalReason?: string;
