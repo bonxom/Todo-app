@@ -101,8 +101,18 @@ export const taskCommandRepository = {
   saveReceipt: (receipt: Omit<TaskCommandReceipt, "createdAt">) =>
     McpWriteReceipt.create(receipt),
 
-  findRecentByUiOrigin: (userId: string, conversationId: string, limit = 3) =>
-    McpWriteReceipt.find({
+  findRecentByUiOrigin: async (
+    userId: string,
+    conversationId: string,
+    limit = 3,
+  ) => {
+    if (
+      mongoose.connection.readyState !== 1 ||
+      !mongoose.Types.ObjectId.isValid(userId)
+    ) {
+      return [];
+    }
+    return McpWriteReceipt.find({
       userId,
       "origin.channel": "a2ui",
       "origin.conversationId": conversationId,
@@ -110,5 +120,6 @@ export const taskCommandRepository = {
       .sort({ createdAt: -1, _id: -1 })
       .limit(limit)
       .lean()
-      .exec(),
+      .exec();
+  },
 };

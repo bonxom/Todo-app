@@ -94,3 +94,14 @@ Disabling the flag rejects both explicit and inherited proposal generation inten
 Browser tests use the shared protocol fixture and mocked HTTP responses; they cover save/reload, subset confirmation, lost-response retry, cancellation and dirty navigation on mobile. MongoDB integration tests independently exercise concurrent confirms, receipt replay, payload conflicts, task/stat updates and rollback after partial execution. Browser tests do not call a live model.
 
 The shared fixture lives inside the frontend package so its tests can be type-checked within the frontend-only Docker build context. Backend contract tests read the same fixture from the repository checkout.
+
+---
+
+## Interactive Task Action Surfaces (`urn:orbit:a2ui:interactive:v1`)
+
+Specification: [`2026-11-27-a2ui-task-actions.md`](superpowers/specs/2026-11-27-a2ui-task-actions.md)
+
+- **Catalog & Fixture**: `urn:orbit:a2ui:interactive:v1` (`interactiveCatalog.ts` / `interactiveComponents.tsx`) adds a bounded `Button` component alongside presentation components and is verified against the canonical fixture [`a2ui-interactive-v09.json`](../frontend/src/test/fixtures/a2ui-interactive-v09.json).
+- **Action Lifecycle (`useUiAction`)**: Button state (`loading | ready | pending | uncertain | succeeded | unavailable`) is bound via `/actionState/<key>` patches into `A2uiHost`. Surfaces initialize targets in `loading` (disabled) until live `taskService.getTaskById` reads confirm status and ownership, preventing stale pre-click activations.
+- **Retry & Cache Consistency**: Lost/5xx responses freeze the button as `uncertain` and permit only exact `(requestId, actionId)` retries. Confirmed commits validate `TaskDto` without casting into frontend `Task` caches and invalidate dependent task/stats and conversation queries gated by the active session revision.
+- **Live Verification Harness**: Backend script `backend/scripts/seed-interactive-action-test.ts serve` spins up an isolated loopback server (`127.0.0.1:4011`) backed by a uniquely named disposable `orbit_ui_actions_test_*` database for `frontend/playwright.interactive.config.ts` (`frontend/e2e/interactive-task-actions-live.spec.ts`), cleaning up and dropping its database on `SIGINT`/`SIGTERM`.

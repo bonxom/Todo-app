@@ -15,6 +15,7 @@ The model chooses when to ask and which tools to call. After the user answers a 
 ### Task proposal outcomes in chat and model context
 
 The Confirm transaction is the source of truth for task creation via proposals. Before each model turn, up to 3 recently confirmed proposals (`status: "created"`, sorted by `updatedAt: -1, _id: -1`) owned by the user in the current conversation are read and injected into the system prompt under `Confirmed task proposals (server data):`.
+
 - Contains `proposalId`, `confirmedAt`, and `createdTasks` (projected to `taskId` and `title`).
 - Records what was actually created at confirmation time, even if the user edited titles or selected only a subset of items.
 - The model treats titles as user data, uses exact IDs for subsequent reads/updates, and requires a new explicit user request before modifying those tasks.
@@ -145,3 +146,12 @@ Specification: `docs/superpowers/specs/2026-11-21-agent-vision-tool-design.md`
 - Phục hồi sự cố: Server restart tự động chuyển các turn dở dang sang `interrupted`, đánh dấu unfinished tools là `unknown` và giải phóng quota slot.
 - Nginx reverse proxy được cấu hình `proxy_buffering off`, `proxy_cache off` và `gzip off` cho endpoint events.
 - Tài liệu vận hành chi tiết: `docs/ai/chat-streaming-operations.vi.md`.
+
+## Interactive Task Action Surfaces (A2UI Milestone 1)
+
+Specification: `docs/superpowers/specs/2026-11-27-a2ui-task-actions.md`
+
+- **Feature Flags**: Gated by `A2UI_COMPOSITION_ENABLED=true` and `A2UI_INTERACTIVE_ENABLED=true` (`A2UI_INTERACTIVE_ENABLED` defaults to `false`). Advertised via `capabilities.interactiveUi` and `capabilities.uiActions` (`["task.complete"]` when enabled).
+- **Read-Only Surface Authoring**: The internal tool `present_interactive_ui` requires the `ui-composition` skill (`SKILL_REQUIRED`), validates bounded `Button` + presentation nodes (max 10 `actions`, no proposal nodes), verifies task readability via `taskService.getReadableById`, and binds server-generated UUID `actionId`s without executing task writes during generation. It is hidden and rejected (`TOOL_NOT_ALLOWED`) during `intent: "task_proposal"` and proposal continuation turns.
+- **Receipt-Backed User Actions**: Clicking an interactive `Button` dispatches `{ requestId, actionId }` to `POST /api/ai/conversations/:conversationId/turns/:turnId/surfaces/:surfaceId/actions`, which validates ownership, non-archived/completed turn state, catalog/binding integrity, and delegates `task.complete` to shared `taskCommandService.update` (`idempotencyKey: "ui_<requestId>"`, `origin: { channel: "a2ui", conversationId, turnId, surfaceId, actionId }`).
+- **Context Reconciliation**: Later turns read up to 3 committed `McpWriteReceipt` outcomes for `(userId, conversationId)` via `uiActionService.recentOutcomes` and inject them into the system prompt as labeled server data alongside `confirmedProposals` and `cancelledProposals`, instructing the agent to read fresh task state before any further writes.

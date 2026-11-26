@@ -1,7 +1,6 @@
-import { useContext, useMemo } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, CheckCircle2, RotateCcw } from "lucide-react";
-import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import { A2uiHost } from "@/shared/A2UI/A2uiHost";
 import { interactiveRegistry } from "@/shared/A2UI/interactiveCatalog";
 import type {
@@ -29,19 +28,29 @@ export function InteractiveSurfaceMessage({
   disabled,
 }: InteractiveSurfaceMessageProps) {
   const { t } = useTranslation("agent");
-  const session = useContext(AgentSessionContext);
 
   const { states, statusMessage, errorMessage, dispatch, retry } = useUiAction({
     location,
     bindings,
     outcomes,
     disabled,
-    onCommitted: () => {
-      if (session?.chat.conversationId === location.conversationId) {
-        void session.chat.reload?.();
-      }
-    },
   });
+
+  const completedOutcome = useMemo(
+    () =>
+      outcomes?.find(
+        (o) =>
+          o.turnId === location.turnId &&
+          o.surfaceId === location.surfaceId &&
+          bindings.some((b) => b.id === o.actionId),
+      ),
+    [outcomes, location.turnId, location.surfaceId, bindings],
+  );
+  const announcedStatus =
+    statusMessage ??
+    (completedOutcome
+      ? t("uiActionCompletedTask", { title: completedOutcome.task.title })
+      : null);
 
   const dataPatches = useMemo(() => {
     const patches: Record<string, unknown> = {};
@@ -87,15 +96,15 @@ export function InteractiveSurfaceMessage({
         role="status"
         aria-live="polite"
         className={
-          statusMessage
+          announcedStatus
             ? "flex items-center gap-1.5 text-xs font-medium text-[var(--color-success,#2f7d5a)]"
             : "sr-only"
         }
       >
-        {statusMessage && (
+        {announcedStatus && (
           <>
             <CheckCircle2 size={14} className="shrink-0" aria-hidden="true" />
-            <span>{statusMessage}</span>
+            <span>{announcedStatus}</span>
           </>
         )}
       </div>

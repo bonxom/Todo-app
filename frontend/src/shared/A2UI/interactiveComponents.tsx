@@ -40,7 +40,7 @@ export const buttonComponent = createBinderlessComponentImplementation(
             });
             void context.dispatchAction(resolved as Record<string, unknown>);
           }}
-          className={`a2ui-button inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-[filter,transform,opacity,background-color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))] ${
+          className={`a2ui-button box-border inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-[filter,transform,opacity,background-color] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-accent,var(--color-accent,#456b8c))] ${
             isSucceeded
               ? "border-[color-mix(in_srgb,var(--color-success,#2f7d5a)_45%,transparent)] bg-[var(--color-success-soft,#eaf5ef)] text-[var(--color-success,#2f7d5a)]"
               : "border-[color-mix(in_srgb,var(--v2-glass-border,rgb(255_255_255_/_50%))_45%,transparent)] bg-[linear-gradient(155deg,color-mix(in_srgb,var(--v2-accent,var(--color-accent,#456b8c))_86%,#ffffff),var(--v2-accent,var(--color-accent,#456b8c))_58%,color-mix(in_srgb,var(--v2-accent,var(--color-accent,#456b8c))_88%,#000000))] !text-[var(--v2-accent-ink,var(--color-primary-text,#ffffff))] shadow-[inset_0_1px_0_rgb(255_255_255_/_46%),0_6px_16px_-8px_var(--v2-accent,var(--color-accent,#456b8c))]"
