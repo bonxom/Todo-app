@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { isTaskProposalsEnabled } from "../../config/A2UI/a2ui.js";
-import { isUiCompositionEnabled } from "../../config/A2UI/composition.js";
+import {
+  isUiCompositionEnabled,
+  isUiInteractiveEnabled,
+} from "../../config/A2UI/composition.js";
 import { chatTurnRepository } from "../../repositories/chatTurnRepository.js";
 import type { ChatTurn } from "../../types/IChatTurn.js";
 import type {
@@ -8,8 +11,12 @@ import type {
   ProposalView,
 } from "../../types/A2UI/ITaskProposal.js";
 import {
+  UI_INTERACTIVE_CATALOG_ID,
+  type UiActionBinding,
+} from "../../types/A2UI/IUiAction.js";
+import {
   UI_COMPOSITION_CATALOG_ID,
-  type StoredUiSurface,
+  type StoredCompositionSurface,
   type SurfaceSpec,
   type UiSurfaceEnvelope,
   type UiSurfaceMode,
@@ -19,6 +26,7 @@ import {
   parseSurfaceSpec,
   storedUiSurfaceSchema,
 } from "../../validations/A2UI/uiSurfaceValidation.js";
+import { interactiveUiService } from "./interactiveUiService.js";
 import { taskProposalUiService } from "./taskProposalUiService.js";
 import { uiSurfaceService } from "./uiSurfaceService.js";
 
@@ -61,6 +69,7 @@ function resolveCompanionText(
 
 export type TurnPresentation = {
   surface?: UiSurfaceEnvelope;
+  actionBindings?: UiActionBinding[];
   proposal?: ProposalView;
   a2ui?: ProposalEnvelope["a2ui"];
   text: string;
@@ -72,7 +81,7 @@ export const uiPresentationService = {
     spec: SurfaceSpec,
     mode: UiSurfaceMode,
     surfaceId = randomUUID(),
-  ): StoredUiSurface {
+  ): StoredCompositionSurface {
     const parsed = parseSurfaceSpec(spec, mode);
     return storedUiSurfaceSchema.parse({
       catalogId: UI_COMPOSITION_CATALOG_ID,
@@ -95,6 +104,7 @@ export const uiPresentationService = {
       );
       if (
         turn.uiSurface &&
+        turn.uiSurface.catalogId === UI_COMPOSITION_CATALOG_ID &&
         isTaskProposalsEnabled() &&
         isUiCompositionEnabled()
       ) {
@@ -153,17 +163,37 @@ export const uiPresentationService = {
     }
 
     if (turn.uiSurface) {
-      if (!isUiCompositionEnabled()) {
+      const uiSurface = turn.uiSurface;
+      const isInteractive = uiSurface.catalogId === UI_INTERACTIVE_CATALOG_ID;
+      if (
+        !isUiCompositionEnabled() ||
+        (isInteractive && !isUiInteractiveEnabled())
+      ) {
         return {
           text:
             turn.response ||
-            (typeof turn.uiSurface.spec?.fallbackText === "string"
-              ? turn.uiSurface.spec.fallbackText
+            (typeof uiSurface.spec?.fallbackText === "string"
+              ? uiSurface.spec.fallbackText
               : ""),
         };
       }
       try {
-        const surface = uiSurfaceService.compileSurface(turn.uiSurface);
+        if (uiSurface.catalogId === UI_INTERACTIVE_CATALOG_ID) {
+          const surface = interactiveUiService.compile(uiSurface);
+          const companionText = resolveCompanionText(
+            turn.response,
+            [surface.text],
+            turn.messages,
+          );
+          return {
+            surface,
+            actionBindings: uiSurface.actionBindings,
+            text: surface.text,
+            ...(companionText ? { companionText } : {}),
+          };
+        }
+
+        const surface = uiSurfaceService.compileSurface(uiSurface);
         const companionText = resolveCompanionText(
           turn.response,
           [surface.text],
@@ -184,8 +214,8 @@ export const uiPresentationService = {
         return {
           text:
             turn.response ||
-            (typeof turn.uiSurface.spec?.fallbackText === "string"
-              ? turn.uiSurface.spec.fallbackText
+            (typeof uiSurface.spec?.fallbackText === "string"
+              ? uiSurface.spec.fallbackText
               : ""),
         };
       }

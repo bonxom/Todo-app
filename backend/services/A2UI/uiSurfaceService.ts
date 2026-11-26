@@ -1,7 +1,8 @@
 import type { ProposalView } from "../../types/A2UI/ITaskProposal.js";
 import {
   UI_COMPOSITION_CATALOG_ID,
-  type StoredUiSurface,
+  type PresentationUiNode,
+  type StoredCompositionSurface,
   type UiNode,
   type UiSurfaceEnvelope,
 } from "../../types/A2UI/IUiSurface.js";
@@ -22,7 +23,9 @@ const buildProposalEvent = (name: "save" | "confirm" | "cancel") => ({
   },
 });
 
-function compileNode(node: UiNode): Record<string, unknown> {
+export function compilePresentationNode(
+  node: PresentationUiNode,
+): Record<string, unknown> {
   switch (node.component) {
     case "Column":
     case "Row":
@@ -91,6 +94,11 @@ function compileNode(node: UiNode): Record<string, unknown> {
             ? node.value.literal
             : { path: node.value.path },
       };
+  }
+}
+
+function compileNode(node: UiNode): Record<string, unknown> {
+  switch (node.component) {
     case "TaskProposalForm":
       return {
         id: node.id,
@@ -115,11 +123,13 @@ function compileNode(node: UiNode): Record<string, unknown> {
         confirmAction: buildProposalEvent("confirm"),
         cancelAction: buildProposalEvent("cancel"),
       };
+    default:
+      return compilePresentationNode(node);
   }
 }
 
 export function compileSurface(
-  stored: StoredUiSurface,
+  stored: StoredCompositionSurface,
   proposal?: ProposalView,
 ): UiSurfaceEnvelope {
   const validatedStored = storedUiSurfaceSchema.parse(stored);

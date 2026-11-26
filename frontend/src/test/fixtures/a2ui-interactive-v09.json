@@ -1,0 +1,158 @@
+{
+  "surfaceId": "11111111-1111-4111-8111-111111111111",
+  "actionId": "33333333-3333-4333-8333-333333333333",
+  "taskId": "0123456789abcdef01234567",
+  "spec": {
+    "fallbackText": "Chuẩn bị slide demo\nTrạng thái: Đang thực hiện",
+    "components": [
+      {
+        "id": "root",
+        "component": "Card",
+        "title": "Chuẩn bị slide demo",
+        "subtitle": "Tác vụ đang thực hiện",
+        "tone": "accent",
+        "children": ["taskSummary", "finishButton"]
+      },
+      {
+        "id": "taskSummary",
+        "component": "Text",
+        "value": { "path": "/display/summary" },
+        "emphasis": "normal"
+      },
+      {
+        "id": "finishButton",
+        "component": "Button",
+        "label": "Hoàn thành",
+        "actionKey": "finishTask"
+      }
+    ],
+    "displayData": {
+      "summary": "Nhấn nút bên dưới khi bạn đã hoàn tất công việc này."
+    },
+    "actions": {
+      "finishTask": {
+        "name": "task.complete",
+        "taskId": "0123456789abcdef01234567"
+      }
+    }
+  },
+  "stored": {
+    "catalogId": "urn:orbit:a2ui:interactive:v1",
+    "surfaceId": "11111111-1111-4111-8111-111111111111",
+    "spec": {
+      "fallbackText": "Chuẩn bị slide demo\nTrạng thái: Đang thực hiện",
+      "components": [
+        {
+          "id": "root",
+          "component": "Card",
+          "title": "Chuẩn bị slide demo",
+          "subtitle": "Tác vụ đang thực hiện",
+          "tone": "accent",
+          "children": ["taskSummary", "finishButton"]
+        },
+        {
+          "id": "taskSummary",
+          "component": "Text",
+          "value": { "path": "/display/summary" },
+          "emphasis": "normal"
+        },
+        {
+          "id": "finishButton",
+          "component": "Button",
+          "label": "Hoàn thành",
+          "actionKey": "finishTask"
+        }
+      ],
+      "displayData": {
+        "summary": "Nhấn nút bên dưới khi bạn đã hoàn tất công việc này."
+      },
+      "actions": {
+        "finishTask": {
+          "name": "task.complete",
+          "taskId": "0123456789abcdef01234567"
+        }
+      }
+    },
+    "actionBindings": [
+      {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "key": "finishTask",
+        "name": "task.complete",
+        "taskId": "0123456789abcdef01234567"
+      }
+    ]
+  },
+  "envelope": {
+    "text": "Chuẩn bị slide demo\nTrạng thái: Đang thực hiện",
+    "a2ui": {
+      "protocolVersion": "v0.9",
+      "catalogId": "urn:orbit:a2ui:interactive:v1",
+      "surfaceId": "11111111-1111-4111-8111-111111111111",
+      "messages": [
+        {
+          "version": "v0.9",
+          "createSurface": {
+            "surfaceId": "11111111-1111-4111-8111-111111111111",
+            "catalogId": "urn:orbit:a2ui:interactive:v1"
+          }
+        },
+        {
+          "version": "v0.9",
+          "updateComponents": {
+            "surfaceId": "11111111-1111-4111-8111-111111111111",
+            "components": [
+              {
+                "id": "root",
+                "component": "Card",
+                "children": ["taskSummary", "finishButton"],
+                "title": "Chuẩn bị slide demo",
+                "subtitle": "Tác vụ đang thực hiện",
+                "tone": "accent"
+              },
+              {
+                "id": "taskSummary",
+                "component": "Text",
+                "value": { "path": "/display/summary" },
+                "emphasis": "normal"
+              },
+              {
+                "id": "finishButton",
+                "component": "Button",
+                "label": "Hoàn thành",
+                "action": {
+                  "event": {
+                    "name": "dispatch",
+                    "context": {
+                      "actionId": "33333333-3333-4333-8333-333333333333"
+                    }
+                  }
+                },
+                "actionState": {
+                  "path": "/actionState/finishTask"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "version": "v0.9",
+          "updateDataModel": {
+            "surfaceId": "11111111-1111-4111-8111-111111111111",
+            "path": "/",
+            "value": {
+              "display": {
+                "summary": "Nhấn nút bên dưới khi bạn đã hoàn tất công việc này."
+              },
+              "actionState": {
+                "finishTask": {
+                  "status": "loading",
+                  "disabled": true
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

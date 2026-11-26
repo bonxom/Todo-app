@@ -2,8 +2,9 @@ import { z } from "zod";
 import { A2UI_CONFIG } from "../../config/A2UI/a2ui.js";
 import {
   UI_COMPOSITION_CATALOG_ID,
+  type DisplayDataValue,
   type DisplayScalar,
-  type StoredUiSurface,
+  type StoredCompositionSurface,
   type SurfaceSpec,
   type UiNode,
   type UiSurfaceEnvelope,
@@ -196,7 +197,7 @@ const taskProposalActionsNodeSchema = z.strictObject({
   component: z.literal("TaskProposalActions"),
 });
 
-export const uiNodeSchema = z.discriminatedUnion("component", [
+export const presentationNodeSchemas = [
   columnNodeSchema,
   rowNodeSchema,
   cardNodeSchema,
@@ -205,6 +206,10 @@ export const uiNodeSchema = z.discriminatedUnion("component", [
   tableNodeSchema,
   chartNodeSchema,
   diagramNodeSchema,
+] as const;
+
+export const uiNodeSchema = z.discriminatedUnion("component", [
+  ...presentationNodeSchemas,
   taskProposalFormNodeSchema,
   taskListNodeSchema,
   taskProposalActionsNodeSchema,
@@ -229,7 +234,7 @@ export const displayDataValueSchema = z.union([
   z.array(displayRowRecordSchema).max(UI_SURFACE_LIMITS.MAX_TABLE_ROWS),
 ]);
 
-const displayDataSchema = z
+export const displayDataSchema = z
   .record(z.string(), displayDataValueSchema)
   .superRefine((record, ctx) => {
     for (const key of Object.keys(record)) {
@@ -243,30 +248,28 @@ const displayDataSchema = z
     }
   });
 
-function getChildrenIds(node: UiNode): string[] {
+type GraphNodeLike = { id: string; component: string; children?: string[] };
+
+function getChildrenIds(node: GraphNodeLike): string[] {
   if (
-    node.component === "Column" ||
-    node.component === "Row" ||
-    node.component === "Card"
+    (node.component === "Column" ||
+      node.component === "Row" ||
+      node.component === "Card") &&
+    Array.isArray(node.children)
   ) {
     return node.children;
   }
   return [];
 }
 
-function validateGraphAndBindings(
-  spec: SurfaceSpec,
-  mode: UiSurfaceMode,
+export function validateSurfaceTree(
+  components: readonly GraphNodeLike[],
   ctx: z.RefinementCtx,
 ): void {
-  const nodeById = new Map<string, { node: UiNode; index: number }>();
+  const nodeById = new Map<string, { node: GraphNodeLike; index: number }>();
 
-  let formCount = 0;
-  let listCount = 0;
-  let actionsCount = 0;
-
-  for (let i = 0; i < spec.components.length; i++) {
-    const node = spec.components[i];
+  for (let i = 0; i < components.length; i++) {
+    const node = components[i];
     if (nodeById.has(node.id)) {
       ctx.addIssue({
         code: "custom",
@@ -275,33 +278,6 @@ function validateGraphAndBindings(
       });
     } else {
       nodeById.set(node.id, { node, index: i });
-    }
-
-    if (node.component === "TaskProposalForm") formCount++;
-    if (node.component === "TaskList") listCount++;
-    if (node.component === "TaskProposalActions") actionsCount++;
-  }
-
-  if (mode === "readonly") {
-    if (formCount > 0 || listCount > 0 || actionsCount > 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["components"],
-        message: "Read-only surfaces cannot include task proposal components",
-      });
-    }
-  } else {
-    const validSingleForm =
-      formCount === 1 && listCount === 0 && actionsCount === 0;
-    const validSplitProposal =
-      formCount === 0 && listCount === 1 && actionsCount === 1;
-    if (!validSingleForm && !validSplitProposal) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["components"],
-        message:
-          "Proposal surface must contain either exactly one TaskProposalForm or one TaskList and one TaskProposalActions",
-      });
     }
   }
 
@@ -316,8 +292,8 @@ function validateGraphAndBindings(
 
   // Validate child existence and single-parent tree constraint before traversal
   const parentByChild = new Map<string, string>();
-  for (let i = 0; i < spec.components.length; i++) {
-    const node = spec.components[i];
+  for (let i = 0; i < components.length; i++) {
+    const node = components[i];
     const children = getChildrenIds(node);
     const seenInParent = new Set<string>();
 
@@ -421,25 +397,27 @@ function validateGraphAndBindings(
       }
     }
   }
+}
 
-  // Validate data bindings for Text, Stat, Diagram, Table, and Chart nodes
-  for (let i = 0; i < spec.components.length; i++) {
-    const node = spec.components[i];
+export function validateDisplayBindings(
+  components: readonly GraphNodeLike[],
+  displayData: Record<string, DisplayDataValue>,
+  ctx: z.RefinementCtx,
+): void {
+  for (let i = 0; i < components.length; i++) {
+    const node = components[i] as UiNode;
     if (
       (node.component === "Text" || node.component === "Stat") &&
       "path" in node.value
     ) {
       const key = extractDisplayKey(node.value.path);
-      if (
-        !key ||
-        !Object.prototype.hasOwnProperty.call(spec.displayData, key)
-      ) {
+      if (!key || !Object.prototype.hasOwnProperty.call(displayData, key)) {
         ctx.addIssue({
           code: "custom",
           path: ["components", i, "value", "path"],
           message: `Display path '${node.value.path}' does not exist in displayData`,
         });
-      } else if (Array.isArray(spec.displayData[key])) {
+      } else if (Array.isArray(displayData[key])) {
         ctx.addIssue({
           code: "custom",
           path: ["components", i, "value", "path"],
@@ -448,17 +426,14 @@ function validateGraphAndBindings(
       }
     } else if (node.component === "Diagram" && "path" in node.value) {
       const key = extractDisplayKey(node.value.path);
-      if (
-        !key ||
-        !Object.prototype.hasOwnProperty.call(spec.displayData, key)
-      ) {
+      if (!key || !Object.prototype.hasOwnProperty.call(displayData, key)) {
         ctx.addIssue({
           code: "custom",
           path: ["components", i, "value", "path"],
           message: `Display path '${node.value.path}' does not exist in displayData`,
         });
       } else {
-        const bound = spec.displayData[key];
+        const bound = displayData[key];
         if (
           typeof bound !== "string" ||
           bound.trim().length === 0 ||
@@ -486,10 +461,7 @@ function validateGraphAndBindings(
       }
 
       const key = extractDisplayKey(node.rowsPath);
-      if (
-        !key ||
-        !Object.prototype.hasOwnProperty.call(spec.displayData, key)
-      ) {
+      if (!key || !Object.prototype.hasOwnProperty.call(displayData, key)) {
         ctx.addIssue({
           code: "custom",
           path: ["components", i, "rowsPath"],
@@ -498,7 +470,7 @@ function validateGraphAndBindings(
         continue;
       }
 
-      const rows = spec.displayData[key];
+      const rows = displayData[key];
       if (!Array.isArray(rows)) {
         ctx.addIssue({
           code: "custom",
@@ -553,10 +525,7 @@ function validateGraphAndBindings(
       }
 
       const key = extractDisplayKey(node.rowsPath);
-      if (
-        !key ||
-        !Object.prototype.hasOwnProperty.call(spec.displayData, key)
-      ) {
+      if (!key || !Object.prototype.hasOwnProperty.call(displayData, key)) {
         ctx.addIssue({
           code: "custom",
           path: ["components", i, "rowsPath"],
@@ -565,7 +534,7 @@ function validateGraphAndBindings(
         continue;
       }
 
-      const rows = spec.displayData[key];
+      const rows = displayData[key];
       if (!Array.isArray(rows)) {
         ctx.addIssue({
           code: "custom",
@@ -607,6 +576,48 @@ function validateGraphAndBindings(
       }
     }
   }
+}
+
+function validateGraphAndBindings(
+  spec: SurfaceSpec,
+  mode: UiSurfaceMode,
+  ctx: z.RefinementCtx,
+): void {
+  let formCount = 0;
+  let listCount = 0;
+  let actionsCount = 0;
+
+  for (const node of spec.components) {
+    if (node.component === "TaskProposalForm") formCount++;
+    if (node.component === "TaskList") listCount++;
+    if (node.component === "TaskProposalActions") actionsCount++;
+  }
+
+  if (mode === "readonly") {
+    if (formCount > 0 || listCount > 0 || actionsCount > 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["components"],
+        message: "Read-only surfaces cannot include task proposal components",
+      });
+    }
+  } else {
+    const validSingleForm =
+      formCount === 1 && listCount === 0 && actionsCount === 0;
+    const validSplitProposal =
+      formCount === 0 && listCount === 1 && actionsCount === 1;
+    if (!validSingleForm && !validSplitProposal) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["components"],
+        message:
+          "Proposal surface must contain either exactly one TaskProposalForm or one TaskList and one TaskProposalActions",
+      });
+    }
+  }
+
+  validateSurfaceTree(spec.components, ctx);
+  validateDisplayBindings(spec.components, spec.displayData, ctx);
 }
 
 export const surfaceSpecBaseSchema = z.strictObject({
@@ -652,13 +663,12 @@ export function parseSurfaceSpec(
   return createSurfaceSpecSchema(mode).parse(input);
 }
 
-export const storedUiSurfaceSchema: z.ZodType<StoredUiSurface> = z.strictObject(
-  {
+export const storedUiSurfaceSchema: z.ZodType<StoredCompositionSurface> =
+  z.strictObject({
     catalogId: z.literal(UI_COMPOSITION_CATALOG_ID),
     surfaceId: z.uuid(),
     spec: surfaceSpecBaseSchema,
-  },
-);
+  });
 
 const proposalBindingSchema = z.strictObject({ path: z.literal("/proposal") });
 const requestIdBindingSchema = z.strictObject({
@@ -675,7 +685,7 @@ const compiledActionSchema = (name: "save" | "confirm" | "cancel") =>
     }),
   });
 
-const compiledComponentSchema = z.discriminatedUnion("component", [
+export const compiledPresentationComponentSchemas = [
   columnNodeSchema,
   rowNodeSchema,
   cardNodeSchema,
@@ -730,6 +740,10 @@ const compiledComponentSchema = z.discriminatedUnion("component", [
       z.strictObject({ path: displayPathSchema }),
     ]),
   }),
+] as const;
+
+const compiledComponentSchema = z.discriminatedUnion("component", [
+  ...compiledPresentationComponentSchemas,
   z.strictObject({
     id: keySchema,
     component: z.literal("TaskProposalForm"),

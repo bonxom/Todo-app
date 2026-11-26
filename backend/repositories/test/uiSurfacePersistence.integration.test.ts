@@ -28,6 +28,16 @@ const specFixture = JSON.parse(
   ),
 );
 
+const interactiveFixture = JSON.parse(
+  readFileSync(
+    resolve(
+      process.cwd(),
+      "../frontend/src/test/fixtures/a2ui-interactive-v09.json",
+    ),
+    "utf-8",
+  ),
+);
+
 describe.skipIf(!uri)(
   "uiSurface persistence with real MongoDB transactions",
   () => {
@@ -209,6 +219,48 @@ describe.skipIf(!uri)(
 
       const convAfter = await Conversation.findById(conversationId).lean();
       expect(convAfter?.activeTurn).toBe(second.turn._id);
+    });
+
+    it("persists and reloads interactive uiSurface with actionBindings intact", async () => {
+      const conversationId = randomUUID();
+      await Conversation.create({
+        _id: conversationId,
+        userId: ownerId,
+        title: "Interactive UI",
+        sequence: 0,
+      });
+
+      const requestId = randomUUID();
+      const claimed = await chatTurnRepository.claim(
+        String(ownerId),
+        conversationId,
+        requestId,
+        "Show complete button",
+      );
+
+      const storedInteractive: StoredUiSurface = interactiveFixture.stored;
+
+      await chatTurnRepository.finish(
+        claimed.turn._id,
+        interactiveFixture.spec.fallbackText,
+        "completed",
+        claimed.turn.executionToken,
+        undefined,
+        [],
+        storedInteractive,
+      );
+
+      const savedTurn = await ChatTurn.findById(claimed.turn._id).lean();
+      expect(savedTurn?.uiSurface).toEqual(storedInteractive);
+
+      const duplicate = await chatTurnRepository.claim(
+        String(ownerId),
+        conversationId,
+        requestId,
+        "Show complete button",
+      );
+      expect(duplicate.claimed).toBe(false);
+      expect(duplicate.turn.uiSurface).toEqual(storedInteractive);
     });
   },
 );

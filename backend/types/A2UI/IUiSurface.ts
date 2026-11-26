@@ -1,4 +1,5 @@
 import type { ProposalView } from "./ITaskProposal.js";
+import type { StoredInteractiveSurface } from "./IUiAction.js";
 
 export const UI_COMPOSITION_CATALOG_ID =
   "urn:orbit:a2ui:composition:v1" as const;
@@ -85,6 +86,11 @@ export type UiNode =
       component: "TaskProposalForm" | "TaskList" | "TaskProposalActions";
     };
 
+export type PresentationUiNode = Exclude<
+  UiNode,
+  { component: "TaskProposalForm" | "TaskList" | "TaskProposalActions" }
+>;
+
 export type DisplayDataValue = DisplayScalar | Record<string, DisplayScalar>[];
 
 export type SurfaceSpec = {
@@ -93,11 +99,14 @@ export type SurfaceSpec = {
   displayData: Record<string, DisplayDataValue>;
 };
 
-export type StoredUiSurface = {
+export type StoredCompositionSurface = {
   catalogId: typeof UI_COMPOSITION_CATALOG_ID;
   surfaceId: string;
   spec: SurfaceSpec;
 };
+
+export type StoredUiSurface =
+  StoredCompositionSurface | StoredInteractiveSurface;
 
 export type UiSurfaceEnvelope = {
   text: string;

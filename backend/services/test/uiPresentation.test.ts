@@ -11,6 +11,7 @@ import {
   UI_COMPOSITION_CATALOG_ID,
   type StoredUiSurface,
 } from "../../types/A2UI/IUiSurface.js";
+import { UI_INTERACTIVE_CATALOG_ID } from "../../types/A2UI/IUiAction.js";
 
 const specFixture = JSON.parse(
   readFileSync(
@@ -27,6 +28,16 @@ const proposalFixture = JSON.parse(
     resolve(
       process.cwd(),
       "../frontend/src/test/fixtures/a2ui-task-proposal-v09.json",
+    ),
+    "utf-8",
+  ),
+);
+
+const interactiveFixture = JSON.parse(
+  readFileSync(
+    resolve(
+      process.cwd(),
+      "../frontend/src/test/fixtures/a2ui-interactive-v09.json",
     ),
     "utf-8",
   ),
@@ -302,5 +313,31 @@ describe("uiPresentationService", () => {
     );
     expect(missingOrForeign.surface).toBeUndefined();
     expect(missingOrForeign.proposal).toEqual(sampleProposal);
+  });
+
+  it("compiles interactive stored surfaces only when A2UI_INTERACTIVE_ENABLED is true and falls back to text when disabled", () => {
+    const turn = makeTurn({
+      response: "Mình đã đính kèm nút hoàn thành cho công việc.",
+      uiSurface: interactiveFixture.stored,
+    });
+
+    // Default false -> text fallback
+    const disabled = uiPresentationService.forTurn(turn);
+    expect(disabled.surface).toBeUndefined();
+    expect(disabled.actionBindings).toBeUndefined();
+    expect(disabled.text).toBe(
+      "Mình đã đính kèm nút hoàn thành cho công việc.",
+    );
+
+    vi.stubEnv("A2UI_INTERACTIVE_ENABLED", "true");
+    const enabled = uiPresentationService.forTurn(turn);
+    expect(enabled.surface).toEqual(interactiveFixture.envelope);
+    expect(enabled.surface?.a2ui.catalogId).toBe(UI_INTERACTIVE_CATALOG_ID);
+    expect(enabled.actionBindings).toEqual(
+      interactiveFixture.stored.actionBindings,
+    );
+    expect(enabled.companionText).toBe(
+      "Mình đã đính kèm nút hoàn thành cho công việc.",
+    );
   });
 });
