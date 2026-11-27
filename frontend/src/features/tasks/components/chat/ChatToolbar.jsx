@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import {
   Paperclip,
   Image,
-  ChevronRight,
+  Plus,
   Bot,
   Zap,
   MessageCircleQuestion,
@@ -138,9 +138,9 @@ export default function ChatToolbar({
             onClick={() => setOpen(!open)}
             title={t(open ? "hideTools" : "showTools")}
           >
-            <ChevronRight
+            <Plus
               size={18}
-              className={open ? "rotate-180" : ""}
+              className={`transition-transform duration-150 ${open ? "rotate-45" : ""}`}
               aria-hidden="true"
             />
           </button>

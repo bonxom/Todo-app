@@ -14,7 +14,7 @@ import {
   useCallback,
   memo,
 } from "react";
-import { Send, ArrowUpRight, Sparkles, Square, Loader2 } from "lucide-react";
+import { Send, ArrowRight, Sparkles, Square, Loader2 } from "lucide-react";
 import { AgentSessionContext } from "@/features/agent/agentSessionContext";
 import ChatToolbar from "./ChatToolbar";
 import InteractionCard from "./InteractionCard";
@@ -661,7 +661,7 @@ const ChatField = ({
                     }}
                   >
                     <span>{label}</span>
-                    <ArrowUpRight size={16} />
+                    <ArrowRight size={16} aria-hidden="true" />
                   </button>
                 ))}
               </div>

@@ -131,3 +131,74 @@ test("Skills tabs and actions align in one row on desktop and wrap on mobile", a
     ),
   ).toBe(true);
 });
+
+test("Assistant bubble keeps an opaque legible panel on mobile, tablet, and desktop across themes and Vietnamese copy", async ({
+  page,
+}) => {
+  for (const config of [
+    {
+      width: 375,
+      height: 812,
+      theme: "light",
+      lang: "en",
+      label: "mobile-light-en",
+    },
+    {
+      width: 390,
+      height: 844,
+      theme: "dark",
+      lang: "vi",
+      label: "mobile-dark-vi",
+    },
+    {
+      width: 768,
+      height: 1024,
+      theme: "light",
+      lang: "en",
+      label: "tablet-light-en",
+    },
+    {
+      width: 1440,
+      height: 900,
+      theme: "light",
+      lang: "en",
+      label: "desktop-light-en",
+    },
+  ] as const) {
+    await page.setViewportSize({ width: config.width, height: config.height });
+    await agentWorkspaceFixture(page, { initialMessages: [] });
+    await page.addInitScript(
+      ({ theme, lang }) => {
+        localStorage.setItem("orbit-theme", theme);
+        localStorage.setItem("orbit.language", lang);
+        localStorage.setItem("orbit.ui-version", "v2");
+      },
+      { theme: config.theme, lang: config.lang },
+    );
+    await page.goto("/v2/dashboard");
+    await page
+      .getByRole("button", { name: /Open assistant|Mở trợ lý/i })
+      .click();
+
+    const panel = page.getByTestId("v2-assistant-panel");
+    await expect(panel).toBeVisible();
+
+    const bgColor = await panel.evaluate(
+      (el) => getComputedStyle(el).backgroundColor,
+    );
+    const alphaMatch = bgColor.match(/rgba?\([^)]+[,/]\s*([\d.]+)\s*\)/);
+    const alpha = alphaMatch ? Number(alphaMatch[1]) : 1;
+    expect(alpha).toBeGreaterThanOrEqual(0.9);
+
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+
+    await page.screenshot({
+      path: `/home/bonxom/.gemini/antigravity-cli/brain/c839d185-1706-44fc-bce5-d9c70ad34941/scratch/bubble-${config.label}.png`,
+      fullPage: false,
+    });
+  }
+});

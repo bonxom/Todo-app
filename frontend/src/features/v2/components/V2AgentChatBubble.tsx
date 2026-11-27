@@ -243,7 +243,7 @@ export default function V2AgentChatBubble({
           />
         )}
 
-        <header className="v2-assistant-header justify-between [border-bottom:1px_solid_var(--v2-border)] flex-col flex-[0_0_auto] [background:linear-gradient(135deg,var(--v2-shell-fill),transparent)]">
+        <header className="v2-assistant-header justify-between [border-bottom:1px_solid_var(--v2-border)] flex-col flex-[0_0_auto] [background:color-mix(in_srgb,var(--v2-surface-solid)_96%,var(--v2-shell-fill))]">
           <div className="v2-assistant-heading flex items-center justify-between gap-[8px] min-w-[0]">
             <div className="v2-assistant-identity flex items-center gap-[10px] min-w-[0]">
               <span
